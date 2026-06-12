@@ -117,8 +117,9 @@ git ls-remote origin refs/heads/main | awk '{print $1}'
 1. cp -r ~/.workbuddy/skills/skill-name ~/Ai/skill/skill-name
 2. 更新 README.md：目录结构 + Skill 说明列表
 3. 更新 CHANGELOG.md：版本号 +1 MINOR，Added 条目
-4. git fetch origin && git pull --rebase origin main（如有远程更新）
-5. git add -A && git commit && git push
+4. git add -A && git commit -m "..."
+5. git fetch origin && git pull --rebase origin main（如有远程更新）
+6. git push origin main
 ```
 
 ### 场景 B：修改已有 Skill
@@ -126,8 +127,9 @@ git ls-remote origin refs/heads/main | awk '{print $1}'
 ```text
 1. 编辑 Skill 文件
 2. 更新 CHANGELOG.md：版本号 +1 PATCH，Changed 条目
-3. git fetch origin && git pull --rebase origin main（如有远程更新）
-4. git add -A && git commit && git push
+3. git add -A && git commit -m "..."
+4. git fetch origin && git pull --rebase origin main（如有远程更新）
+5. git push origin main
 ```
 
 ### 场景 C：仅文档更新
@@ -135,8 +137,9 @@ git ls-remote origin refs/heads/main | awk '{print $1}'
 ```text
 1. 编辑 README.md / CHANGELOG.md
 2. 更新 CHANGELOG.md：记录本次文档更新
-3. git fetch origin && git pull --rebase origin main（如有远程更新）
-4. git add -A && git commit && git push
+3. git add -A && git commit -m "..."
+4. git fetch origin && git pull --rebase origin main（如有远程更新）
+5. git push origin main
 ```
 
 ## 注意事项
