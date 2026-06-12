@@ -1,0 +1,1213 @@
+{
+  "xq-1107378837": {},
+  "xq-1505944393": {
+    "贵州茅台": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "五粮液": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中石油": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 2,
+      "models": 1
+    },
+    "牧原股份": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "温氏股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "天齐锂业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-1760673340": {
+    "中远海控": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中国移动": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中国海洋石油": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-2034300328": {
+    "华能": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "保利": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    }
+  },
+  "xq-2093337947": {
+    "贵州茅台": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "黄金": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    },
+    "华能": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "牧原股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    }
+  },
+  "xq-2292705444": {},
+  "xq-2604731369": {
+    "紫金矿业": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 1,
+      "heuristics": 2,
+      "models": 1
+    },
+    "黄金": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 2,
+      "heuristics": 0,
+      "models": 3
+    },
+    "兴业银锡": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "中国海洋石油": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-2681290304": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "紫金矿业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "黄金": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "华能": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中国移动": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "长江电力": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    }
+  },
+  "xq-2695845628": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    },
+    "比亚迪": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    },
+    "香港交易所": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-3189443391": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 2,
+      "quotes": 3,
+      "heuristics": 4,
+      "models": 3
+    },
+    "美团": {
+      "holdings": true,
+      "predictions": 2,
+      "quotes": 1,
+      "heuristics": 1,
+      "models": 4
+    },
+    "中国移动": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "谷歌": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "商汤": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    }
+  },
+  "xq-3203323063": {},
+  "xq-3338834427": {
+    "黄金": {
+      "holdings": true,
+      "predictions": 3,
+      "quotes": 0,
+      "heuristics": 3,
+      "models": 15
+    }
+  },
+  "xq-3350642636": {
+    "苹果": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 3
+    },
+    "微软": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 3
+    },
+    "谷歌": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 3
+    },
+    "中国海洋石油": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "澜起科技": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    }
+  },
+  "xq-3627993957": {
+    "紫金矿业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "神火股份": {
+      "holdings": true,
+      "predictions": 5,
+      "quotes": 2,
+      "heuristics": 2,
+      "models": 5
+    },
+    "云铝股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 2,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中国铝业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "海天味业": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    }
+  },
+  "xq-3858193052": {
+    "华能": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "牧原股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "温氏股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-3911541976": {
+    "金蝶": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "寒武纪": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "海光信息": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-4059841522": {
+    "紫金矿业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-4381703788": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "美团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "贵州茅台": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-4930371170": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 2,
+      "quotes": 1,
+      "heuristics": 3,
+      "models": 11
+    },
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "紫金矿业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    },
+    "英伟达": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "黄金": {
+      "holdings": true,
+      "predictions": 4,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 3
+    },
+    "兴业银锡": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "中远海控": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中远海能": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "美的集团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "山东黄金": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "赤峰黄金": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "招金矿业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "华能": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 1,
+      "heuristics": 1,
+      "models": 1
+    },
+    "Palantir": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "ARM": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    }
+  },
+  "xq-5243796549": {
+    "紫金矿业": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "宁德时代": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 3
+    },
+    "天齐锂业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "赣锋锂业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-5712453299": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "京东": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 1,
+      "heuristics": 1,
+      "models": 0
+    },
+    "理想汽车": {
+      "holdings": true,
+      "predictions": 2,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "工业富联": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "东山精密": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "京东方": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 1,
+      "heuristics": 1,
+      "models": 0
+    },
+    "宁德时代": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "药明康德": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中兴通讯": {
+      "holdings": true,
+      "predictions": 2,
+      "quotes": 2,
+      "heuristics": 4,
+      "models": 0
+    },
+    "阳光电源": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    }
+  },
+  "xq-5782734677": {
+    "腾讯控股": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    },
+    "紫金矿业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "黄金": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 5,
+      "models": 3
+    },
+    "中国移动": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "神华": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 4,
+      "models": 6
+    }
+  },
+  "xq-5815535041": {
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 1,
+      "heuristics": 0,
+      "models": 2
+    },
+    "京东": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "保利": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "中海油": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "长江电力": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 1,
+      "heuristics": 0,
+      "models": 1
+    },
+    "中国海洋石油": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-5849834563": {
+    "拼多多": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 1,
+      "heuristics": 1,
+      "models": 0
+    }
+  },
+  "xq-6719117336": {
+    "黄金": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 1,
+      "heuristics": 2,
+      "models": 0
+    },
+    "宁德时代": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-6746605430": {
+    "小米集团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    },
+    "紫金矿业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中远海控": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 1,
+      "heuristics": 1,
+      "models": 1
+    },
+    "农夫山泉": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    }
+  },
+  "xq-7412475798": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 2,
+      "models": 0
+    },
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 2,
+      "models": 3
+    },
+    "小米集团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "黄金": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "理想汽车": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-8228987213": {
+    "贵州茅台": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "五粮液": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "美的集团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 1
+    },
+    "中海油": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "格力电器": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 2,
+      "models": 3
+    },
+    "海尔智家": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-8295448217": {
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "Palantir": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    }
+  },
+  "xq-8632046745": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "理想汽车": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 1,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中国移动": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中海油": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 1,
+      "heuristics": 3,
+      "models": 3
+    },
+    "神华": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 2,
+      "models": 0
+    },
+    "中国海洋石油": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-8667231978": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "美团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "黄金": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    },
+    "云铝股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-8790885129": {
+    "贵州茅台": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "神火股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    },
+    "云铝股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 2,
+      "models": 2
+    },
+    "华能": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "长江电力": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    },
+    "陕西煤业": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    }
+  },
+  "xq-9573013200": {
+    "黄金": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "理想汽车": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-9598793634": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "英伟达": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 1,
+      "heuristics": 2,
+      "models": 2
+    },
+    "联想": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "台积电": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 1,
+      "heuristics": 2,
+      "models": 3
+    },
+    "快手": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "拼多多": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "联想集团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-9598902646": {
+    "贵州茅台": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 3,
+      "models": 8
+    },
+    "五粮液": {
+      "holdings": true,
+      "predictions": 2,
+      "quotes": 1,
+      "heuristics": 4,
+      "models": 4
+    }
+  },
+  "xq-9650668145": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "五粮液": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    },
+    "联想": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "中海油": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "中国海洋石油": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "联想集团": {
+      "holdings": false,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-9742512811": {
+    "腾讯控股": {
+      "holdings": true,
+      "predictions": 1,
+      "quotes": 0,
+      "heuristics": 2,
+      "models": 3
+    },
+    "阿里巴巴": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 1,
+      "models": 0
+    },
+    "美团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "黄金": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "理想汽车": {
+      "holdings": false,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "中国海洋石油": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    },
+    "拼多多": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 1
+    }
+  },
+  "xq-9743713791": {
+    "小米集团": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "歌尔股份": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-9838764557": {
+    "五粮液": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    },
+    "招商银行": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 0
+    }
+  },
+  "xq-9887656769": {
+    "贵州茅台": {
+      "holdings": true,
+      "predictions": 0,
+      "quotes": 0,
+      "heuristics": 0,
+      "models": 2
+    }
+  }
+}

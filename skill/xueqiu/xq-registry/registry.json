@@ -1,0 +1,4183 @@
+{
+  "version": "1.0",
+  "created_at": "2026-06-05",
+  "last_updated": "2026-06-11",
+  "total_bloggers": 40,
+  "stats": {
+    "full_profiles": 40,
+    "skeleton_profiles": 0,
+    "total_posts_analyzed": 4184
+  },
+  "bloggers": [
+    {
+      "skill_name": "xq-apec-lantian",
+      "xueqiu_id": "2034300328",
+      "nickname": "APEC蓝天",
+      "post_count": 100,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中",
+      "info_cutoff": "2026-06-04",
+      "profile_url": "https://xueqiu.com/u/2034300328",
+      "markets": [
+        "A股",
+        "B股",
+        "港股"
+      ],
+      "style_keywords": [
+        "收息",
+        "周期",
+        "趋势",
+        "消费",
+        "科技",
+        "长期持有",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "华能": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "保利": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        }
+      },
+      "followers_count": 8027,
+      "account_age_years": 12.5,
+      "created_at": "2013-11-23",
+      "status_count": 1974,
+      "sector_mentions": {
+        "电力/公用事业": 62,
+        "煤炭/能源": 20,
+        "银行/金融": 16,
+        "航运/周期": 2,
+        "消费": 1
+      }
+    },
+    {
+      "skill_name": "xq-aqin-ai-alan",
+      "xueqiu_id": "3350642636",
+      "nickname": "亲爱的阿兰",
+      "post_count": 101,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "未公开（高活跃度用户）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/3350642636",
+      "markets": [
+        "A股",
+        "港股",
+        "科创板",
+        "美股"
+      ],
+      "style_keywords": [
+        "成长",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "定投",
+        "长期持有",
+        "波段",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "苹果": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 3
+        },
+        "微软": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 3
+        },
+        "谷歌": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 3
+        },
+        "中国海洋石油": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "澜起科技": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "苹果(AAPL)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        }
+      },
+      "followers_count": 50044,
+      "account_age_years": 7.4,
+      "created_at": "2019-01-28",
+      "status_count": 1652,
+      "sector_mentions": {
+        "算力/AI算力": 1,
+        "AI应用": 2,
+        "半导体": 2,
+        "医药": 8,
+        "煤炭/能源": 15,
+        "银行/金融": 2,
+        "新能源车": 8,
+        "房地产": 2,
+        "航运/周期": 5,
+        "消费": 8
+      }
+    },
+    {
+      "skill_name": "xq-benjm-xiu",
+      "xueqiu_id": "8295448217",
+      "nickname": "Benjm_修",
+      "post_count": 100,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "中高（科技成长方向活跃博主）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/8295448217",
+      "markets": [
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "成长",
+        "逆向",
+        "周期",
+        "趋势",
+        "产业",
+        "科技",
+        "资源",
+        "右侧交易",
+        "左侧",
+        "长期持有",
+        "波段"
+      ],
+      "stock_mentions": {
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "Palantir": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        }
+      },
+      "followers_count": 182310,
+      "account_age_years": 13.5,
+      "created_at": "2012-11-22",
+      "status_count": 1595,
+      "sector_mentions": {
+        "算力/AI算力": 4,
+        "AI应用": 19,
+        "互联网平台": 6,
+        "医药": 1,
+        "新能源车": 6,
+        "航运/周期": 1
+      }
+    },
+    {
+      "skill_name": "xq-biancheng-langzi",
+      "xueqiu_id": "2093337947",
+      "nickname": "边城浪子1986",
+      "post_count": 100,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "雪球活跃大V，发帖频率高",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/2093337947",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "逆向",
+        "周期",
+        "趋势",
+        "宏观",
+        "消费",
+        "科技",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "贵州茅台": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "黄金": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "华能": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "牧原股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        }
+      },
+      "followers_count": 411746,
+      "account_age_years": 12.5,
+      "created_at": "2013-12-14",
+      "status_count": 2699,
+      "sector_mentions": {
+        "互联网平台": 2,
+        "半导体": 4,
+        "白酒": 10,
+        "医药": 6,
+        "黄金/贵金属": 2,
+        "电力/公用事业": 16,
+        "煤炭/能源": 1,
+        "银行/金融": 1,
+        "新能源车": 6,
+        "房地产": 2,
+        "航运/周期": 15,
+        "消费": 14
+      }
+    },
+    {
+      "skill_name": "xq-caimi88",
+      "xueqiu_id": "2604731369",
+      "nickname": "财迷88",
+      "post_count": 100,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中等偏上",
+      "info_cutoff": "2026-06-04",
+      "profile_url": "https://xueqiu.com/u/2604731369",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "高股息",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "资源",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "紫金矿业": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 2,
+          "models": 1
+        },
+        "黄金": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 2,
+          "heuristics": 0,
+          "models": 3
+        },
+        "兴业银锡": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "中国海洋石油": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 26959,
+      "account_age_years": 14.0,
+      "created_at": "2012-06-19",
+      "status_count": 1265,
+      "sector_mentions": {
+        "医药": 4,
+        "黄金/贵金属": 43,
+        "有色金属": 54,
+        "煤炭/能源": 5,
+        "新能源车": 2,
+        "航运/周期": 15,
+        "消费": 1
+      }
+    },
+    {
+      "skill_name": "xq-chaoji-ludinggong",
+      "xueqiu_id": "8790885129",
+      "nickname": "超级鹿鼎公",
+      "post_count": 98,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "雪球活跃大V，以游戏仓公开实盘著称",
+      "info_cutoff": "2026-06-04",
+      "profile_url": "https://xueqiu.com/u/8790885129",
+      "markets": [
+        "A股",
+        "B股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "高股息",
+        "周期",
+        "趋势",
+        "宏观",
+        "消费",
+        "科技",
+        "深度价值",
+        "困境反转",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "贵州茅台": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "神火股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        },
+        "云铝股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 2,
+          "models": 2
+        },
+        "华能": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "长江电力": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        },
+        "陕西煤业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        }
+      },
+      "followers_count": 578173,
+      "account_age_years": 14.6,
+      "created_at": "2011-10-21",
+      "status_count": 23535,
+      "sector_mentions": {
+        "白酒": 2,
+        "黄金/贵金属": 1,
+        "有色金属": 57,
+        "电力/公用事业": 31,
+        "煤炭/能源": 12,
+        "银行/金融": 13,
+        "房地产": 4,
+        "航运/周期": 1,
+        "消费": 2
+      }
+    },
+    {
+      "skill_name": "xq-chenda-meigu",
+      "xueqiu_id": "9598793634",
+      "nickname": "陈达美股投资",
+      "post_count": 99,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "高影响力全球市场研究型博主，前美国持牌投顾",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/9598793634",
+      "markets": [
+        "A股",
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "英伟达": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 2,
+          "models": 2
+        },
+        "联想": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "台积电": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 2,
+          "models": 3
+        },
+        "快手": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "拼多多": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "联想集团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "胜宏科技(SZ300476)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "标普500(.INX)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 354336,
+      "account_age_years": 11.5,
+      "created_at": "2014-12-05",
+      "status_count": 53884,
+      "sector_mentions": {
+        "算力/AI算力": 14,
+        "AI应用": 15,
+        "互联网平台": 9,
+        "半导体": 3,
+        "医药": 1,
+        "银行/金融": 5,
+        "新能源车": 1,
+        "房地产": 1,
+        "航运/周期": 21,
+        "电信/运营商": 6,
+        "消费": 12
+      }
+    },
+    {
+      "skill_name": "xq-chenxi-jiatou",
+      "xueqiu_id": "5815535041",
+      "nickname": "晨曦价投",
+      "post_count": 100,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "高（10年复合收益率40%的实战型价值投资者）",
+      "info_cutoff": "2026-06-04",
+      "profile_url": "https://xueqiu.com/u/5815535041",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "收息",
+        "高股息",
+        "周期",
+        "科技",
+        "长期持有",
+        "波段",
+        "分仓",
+        "集中持股",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 0,
+          "models": 2
+        },
+        "京东": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "保利": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "中海油": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "长江电力": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 0,
+          "models": 1
+        },
+        "中国海洋石油": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 7012,
+      "account_age_years": 11.5,
+      "created_at": "2014-12-20",
+      "status_count": 1077,
+      "sector_mentions": {
+        "AI应用": 8,
+        "互联网平台": 10,
+        "电力/公用事业": 28,
+        "煤炭/能源": 25,
+        "银行/金融": 17,
+        "航运/周期": 1
+      }
+    },
+    {
+      "skill_name": "xq-chongzu-zhuanjia",
+      "xueqiu_id": "1107378837",
+      "nickname": "重组专家",
+      "post_count": 150,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "未公开（高活跃度用户）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/1107378837",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "高股息",
+        "逆向",
+        "周期",
+        "科技",
+        "深度价值",
+        "长期持有"
+      ],
+      "stock_mentions": {},
+      "followers_count": 44420,
+      "account_age_years": 8.3,
+      "created_at": "2018-02-04",
+      "status_count": 838,
+      "sector_mentions": {
+        "有色金属": 2,
+        "电力/公用事业": 11,
+        "煤炭/能源": 6,
+        "银行/金融": 12,
+        "航运/周期": 2
+      }
+    },
+    {
+      "skill_name": "xq-csck",
+      "xueqiu_id": "7412475798",
+      "nickname": "CSCK",
+      "post_count": 100,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中高",
+      "info_cutoff": "2026-06-08",
+      "profile_url": "https://xueqiu.com/u/7412475798",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "量化",
+        "周期",
+        "消费",
+        "科技",
+        "困境反转",
+        "分仓"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 2,
+          "models": 0
+        },
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 2,
+          "models": 3
+        },
+        "小米集团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "黄金": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "理想汽车": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "老铺黄金(06181)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "美团(03690)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "理想汽车(02015)": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 16721,
+      "account_age_years": 7.6,
+      "created_at": "2018-11-09",
+      "status_count": 8101,
+      "sector_mentions": {
+        "AI应用": 17,
+        "互联网平台": 24,
+        "医药": 1,
+        "黄金/贵金属": 4,
+        "银行/金融": 1,
+        "新能源车": 5,
+        "航运/周期": 1,
+        "电信/运营商": 1,
+        "消费": 15
+      }
+    },
+    {
+      "skill_name": "xq-dacaolv",
+      "xueqiu_id": "4930371170",
+      "nickname": "大草驴",
+      "post_count": 15,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中高（6.8万粉丝，477帖子）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/4930371170",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "成长",
+        "量化",
+        "周期",
+        "宏观",
+        "消费"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 2,
+          "quotes": 1,
+          "heuristics": 3,
+          "models": 11
+        },
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "紫金矿业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        },
+        "英伟达": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "黄金": {
+          "holdings": true,
+          "predictions": 4,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 3
+        },
+        "兴业银锡": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "中远海控": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中远海能": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "美的集团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "山东黄金": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "赤峰黄金": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "招金矿业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "华能": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 1,
+          "models": 1
+        },
+        "Palantir": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "ARM": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "腾讯控股(00700)": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        }
+      },
+      "followers_count": 67998,
+      "account_age_years": 2.8,
+      "created_at": "2023-08-23",
+      "status_count": 477,
+      "sector_mentions": {
+        "算力/AI算力": 7,
+        "AI应用": 40,
+        "互联网平台": 31,
+        "半导体": 1,
+        "医药": 1,
+        "黄金/贵金属": 43,
+        "有色金属": 27,
+        "电力/公用事业": 3,
+        "银行/金融": 1,
+        "航运/周期": 16,
+        "消费": 4
+      }
+    },
+    {
+      "skill_name": "xq-danshu-tiequan",
+      "xueqiu_id": "9742512811",
+      "nickname": "丹书铁券",
+      "post_count": 201,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "高（雪球知名博主）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/9742512811",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "资源",
+        "深度价值"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 2,
+          "models": 3
+        },
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "美团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "黄金": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "理想汽车": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "中国海洋石油": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "拼多多": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        }
+      },
+      "followers_count": 607514,
+      "account_age_years": 12.9,
+      "created_at": "2013-07-26",
+      "status_count": 3559,
+      "sector_mentions": {
+        "AI应用": 18,
+        "互联网平台": 34,
+        "白酒": 5,
+        "黄金/贵金属": 2,
+        "煤炭/能源": 6,
+        "银行/金融": 1,
+        "新能源车": 1,
+        "航运/周期": 4,
+        "消费": 10
+      }
+    },
+    {
+      "skill_name": "xq-daren-zhiming",
+      "xueqiu_id": "8632046745",
+      "nickname": "達人知命",
+      "post_count": 99,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/8632046745",
+      "markets": [
+        "A股",
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "成长",
+        "收息",
+        "高股息",
+        "周期",
+        "消费",
+        "科技",
+        "资源",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "理想汽车": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中国移动": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中海油": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 3,
+          "models": 3
+        },
+        "神华": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 2,
+          "models": 0
+        },
+        "中国海洋石油": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中国海洋石油(00883)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "大行科工(02543)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 91990,
+      "account_age_years": 13.5,
+      "created_at": "2012-12-21",
+      "status_count": 944,
+      "sector_mentions": {
+        "AI应用": 5,
+        "互联网平台": 8,
+        "电力/公用事业": 7,
+        "煤炭/能源": 42,
+        "银行/金融": 16,
+        "新能源车": 1,
+        "航运/周期": 12,
+        "电信/运营商": 5,
+        "消费": 1
+      }
+    },
+    {
+      "skill_name": "xq-douhun",
+      "xueqiu_id": "6746605430",
+      "nickname": "douhun",
+      "post_count": 173,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "中等偏上",
+      "info_cutoff": "2026-06-05",
+      "profile_url": "https://xueqiu.com/u/6746605430",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "成长",
+        "量化",
+        "周期",
+        "趋势",
+        "消费",
+        "科技",
+        "困境反转",
+        "集中持股"
+      ],
+      "stock_mentions": {
+        "小米集团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "紫金矿业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中远海控": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 1,
+          "models": 1
+        },
+        "农夫山泉": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        }
+      },
+      "followers_count": 84581,
+      "account_age_years": 13.6,
+      "created_at": "2012-10-17",
+      "status_count": 3769,
+      "sector_mentions": {
+        "互联网平台": 11,
+        "半导体": 3,
+        "白酒": 2,
+        "医药": 1,
+        "黄金/贵金属": 4,
+        "有色金属": 6,
+        "银行/金融": 7,
+        "航运/周期": 41,
+        "消费": 14
+      }
+    },
+    {
+      "skill_name": "xq-fengyu-tongxin",
+      "xueqiu_id": "3189443391",
+      "nickname": "风雨同心-等待机会",
+      "post_count": 99,
+      "model_count": 6,
+      "status": "full",
+      "fan_level": "中",
+      "info_cutoff": "2026-06-06",
+      "profile_url": "https://xueqiu.com/u/3189443391",
+      "markets": [
+        "A股",
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "成长",
+        "逆向",
+        "产业",
+        "消费",
+        "科技",
+        "资源"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 2,
+          "quotes": 3,
+          "heuristics": 4,
+          "models": 3
+        },
+        "美团": {
+          "holdings": true,
+          "predictions": 2,
+          "quotes": 1,
+          "heuristics": 1,
+          "models": 4
+        },
+        "中国移动": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "谷歌": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "商汤": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "阿里巴巴-W(09988)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 50543,
+      "account_age_years": 10.1,
+      "created_at": "2016-04-13",
+      "status_count": 2078,
+      "sector_mentions": {
+        "算力/AI算力": 3,
+        "AI应用": 40,
+        "互联网平台": 58,
+        "半导体": 4,
+        "医药": 3,
+        "有色金属": 4,
+        "银行/金融": 3,
+        "电信/运营商": 3,
+        "消费": 5
+      }
+    },
+    {
+      "skill_name": "xq-guanwocai",
+      "xueqiu_id": "9650668145",
+      "nickname": "管我财",
+      "post_count": 99,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "极高（809K粉丝，港股达人）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/9650668145",
+      "markets": [
+        "A股",
+        "B股",
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "逆向",
+        "宏观",
+        "消费",
+        "科技",
+        "深度价值",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "五粮液": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "联想": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中海油": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "中国海洋石油": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "联想集团": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中电控股(00002)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "港灯(02638)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "煤气(00003)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "美的集团(00300)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 0,
+          "models": 0
+        },
+        "统一企业中国(00220)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "巴群(BRK.A)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        }
+      },
+      "followers_count": 809667,
+      "account_age_years": 14.9,
+      "created_at": "2011-07-16",
+      "status_count": 35140,
+      "sector_mentions": {
+        "AI应用": 9,
+        "互联网平台": 11,
+        "白酒": 6,
+        "煤炭/能源": 6,
+        "银行/金融": 10,
+        "电信/运营商": 1,
+        "消费": 4
+      }
+    },
+    {
+      "skill_name": "xq-his1963",
+      "xueqiu_id": "1760673340",
+      "nickname": "HIS1963",
+      "post_count": 99,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "高（二十年A股老兵，穿越三次超级牛熊）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/1760673340",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "量化",
+        "收息",
+        "高股息",
+        "周期",
+        "趋势",
+        "科技",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "中远海控": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中国移动": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中国海洋石油": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中国石油(00857)": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 557999,
+      "account_age_years": 12.1,
+      "created_at": "2014-04-30",
+      "status_count": 13097,
+      "sector_mentions": {
+        "电力/公用事业": 3,
+        "煤炭/能源": 16,
+        "银行/金融": 20,
+        "航运/周期": 16,
+        "电信/运营商": 2
+      }
+    },
+    {
+      "skill_name": "xq-i-zhifou",
+      "xueqiu_id": "2695845628",
+      "nickname": "i知否",
+      "post_count": 200,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "雪球活跃大V，高互动量",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/2695845628",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "资源",
+        "长期持有",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        },
+        "比亚迪": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "香港交易所": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 154394,
+      "account_age_years": 13.2,
+      "created_at": "2013-03-21",
+      "status_count": 23685,
+      "sector_mentions": {
+        "算力/AI算力": 1,
+        "AI应用": 7,
+        "互联网平台": 9,
+        "医药": 4,
+        "黄金/贵金属": 2,
+        "有色金属": 9,
+        "电力/公用事业": 19,
+        "煤炭/能源": 3,
+        "银行/金融": 3,
+        "新能源车": 1,
+        "航运/周期": 2,
+        "消费": 13
+      }
+    },
+    {
+      "skill_name": "xq-james-nj",
+      "xueqiu_id": "5782734677",
+      "nickname": "james_nj",
+      "post_count": 17,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "低发帖高频深度，每篇都是深度长文",
+      "info_cutoff": "2026-06-04",
+      "profile_url": "https://xueqiu.com/u/5782734677",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "量化",
+        "高股息",
+        "周期",
+        "产业",
+        "消费",
+        "资源",
+        "深度价值",
+        "长期持有",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        },
+        "紫金矿业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "黄金": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 5,
+          "models": 3
+        },
+        "中国移动": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "神华": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 4,
+          "models": 6
+        }
+      },
+      "followers_count": 82626,
+      "account_age_years": 14.0,
+      "created_at": "2012-06-19",
+      "status_count": 19,
+      "sector_mentions": {
+        "AI应用": 2,
+        "互联网平台": 4,
+        "医药": 1,
+        "黄金/贵金属": 34,
+        "有色金属": 27,
+        "电力/公用事业": 16,
+        "煤炭/能源": 18,
+        "银行/金融": 12,
+        "航运/周期": 2,
+        "电信/运营商": 11,
+        "消费": 2
+      }
+    },
+    {
+      "skill_name": "xq-jianlaji-xiongmao",
+      "xueqiu_id": "3627993957",
+      "nickname": "捡垃圾的熊猫",
+      "post_count": 191,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中高（3.6万粉丝，星序资本董事长）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/3627993957",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "逆向",
+        "周期",
+        "困境反转"
+      ],
+      "stock_mentions": {
+        "紫金矿业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "神火股份": {
+          "holdings": true,
+          "predictions": 5,
+          "quotes": 2,
+          "heuristics": 2,
+          "models": 5
+        },
+        "云铝股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 2,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中国铝业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "海天味业": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "神火股份(SZ000933)": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 36130,
+      "account_age_years": 13.2,
+      "created_at": "2013-04-03",
+      "status_count": 4360,
+      "sector_mentions": {
+        "算力/AI算力": 1,
+        "黄金/贵金属": 3,
+        "有色金属": 164,
+        "电力/公用事业": 2,
+        "煤炭/能源": 25,
+        "新能源车": 4,
+        "航运/周期": 19
+      }
+    },
+    {
+      "skill_name": "xq-jituan-zongzai",
+      "xueqiu_id": "9573013200",
+      "nickname": "集团军总裁",
+      "post_count": 100,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "中等",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/9573013200",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "周期",
+        "趋势",
+        "宏观",
+        "消费",
+        "分仓"
+      ],
+      "stock_mentions": {
+        "黄金": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "理想汽车": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "荣昌生物(09995)": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 0,
+          "models": 0
+        },
+        "康方生物(09926)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "百济神州(06160)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 9311,
+      "account_age_years": 6.1,
+      "created_at": "2020-04-22",
+      "status_count": 1830,
+      "sector_mentions": {
+        "互联网平台": 5,
+        "黄金/贵金属": 8,
+        "银行/金融": 1,
+        "新能源车": 4,
+        "航运/周期": 1,
+        "电信/运营商": 2,
+        "消费": 17
+      }
+    },
+    {
+      "skill_name": "xq-kezhong",
+      "xueqiu_id": "5243796549",
+      "nickname": "柯中",
+      "post_count": 100,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中等",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/5243796549",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "成长",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "资源"
+      ],
+      "stock_mentions": {
+        "紫金矿业": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "宁德时代": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 3
+        },
+        "天齐锂业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "赣锋锂业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 153065,
+      "account_age_years": 13.1,
+      "created_at": "2013-04-16",
+      "status_count": 2052,
+      "sector_mentions": {
+        "白酒": 1,
+        "黄金/贵金属": 2,
+        "有色金属": 69,
+        "新能源车": 19,
+        "房地产": 1,
+        "航运/周期": 7,
+        "消费": 1
+      }
+    },
+    {
+      "skill_name": "xq-laolei",
+      "xueqiu_id": "8228987213",
+      "nickname": "老雷_",
+      "post_count": 98,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "中等",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/8228987213",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "收息",
+        "高股息",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "贵州茅台": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "五粮液": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "美的集团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "中海油": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "格力电器": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 2,
+          "models": 3
+        },
+        "海尔智家": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "赛轮轮胎": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 1,
+          "models": 1
+        }
+      },
+      "followers_count": 3912,
+      "account_age_years": 5.5,
+      "created_at": "2020-11-19",
+      "status_count": 2554,
+      "sector_mentions": {
+        "互联网平台": 1,
+        "白酒": 27,
+        "有色金属": 5,
+        "煤炭/能源": 1,
+        "银行/金融": 15,
+        "航运/周期": 3,
+        "消费": 29
+      }
+    },
+    {
+      "skill_name": "xq-lianghong",
+      "xueqiu_id": "9887656769",
+      "nickname": "梁宏",
+      "post_count": 97,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "雪球私募大V，希瓦小牛基金经理",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/9887656769",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "消费",
+        "科技"
+      ],
+      "stock_mentions": {
+        "贵州茅台": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 2
+        },
+        "英伟达(NVDA)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        }
+      },
+      "followers_count": 1090818,
+      "account_age_years": 14.4,
+      "created_at": "2011-12-26",
+      "status_count": 8186,
+      "sector_mentions": {
+        "算力/AI算力": 7,
+        "互联网平台": 4,
+        "半导体": 12,
+        "白酒": 10,
+        "黄金/贵金属": 1,
+        "煤炭/能源": 5,
+        "银行/金融": 9,
+        "房地产": 2,
+        "消费": 8
+      }
+    },
+    {
+      "skill_name": "xq-liyaoshi2003",
+      "xueqiu_id": "3338834427",
+      "nickname": "李药师2003",
+      "post_count": 100,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "中等",
+      "info_cutoff": "2026-06-06",
+      "profile_url": "https://xueqiu.com/u/3338834427",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "量化",
+        "周期",
+        "趋势",
+        "宏观",
+        "消费",
+        "科技",
+        "资源",
+        "定投",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "黄金": {
+          "holdings": true,
+          "predictions": 3,
+          "quotes": 0,
+          "heuristics": 3,
+          "models": 15
+        }
+      },
+      "followers_count": 46777,
+      "account_age_years": 13.4,
+      "created_at": "2012-12-25",
+      "status_count": 2618,
+      "sector_mentions": {
+        "半导体": 1,
+        "黄金/贵金属": 71,
+        "有色金属": 2,
+        "电力/公用事业": 2,
+        "银行/金融": 1,
+        "航运/周期": 5,
+        "消费": 2
+      }
+    },
+    {
+      "skill_name": "xq-lunchuan-shuishou",
+      "xueqiu_id": "6719117336",
+      "nickname": "轮船小水手",
+      "post_count": 100,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "高活跃度A股实战型博主",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/6719117336",
+      "markets": [
+        "A股",
+        "创业板",
+        "港股",
+        "科创板"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "量化",
+        "逆向",
+        "周期",
+        "趋势",
+        "宏观",
+        "消费",
+        "科技",
+        "左侧",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "黄金": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 1,
+          "heuristics": 2,
+          "models": 0
+        },
+        "宁德时代": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 249002,
+      "account_age_years": 8.6,
+      "created_at": "2017-10-29",
+      "status_count": 2411,
+      "sector_mentions": {
+        "半导体": 1,
+        "黄金/贵金属": 8,
+        "电力/公用事业": 3,
+        "新能源车": 3,
+        "航运/周期": 4,
+        "电信/运营商": 2,
+        "消费": 1
+      }
+    },
+    {
+      "skill_name": "xq-luoji-guaidian",
+      "xueqiu_id": "4059841522",
+      "nickname": "逻辑拐点",
+      "post_count": 99,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中等活跃度A股研究型博主",
+      "info_cutoff": "2026-06-08",
+      "profile_url": "https://xueqiu.com/u/4059841522",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "周期",
+        "趋势",
+        "宏观",
+        "消费",
+        "科技",
+        "左侧"
+      ],
+      "stock_mentions": {
+        "紫金矿业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 85881,
+      "account_age_years": 14.0,
+      "created_at": "2012-06-10",
+      "status_count": 728,
+      "sector_mentions": {
+        "半导体": 1,
+        "医药": 2,
+        "黄金/贵金属": 6,
+        "有色金属": 10,
+        "电力/公用事业": 3,
+        "煤炭/能源": 2,
+        "新能源车": 2,
+        "航运/周期": 10,
+        "消费": 9
+      }
+    },
+    {
+      "skill_name": "xq-metalslime",
+      "xueqiu_id": "2292705444",
+      "nickname": "metalslime",
+      "post_count": 97,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中高（活跃型科技消费博主）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/2292705444",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "量化",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "古井贡B(200596)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "青岛啤酒(00168)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "赛轮轮胎": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        }
+      },
+      "followers_count": 233947,
+      "account_age_years": 8.2,
+      "created_at": "2018-03-24",
+      "status_count": 27671,
+      "sector_mentions": {
+        "算力/AI算力": 8,
+        "半导体": 3,
+        "白酒": 6,
+        "医药": 2,
+        "煤炭/能源": 1,
+        "航运/周期": 3,
+        "消费": 28
+      }
+    },
+    {
+      "skill_name": "xq-minhang-yiba",
+      "xueqiu_id": "9838764557",
+      "nickname": "闵行一霸",
+      "post_count": 155,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "高活跃度港股研究型博主",
+      "info_cutoff": "2026-06-05",
+      "profile_url": "https://xueqiu.com/u/9838764557",
+      "markets": [
+        "A股",
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "成长",
+        "逆向",
+        "周期",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "困境反转",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "五粮液": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "招商银行": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 53824,
+      "account_age_years": 9.0,
+      "created_at": "2017-06-20",
+      "status_count": 883,
+      "sector_mentions": {
+        "半导体": 1,
+        "白酒": 3,
+        "电力/公用事业": 1,
+        "煤炭/能源": 1,
+        "银行/金融": 4,
+        "航运/周期": 13,
+        "消费": 5
+      }
+    },
+    {
+      "skill_name": "xq-qicai-yunlong",
+      "xueqiu_id": "9598902646",
+      "nickname": "七彩云龙",
+      "post_count": 97,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "未公开（高活跃度用户）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/9598902646",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "逆向",
+        "周期",
+        "消费",
+        "科技",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "贵州茅台": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 3,
+          "models": 8
+        },
+        "五粮液": {
+          "holdings": true,
+          "predictions": 2,
+          "quotes": 1,
+          "heuristics": 4,
+          "models": 4
+        },
+        "洋河股份(SZ002304)": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 2,
+          "heuristics": 0,
+          "models": 0
+        },
+        "五粮液(SZ000858)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "泸州老窖(SZ000568)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 15126,
+      "account_age_years": 11.1,
+      "created_at": "2015-04-14",
+      "status_count": 14285,
+      "sector_mentions": {
+        "互联网平台": 5,
+        "白酒": 105,
+        "煤炭/能源": 6,
+        "银行/金融": 6,
+        "航运/周期": 3,
+        "消费": 37
+      }
+    },
+    {
+      "skill_name": "xq-qiuyuan-jun2",
+      "xueqiu_id": "8667231978",
+      "nickname": "秋源俊二",
+      "post_count": 99,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "高活跃度港股+A股研究型博主",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/8667231978",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "高股息",
+        "周期",
+        "趋势",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "资源",
+        "困境反转",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "美团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "黄金": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        },
+        "云铝股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "万辰集团(SZ300972)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 120374,
+      "account_age_years": 11.3,
+      "created_at": "2015-02-05",
+      "status_count": 5507,
+      "sector_mentions": {
+        "AI应用": 5,
+        "互联网平台": 18,
+        "半导体": 7,
+        "医药": 5,
+        "黄金/贵金属": 10,
+        "有色金属": 10,
+        "煤炭/能源": 2,
+        "航运/周期": 1,
+        "消费": 31
+      }
+    },
+    {
+      "skill_name": "xq-saiting-duizhang",
+      "xueqiu_id": "9743713791",
+      "nickname": "赛艇队长",
+      "post_count": 98,
+      "model_count": 6,
+      "status": "full",
+      "fan_level": "中",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/9743713791",
+      "markets": [
+        "A股",
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "成长",
+        "量化",
+        "逆向",
+        "周期",
+        "趋势",
+        "消费",
+        "科技",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "小米集团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "歌尔股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 117957,
+      "account_age_years": 11.0,
+      "created_at": "2015-05-24",
+      "status_count": 1448,
+      "sector_mentions": {
+        "互联网平台": 6,
+        "有色金属": 1,
+        "电力/公用事业": 13,
+        "煤炭/能源": 2,
+        "房地产": 2,
+        "航运/周期": 18,
+        "消费": 9
+      }
+    },
+    {
+      "skill_name": "xq-sansui-guaishou",
+      "xueqiu_id": "5712453299",
+      "nickname": "三岁小怪兽",
+      "post_count": 19,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "中等（日更型A股实战博主）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/5712453299",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "技术派",
+        "趋势",
+        "产业"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "京东": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 1,
+          "models": 0
+        },
+        "理想汽车": {
+          "holdings": true,
+          "predictions": 2,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "工业富联": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "东山精密": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "京东方": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 1,
+          "models": 0
+        },
+        "宁德时代": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "药明康德": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中兴通讯": {
+          "holdings": true,
+          "predictions": 2,
+          "quotes": 2,
+          "heuristics": 4,
+          "models": 0
+        },
+        "阳光电源": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 0
+        }
+      },
+      "followers_count": 174046,
+      "account_age_years": 13.5,
+      "created_at": "2012-12-02",
+      "status_count": 6555,
+      "sector_mentions": {
+        "算力/AI算力": 3,
+        "AI应用": 1,
+        "互联网平台": 8,
+        "半导体": 1,
+        "白酒": 1,
+        "医药": 6,
+        "有色金属": 6,
+        "新能源车": 20,
+        "消费": 3
+      }
+    },
+    {
+      "skill_name": "xq-shanhu-shui",
+      "xueqiu_id": "3203323063",
+      "nickname": "山湖水",
+      "post_count": 1,
+      "model_count": 3,
+      "status": "full",
+      "fan_level": "极高（10.9万粉丝，惜字如金的传奇型博主）",
+      "info_cutoff": "2026-06-04",
+      "profile_url": "https://xueqiu.com/u/3203323063",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "周期",
+        "深度价值",
+        "长期持有"
+      ],
+      "stock_mentions": {},
+      "followers_count": 109236,
+      "account_age_years": 13.9,
+      "created_at": "2012-07-07",
+      "status_count": 2,
+      "sector_mentions": {
+        "电力/公用事业": 1,
+        "航运/周期": 1
+      }
+    },
+    {
+      "skill_name": "xq-shuren-yashi",
+      "xueqiu_id": "4381703788",
+      "nickname": "庶人哑士",
+      "post_count": 98,
+      "model_count": 4,
+      "status": "full",
+      "fan_level": "中等",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/4381703788",
+      "markets": [
+        "港股"
+      ],
+      "style_keywords": [
+        "成长",
+        "高股息",
+        "逆向",
+        "周期",
+        "消费",
+        "科技",
+        "长期持有"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "美团": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "贵州茅台": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 123218,
+      "account_age_years": 8.6,
+      "created_at": "2017-10-11",
+      "status_count": 7465,
+      "sector_mentions": {
+        "AI应用": 4,
+        "互联网平台": 10,
+        "白酒": 7,
+        "银行/金融": 3,
+        "航运/周期": 5,
+        "消费": 16
+      }
+    },
+    {
+      "skill_name": "xq-spinuosa-world",
+      "xueqiu_id": "5849834563",
+      "nickname": "斯宾诺莎的世界",
+      "post_count": 99,
+      "model_count": 3,
+      "status": "full",
+      "fan_level": "中等",
+      "info_cutoff": "2026-06-04",
+      "profile_url": "https://xueqiu.com/u/5849834563",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "量化",
+        "周期",
+        "宏观",
+        "产业",
+        "消费"
+      ],
+      "stock_mentions": {
+        "拼多多": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 1,
+          "heuristics": 1,
+          "models": 0
+        }
+      },
+      "followers_count": 88211,
+      "account_age_years": 8.8,
+      "created_at": "2017-08-03",
+      "status_count": 824,
+      "sector_mentions": {
+        "AI应用": 5,
+        "互联网平台": 6,
+        "航运/周期": 2,
+        "消费": 6
+      }
+    },
+    {
+      "skill_name": "xq-wanzhou-xizhao",
+      "xueqiu_id": "3858193052",
+      "nickname": "晚舟夕照",
+      "post_count": 89,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中",
+      "info_cutoff": "2026-06-06",
+      "profile_url": "https://xueqiu.com/u/3858193052",
+      "markets": [
+        "A股",
+        "创业板",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "周期",
+        "宏观",
+        "产业",
+        "消费",
+        "科技",
+        "长期持有",
+        "波段"
+      ],
+      "stock_mentions": {
+        "华能": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "牧原股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "温氏股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 29864,
+      "account_age_years": 10.1,
+      "created_at": "2016-05-11",
+      "status_count": 3185,
+      "sector_mentions": {
+        "白酒": 3,
+        "有色金属": 2,
+        "电力/公用事业": 23,
+        "航运/周期": 9,
+        "消费": 2
+      }
+    },
+    {
+      "skill_name": "xq-xueyueshuang",
+      "xueqiu_id": "1505944393",
+      "nickname": "雪月霜",
+      "post_count": 200,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "未公开（极高活跃度用户）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/1505944393",
+      "markets": [
+        "A股",
+        "创业板",
+        "港股",
+        "美股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "逆向",
+        "周期",
+        "趋势",
+        "消费",
+        "科技",
+        "资源",
+        "深度价值",
+        "波段",
+        "杠杆"
+      ],
+      "stock_mentions": {
+        "贵州茅台": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "五粮液": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中石油": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 2,
+          "models": 1
+        },
+        "牧原股份": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "温氏股份": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "天齐锂业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "海螺水泥(SH600585)": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 168841,
+      "account_age_years": 7.2,
+      "created_at": "2019-03-28",
+      "status_count": 32011,
+      "sector_mentions": {
+        "互联网平台": 2,
+        "半导体": 1,
+        "白酒": 9,
+        "有色金属": 13,
+        "煤炭/能源": 9,
+        "银行/金融": 5,
+        "房地产": 4,
+        "航运/周期": 17,
+        "消费": 7
+      }
+    },
+    {
+      "skill_name": "xq-xuezhi-lixing",
+      "xueqiu_id": "2681290304",
+      "nickname": "学知利行",
+      "post_count": 101,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "未公开（高活跃度用户）",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/2681290304",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "成长",
+        "逆向",
+        "周期",
+        "消费",
+        "资源",
+        "困境反转",
+        "波段"
+      ],
+      "stock_mentions": {
+        "腾讯控股": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "阿里巴巴": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "紫金矿业": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 1
+        },
+        "黄金": {
+          "holdings": false,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "华能": {
+          "holdings": true,
+          "predictions": 1,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "中国移动": {
+          "holdings": false,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        },
+        "长江电力": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 1,
+          "models": 1
+        }
+      },
+      "followers_count": 139588,
+      "account_age_years": 12.3,
+      "created_at": "2014-02-18",
+      "status_count": 11239,
+      "sector_mentions": {
+        "AI应用": 10,
+        "互联网平台": 13,
+        "黄金/贵金属": 13,
+        "有色金属": 21,
+        "电力/公用事业": 23,
+        "煤炭/能源": 18,
+        "银行/金融": 18,
+        "航运/周期": 5,
+        "电信/运营商": 3,
+        "消费": 1
+      }
+    },
+    {
+      "skill_name": "xq-ziwo-qiaoda",
+      "xueqiu_id": "3911541976",
+      "nickname": "自我敲打",
+      "post_count": 96,
+      "model_count": 5,
+      "status": "full",
+      "fan_level": "中等",
+      "info_cutoff": "2026-06-11",
+      "profile_url": "https://xueqiu.com/u/3911541976",
+      "markets": [
+        "A股",
+        "港股"
+      ],
+      "style_keywords": [
+        "价值投资",
+        "逆向",
+        "周期",
+        "趋势",
+        "产业",
+        "消费",
+        "科技",
+        "资源",
+        "困境反转",
+        "波段"
+      ],
+      "stock_mentions": {
+        "金蝶": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "寒武纪": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        },
+        "海光信息": {
+          "holdings": true,
+          "predictions": 0,
+          "quotes": 0,
+          "heuristics": 0,
+          "models": 0
+        }
+      },
+      "followers_count": 2894,
+      "account_age_years": 5.9,
+      "created_at": "2020-07-22",
+      "status_count": 673,
+      "sector_mentions": {
+        "算力/AI算力": 9,
+        "AI应用": 1,
+        "有色金属": 2,
+        "煤炭/能源": 5,
+        "航运/周期": 2,
+        "消费": 2
+      }
+    }
+  ],
+  "groups": {
+    "A股方向": {
+      "type": "market",
+      "description": "主要关注A股市场的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-2093337947",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-7412475798",
+        "xq-9742512811",
+        "xq-8632046745",
+        "xq-6746605430",
+        "xq-3189443391",
+        "xq-9650668145",
+        "xq-1760673340",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-9887656769",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-9838764557",
+        "xq-9598902646",
+        "xq-8667231978",
+        "xq-9743713791",
+        "xq-5849834563",
+        "xq-3858193052",
+        "xq-1505944393",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "港股达人": {
+      "type": "market",
+      "description": "主要关注港股市场的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-2093337947",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-7412475798",
+        "xq-4930371170",
+        "xq-9742512811",
+        "xq-8632046745",
+        "xq-6746605430",
+        "xq-3189443391",
+        "xq-9650668145",
+        "xq-1760673340",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-3627993957",
+        "xq-9573013200",
+        "xq-5243796549",
+        "xq-8228987213",
+        "xq-9887656769",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-2292705444",
+        "xq-9838764557",
+        "xq-9598902646",
+        "xq-8667231978",
+        "xq-9743713791",
+        "xq-5712453299",
+        "xq-3203323063",
+        "xq-4381703788",
+        "xq-5849834563",
+        "xq-3858193052",
+        "xq-1505944393",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "美股视角": {
+      "type": "market",
+      "description": "主要关注美股市场的博主",
+      "members": [
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-9598793634",
+        "xq-8632046745",
+        "xq-3189443391",
+        "xq-9650668145",
+        "xq-9838764557",
+        "xq-9743713791",
+        "xq-1505944393"
+      ]
+    },
+    "B股玩家": {
+      "type": "market",
+      "description": "主要关注B股市场的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-8790885129",
+        "xq-9650668145"
+      ]
+    },
+    "创业板关注": {
+      "type": "market",
+      "description": "主要关注创业板市场的博主",
+      "members": [
+        "xq-6719117336",
+        "xq-3858193052",
+        "xq-1505944393"
+      ]
+    },
+    "科创板关注": {
+      "type": "market",
+      "description": "主要关注科创板市场的博主",
+      "members": [
+        "xq-3350642636",
+        "xq-6719117336"
+      ]
+    },
+    "高股息/收息": {
+      "type": "style",
+      "description": "投资风格包含「高股息/收息」的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-8632046745",
+        "xq-1760673340",
+        "xq-5782734677",
+        "xq-8228987213",
+        "xq-8667231978",
+        "xq-4381703788"
+      ]
+    },
+    "资源/周期": {
+      "type": "style",
+      "description": "投资风格包含「资源/周期」的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-2093337947",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-7412475798",
+        "xq-4930371170",
+        "xq-9742512811",
+        "xq-8632046745",
+        "xq-6746605430",
+        "xq-3189443391",
+        "xq-1760673340",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-3627993957",
+        "xq-9573013200",
+        "xq-5243796549",
+        "xq-8228987213",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-2292705444",
+        "xq-9838764557",
+        "xq-9598902646",
+        "xq-8667231978",
+        "xq-9743713791",
+        "xq-3203323063",
+        "xq-4381703788",
+        "xq-5849834563",
+        "xq-3858193052",
+        "xq-1505944393",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "趋势": {
+      "type": "style",
+      "description": "投资风格包含「趋势」的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-2093337947",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-9742512811",
+        "xq-6746605430",
+        "xq-1760673340",
+        "xq-2695845628",
+        "xq-9573013200",
+        "xq-5243796549",
+        "xq-8228987213",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-2292705444",
+        "xq-8667231978",
+        "xq-9743713791",
+        "xq-5712453299",
+        "xq-1505944393",
+        "xq-3911541976"
+      ]
+    },
+    "消费赛道": {
+      "type": "style",
+      "description": "投资风格包含「消费赛道」的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-2093337947",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-7412475798",
+        "xq-4930371170",
+        "xq-9742512811",
+        "xq-8632046745",
+        "xq-6746605430",
+        "xq-3189443391",
+        "xq-9650668145",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-9573013200",
+        "xq-5243796549",
+        "xq-8228987213",
+        "xq-9887656769",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-2292705444",
+        "xq-9838764557",
+        "xq-9598902646",
+        "xq-8667231978",
+        "xq-9743713791",
+        "xq-4381703788",
+        "xq-5849834563",
+        "xq-3858193052",
+        "xq-1505944393",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "科技赛道": {
+      "type": "style",
+      "description": "投资风格包含「科技赛道」的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-2093337947",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-7412475798",
+        "xq-9742512811",
+        "xq-8632046745",
+        "xq-6746605430",
+        "xq-3189443391",
+        "xq-9650668145",
+        "xq-1760673340",
+        "xq-2695845628",
+        "xq-8228987213",
+        "xq-9887656769",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-2292705444",
+        "xq-9838764557",
+        "xq-9598902646",
+        "xq-8667231978",
+        "xq-9743713791",
+        "xq-4381703788",
+        "xq-3858193052",
+        "xq-1505944393",
+        "xq-3911541976"
+      ]
+    },
+    "长期持有派": {
+      "type": "style",
+      "description": "投资风格包含「长期持有派」的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-8632046745",
+        "xq-1760673340",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-8228987213",
+        "xq-2292705444",
+        "xq-9598902646",
+        "xq-8667231978",
+        "xq-9743713791",
+        "xq-3203323063",
+        "xq-4381703788",
+        "xq-3858193052"
+      ]
+    },
+    "杠杆": {
+      "type": "style",
+      "description": "投资风格包含「杠杆」的博主",
+      "members": [
+        "xq-2034300328",
+        "xq-3350642636",
+        "xq-2093337947",
+        "xq-9598793634",
+        "xq-5815535041",
+        "xq-9650668145",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-9838764557",
+        "xq-1505944393"
+      ]
+    },
+    "成长投资派": {
+      "type": "style",
+      "description": "投资风格包含「成长投资派」的博主",
+      "members": [
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-7412475798",
+        "xq-4930371170",
+        "xq-8632046745",
+        "xq-6746605430",
+        "xq-3189443391",
+        "xq-9650668145",
+        "xq-1760673340",
+        "xq-5782734677",
+        "xq-9573013200",
+        "xq-5243796549",
+        "xq-8228987213",
+        "xq-9887656769",
+        "xq-4059841522",
+        "xq-9838764557",
+        "xq-9743713791",
+        "xq-4381703788",
+        "xq-2681290304"
+      ]
+    },
+    "宏观视角": {
+      "type": "style",
+      "description": "投资风格包含「宏观视角」的博主",
+      "members": [
+        "xq-3350642636",
+        "xq-2093337947",
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-4930371170",
+        "xq-9742512811",
+        "xq-9650668145",
+        "xq-2695845628",
+        "xq-9573013200",
+        "xq-5243796549",
+        "xq-8228987213",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-2292705444",
+        "xq-9838764557",
+        "xq-8667231978",
+        "xq-5849834563",
+        "xq-3858193052"
+      ]
+    },
+    "产业研究": {
+      "type": "style",
+      "description": "投资风格包含「产业研究」的博主",
+      "members": [
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-2604731369",
+        "xq-9598793634",
+        "xq-9742512811",
+        "xq-3189443391",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-5243796549",
+        "xq-8228987213",
+        "xq-2292705444",
+        "xq-9838764557",
+        "xq-8667231978",
+        "xq-5712453299",
+        "xq-5849834563",
+        "xq-3858193052",
+        "xq-3911541976"
+      ]
+    },
+    "定投": {
+      "type": "style",
+      "description": "投资风格包含「定投」的博主",
+      "members": [
+        "xq-3350642636",
+        "xq-3338834427"
+      ]
+    },
+    "波段": {
+      "type": "style",
+      "description": "投资风格包含「波段」的博主",
+      "members": [
+        "xq-3350642636",
+        "xq-8295448217",
+        "xq-5815535041",
+        "xq-3858193052",
+        "xq-1505944393",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "逆向投资": {
+      "type": "style",
+      "description": "投资风格包含「逆向投资」的博主",
+      "members": [
+        "xq-8295448217",
+        "xq-2093337947",
+        "xq-1107378837",
+        "xq-3189443391",
+        "xq-9650668145",
+        "xq-3627993957",
+        "xq-6719117336",
+        "xq-9838764557",
+        "xq-9598902646",
+        "xq-9743713791",
+        "xq-4381703788",
+        "xq-1505944393",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "右侧交易": {
+      "type": "style",
+      "description": "投资风格包含「右侧交易」的博主",
+      "members": [
+        "xq-8295448217"
+      ]
+    },
+    "左侧": {
+      "type": "style",
+      "description": "投资风格包含「左侧」的博主",
+      "members": [
+        "xq-8295448217",
+        "xq-6719117336",
+        "xq-4059841522"
+      ]
+    },
+    "价值投资派": {
+      "type": "style",
+      "description": "投资风格包含「价值投资派」的博主",
+      "members": [
+        "xq-2604731369",
+        "xq-8790885129",
+        "xq-9598793634",
+        "xq-5815535041",
+        "xq-1107378837",
+        "xq-7412475798",
+        "xq-9742512811",
+        "xq-9650668145",
+        "xq-1760673340",
+        "xq-2695845628",
+        "xq-5782734677",
+        "xq-9573013200",
+        "xq-8228987213",
+        "xq-9887656769",
+        "xq-6719117336",
+        "xq-4059841522",
+        "xq-2292705444",
+        "xq-9598902646",
+        "xq-8667231978",
+        "xq-5712453299",
+        "xq-3203323063",
+        "xq-3858193052",
+        "xq-1505944393",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "深度价值": {
+      "type": "style",
+      "description": "投资风格包含「深度价值」的博主",
+      "members": [
+        "xq-8790885129",
+        "xq-1107378837",
+        "xq-9742512811",
+        "xq-9650668145",
+        "xq-5782734677",
+        "xq-3203323063",
+        "xq-1505944393"
+      ]
+    },
+    "困境反转": {
+      "type": "style",
+      "description": "投资风格包含「困境反转」的博主",
+      "members": [
+        "xq-8790885129",
+        "xq-7412475798",
+        "xq-6746605430",
+        "xq-3627993957",
+        "xq-9838764557",
+        "xq-8667231978",
+        "xq-2681290304",
+        "xq-3911541976"
+      ]
+    },
+    "分仓": {
+      "type": "style",
+      "description": "投资风格包含「分仓」的博主",
+      "members": [
+        "xq-5815535041",
+        "xq-7412475798",
+        "xq-9573013200"
+      ]
+    },
+    "集中持股": {
+      "type": "style",
+      "description": "投资风格包含「集中持股」的博主",
+      "members": [
+        "xq-5815535041",
+        "xq-6746605430"
+      ]
+    },
+    "量化/技术派": {
+      "type": "style",
+      "description": "投资风格包含「量化/技术派」的博主",
+      "members": [
+        "xq-7412475798",
+        "xq-4930371170",
+        "xq-6746605430",
+        "xq-1760673340",
+        "xq-5782734677",
+        "xq-3338834427",
+        "xq-6719117336",
+        "xq-2292705444",
+        "xq-9743713791",
+        "xq-5712453299",
+        "xq-5849834563"
+      ]
+    },
+    "完整画像": {
+      "type": "status",
+      "description": "已完成100+帖子深度分析的博主",
+      "members": [
+        "xq-1107378837",
+        "xq-1505944393",
+        "xq-1760673340",
+        "xq-2034300328",
+        "xq-2093337947",
+        "xq-2292705444",
+        "xq-2604731369",
+        "xq-2681290304",
+        "xq-2695845628",
+        "xq-3189443391",
+        "xq-3203323063",
+        "xq-3338834427",
+        "xq-3350642636",
+        "xq-3627993957",
+        "xq-3858193052",
+        "xq-3911541976",
+        "xq-4059841522",
+        "xq-4381703788",
+        "xq-4930371170",
+        "xq-5243796549",
+        "xq-5712453299",
+        "xq-5782734677",
+        "xq-5815535041",
+        "xq-5849834563",
+        "xq-6719117336",
+        "xq-6746605430",
+        "xq-7412475798",
+        "xq-8228987213",
+        "xq-8295448217",
+        "xq-8632046745",
+        "xq-8667231978",
+        "xq-8790885129",
+        "xq-9573013200",
+        "xq-9598793634",
+        "xq-9598902646",
+        "xq-9650668145",
+        "xq-9742512811",
+        "xq-9743713791",
+        "xq-9838764557",
+        "xq-9887656769"
+      ]
+    }
+  },
+  "usage_log": [
+    {
+      "skill_name": "xq-9742512811",
+      "nickname": "丹书铁券",
+      "timestamp": "2026-06-05T22:36:56",
+      "action": "compare",
+      "topic": "腾讯控股联合分析"
+    },
+    {
+      "skill_name": "xq-9650668145",
+      "nickname": "管我财",
+      "timestamp": "2026-06-05T22:36:56",
+      "action": "compare",
+      "topic": "腾讯控股联合分析"
+    },
+    {
+      "skill_name": "xq-4930371170",
+      "nickname": "大草驴",
+      "timestamp": "2026-06-05T22:36:56",
+      "action": "compare",
+      "topic": "腾讯控股联合分析"
+    },
+    {
+      "skill_name": "xq-9598793634",
+      "nickname": "陈达美股投资",
+      "timestamp": "2026-06-05T22:36:56",
+      "action": "compare",
+      "topic": "腾讯控股联合分析"
+    },
+    {
+      "skill_name": "xq-4381703788",
+      "nickname": "庶人哑士",
+      "timestamp": "2026-06-05T22:36:56",
+      "action": "compare",
+      "topic": "腾讯控股联合分析"
+    }
+  ],
+  "name_change_log": [],
+  "stock_aliases": {
+    "腾讯控股": [
+      "腾讯控股",
+      "腾讯",
+      "0700.HK",
+      "0700"
+    ],
+    "阿里巴巴": [
+      "阿里巴巴",
+      "阿里",
+      "BABA",
+      "9988.HK",
+      "9988"
+    ],
+    "美团": [
+      "美团",
+      "美团-W",
+      "3690.HK",
+      "3690"
+    ],
+    "京东": [
+      "京东",
+      "JD",
+      "9618.HK",
+      "9618"
+    ],
+    "百度": [
+      "百度",
+      "BIDU",
+      "9888.HK",
+      "9888"
+    ],
+    "小米": [
+      "小米",
+      "小米集团",
+      "1810.HK",
+      "1810"
+    ],
+    "比亚迪": [
+      "比亚迪",
+      "BYD",
+      "1211.HK",
+      "002594"
+    ],
+    "贵州茅台": [
+      "贵州茅台",
+      "茅台",
+      "600519"
+    ],
+    "五粮液": [
+      "五粮液",
+      "000858"
+    ],
+    "中国平安": [
+      "中国平安",
+      "平安",
+      "601318",
+      "2318.HK"
+    ],
+    "招商银行": [
+      "招商银行",
+      "招行",
+      "600036",
+      "3968.HK"
+    ],
+    "紫金矿业": [
+      "紫金矿业",
+      "紫金",
+      "601899",
+      "2899.HK"
+    ],
+    "英伟达": [
+      "英伟达",
+      "NVDA",
+      "NVIDIA"
+    ],
+    "苹果": [
+      "苹果",
+      "AAPL",
+      "Apple"
+    ],
+    "特斯拉": [
+      "特斯拉",
+      "TSLA",
+      "Tesla"
+    ],
+    "黄金": [
+      "黄金",
+      "金价",
+      "XAUUSD"
+    ],
+    "神火股份": [
+      "神火股份",
+      "神火",
+      "000933"
+    ],
+    "云铝股份": [
+      "云铝股份",
+      "云铝",
+      "000807"
+    ],
+    "兴业银锡": [
+      "兴业银锡",
+      "兴业矿业",
+      "000426"
+    ],
+    "中远海控": [
+      "中远海控",
+      "中远海",
+      "601919",
+      "1919.HK"
+    ],
+    "中远海能": [
+      "中远海能",
+      "600026",
+      "1138.HK"
+    ],
+    "美的集团": [
+      "美的集团",
+      "美的",
+      "000333"
+    ],
+    "山东黄金": [
+      "山东黄金",
+      "600547",
+      "1787.HK"
+    ],
+    "赤峰黄金": [
+      "赤峰黄金",
+      "600988"
+    ],
+    "招金矿业": [
+      "招金矿业",
+      "1818.HK"
+    ],
+    "华能": [
+      "华能",
+      "华能国际",
+      "600011",
+      "0902.HK"
+    ],
+    "理想汽车": [
+      "理想汽车",
+      "理想",
+      "LI",
+      "2015.HK"
+    ],
+    "工业富联": [
+      "工业富联",
+      "601138"
+    ],
+    "东山精密": [
+      "东山精密",
+      "002384"
+    ],
+    "京东方": [
+      "京东方",
+      "BOE",
+      "000725"
+    ],
+    "宁德时代": [
+      "宁德时代",
+      "宁德",
+      "300750"
+    ],
+    "恒瑞医药": [
+      "恒瑞医药",
+      "恒瑞",
+      "600276"
+    ],
+    "药明康德": [
+      "药明康德",
+      "药明",
+      "603259",
+      "2359.HK"
+    ],
+    "万科": [
+      "万科",
+      "万科A",
+      "000002",
+      "2202.HK"
+    ],
+    "中国移动": [
+      "中国移动",
+      "中移动",
+      "0941.HK",
+      "600941"
+    ],
+    "友邦保险": [
+      "友邦保险",
+      "友邦",
+      "AIA",
+      "1299.HK"
+    ],
+    "汇丰": [
+      "汇丰",
+      "HSBC",
+      "0005.HK",
+      "HSBA"
+    ],
+    "中海油": [
+      "中海油",
+      "中国海洋石油",
+      "CNOOC",
+      "0883.HK",
+      "600938"
+    ],
+    "长江电力": [
+      "长江电力",
+      "长江电力",
+      "600900"
+    ],
+    "神华": [
+      "神华",
+      "中国神华",
+      "601088",
+      "1088.HK"
+    ],
+    "拼多多": [
+      "拼多多",
+      "PDD",
+      "Pinduoduo"
+    ],
+    "舜宇光学": [
+      "舜宇光学",
+      "舜宇",
+      "2382.HK"
+    ],
+    "中芯国际": [
+      "中芯国际",
+      "中芯",
+      "0981.HK",
+      "688981"
+    ],
+    "北方华创": [
+      "北方华创",
+      "002371"
+    ],
+    "韦尔股份": [
+      "韦尔股份",
+      "603501"
+    ],
+    "兆易创新": [
+      "兆易创新",
+      "603986"
+    ]
+  },
+  "sectors": {
+    "算力/AI算力": {
+      "description": "GPU、AI芯片、算力基础设施",
+      "stocks": [
+        "英伟达",
+        "工业富联"
+      ],
+      "keywords": [
+        "算力",
+        "GPU",
+        "HBM",
+        "AI芯片",
+        "数据中心",
+        "服务器",
+        "算力租赁",
+        "液冷"
+      ]
+    },
+    "AI应用": {
+      "description": "AI商业化落地、Agent、大模型应用",
+      "stocks": [
+        "腾讯控股",
+        "阿里巴巴",
+        "百度",
+        "拼多多"
+      ],
+      "keywords": [
+        "AI应用",
+        "Agent",
+        "大模型",
+        "AIGC",
+        "AI赋能",
+        "智能助手",
+        "Copilot",
+        "混元"
+      ]
+    },
+    "互联网平台": {
+      "description": "港股/中概互联网平台公司",
+      "stocks": [
+        "腾讯控股",
+        "阿里巴巴",
+        "美团",
+        "京东",
+        "百度",
+        "小米",
+        "拼多多"
+      ],
+      "keywords": [
+        "互联网",
+        "平台经济",
+        "电商",
+        "社交",
+        "本地生活",
+        "流量",
+        "MAU",
+        "DAU"
+      ]
+    },
+    "半导体": {
+      "description": "芯片设计、制造、封测、设备",
+      "stocks": [
+        "中芯国际",
+        "北方华创",
+        "韦尔股份",
+        "兆易创新",
+        "舜宇光学"
+      ],
+      "keywords": [
+        "半导体",
+        "芯片",
+        "晶圆",
+        "封测",
+        "EDA",
+        "光刻",
+        "先进制程",
+        "国产替代"
+      ]
+    },
+    "白酒": {
+      "description": "高端白酒、次高端白酒",
+      "stocks": [
+        "贵州茅台",
+        "五粮液"
+      ],
+      "keywords": [
+        "白酒",
+        "茅台",
+        "五粮液",
+        "浓香",
+        "酱香",
+        "高端消费",
+        "宴请",
+        "批价"
+      ]
+    },
+    "医药": {
+      "description": "创新药、CXO、医疗器械",
+      "stocks": [
+        "恒瑞医药",
+        "药明康德"
+      ],
+      "keywords": [
+        "医药",
+        "创新药",
+        "CXO",
+        "集采",
+        "管线",
+        "临床",
+        "出海",
+        "医疗器械",
+        "biotech"
+      ]
+    },
+    "黄金/贵金属": {
+      "description": "黄金、白银等贵金属",
+      "stocks": [
+        "黄金",
+        "紫金矿业",
+        "山东黄金",
+        "赤峰黄金",
+        "招金矿业",
+        "兴业银锡"
+      ],
+      "keywords": [
+        "黄金",
+        "金价",
+        "白银",
+        "贵金属",
+        "避险",
+        "央行购金",
+        "美联储降息"
+      ]
+    },
+    "有色金属": {
+      "description": "铜、铝、锡、锂等工业金属",
+      "stocks": [
+        "紫金矿业",
+        "兴业银锡",
+        "神火股份",
+        "云铝股份"
+      ],
+      "keywords": [
+        "有色",
+        "铜",
+        "电解铝",
+        "铝",
+        "锡",
+        "锂",
+        "资源品",
+        "供给侧",
+        "碳中和产能"
+      ]
+    },
+    "电力/公用事业": {
+      "description": "火电、水电、核电、新能源发电",
+      "stocks": [
+        "华能",
+        "长江电力",
+        "神华"
+      ],
+      "keywords": [
+        "电力",
+        "火电",
+        "水电",
+        "核电",
+        "电价",
+        "上网电价",
+        "煤电联动",
+        "新能源发电"
+      ]
+    },
+    "煤炭/能源": {
+      "description": "煤炭、石油、天然气等传统能源",
+      "stocks": [
+        "神华",
+        "中海油"
+      ],
+      "keywords": [
+        "煤炭",
+        "煤价",
+        "动力煤",
+        "焦煤",
+        "石油",
+        "天然气",
+        "能源安全",
+        "分红"
+      ]
+    },
+    "银行/金融": {
+      "description": "银行、保险、券商",
+      "stocks": [
+        "招商银行",
+        "中国平安",
+        "友邦保险",
+        "汇丰"
+      ],
+      "keywords": [
+        "银行",
+        "保险",
+        "券商",
+        "息差",
+        "不良率",
+        "分红",
+        "股息率",
+        "金融"
+      ]
+    },
+    "新能源车": {
+      "description": "整车、电池、智能驾驶",
+      "stocks": [
+        "比亚迪",
+        "理想汽车",
+        "宁德时代"
+      ],
+      "keywords": [
+        "新能源车",
+        "电动车",
+        "智能驾驶",
+        "电池",
+        "充电桩",
+        "渗透率",
+        "出海"
+      ]
+    },
+    "房地产": {
+      "description": "开发商、物业、建材",
+      "stocks": [
+        "万科"
+      ],
+      "keywords": [
+        "房地产",
+        "地产",
+        "楼市",
+        "保交楼",
+        "土拍",
+        "销售面积",
+        "政策放松"
+      ]
+    },
+    "航运/周期": {
+      "description": "集装箱、油运、干散货",
+      "stocks": [
+        "中远海控",
+        "中远海能"
+      ],
+      "keywords": [
+        "航运",
+        "集运",
+        "油运",
+        "BDI",
+        "运价",
+        "周期",
+        "产能周期",
+        "朱格拉周期"
+      ]
+    },
+    "电信/运营商": {
+      "description": "电信运营商、通信设备",
+      "stocks": [
+        "中国移动"
+      ],
+      "keywords": [
+        "电信",
+        "运营商",
+        "5G",
+        "ARPU",
+        "流量",
+        "通信",
+        "数字经济"
+      ]
+    },
+    "消费": {
+      "description": "食品饮料、家电、日用品",
+      "stocks": [
+        "美的集团",
+        "贵州茅台",
+        "五粮液"
+      ],
+      "keywords": [
+        "消费",
+        "内需",
+        "消费升级",
+        "消费降级",
+        "品牌",
+        "渠道",
+        "零售",
+        "CPI"
+      ]
+    }
+  }
+}
