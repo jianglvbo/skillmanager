@@ -65,7 +65,30 @@ git commit -m "<简洁的提交信息>"
 
 提交信息要求：中文、一句话概括、无需前缀。
 
-### 步骤 5：推送到 GitHub
+### 步骤 5：同步远程（推送前）
+
+**先本地提交，再检查远程是否有新变动。**
+
+```bash
+git fetch origin
+```
+
+检查本地是否落后于远程：
+
+```bash
+git rev-list --count HEAD..origin/main
+```
+
+- 结果为 0：远程无新提交，直接推送
+- 结果为 > 0：远程有新提交，必须先合并：
+
+```bash
+git pull --rebase origin main
+```
+
+> ⚠️ rebase 前必须先完成本地 commit（无 unstaged changes）。如遇冲突，解决后 `git add` + `git rebase --continue`，无法解决则报告用户。
+
+### 步骤 6：推送到 GitHub
 
 ```bash
 git push origin main
@@ -76,7 +99,7 @@ git push origin main
 git -c http.postBuffer=2147483648 push origin main
 ```
 
-### 步骤 6：确认
+### 步骤 7：确认
 
 推送完成后确认远程已同步：
 ```bash
@@ -94,7 +117,8 @@ git ls-remote origin refs/heads/main | awk '{print $1}'
 1. cp -r ~/.workbuddy/skills/skill-name ~/Ai/skill/skill-name
 2. 更新 README.md：目录结构 + Skill 说明列表
 3. 更新 CHANGELOG.md：版本号 +1 MINOR，Added 条目
-4. git add -A && git commit && git push
+4. git fetch origin && git pull --rebase origin main（如有远程更新）
+5. git add -A && git commit && git push
 ```
 
 ### 场景 B：修改已有 Skill
@@ -102,7 +126,8 @@ git ls-remote origin refs/heads/main | awk '{print $1}'
 ```text
 1. 编辑 Skill 文件
 2. 更新 CHANGELOG.md：版本号 +1 PATCH，Changed 条目
-3. git add -A && git commit && git push
+3. git fetch origin && git pull --rebase origin main（如有远程更新）
+4. git add -A && git commit && git push
 ```
 
 ### 场景 C：仅文档更新
@@ -110,7 +135,8 @@ git ls-remote origin refs/heads/main | awk '{print $1}'
 ```text
 1. 编辑 README.md / CHANGELOG.md
 2. 更新 CHANGELOG.md：记录本次文档更新
-3. git add -A && git commit && git push
+3. git fetch origin && git pull --rebase origin main（如有远程更新）
+4. git add -A && git commit && git push
 ```
 
 ## 注意事项
