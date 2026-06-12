@@ -74,6 +74,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ├── CHANGELOG.md                      ← 版本变更记录
 ├── .gitignore                        ← Git 忽略规则
 ├── skill/                            ← Skill 根目录
+│   ├── ai-repo-manager/              ← Ai/ 仓库管理（Git 同步 + 文档迭代）
 │   ├── link-analysis/               ← 链接分析工作流
 │   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
 │   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
@@ -175,6 +176,10 @@ git push origin main
 ---
 
 ## 各 Skill 说明
+
+### ai-repo-manager — Ai/ 仓库管理
+
+管理 `~/Ai/` 仓库的 GitHub 版本控制全流程。包含六步强制流程：变更 → 更新 README.md → 更新 CHANGELOG.md → Git 提交 → 推送 GitHub → 确认同步。确保每次变更文档完整、版本号正确。
 
 ### link-analysis — 链接分析工作流
 

@@ -2,6 +2,18 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.3.1 — 2026-06-12
+
+### Added
+- **ai-repo-manager skill**：Ai/ 仓库管理器（`skill/ai-repo-manager/`）
+  - 六步强制流程：变更 → 更新 README.md → 更新 CHANGELOG.md → Git 提交 → 推送 → 确认同步
+  - 强调 README.md 和 CHANGELOG.md 迭代为强制性步骤，不可跳过
+  - 包含 CHANGELOG 格式参考（`references/changelog-format.md`）
+  - 涵盖三种常见场景：新增 Skill、修改 Skill、仅文档更新
+
+### Changed
+- **README.md**：目录结构和 Skill 列表加入 ai-repo-manager
+
 ## 1.3.0 — 2026-06-12
 
 ### Added
