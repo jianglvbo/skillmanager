@@ -8,7 +8,9 @@
 
 </div>
 
-本仓库是一个**本地 Skill 仓库**，存放用户自行创建或从网络获取的 Agent Skill。多个 Agent 共享此仓库，通过符号链接安装到各自的 skills 目录。
+本仓库是一个**本地 Skill 仓库**，存放用户自行创建或从网络获取的 Agent Skill。多个 Agent 共享此仓库，通过复制安装到各自的 skills 目录。
+
+> 📦 已纳入 GitHub 版本管理：**[github.com/jianglvbo/Ai](https://github.com/jianglvbo/Ai)**
 
 它的核心目标：让任何接入的 Agent 都能以统一的方式发现、安装、使用和更新 Skill。
 
@@ -19,8 +21,9 @@
 ## 仓库定位
 
 - **本地 Skill 仓库**：所有自建 skill 的单一真相来源（single source of truth）
+- **GitHub 远程托管**：推送到 [github.com/jianglvbo/Ai](https://github.com/jianglvbo/Ai)，支持版本管理和多设备同步
 - **Agent 无关**：不绑定任何特定 Agent 框架，任何支持 Agent Skills 协议的客户端都可以使用
-- **版本管理**：变更通过 Git 追踪，版本记录在 CHANGELOG.md
+- **版本管理**：变更通过 Git 追踪，推送前更新 CHANGELOG.md
 - **只按需更新**：仓库内的 skill 仅在用户明确要求时更新或推送
 
 ---
@@ -29,26 +32,26 @@
 
 ### 通用安装
 
-将本仓库 clone 到本地后，通过符号链接将需要的 skill 安装到你的 Agent 的 skills 目录：
+将本仓库 clone 到本地后，通过**复制**将需要的 skill 安装到你的 Agent 的 skills 目录（**严禁 symlink**，保持仓库与运行实例隔离）：
 
 ```bash
-# 假设 Agent skills 目录为 ~/.agent/skills/
-ln -s ~/Ai/skill/分类目录/skill名称 ~/.agent/skills/skill名称
+cp -r ~/Ai/skill/分类目录/skill名称 ~/.agent/skills/skill名称
 ```
 
 ### 批量安装所有 Skill
 
 ```bash
 for skill_dir in ~/Ai/skill/*/; do
+  [ -f "$skill_dir/SKILL.md" ] || continue
   name=$(basename "$skill_dir")
-  [ ! -L ~/.agent/skills/"$name" ] && ln -s "$(realpath "$skill_dir")" ~/.agent/skills/"$name"
+  cp -r "$skill_dir" ~/.agent/skills/"$name"
 done
 
 # 也安装子分类中的 skill（如 xueqiu/ 下的具体 skill）
 for skill_dir in ~/Ai/skill/*/*/; do
   [ -f "$skill_dir/SKILL.md" ] || continue
   name=$(basename "$skill_dir")
-  [ ! -L ~/.agent/skills/"$name" ] && ln -s "$(realpath "$skill_dir")" ~/.agent/skills/"$name"
+  cp -r "$skill_dir" ~/.agent/skills/"$name"
 done
 ```
 
@@ -72,6 +75,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ├── .gitignore                        ← Git 忽略规则
 ├── skill/                            ← Skill 根目录
 │   ├── link-analysis/               ← 链接分析工作流
+│   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
 │   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
 │   └── xueqiu/                      ← 雪球投资博主系统
 │       ├── README.md                ← 雪球组说明
@@ -127,12 +131,36 @@ skill-name/
 
 ## 版本管理
 
-本仓库应作为代码库进行版本管理：
+本仓库已纳入 GitHub 版本管理：
 
+- **远程仓库**：[github.com/jianglvbo/Ai](https://github.com/jianglvbo/Ai)（主分支：`main`）
+- **本地路径**：`~/Ai/`
 - 使用 Git 追踪所有变更
 - Skill 更新后，提交到仓库并更新 CHANGELOG.md
 - 合并时如遇冲突，自行处理的由 Agent 解决；无法自动处理的需提交给用户确认
 - **仅在用户明确要求时更新或推送仓库内容**
+
+### 首次推送到 GitHub
+
+```bash
+cd ~/Ai
+git init
+git branch -m main
+git remote add origin https://github.com/jianglvbo/Ai.git
+git add -A
+git commit -m "初始提交"
+# 大仓库（含二进制文件）推送时可能需要增大 buffer：
+git -c http.postBuffer=2147483648 push -u origin main
+```
+
+### 日常同步
+
+```bash
+cd ~/Ai
+git add -A
+git commit -m "变更说明"
+git push origin main
+```
 
 ---
 
@@ -152,6 +180,10 @@ skill-name/
 
 收集用户链接（雪球、公众号、抖音等），定时整理生成分析文档存入熊掌记，并通过飞书发送浓缩摘要。
 
+### mac-cleaner — macOS 磁盘分析与垃圾清理
+
+分析 Mac 存储空间占用，扫描缓存、应用残留、Time Machine 快照等垃圾文件，安全清理释放空间。包含三段式工作流：扫描分析 → 生成建议 → 安全清理（osascript 废纸篓）。
+
 ### serenity-skill — Serenity 式供应链瓶颈研究
 
 基于 Serenity（@aleabroreddit）方法论的投资研究工作流。从市场叙事出发，沿产业链定位稀缺层，用公开证据验证，输出研究优先级排序。
@@ -168,4 +200,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-10*
+*最后更新：2026-06-12*
