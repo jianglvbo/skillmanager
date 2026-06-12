@@ -156,10 +156,19 @@ git -c http.postBuffer=2147483648 push -u origin main
 
 ### 日常同步
 
+每次提交前必须先拉取远程更新，防止本地与远程不一致导致 push 被拒绝：
+
 ```bash
 cd ~/Ai
+# 1. 先拉取远程，检查是否有新提交
+git fetch origin
+git pull --rebase origin main
+
+# 2. 再提交本地变更
 git add -A
 git commit -m "变更说明"
+
+# 3. 推送到远程
 git push origin main
 ```
 

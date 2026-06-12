@@ -2,6 +2,12 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.3.2 — 2026-06-12
+
+### Fixed
+- **ai-repo-manager**：修正 Git 提交流程，在 commit 前增加 `git fetch` + `git pull --rebase` 步骤，防止因远程有新提交导致 push 被拒绝
+- **README.md**：日常同步章节同步修正为先拉取再提交的流程
+
 ## 1.3.1 — 2026-06-12
 
 ### Added
