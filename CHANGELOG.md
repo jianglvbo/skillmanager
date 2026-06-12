@@ -2,6 +2,22 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.3.0 — 2026-06-12
+
+### Added
+- **mac-cleaner skill**：macOS 磁盘分析与垃圾清理（`skill/mac-cleaner/`）
+  - 三段式工作流：扫描分析 → 生成建议 → 安全清理
+  - 包含分析脚本 `scripts/analyze_mac_storage.sh` 和参考文档 `references/common-junk-locations.md`
+  - 使用 osascript 废纸篓方式，安全可恢复
+
+### Changed
+- **纳入 GitHub 版本管理**：仓库已推送到 [github.com/jianglvbo/Ai](https://github.com/jianglvbo/Ai)（main 分支）
+- **README.md**：
+  - 新增 GitHub 仓库链接和版本管理章节（含首次推送和日常同步命令）
+  - 安装方式从 symlink 改为 `cp -r`（匹配实际规范，保持仓库与运行实例隔离）
+  - 更新目录结构和 Skill 列表（加入 mac-cleaner）
+  - 更新日期 2026-06-12
+
 ## 1.2.1 — 2026-06-10
 
 ### Changed
