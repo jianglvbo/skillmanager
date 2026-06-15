@@ -77,6 +77,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── ai-repo-manager/              ← Ai/ 仓库管理（Git 同步 + 文档迭代）
 │   ├── link-analysis/               ← 链接分析工作流
 │   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
+│   ├── qmd/                         ← 本地文档索引与搜索（CLI 工具）
 │   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
 │   └── xueqiu/                      ← 雪球投资博主系统
 │       ├── README.md                ← 雪球组说明
@@ -198,6 +199,10 @@ git push origin main
 
 分析 Mac 存储空间占用，扫描缓存、应用残留、Time Machine 快照等垃圾文件，安全清理释放空间。包含三段式工作流：扫描分析 → 生成建议 → 安全清理（osascript 废纸篓）。
 
+### qmd — 本地文档索引与搜索
+
+基于 `qmd` CLI 的本地文档索引与搜索工具。支持全文检索（BM25）、向量语义搜索、混合查询+LLM 重排序，以及 MCP Server 模式。可对 Obsidian vault 等本地 Markdown 仓库建索引。
+
 ### serenity-skill — Serenity 式供应链瓶颈研究
 
 基于 Serenity（@aleabroreddit）方法论的投资研究工作流。从市场叙事出发，沿产业链定位稀缺层，用公开证据验证，输出研究优先级排序。
@@ -214,4 +219,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-12*
+*最后更新：2026-06-16*

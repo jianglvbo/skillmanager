@@ -2,6 +2,19 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.4.0 — 2026-06-16
+
+### Added
+- **qmd skill**：本地文档索引与搜索工具（`skill/qmd/`）
+  - 基于 `qmd` CLI（v0.9.0），支持对本地 Markdown 文件建立全文索引和向量嵌入
+  - 三种搜索模式：BM25 关键词搜索（`search`）、向量语义搜索（`vsearch`）、混合查询+LLM 重排序（`query`）
+  - Collection 管理：添加/删除/重命名/浏览/更新
+  - MCP Server 模式：支持 stdio 和 HTTP 两种传输方式
+  - 当前已索引 Obsidian vault（45 个 Markdown 文件）
+
+### Changed
+- **README.md**：目录结构和 Skill 列表加入 qmd
+
 ## 1.3.2 — 2026-06-12
 
 ### Fixed
