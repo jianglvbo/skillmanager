@@ -19,6 +19,8 @@ agent_created: true
 - 查看索引状态
 - 启动 qmd MCP Server
 
+**Agent 自动化触发**：当对话中需要查找用户的 Obsidian 笔记或本地文档时，Agent 应主动使用本 Skill 进行搜索，无需等待用户明确提及「qmd」。
+
 ## 工作模式（路由表）
 
 | 用户意图 | 对应命令 | 说明 |
@@ -113,7 +115,68 @@ qmd mcp --http --daemon
 qmd mcp stop
 ```
 
+## Agent 使用模式
+
+Agent 在对话中检索用户的 Obsidian/本地文档时，遵循以下流程：
+
+### 模式一：关键词快速定位
+
+当用户提到某个具体主题、股票、公司名时：
+
+```bash
+# 先用 search 找相关文件（不依赖 embedding，立即可用）
+qmd search "关键词" -c obsidian --json -n 10
+
+# 拿到文件列表后，用 qmd get 读取内容
+qmd get qmd://obsidian/旧文件/个股研究/xxx.md
+```
+
+### 模式二：语义理解搜索
+
+当用户描述概念、场景而非精确关键词时：
+
+```bash
+# 需先 embed
+qmd query "语义查询" -c obsidian -n 10 --json
+```
+
+### 模式三：URI → 真实路径转换
+
+qmd 搜索返回的是 `qmd://` 前缀的 URI，读/写文件需转换为真实路径：
+
+```
+qmd://obsidian/旧文件/个股研究/耀才证券.md
+→ /Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/旧文件/个股研究/耀才证券.md
+```
+
+转换方式：`qmd get` 直接输出内容，或用 shell 拼接真实路径。
+
+### 模式四：检查索引是否最新
+
+```bash
+# 查看状态确认文件是否已索引
+qmd status
+
+# 如有新文件未索引
+qmd update && qmd embed
+```
+
 ## 当前状态
+
+### Obsidian Vault
+
+| 项目 | 值 |
+|------|-----|
+| **Vault 路径** | `/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents` |
+| **qmd Collection 名** | `obsidian` |
+| **URI 前缀** | `qmd://obsidian/` |
+| **文件数** | 45（`**/*.md`） |
+
+> **路径映射**：`qmd://obsidian/旧文件/xxx.md` ↔ `/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/旧文件/xxx.md`
+>
+> 搜索用 qmd URI，读/写文件用真实路径。
+
+### 系统信息
 
 | 项目 | 值 |
 |------|-----|
