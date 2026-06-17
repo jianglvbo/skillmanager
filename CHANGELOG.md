@@ -2,6 +2,29 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.5.0 — 2026-06-17
+
+### Added
+- **douyin-video-summary skill**：抖音视频摘要工具（`skill/douyin-video-summary/`）
+  - 来源：skills.sh 社区（liu-wei-ai/douyin-video-summary），1.5K 安装量
+  - 工作流：解析抖音链接 → 浏览器拦截音频 URL → curl 下载 → ffmpeg 转 WAV → whisper.cpp 本地转录 → 结构化摘要
+  - 包含辅助脚本 `scripts/download_audio.sh`、`scripts/transcribe.sh` 和一键依赖安装 `scripts/setup.sh`
+  - whisper 模型文件（ggml-small.bin, 465MB）通过 hf-mirror.com 国内镜像下载到 `models/` 目录
+  - 支持飞书文档同步（`references/feishu-sync.md`）
+  - 依赖：whisper-cpp、ffmpeg（setup.sh 自动安装）
+
+### Changed
+- **link-analysis**：重大改写，从熊掌记（Bear）迁移到 Obsidian 投资分析框架
+  - 链接收集：区分飞书/IM（存粗制品）和 WorkBuddy 对话（仅存档）两种渠道
+  - 粗加工流程：从粗制品目录读取 → 补 frontmatter → 归档到 `2 原始资源仓库/`
+  - 新增 Obsidian Vault 路径和目录结构说明
+- **xq-registry**：增量数据刷新（2026-06-16）
+  - 总帖子分析量：4643 → 4796（+153 条）
+  - 18 位博主的 SKILL.md 新增当日发帖更新章节
+  - 各博主 post_count 和 info_cutoff 同步更新
+- **README.md**：目录结构和 Skill 列表加入 douyin-video-summary；更新 link-analysis 描述
+- **.gitignore**：添加 `*.bin` 和 `skill/xueqiu/data/*.json` 规则
+
 ## 1.4.1 — 2026-06-16
 
 ### Changed

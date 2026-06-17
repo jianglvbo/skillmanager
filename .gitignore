@@ -32,3 +32,9 @@ node_modules/
 *.key
 *.pem
 credentials.*
+
+# Large binary models (exceed GitHub 100MB limit)
+*.bin
+
+# Transient scrape data (auto-generated, avoid repo bloat)
+skill/xueqiu/data/*.json

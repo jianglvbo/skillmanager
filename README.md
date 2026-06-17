@@ -75,6 +75,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ├── .gitignore                        ← Git 忽略规则
 ├── skill/                            ← Skill 根目录
 │   ├── ai-repo-manager/              ← Ai/ 仓库管理（Git 同步 + 文档迭代）
+│   ├── douyin-video-summary/        ← 抖音视频摘要（音频提取 + whisper 转录 + 结构化总结）
 │   ├── link-analysis/               ← 链接分析工作流
 │   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
 │   ├── qmd/                         ← 本地文档索引与搜索（CLI 工具）
@@ -191,9 +192,13 @@ git push origin main
 
 管理 `~/Ai/` 仓库的 GitHub 版本控制全流程。包含六步强制流程：变更 → 更新 README.md → 更新 CHANGELOG.md → Git 提交 → 推送 GitHub → 确认同步。确保每次变更文档完整、版本号正确。
 
+### douyin-video-summary — 抖音视频摘要
+
+从抖音链接提取视频内容并生成结构化摘要。工作流：解析链接 → 浏览器拦截音频 URL → curl 下载 → ffmpeg 转 WAV → whisper.cpp 本地转录 → AI 生成摘要。支持飞书文档同步。依赖 whisper-cpp、ffmpeg。
+
 ### link-analysis — 链接分析工作流
 
-收集用户链接（雪球、公众号、抖音等），定时整理生成分析文档存入熊掌记，并通过飞书发送浓缩摘要。
+收集用户链接（雪球、公众号、抖音等），存入 Obsidian 投资分析框架粗制品目录，支持飞书/IM 和 WorkBuddy 对话两种收集渠道。
 
 ### mac-cleaner — macOS 磁盘分析与垃圾清理
 
@@ -219,4 +224,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-16*
+*最后更新：2026-06-17*
