@@ -37,4 +37,4 @@ credentials.*
 *.bin
 
 # Transient scrape data (auto-generated, avoid repo bloat)
-skill/xueqiu/data/*.json
+skill/xueqiu/data/

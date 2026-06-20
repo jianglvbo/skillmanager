@@ -1,5 +1,13 @@
 # Changelog — xueqiu
 
+## 1.4.0 — 2026-06-20
+
+### Removed
+- 删除 `data/` 目录（含 feed_scrape、metadata、posts 等历史数据），不再本地持久化分析数据
+- .gitignore 规则从 `skill/xueqiu/data/*.json` 改为 `skill/xueqiu/data/` 整目录忽略
+- xq-registry/SKILL.md：移除粉丝数刷新和股票提及重算中的 metadata 文件更新步骤
+- 目录树结构移除 data/ 子树，明确所有原始数据用完即弃
+
 ## 1.3.0 — 2026-06-09
 
 ### Changed

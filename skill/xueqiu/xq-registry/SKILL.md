@@ -1,7 +1,7 @@
 ---
 name: xq-registry
 description: |
-  雪球博主投资思维统一中控。维护 40 位雪球博主的注册表（ID、昵称、分组、风格标签），
+  雪球博主投资思维统一中控。维护雪球博主的注册表（ID、昵称、分组、风格标签），博主数量动态增长，当前见 registry.json，
   支持改名自动检测、粉丝数刷新、帖子增量抓取、股票提及重算、风格标签刷新、全量更新、
   使用频次追踪、博主分组查询、多博主联合分析（含加权推荐与板块展开）。
   触发词：「雪球博主管理」「xq-registry」「博主改名」「刷新粉丝数」「更新博主信息」
@@ -15,21 +15,20 @@ description: |
 
 # 雪球博主投资思维 · 统一中控
 
-> 40 位雪球博主，一个注册表，全局掌控。
+> 多位雪球博主，一个注册表，全局掌控。
 
 ## 身份识别
 
 - **技能名**: xq-registry
 - **中控位置**: `~/Ai/skill/xueqiu/xq-registry/`
 - **数据文件**: `~/Ai/skill/xueqiu/xq-registry/registry.json`
-- **管理的 Skills**: `~/Ai/skill/xueqiu/xq-{拼音昵称}/` 目录下 40 个博主技能
-- **持久化数据**: `~/Ai/skill/xueqiu/data/`（帖子原始数据 + 元数据）
+- **管理的 Skills**: `~/Ai/skill/xueqiu/xq-{拼音昵称}/` 目录下所有博主技能（数量动态，见 registry.json）
 
 ---
 
 ## 🚨 路由层（最高优先级）
 
-> Skill 涨到上百个后，路由就是检索问题。40 个 xq-* 博主的请求**不得平铺竞争**。
+> Skill 涨到上百个后，路由就是检索问题。所有 xq-* 博主的请求**不得平铺竞争**。
 
 本 Skill 是雪球博主体系的**统一路由入口**。Agent 遇到与雪球博主相关的咨询请求时，**必须**先经过本 Skill 做博主匹配，匹配确认后再加载对应 xq-{id} Skill。
 
@@ -138,11 +137,11 @@ action 类型：`query`（咨询观点）、`update`（更新画像）、`compar
 
 ### 4. 博主分组与标签
 
-registry.json 中的 `groups` 字段包含自动生成的 28 个分组：
+registry.json 中的 `groups` 字段包含自动生成的分组（数量动态，以下为当前快照）：
 
-- **市场分组**（type: market）: A股方向(30)、港股达人(40)、美股视角(9)、B股玩家(3)、创业板关注(3)、科创板关注(2)
-- **风格分组**（type: style）: 价值投资派(25)、成长投资派(23)、深度价值(7)、逆向投资(14)、高股息/收息(11)、量化/技术派(11)、困境反转(8)、宏观视角(20)、产业研究(17)、消费赛道(33)、科技赛道(30)、资源/周期(37)、长期持有派(19)、趋势(23)、波段(7)、杠杆(12)、分仓(3)、集中持股(2)、定投(2)、左侧(3)、右侧交易(1)
-- **状态分组**（type: status）: 完整画像(40)
+- **市场分组**（type: market）: A股方向、港股达人、美股视角、B股玩家、创业板关注、科创板关注（各分组人数动态，下同）
+- **风格分组**（type: style）: 价值投资派、成长投资派、深度价值、逆向投资、高股息/收息、量化/技术派、困境反转、宏观视角、产业研究、消费赛道、科技赛道、资源/周期、长期持有派、趋势、波段、杠杆、分仓、集中持股、定投、左侧、右侧交易
+- **状态分组**（type: status）: 完整画像
 
 用户可以要求：
 - 「给 xxx 博主加个标签 '我的核心圈'」→ 在 groups 中创建自定义分组（type: custom）
@@ -253,8 +252,7 @@ registry.json 的 `sectors` 字段定义了 16 个板块，每个板块包含：
    - followers_count（粉丝数）
    - account_age_years（注册年数，从 created_at 计算）
    - status_count（发帖总数）
-3. 更新 ~/Ai/skill/xueqiu/data/metadata/account_metadata.json
-4. 输出变更摘要（新增粉丝最多的 Top 5、掉粉最多的 Top 5）
+3. 输出变更摘要（新增粉丝最多的 Top 5、掉粉最多的 Top 5）
 ```
 
 #### 6.3 帖子增量抓取（中量 · 更新画像）
@@ -267,14 +265,13 @@ registry.json 的 `sectors` 字段定义了 16 个板块，每个板块包含：
 2. 从雪球主页/API 抓取 info_cutoff 之后的新帖子
    - 优先使用 autocli read 抓取帖子正文（复用 Chrome 登录态，token 低）
    - 降级方案：浏览器自动化打开 → 提取 → 关闭
-3. 将新帖子追加到 ~/Ai/skill/xueqiu/data/posts/posts_{id}.json
-4. 分析新帖子中的：
+3. 分析新帖子中的（原始帖子不持久化，仅保留提炼结果）：
    - 新出现的股票/标的 → 更新 stock_mentions
    - 新的投资观点/预测 → 更新 SKILL.md 的预测记录
    - 新的代表性语录 → 更新 SKILL.md 的语录段落
    - 持仓变动 → 更新核心持仓与观点
-5. 更新 SKILL.md 的 post_count 和 info_cutoff
-6. 更新 registry.json 对应的 post_count、info_cutoff、stock_mentions
+4. 更新 SKILL.md 的 post_count 和 info_cutoff
+5. 更新 registry.json 对应的 post_count、info_cutoff、stock_mentions
 ```
 
 **批量模式**：用户说「增量更新所有博主」时，按 info_cutoff 从旧到新排序，逐批处理。
@@ -294,8 +291,7 @@ registry.json 的 `sectors` 字段定义了 16 个板块，每个板块包含：
 2. 生成新的 stock_mentions 映射
 3. 覆盖写入 registry.json 的 stock_mentions 字段
 4. 同时扫描板块关键词：对每位博主 SKILL.md，用 sectors 中的 keywords 计数 → 写入 sector_mentions
-5. 更新 ~/Ai/skill/xueqiu/data/metadata/stock_mentions.json
-6. 输出变更报告（股票/板块提及变化 Top 10）
+5. 输出变更报告（股票/板块提及变化 Top 10）
 ```
 
 **股票名列表**维护在 registry.json 的 `stock_aliases` 字段中（当前 46 个股票），用户可要求添加/删除别名。
@@ -353,18 +349,12 @@ registry.json 的 `sectors` 字段定义了 16 个板块，每个板块包含：
 ├── xq-registry/
 │   ├── SKILL.md              ← 本文件（中控说明）
 │   └── registry.json         ← 中央数据（博主、分组、别名、板块、日志）
-├── xq-{拼音昵称}/SKILL.md      ← 40 个博主画像
+├── xq-{拼音昵称}/SKILL.md      ← 博主画像
 ├── xueqiu-following-search/  ← 关注列表搜索
-├── xueqiu-to-bear/           ← 帖子转熊掌记
-└── data/
-    ├── posts/                ← 帖子原始 JSON（posts_{xueqiu_id}.json）
-    └── metadata/
-        ├── account_metadata.json  ← 账号信息（粉丝、注册日期）
-        ├── stock_mentions.json    ← 股票提及统计
-        └── xq_metadata.json       ← 注册表初始元数据
+└── xueqiu-to-bear/           ← 帖子转熊掌记
 ```
 
-所有新增/更新的帖子数据存入 `data/posts/`，元数据存入 `data/metadata/`。
+所有抓取和分析数据**不持久化**到本地。分析完成后仅保留提炼结果到 SKILL.md，原始数据用完即弃。
 
 ---
 
@@ -413,7 +403,7 @@ registry.json 的 `sectors` 字段定义了 16 个板块，每个板块包含：
 
 | 用户说 | 动作 |
 |--------|------|
-| 「雪球博主列表」 | 展示全部 40 位博主的昵称、ID、状态、粉丝量 |
+| 「雪球博主列表」 | 展示全部博主的昵称、ID、状态、粉丝量（数量从 registry.json 实时读取） |
 | 「港股达人都谁」 | 查询 groups 中港股达人分组的成员 |
 | 「谁擅长困境反转」 | 按 style_keywords 过滤 |
 | 「检查博主改名」 | 执行改名检测流程（6.1） |
@@ -430,7 +420,7 @@ registry.json 的 `sectors` 字段定义了 16 个板块，每个板块包含：
 | 「板块热度排行」 | 展示 16 个板块的博主提及排行 |
 | 「给 xxx 加标签 '核心圈'」 | 创建自定义分组 |
 | 「哪些博主还没补全」 | 展示 status=skeleton 的博主 |
-| 「{昵称}怎么看{股票}」 | 路由匹配→加载对应 Skill 分析（不直接匹配 40 个 Skill） |
+| 「{昵称}怎么看{股票}」 | 路由匹配→加载对应 Skill 分析（通过 xq-registry 路由，不直接平铺匹配） |
 | 「{板块/风格}方向的博主推荐」 | 按分组+加权推荐 Top 3-5，供用户选择 |
 
 ---
@@ -452,11 +442,10 @@ registry.json 的 `sectors` 字段定义了 16 个板块，每个板块包含：
 - 改名检测依赖雪球主页可访问性，如遇反爬限制会跳过并告知
 - 使用追踪只记录当前 Agent 实例内的调用，跨实例不共享
 - 联合分析中的「观点」是基于博主人设的模拟，不代表博主本人当前真实看法
-- 37 位博主的原始帖子未持久化，仅保留提炼后的画像；如需原始数据需重新抓取
+- 原始帖子数据不持久化，仅保留提炼后的画像到 SKILL.md；如需原始数据需重新抓取
 - 路由层依赖 registry.json 的博主数据完整性，新增博主后需同步更新分组和风格标签
 
 ---
 
-**最后更新**：2026-06-08
-**技能数量**：40 个博主 + 3 个辅助工具
-**数据版本**：基于 ~/Ai/skill/xueqiu/data/ 最新抓取
+**最后更新**：2026-06-20
+**技能数量**：见 registry.json（当前博主数 + 3 个辅助工具）
