@@ -2,6 +2,33 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.7.0 — 2026-06-18
+
+### Added
+- **investment-knowledge-framework skill**：投资分析知识管理框架操作手册（`skill/investment-knowledge-framework/`）
+  - 从 Obsidian vault 内文件迁移为独立 skill
+  - 整合粗加工、提炼、问答、迭代四个流程
+  - 整合三套 frontmatter 模板（原始资源、维基条目、问答看板）
+  - 整合标签体系和审查规则
+  - 包含核心约定：日期格式、wikilink 路径规范、多维度提炼、交叉链接
+
+### Changed
+- **README.md**：目录结构和 Skill 列表加入 investment-knowledge-framework
+
+## 1.6.0 — 2026-06-17
+
+### Added
+- **wechat-article skill**：微信公众号文章提取工具（`skill/wechat-article/`）
+  - `scripts/wechat_extract.py`：通过模拟微信客户端 UA（MicroMessenger）绕过反爬
+  - 支持 JSON 和 Markdown 两种输出模式，含 frontmatter（title/source/author/date/status）
+  - 提取标题、作者、公众号名称、发布日期（ct 时间戳解析）、摘要、正文
+  - 图片 URL 提取（data-src），支持 `--with-images` 内联模式
+  - 错误处理：文章删除/权限限制/视频类型等场景
+- **README.md**：目录结构和 Skill 列表加入 wechat-article
+
+### Changed
+- **link-analysis**：公众号内容抓取策略从 `curl / autocli` 改为引用 `wechat-article` skill 的专用脚本
+
 ## 1.5.0 — 2026-06-17
 
 ### Added

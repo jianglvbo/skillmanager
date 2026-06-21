@@ -76,15 +76,17 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ├── skill/                            ← Skill 根目录
 │   ├── ai-repo-manager/              ← Ai/ 仓库管理（Git 同步 + 文档迭代）
 │   ├── douyin-video-summary/        ← 抖音视频摘要（音频提取 + whisper 转录 + 结构化总结）
+│   ├── investment-knowledge-framework/ ← 投资分析知识管理框架（五层流水线操作手册）
+│   ├── knowledge-pipeline/           ← 全链路总览（流水线、目录约定、skill 角色）
 │   ├── link-analysis/               ← 链接分析工作流
 │   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
 │   ├── qmd/                         ← 本地文档索引与搜索（CLI 工具）
 │   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
+│   ├── wechat-article/             ← 微信公众号文章提取（UA 模拟 + 正文转 Markdown）
 │   └── xueqiu/                      ← 雪球投资博主系统
 │       ├── README.md                ← 雪球组说明
 │       ├── CHANGELOG.md             ← 雪球组变更记录
-│       ├── xq-registry/             ← 中控（注册表 + 调度）
-│       ├── xq-{数字ID}/             ← 博主画像（40位）
+│       ├── xq-blogger-analysis/     ← 博主画像分析操作手册
 │       ├── xueqiu-following-search/  ← 关注搜索
 │       ├── xueqiu-to-bear/          ← 帖子转笔记
 │       └── data/                    ← 共享数据
@@ -196,6 +198,14 @@ git push origin main
 
 从抖音链接提取视频内容并生成结构化摘要。工作流：解析链接 → 浏览器拦截音频 URL → curl 下载 → ffmpeg 转 WAV → whisper.cpp 本地转录 → AI 生成摘要。支持飞书文档同步。依赖 whisper-cpp、ffmpeg。
 
+### investment-knowledge-framework — 投资分析知识管理框架
+
+基于 Obsidian vault 的五层循环流水线操作手册。覆盖粗加工、提炼（多维度）、问答、迭代四个核心流程，包含 frontmatter 模板、标签体系、审查规则和交叉链接原则。当用户要求处理投资文章、提炼知识或管理知识库时使用。
+
+### knowledge-pipeline — 全链路总览
+
+投资知识管理系统的全局地图。定义完整流水线（待处理链接 → 粗制品 → 投资分析/博主画像 → 问答回流）、vault 目录约定、四个 skill 的角色分工和 frontmatter `_` 前缀通信协议。当需要了解系统全貌时使用。
+
 ### link-analysis — 链接分析工作流
 
 收集用户链接（雪球、公众号、抖音等），存入 Obsidian 投资分析框架粗制品目录，支持飞书/IM 和 WorkBuddy 对话两种收集渠道。
@@ -212,9 +222,13 @@ git push origin main
 
 基于 Serenity（@aleabroreddit）方法论的投资研究工作流。从市场叙事出发，沿产业链定位稀缺层，用公开证据验证，输出研究优先级排序。
 
+### wechat-article — 微信公众号文章提取
+
+从微信公众号链接（mp.weixin.qq.com）提取文章正文并转为 Markdown。通过模拟微信客户端 UA 绕过反爬限制，支持标题、作者、公众号名称、发布日期和完整正文的结构化提取，可直接写入 Obsidian 粗制品目录。
+
 ### xueqiu/ — 雪球投资博主系统
 
-40 位雪球博主的投资思维画像系统。包含中控注册表（xq-registry）、博主画像（xq-*）、关注搜索、帖子转笔记等完整工具链。
+雪球博主画像分析系统。包含博主画像分析操作手册（xq-blogger-analysis）、关注搜索、帖子转笔记等工具链。博主画像数据存储在 Obsidian vault 中。
 
 ---
 
@@ -224,4 +238,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-17*
+*最后更新：2026-06-18*

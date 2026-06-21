@@ -2,7 +2,7 @@
 
 ### 链接分析工作流
 
-收集用户发送的链接（雪球、公众号、抖音等），定时整理生成分析文档存入熊掌记，并通过飞书发送浓缩摘要。
+收集用户发送的链接（雪球、公众号、抖音等），存入每日收集队列（~/.qoderworkcn/daily-links/），18:00 定时任务统一抓取内容、生成分析文档存入熊掌记，并通过飞书发送浓缩摘要。
 
 ## 它能做什么
 
@@ -14,11 +14,8 @@
 ## 安装
 
 ```bash
-# 符号链接安装到 Agent skills 目录
-ln -s ~/Ai/skill/link-analysis ~/.agent/skills/link-analysis
-
-# 创建数据目录
-mkdir -p ~/Ai/skill/link-analysis/data
+# 符号链接安装到 QoderWork CN skills 目录
+ln -s ~/Ai/skill/link-analysis ~/.qoderworkcn/skills/link-analysis
 ```
 
 ## 依赖
@@ -48,7 +45,7 @@ python3 ~/Ai/skill/link-analysis/scripts/add_link.py "https://xueqiu.com/..." "�
 
 ### 定时执行分析
 
-由各 Agent 的定时任务机制触发，Agent 加载本 Skill 后执行完整分析流程。
+由 QoderWork CN 的定时任务（每日 18:00）触发，完整执行协议见 `~/.qoderworkcn/daily-links/protocol.md`。
 
 ## License
 

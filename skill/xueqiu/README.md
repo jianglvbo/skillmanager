@@ -1,41 +1,21 @@
-# xueqiu — 雪球投资博主系统
+# xueqiu — 雪球博主画像分析系统
 
-### 40 位雪球博主的投资思维画像与分析系统
+### 雪球博主的投资画像分析与联合分析系统
 
 基于雪球平台博主公开帖子的深度分析，提炼每位博主的投资模型、决策启发式和表达风格，提供跨博主的联合分析能力。
 
 ## 系统组成
 
-### 中控
-- **xq-registry**：统一注册表和调度入口，管理博主 ID、昵称、分组、风格标签，支持改名检测、粉丝刷新、增量抓取、联合分析
-
-### 博主画像（40 位）
-- **xq-{数字ID}/**：每位博主一个独立 Skill，包含投资模型、决策启发式、表达 DNA、持仓追踪、预测记录、经典语录
+### 操作手册
+- **xq-blogger-analysis**：博主画像分析的完整操作手册，覆盖粗加工、提炼、问答、迭代全流程。管理注册表索引（registry.json）、画像模板和联合分析
 
 ### 工具
 - **xueqiu-following-search**：按关键词搜索关注用户的帖子
 - **xueqiu-to-bear**：抓取帖子 + 评论，格式化为熊掌记问答文章
 
-### 数据
-- **data/posts/**：帖子原始 JSON（只追加）
-- **data/metadata/**：元数据快照
+## 数据流
 
-## 安装
-
-```bash
-# 安装中控
-ln -s ~/Ai/skill/xueqiu/xq-registry ~/.agent/skills/xq-registry
-
-# 安装博主画像（全部）
-for dir in ~/Ai/skill/xueqiu/xq-*/; do
-  name=$(basename "$dir")
-  [ ! -L ~/.agent/skills/"$name" ] && ln -s "$(realpath "$dir")" ~/.agent/skills/"$name"
-done
-
-# 安装工具
-ln -s ~/Ai/skill/xueqiu/xueqiu-following-search ~/.agent/skills/xueqiu-following-search
-ln -s ~/Ai/skill/xueqiu/xueqiu-to-bear ~/.agent/skills/xueqiu-to-bear
-```
+博主画像数据存储在 Obsidian vault（我的知识库/博主分析框架/博主画像/）中，每位博主一份 .md 文件。registry.json 索引数据只存在 skill 目录，不进 vault。
 
 ## 使用
 

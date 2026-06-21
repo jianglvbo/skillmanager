@@ -24,7 +24,7 @@ def main():
 
     # 今天的日期文件
     today = datetime.now().strftime("%Y-%m-%d")
-    links_dir = os.path.expanduser("~/Ai/skill/link-analysis/data")
+    links_dir = os.path.expanduser("~/.qoderworkcn/daily-links")
     os.makedirs(links_dir, exist_ok=True)
     filepath = os.path.join(links_dir, f"{today}.json")
 
