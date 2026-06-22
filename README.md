@@ -70,28 +70,31 @@ cat ~/.agent/skills/skill名称/SKILL.md
 
 ```text
 ~/Ai/
-├── README.md                         ← 本文件
-├── CHANGELOG.md                      ← 版本变更记录
-├── .gitignore                        ← Git 忽略规则
-├── skill/                            ← Skill 根目录
-│   ├── ai-repo-manager/              ← Ai/ 仓库管理（Git 同步 + 文档迭代）
-│   ├── douyin-video-summary/        ← 抖音视频摘要（音频提取 + whisper 转录 + 结构化总结）
-│   ├── getnote/                      ← 得到大脑（Get笔记）：保存、搜索、管理个人笔记
-│   ├── knowledge-pipeline/           ← 知识框架全局编排者（路径表、模板表、调用链、全局规则）
-│   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
-│   ├── my-knowledge/                 ← 个人知识库
-│   ├── qmd/                         ← 本地文档索引与搜索（CLI 工具）
-│   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
-│   ├── skill-guidelines/            ← Agent Skill 准则（八条核心准则）
-│   ├── wechat-article/             ← 微信公众号文章提取（UA 模拟 + 正文转 Markdown）
-│   └── xueqiu/                      ← 雪球投资博主系统
-│       ├── README.md                ← 雪球组说明
-│       ├── CHANGELOG.md             ← 雪球组变更记录
-│       ├── xq-blogger-analysis/     ← 博主画像分析操作手册
-│       ├── xueqiu-following-search/  ← 关注搜索
-│       ├── xueqiu-to-bear/          ← 帖子转笔记
-│       └── data/                    ← 共享数据
-└── tools/                           ← CLI 工具
+├── README.md
+├── CHANGELOG.md
+├── .gitignore
+├── skill/
+│   ├── ai-repo-manager/            ← Ai/ 仓库管理
+│   ├── douyin-video-summary/       ← 抖音视频摘要
+│   ├── getnote/                    ← 得到大脑（Get笔记）
+│   ├── knowledge-framework/        ← 投资知识框架
+│   │   ├── knowledge-pipeline/     ←   全局编排
+│   │   ├── coarse-processor/       ←   粗加工
+│   │   ├── wiki-refine/            ←   知识提炼
+│   │   ├── wiki-review/            ←   维基审查
+│   │   ├── qa-ask/                 ←   知识问答
+│   │   ├── blogger-refine/         ←   博主画像提炼
+│   │   ├── link-ingest/            ←   链接抓取
+│   │   ├── link-analysis/          ←   链接分析
+│   │   ├── investment-knowledge-framework/ ← 框架总览
+│   │   └── xq-blogger-analysis/   ←   雪球博主分析
+│   ├── mac-cleaner/                ← macOS 磁盘清理
+│   ├── qmd/                        ← 本地文档索引
+│   ├── serenity-skill/             ← Serenity 供应链研究
+│   ├── skill-guidelines/           ← Skill 准则
+│   ├── wechat-article/             ← 公众号文章提取
+│   └── xueqiu/                     ← 雪球博主系统
+└── tools/
     └── autocli/
 ```
 
@@ -191,49 +194,34 @@ git push origin main
 
 ## 各 Skill 说明
 
-### ai-repo-manager — Ai/ 仓库管理
+### knowledge-framework/ — 投资知识框架
 
-管理 `~/Ai/` 仓库的 GitHub 版本控制全流程。包含六步强制流程：变更 → 更新 README.md → 更新 CHANGELOG.md → Git 提交 → 推送 GitHub → 确认同步。确保每次变更文档完整、版本号正确。
+| Skill | 说明 |
+|:---|:---|
+| `knowledge-pipeline` | 全局编排者：路径表、模板表、调用链、全局规则 |
+| `coarse-processor` | 粗加工：补全 frontmatter 并归档 |
+| `wiki-refine` | 知识提炼：原始资源 → 维基条目 |
+| `wiki-review` | 维基审查：批量扫描健康度 |
+| `qa-ask` | 知识问答：基于维基仓库生成分析 |
+| `blogger-refine` | 博主画像提炼 |
+| `link-ingest` | 链接收集与抓取 |
+| `link-analysis` | 链接分析工作流 |
+| `investment-knowledge-framework` | 投资知识框架总览 |
+| `xq-blogger-analysis` | 雪球博主分析框架 |
 
-### douyin-video-summary — 抖音视频摘要
+### 通用工具
 
-从抖音链接提取视频内容并生成结构化摘要。工作流：解析链接 → 浏览器拦截音频 URL → curl 下载 → ffmpeg 转 WAV → whisper.cpp 本地转录 → AI 生成摘要。支持飞书文档同步。依赖 whisper-cpp、ffmpeg。
-
-### getnote — 得到大脑（Get笔记）
-
-保存、搜索、管理个人笔记和知识库。支持链接保存、图片保存、笔记搜索和原文查看。
-
-### knowledge-pipeline — 知识框架全局编排者
-
-投资知识管理系统的全局调配中心。唯一持有路径表、模板路径表和全局规则的地方。定义投资知识全流程、博主画像全流程的调用链和模块分工。加工 skill 全部无默认值，路径变更只改这里。
-
-### mac-cleaner — macOS 磁盘分析与垃圾清理
-
-分析 Mac 存储空间占用，扫描缓存、应用残留、Time Machine 快照等垃圾文件，安全清理释放空间。包含三段式工作流：扫描分析 → 生成建议 → 安全清理（osascript 废纸篓）。
-
-### my-knowledge — 个人知识库
-
-个人知识管理系统。
-
-### qmd — 本地文档索引与搜索
-
-基于 `qmd` CLI 的本地文档索引与搜索工具。支持全文检索（BM25）、向量语义搜索、混合查询+LLM 重排序，以及 MCP Server 模式。可对 Obsidian vault 等本地 Markdown 仓库建索引。
-
-### serenity-skill — Serenity 式供应链瓶颈研究
-
-基于 Serenity（@aleabroreddit）方法论的投资研究工作流。从市场叙事出发，沿产业链定位稀缺层，用公开证据验证，输出研究优先级排序。
-
-### skill-guidelines — Agent Skill 准则
-
-适用于创建新 Skill 与修改已有 Skill 的全生命周期。八条核心准则：职责单一与模块化、精准的描述与语义发现、确定性优先与结构刚性、渐进式披露与少即是多、核心知识的人类主导、内置验证循环与可观测性、安全性与权限边界、标准化输出与工程化结构。包含级别分类（轻量/标准/重量）、设计模式和四层工程结构。
-
-### wechat-article — 微信公众号文章提取
-
-从微信公众号链接（mp.weixin.qq.com）提取文章正文并转为 Markdown。通过模拟微信客户端 UA 绕过反爬限制，支持标题、作者、公众号名称、发布日期和完整正文的结构化提取，可直接写入 Obsidian 粗制品目录。
-
-### xueqiu/ — 雪球投资博主系统
-
-雪球博主画像分析系统。包含博主画像分析操作手册（xq-blogger-analysis）、关注搜索、帖子转笔记等工具链。博主画像数据存储在 Obsidian vault 中。
+| Skill | 说明 |
+|:---|:---|
+| `ai-repo-manager` | Ai/ 仓库 GitHub 版本管理 |
+| `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
+| `getnote` | 得到大脑（Get笔记） |
+| `mac-cleaner` | macOS 磁盘分析与清理 |
+| `qmd` | 本地文档索引与搜索 |
+| `serenity-skill` | Serenity 式供应链瓶颈研究 |
+| `skill-guidelines` | Agent Skill 准则 |
+| `wechat-article` | 微信公众号文章提取 |
+| `xueqiu/` | 雪球投资博主系统 |
 
 ---
 

@@ -2,6 +2,18 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.10.0 — 2026-06-23
+
+### Added
+- **knowledge-framework/ 目录**：知识框架专用子目录，收录 10 个 pipeline skill
+
+### Changed
+- knowledge-pipeline、wiki-refine、link-analysis 移入 `skill/knowledge-framework/`
+- 新增 coarse-processor、wiki-review、qa-ask、blogger-refine、link-ingest、investment-knowledge-framework、xq-blogger-analysis 到 knowledge-framework/
+
+### Removed
+- `skill/my-knowledge/`：旧版知识框架目录，内容已迁移到 knowledge-framework/
+
 ## 1.9.0 — 2026-06-23
 
 ### Added
