@@ -32,17 +32,17 @@ version: 4.0.0
 
 | 模板 | 路径 |
 |:---|:---|
-| raw-frontmatter | knowledge-pipeline/assets/raw-frontmatter.yaml |
-| wiki-entry | knowledge-pipeline/assets/wiki-entry.yaml |
+| raw-frontmatter | knowledge-pipeline/assets/raw-frontmatter.md |
+| wiki-entry | knowledge-pipeline/assets/wiki-entry.md |
 | wiki-method | knowledge-pipeline/assets/wiki-method.md |
 | wiki-case-study | knowledge-pipeline/assets/wiki-case-study.md |
 | wiki-data-interp | knowledge-pipeline/assets/wiki-data-interp.md |
 | wiki-opinion | knowledge-pipeline/assets/wiki-opinion.md |
 | wiki-market-overview | knowledge-pipeline/assets/wiki-market-overview.md |
-| blogger-frontmatter | knowledge-pipeline/assets/blogger-frontmatter.yaml |
+| blogger-frontmatter | knowledge-pipeline/assets/blogger-frontmatter.md |
 | blogger-profile | knowledge-pipeline/assets/blogger-profile.md |
-| qa-output | knowledge-pipeline/assets/qa-output.yaml |
-| review-report | knowledge-pipeline/assets/review-report.yaml |
+| qa-output | knowledge-pipeline/assets/qa-output.md |
+| review-report | knowledge-pipeline/assets/review-report.md |
 | question-templates | knowledge-pipeline/assets/question-templates.md |
 
 ---
