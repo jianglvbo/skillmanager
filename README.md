@@ -76,10 +76,10 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ├── skill/                            ← Skill 根目录
 │   ├── ai-repo-manager/              ← Ai/ 仓库管理（Git 同步 + 文档迭代）
 │   ├── douyin-video-summary/        ← 抖音视频摘要（音频提取 + whisper 转录 + 结构化总结）
-│   ├── investment-knowledge-framework/ ← 投资分析知识管理框架（五层流水线操作手册）
+│   ├── getnote/                      ← 得到大脑（Get笔记）：保存、搜索、管理个人笔记
 │   ├── knowledge-pipeline/           ← 知识框架全局编排者（路径表、模板表、调用链、全局规则）
-│   ├── link-analysis/               ← 链接分析工作流
 │   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
+│   ├── my-knowledge/                 ← 个人知识库
 │   ├── qmd/                         ← 本地文档索引与搜索（CLI 工具）
 │   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
 │   ├── skill-guidelines/            ← Agent Skill 准则（八条核心准则）
@@ -199,21 +199,21 @@ git push origin main
 
 从抖音链接提取视频内容并生成结构化摘要。工作流：解析链接 → 浏览器拦截音频 URL → curl 下载 → ffmpeg 转 WAV → whisper.cpp 本地转录 → AI 生成摘要。支持飞书文档同步。依赖 whisper-cpp、ffmpeg。
 
-### investment-knowledge-framework — 投资分析知识管理框架
+### getnote — 得到大脑（Get笔记）
 
-基于 Obsidian vault 的五层循环流水线操作手册。覆盖粗加工、提炼（多维度）、问答、迭代四个核心流程，包含 frontmatter 模板、标签体系、审查规则和交叉链接原则。当用户要求处理投资文章、提炼知识或管理知识库时使用。
+保存、搜索、管理个人笔记和知识库。支持链接保存、图片保存、笔记搜索和原文查看。
 
 ### knowledge-pipeline — 知识框架全局编排者
 
 投资知识管理系统的全局调配中心。唯一持有路径表、模板路径表和全局规则的地方。定义投资知识全流程、博主画像全流程的调用链和模块分工。加工 skill 全部无默认值，路径变更只改这里。
 
-### link-analysis — 链接分析工作流
-
-收集用户链接（雪球、公众号、抖音等），存入 Obsidian 投资分析框架粗制品目录，支持飞书/IM 和 WorkBuddy 对话两种收集渠道。
-
 ### mac-cleaner — macOS 磁盘分析与垃圾清理
 
 分析 Mac 存储空间占用，扫描缓存、应用残留、Time Machine 快照等垃圾文件，安全清理释放空间。包含三段式工作流：扫描分析 → 生成建议 → 安全清理（osascript 废纸篓）。
+
+### my-knowledge — 个人知识库
+
+个人知识管理系统。
 
 ### qmd — 本地文档索引与搜索
 
