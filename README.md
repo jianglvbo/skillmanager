@@ -77,12 +77,12 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── ai-repo-manager/              ← Ai/ 仓库管理（Git 同步 + 文档迭代）
 │   ├── douyin-video-summary/        ← 抖音视频摘要（音频提取 + whisper 转录 + 结构化总结）
 │   ├── investment-knowledge-framework/ ← 投资分析知识管理框架（五层流水线操作手册）
-│   ├── knowledge-pipeline/           ← 全链路总览（流水线、目录约定、skill 角色）
+│   ├── knowledge-pipeline/           ← 知识框架全局编排者（路径表、模板表、调用链、全局规则）
 │   ├── link-analysis/               ← 链接分析工作流
 │   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
 │   ├── qmd/                         ← 本地文档索引与搜索（CLI 工具）
 │   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
-│   ├── skill-design/                ← Skill 设计规范（八条核心原则）
+│   ├── skill-guidelines/            ← Agent Skill 准则（八条核心准则）
 │   ├── wechat-article/             ← 微信公众号文章提取（UA 模拟 + 正文转 Markdown）
 │   └── xueqiu/                      ← 雪球投资博主系统
 │       ├── README.md                ← 雪球组说明
@@ -203,9 +203,9 @@ git push origin main
 
 基于 Obsidian vault 的五层循环流水线操作手册。覆盖粗加工、提炼（多维度）、问答、迭代四个核心流程，包含 frontmatter 模板、标签体系、审查规则和交叉链接原则。当用户要求处理投资文章、提炼知识或管理知识库时使用。
 
-### knowledge-pipeline — 全链路总览
+### knowledge-pipeline — 知识框架全局编排者
 
-投资知识管理系统的全局地图。定义完整流水线（待处理链接 → 粗制品 → 投资分析/博主画像 → 问答回流）、vault 目录约定、四个 skill 的角色分工和 frontmatter `_` 前缀通信协议。当需要了解系统全貌时使用。
+投资知识管理系统的全局调配中心。唯一持有路径表、模板路径表和全局规则的地方。定义投资知识全流程、博主画像全流程的调用链和模块分工。加工 skill 全部无默认值，路径变更只改这里。
 
 ### link-analysis — 链接分析工作流
 
@@ -223,9 +223,9 @@ git push origin main
 
 基于 Serenity（@aleabroreddit）方法论的投资研究工作流。从市场叙事出发，沿产业链定位稀缺层，用公开证据验证，输出研究优先级排序。
 
-### skill-design — Skill 设计规范
+### skill-guidelines — Agent Skill 准则
 
-创建新 Skill 或重构已有 Skill 时的设计规范。八条核心原则：职责单一、精准描述、确定性优先、渐进式披露、人类主导、验证循环、安全性、标准化输出。包含级别分类（轻量/标准/重量）、设计模式和工程化四层结构。
+适用于创建新 Skill 与修改已有 Skill 的全生命周期。八条核心准则：职责单一与模块化、精准的描述与语义发现、确定性优先与结构刚性、渐进式披露与少即是多、核心知识的人类主导、内置验证循环与可观测性、安全性与权限边界、标准化输出与工程化结构。包含级别分类（轻量/标准/重量）、设计模式和四层工程结构。
 
 ### wechat-article — 微信公众号文章提取
 
@@ -243,4 +243,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-22*
+*最后更新：2026-06-23*

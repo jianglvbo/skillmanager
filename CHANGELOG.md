@@ -2,6 +2,24 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.9.0 — 2026-06-23
+
+### Added
+- **knowledge-pipeline skill**：知识框架全局编排者（`skill/knowledge-pipeline/`）
+  - 唯一持有路径表、模板路径表、全局规则和调用链
+  - 投资知识全流程：link-ingest → coarse-processor → wiki-refine → qa-ask
+  - 博主画像全流程：link-ingest → coarse-processor → blogger-refine
+  - 提问模板（`assets/question-templates.md`）：板块分析/个股分析/博主观点汇总/宏观环境分析
+  - 全局规则：日期格式 YYYY年M月D日、提炼前必读控制台、新增画像扫描全部原始资源
+
+### Changed
+- **skill-design → skill-guidelines**：重命名为 Agent Skill 准则（`skill/skill-guidelines/`）
+  - 适用范围从「创建/重构」扩展到「全生命周期」（创建 + 修改 + 维护）
+  - 触发词新增「skill修改」「修改skill」「skill规范」
+  - 标题从「设计原则」改为「准则」
+  - version：3.0.0 → 3.1.0
+- **README.md**：目录结构和 Skill 列表更新；knowledge-pipeline 和 skill-guidelines 描述更新
+
 ## 1.8.0 — 2026-06-22
 
 ### Added
