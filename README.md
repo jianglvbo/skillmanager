@@ -82,6 +82,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── mac-cleaner/                 ← macOS 磁盘分析与垃圾清理
 │   ├── qmd/                         ← 本地文档索引与搜索（CLI 工具）
 │   ├── serenity-skill/              ← Serenity 式供应链瓶颈研究
+│   ├── skill-design-checklist/      ← Skill 设计规范（八条核心原则）
 │   ├── wechat-article/             ← 微信公众号文章提取（UA 模拟 + 正文转 Markdown）
 │   └── xueqiu/                      ← 雪球投资博主系统
 │       ├── README.md                ← 雪球组说明
@@ -222,6 +223,10 @@ git push origin main
 
 基于 Serenity（@aleabroreddit）方法论的投资研究工作流。从市场叙事出发，沿产业链定位稀缺层，用公开证据验证，输出研究优先级排序。
 
+### skill-design-checklist — Skill 设计规范
+
+创建新 Skill 或重构已有 Skill 时的设计规范。八条核心原则：职责单一、精准描述、确定性优先、渐进式披露、人类主导、验证循环、安全性、标准化输出。包含级别分类（轻量/标准/重量）、设计模式和工程化四层结构。
+
 ### wechat-article — 微信公众号文章提取
 
 从微信公众号链接（mp.weixin.qq.com）提取文章正文并转为 Markdown。通过模拟微信客户端 UA 绕过反爬限制，支持标题、作者、公众号名称、发布日期和完整正文的结构化提取，可直接写入 Obsidian 粗制品目录。
@@ -238,4 +243,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-18*
+*最后更新：2026-06-22*
