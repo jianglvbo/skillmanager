@@ -1,6 +1,6 @@
 ---
-name: skill-design-checklist
-description: 创建新 Skill 或重构已有 Skill 时的设计规范。八条核心原则指导如何将人类专家知识转化为 AI 可执行工作流。触发词：「设计skill」「skill规范」「创建技能」「skill设计原则」。
+name: skill-design
+description: 创建新 Skill 或重构已有 Skill 时的设计规范。八条核心原则指导如何将人类专家知识转化为 AI 可执行工作流。触发词：「设计skill」「skill设计」「设计技能」。
 license: MIT
 agent_created: true
 metadata:
