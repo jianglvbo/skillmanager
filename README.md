@@ -215,7 +215,7 @@ git push origin main
 | `mac-cleaner` | macOS 磁盘分析与清理 |
 | `qmd` | 本地文档索引与搜索 |
 | `serenity-skill` | Serenity 式供应链瓶颈研究 |
-| `skill-guidelines` | Agent Skill 准则 |
+| `skill-guidelines` | Agent Skill 设计纲领（八原则 + 九规律 + 模板） |
 | `wechat-article` | 微信公众号文章提取 |
 | `xueqiu/` | 雪球投资博主系统 |
 
