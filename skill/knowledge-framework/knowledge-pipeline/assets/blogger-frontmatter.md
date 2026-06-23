@@ -9,7 +9,7 @@ markets: []
 style_keywords: []
 images: []
 info_cutoff: []
-score: 0
+post_score: 0
 status: "full"
 category: "博主画像"
 content_type: "人物画像"

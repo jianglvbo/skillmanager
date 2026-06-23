@@ -39,7 +39,7 @@ config_snapshot 结构：
             │        将平台数据注入 frontmatter
             └─ 否 → 跳过
                   ↓
-          提炼观点/风格/语录 → 计算 score
+          提炼观点/风格/语录 → 计算 post_score
                   ↓
           生成 profile_content + console_delta
 ```
@@ -53,7 +53,7 @@ config_snapshot 结构：
    - `is_xueqiu = 是` → 加载 `references/xueqiu-data-pipeline.md`，获取 xq_id / followers / 近期帖子
    - `is_xueqiu = 否` → 跳过平台数据步骤
 5. 按模板结构增量提炼：定位、风格、观点、标的、语录
-6. **计算 score 并累加**（见下方评分规则）
+6. **计算 post_score 并累加**（见下方评分规则）
 7. 生成 profile_content（完整 Markdown，含 frontmatter）
 8. 生成 console_delta（仅实际变化的字段）
 
@@ -93,7 +93,7 @@ config_snapshot 结构：
 | `following` | 控制台「雪球关注=是」→ true | config_snapshot |
 | `xq_id` | 雪球数字 ID，雪球博主才有 | xueqiu-data-pipeline |
 | `followers` | 粉丝数，雪球博主才有 | xueqiu-data-pipeline |
-| `score` | 质量加权累计分 | 见评分规则 |
+| `post_score` | 帖子质量加权累计分 | 见评分规则 |
 
 ### 语录动态更新
 
@@ -103,9 +103,9 @@ config_snapshot 结构：
 
 ---
 
-## 质量评分规则（score）
+## 质量评分规则（post_score）
 
-用 `score` 替代 `post_count`。从 0 开始，每次提炼累加。
+用 `post_score` 替代 `post_count`。从 0 开始，每次提炼累加。
 
 ### 内容类型基础分
 
@@ -128,7 +128,7 @@ config_snapshot 结构：
 
 ```
 本轮新增 = Σ(内容类型基础分 × 来源权重)
-score = 已有 score + 本轮新增（整数累加）
+post_score = 已有 post_score + 本轮新增（整数累加）
 ```
 
 ### 示例
@@ -151,7 +151,7 @@ score = 已有 score + 本轮新增（整数累加）
 ## 自检
 
 - [ ] profile_content 包含模板所有必须章节？
-- [ ] summary / sources / score 三个字段非空？
+- [ ] summary / sources / post_score 三个字段非空？
 - [ ] 新增内容有来源标注？
 - [ ] 语录是否需要替换/更新？
 - [ ] console_delta 只含实际变化的字段？
