@@ -19,7 +19,7 @@ config_snapshot 结构：
 ```json
 {
   "name": "博主名",
-  "aliases": "别名1, 别名2",
+  "aliases": ["别名1", "别名2"],
   "is_xueqiu": "是 | 否",
   "is_following": "是 | 否",
   "is_starred": "是 | 否"
@@ -55,6 +55,9 @@ config_snapshot 结构：
 - 增量追加而非覆盖已有内容
 - 保持画像的历史演变记录
 - 新增内容标注来源日期
+- **`summary` 必填**：从原文提取一句定位描述（平台 + 风格/专长 + 代表作），不超过一行
+- **`sources` 必须追加**：每次提炼将 source_path 追加到 sources 列表
+- **`aliases` 从 config_snapshot 获取**：控制台别名列有值时写入，无别名则留空 []
 
 ## 控制台字段默认值
 
