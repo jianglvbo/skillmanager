@@ -86,7 +86,6 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── blogger-refine/         ←   博主画像提炼
 │   │   ├── link-ingest/            ←   链接抓取
 │   │   ├── link-analysis/          ←   链接分析
-│   │   ├── xq-blogger-analysis/   ←   雪球博主分析（数据拉取+分析）
 │   ├── mac-cleaner/                ← macOS 磁盘清理
 │   ├── qmd/                        ← 本地文档索引
 │   ├── serenity-skill/             ← Serenity 供应链研究
@@ -202,10 +201,9 @@ git push origin main
 | `wiki-refine` | 知识提炼：原始资源 → 维基条目 |
 | `wiki-review` | 维基审查：批量扫描健康度 |
 | `qa-ask` | 知识问答：基于维基仓库生成分析 |
-| `blogger-refine` | 博主画像提炼 |
+| `blogger-refine` | 博主画像提炼（雪球数据管道见 references/） |
 | `link-ingest` | 链接收集与抓取 |
 | `link-analysis` | 链接分析工作流 |
-| `xq-blogger-analysis` | 雪球博主分析（数据拉取+聚合） |
 
 ### 通用工具
 
