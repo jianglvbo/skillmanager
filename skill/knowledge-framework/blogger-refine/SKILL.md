@@ -1,6 +1,6 @@
 ---
 name: blogger-refine
-description: >
+description: 
   博主画像提炼。输入 config_snapshot + 原文 + 已有画像，返回 profile_content 和 console_delta。
   纯内存加工，不碰文件 I/O。由 pipeline 负责读写。
   触发词：「博主提炼」「博主画像」「画像更新」。
@@ -11,6 +11,7 @@ description: >
 # Default stance
 
 ## 核心原则
+
 - 纯内存操作：不读不写文件，pipeline 负责所有 I/O
 - 增量追加：已有画像追加新日期段落，不覆盖历史章节
 - 忠于原文：不添加原文没有的观点

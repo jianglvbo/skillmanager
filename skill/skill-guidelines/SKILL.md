@@ -260,75 +260,36 @@ source: "{{链接}}"
 ```yaml
 ---
 # 1. YAML 门控：定义 Skill 的基本元信息
-name: skill-name              # 唯一标识符，kebab-case
+name: skill-name
 description: >
   简要描述该技能的功能以及何时该使用它。
-  包含中英文触发关键词，并明确非触发条件。
-  说明与其他 Skill 的区别。
-license: MIT                  # 可选
-agent_created: true           # AI 创建的标记
-metadata:
-  version: "1.0.0"
-compatibility: 通用
+  包含触发关键词，并明确非触发条件。
 ---
 
-# 2. 核心定位：说明此 Skill 解决什么问题、不解决什么
-- 定位：...
-- 边界：与 XX Skill 的区别在于...
-- 类比：类似微服务中的 XX 模块
+# 2. Default stance：定义核心原则和禁止行为
+- 核心原则：...
+- 禁止行为：...
 
-# 3. Default Stance：定义核心原则和禁止行为
-## 默认行为
-- 输入为空时：报错并提示需要哪些参数
-- 未指定输出路径时：使用规定的默认路径
-- 遇到冲突时：保留双方内容，标记 [待确认]
+# 3. Workflow：编号说明任务执行顺序
+1. 第一步：...
+2. 第二步：...
+3. 第三步：...
 
-## 禁止行为
-- 绝不删除源文件，只做复制或移动
-- 绝不修改用户未提及的文件
-- 绝不在没有显式确认的情况下发送消息或调外部 API
+# 4. Output format：固定输出结构和字段
+- 字段A：...
+- 字段B：...
 
-# 4. Workflow：编号说明任务执行顺序
-1. 第一步：读取输入，校验完整性
-2. 第二步：根据条件选择分支（决策树见 references/）
-3. 第三步：生成输出，填入模板
-4. 第四步：写入目标文件
-5. 第五步：自检验证
-   - [ ] 所有必填字段是否已填充？
-   - [ ] 输出路径是否存在？
-   - [ ] 格式是否与模板一致？
-   → 任一不通过，回溯修正
+# 5. Relative files：说明不同情况应加载哪些子文件
+- 场景X：加载 references/x.md
+- 场景Y：执行 scripts/y.py
 
-# 5. Output Format：固定输出结构和字段
-| 字段 | 类型 | 必填 | 说明 |
-|:---|:---|:---|:---|
-| field_a | string | 是 | 字段说明 |
-| field_b | enum | 是 | 可选值列表 |
-| field_c | markdown | 否 | 可选内容 |
+# 6. Source hierarchy：写明规则来源和优先级
+- 优先级1：...
+- 优先级2：...
 
-# 6. Relative Files：说明不同情况应加载哪些子文件
-| 文件 | 何时加载 | 内容 |
-|:---|:---|:---|
-| SKILL.md | 始终 | 核心流程、关键决策点 |
-| references/routing.md | 多模式场景 | 路由决策树 |
-| references/edge-cases.md | 遇到异常时 | 边界情况处理 |
-| scripts/validator.py | 校验步骤 | 确定性校验脚本 |
-| assets/template.md | 生成输出时 | 输出模板文件 |
-| examples/good-output.md | 不确定输出格式时 | 优秀输出样例 |
-
-# 7. Source Hierarchy：写明规则来源和优先级
-| 优先级 | 来源 | 示例 |
-|:---|:---|:---|
-| 1 最高 | 官方文档/API 规范 | Anthropic Skill 文档 |
-| 2 | 权威方法论 | 软件工程原则 |
-| 3 | 工程实践 | 验证有效的模式 |
-| 4 | 用户约定 | 用户要求的规范 |
-| 5 最低 | 最佳实践推断 | 业界公认做法 |
-
-# 8. 语言约定（面向中文用户）
-- 输入：接受中文和英文
-- 输出：默认中文
-- 术语：首次出现附英文原文
+# 自检
+- [ ] 字段完整？
+- [ ] 格式匹配？
 ```
 
 ---
@@ -357,12 +318,11 @@ compatibility: 通用
 
 写完或修改 Skill 后，逐项检查：
 
-### 必查项（七要素完整性）
-- [ ] YAML 门控：name、description 完整
-- [ ] Description：中英文关键词 + 排除条件 + 与相关 Skill 的区别
-- [ ] Default Stance：默认行为 + 禁止行为
-- [ ] Workflow：数字编号，含自检步骤
-- [ ] Output Format：字段固定、有模板/样例
+### 必查项（六要素完整性）
+- [ ] YAML 门控：name、description 完整，含触发词和排除条件
+- [ ] Default Stance：核心原则 + 禁止行为
+- [ ] Workflow：第一步/第二步…编号，含决策点
+- [ ] Output Format：字段固定、有模板或样例
 - [ ] Relative Files：子文件加载时机明确
 - [ ] Source Hierarchy：规则来源和优先级清晰
 
