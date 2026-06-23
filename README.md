@@ -77,6 +77,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── ai-repo-manager/            ← Ai/ 仓库管理
 │   ├── douyin-video-summary/       ← 抖音视频摘要
 │   ├── getnote/                    ← 得到大脑（Get笔记）
+│   ├── xq-post-fetch/              ← 雪球博主帖子采集
 │   ├── knowledge-framework/        ← 投资知识框架
 │   │   ├── knowledge-pipeline/     ←   全局编排
 │   │   ├── coarse-processor/       ←   粗加工

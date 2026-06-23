@@ -2,6 +2,17 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.12.0 — 2026-06-24
+
+### Added
+- **xq-post-fetch**：雪球博主帖子采集 skill（v2.1.0）
+  - CDP Proxy + user_timeline API 采集
+  - 批量采集、分级超时重试、断点续采、多页分页
+  - JS 模板外部化 + 防御性编程
+
+### Removed
+- **serenity-skill**：已废弃删除
+
 ## 1.11.0 — 2026-06-23
 
 ### Changed
