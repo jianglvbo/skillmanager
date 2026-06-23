@@ -6,7 +6,7 @@ description: |
   由 pipeline 负责实际文件读写。所有路径和模板由 pipeline 传入。
   触发词：「博主提炼」「博主画像」「blogger refine」「画像更新」
   区别：与 wiki-refine 的区别在于产出是人物画像。纯内存操作。
-version: 1.0.0
+version: 2.0.0
 ---
 
 # 博主画像提炼（纯内存）
@@ -26,14 +26,38 @@ config_snapshot 结构：
 }
 ```
 
-## 流程
+---
 
-1. 读 {template_path}，获取画像章节结构
-2. 读 source_path 原文
-3. 读 profile_path 已有画像内容（不存在则为空）
-4. 按 {template_path} 结构，增量提炼
-5. 生成 profile_content（完整 Markdown，含 frontmatter）
-6. 生成 console_delta（仅实际变化的字段）
+## 核心流程
+
+```
+读模板 → 读原文 → 读已有画像（可选）
+                  ↓
+           【决策点】is_xueqiu = 是？
+            ├─ 是 → 按需加载 references/xueqiu-data-pipeline.md
+            │        拉取雪球数据（xq_id、粉丝、近帖）
+            │        将平台数据注入 frontmatter
+            └─ 否 → 跳过
+                  ↓
+          提炼观点/风格/语录 → 计算 score
+                  ↓
+          生成 profile_content + console_delta
+```
+
+### 详细步骤
+
+1. 读 {template_path}，获取画像章节结构（见 `assets/blogger-profile.md`）
+2. 读 source_path 原文内容
+3. 读 profile_path 已有画像（不存在则为空，新建）
+4. **决策：是否需要平台数据？**
+   - `is_xueqiu = 是` → 加载 `references/xueqiu-data-pipeline.md`，获取 xq_id / followers / 近期帖子
+   - `is_xueqiu = 否` → 跳过平台数据步骤
+5. 按模板结构增量提炼：定位、风格、观点、标的、语录
+6. **计算 score 并累加**（见下方评分规则）
+7. 生成 profile_content（完整 Markdown，含 frontmatter）
+8. 生成 console_delta（仅实际变化的字段）
+
+---
 
 ## 输出（纯数据，不碰文件）
 
@@ -41,7 +65,7 @@ config_snapshot 结构：
 {
   "profile_content": "完整的画像 Markdown 字符串",
   "console_delta": {
-    "aliases?": "更新后的别名字符串",
+    "aliases?": "更新后的别名数组",
     "is_xueqiu?": "是 | 否",
     "is_following?": "是 | 否",
     "is_starred?": "是 | 否"
@@ -49,16 +73,70 @@ config_snapshot 结构：
 }
 ```
 
+---
+
 ## 提炼要求
 
+### 内容规则
 - 忠于原文，不添加原文没有的观点
 - 增量追加而非覆盖已有内容
-- 保持画像的历史演变记录
+- 保持画像的历史演变记录（「演变轨迹」章节）
 - 新增内容标注来源日期
-- **`summary` 必填**：从原文提取一句定位描述（平台 + 风格/专长 + 代表作），不超过一行
-- **`sources` 必须追加**：每次提炼将 source_path 追加到 sources 列表
-- **`aliases` 从 config_snapshot 获取**：控制台别名列有值时写入，无别名则留空 []
-- **语录动态更新**：画像底部代表性语录（一句话总结博主风格的金句）需在每次提炼新内容时重新审视。若新内容中的某句话比旧语录更能代表博主当前风格，应替换或追加，确保语录始终是博主表达 DNA 的最佳切片
+
+### Frontmatter 必填规则
+
+| 字段 | 规则 | 来源 |
+|:---|:---|:---|
+| `summary` | 一句定位描述（平台+风格+代表作），≤一行 | 从原文提炼 |
+| `sources` | 每次提炼追加 source_path | pipeline 传入 |
+| `aliases` | 从控制台别名列获取 | config_snapshot |
+| `following` | 控制台「雪球关注=是」→ true | config_snapshot |
+| `xq_id` | 雪球数字 ID，雪球博主才有 | xueqiu-data-pipeline |
+| `followers` | 粉丝数，雪球博主才有 | xueqiu-data-pipeline |
+| `score` | 质量加权累计分 | 见评分规则 |
+
+### 语录动态更新
+
+画像底部代表性语录需在每次提炼新内容时重新审视：
+- 新内容中出现比旧语录更能代表博主当前风格的金句 → 替换或追加
+- 确保语录始终是博主表达 DNA 的最佳切片
+
+---
+
+## 质量评分规则（score）
+
+用 `score` 替代 `post_count`。从 0 开始，每次提炼累加。
+
+### 内容类型基础分
+
+| 内容类型 | 基础分 | 判断依据 |
+|:---|:---:|:---|
+| 方法论 / 投资体系 | 10 | 系统性方法论输出（如仓位管理框架、定投规则） |
+| 案例分析 / 个股深度 | 8 | 单一标的深度拆解（如中广核深度、泡泡玛特分析） |
+| 观点评论 | 6 | 对市场/板块/概念的观点输出 |
+| 数据解读 | 5 | 以数据为核心的分析（如周期数据、估值分位） |
+| 市场综述 / 新闻 | 3 | 行情复盘、事件速评 |
+
+### 来源权重
+
+| 来源类型 | 权重 | 判断依据 |
+|:---|:---:|:---|
+| 原创 | ×1.0 | 博主本人撰写/口述 |
+| 转载 / 转述 | ×0.5 | 二次传播（如抖音转录他人观点） |
+
+### 计算公式
+
+```
+本轮新增 = Σ(内容类型基础分 × 来源权重)
+score = 已有 score + 本轮新增（整数累加）
+```
+
+### 示例
+
+重组专家一篇原创中广核深度分析（案例分析 8 分 × 原创 1.0）= +8 分
+段永平一篇转载访谈（观点评论 6 分 × 转载 0.5）= +3 分
+
+---
 
 ## 控制台字段默认值
 
@@ -68,9 +146,14 @@ config_snapshot 结构：
 | is_following | 是 |
 | is_starred | 否 |
 
+---
+
 ## 自检
 
 - [ ] profile_content 包含模板所有必须章节？
+- [ ] summary / sources / score 三个字段非空？
 - [ ] 新增内容有来源标注？
+- [ ] 语录是否需要替换/更新？
 - [ ] console_delta 只含实际变化的字段？
 - [ ] 未执行任何文件读写操作？
+- [ ] 雪球博主 → 已加载 xueqiu-data-pipeline 并注入平台数据？

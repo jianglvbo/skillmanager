@@ -1,6 +1,6 @@
 ---
 title: "{博主名}"
-aliases: []
+aliases: {从控制台别名列获取，无别名则留空 []}
 xq_id: []
 following: false
 followers:
@@ -9,7 +9,7 @@ markets: []
 style_keywords: []
 images: []
 info_cutoff: []
-post_count: 0
+score: 0
 status: "full"
 category: "博主画像"
 content_type: "人物画像"
