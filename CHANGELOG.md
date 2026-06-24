@@ -2,6 +2,30 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.14.0 — 2026-06-24
+
+### Changed
+- **knowledge-pipeline (v5.2.0)**：路由决策层新增作者-博主联动
+  - 命中「投资知识全流程」时检查 author 是否在 BLOGGER_CONSOLE 中
+  - 若匹配则并行触发「博主画像纯提炼」链路，两条链路独立并行、互不耦合
+
+## 1.13.0 — 2026-06-24
+
+### Changed
+- **Skill 目录重新整理**：按 content/knowledge-framework/meta/office 四大分类归档
+  - `content/`：douyin-video-summary、getnote、wechat-article
+  - `knowledge-framework/`：保持不变（7 个子 skill）
+  - `meta/`：ai-repo-manager、skill-guidelines
+  - `office/`：mac-cleaner、qmd
+  - `xq-post-fetch/`：独立保留（v3.0.0，Chrome Extension MCP 方案）
+
+### Removed
+- **serenity-skill/**：已废弃，清理残留目录（v1.12.0 标记删除但未实际清理）
+- **xueqiu/**：旧版雪球系统目录，已被顶层 xq-post-fetch v3.0.0 替代
+- **knowledge/**：空壳分类目录（v1.10.0 迁移残留，7 个子目录均无 SKILL.md）
+- **investment/**：空目录
+- **content/douyin-video-summary/models/ggml-small.bin**：孤立的 465MB whisper 模型（已移至废纸篓）
+
 ## 1.12.0 — 2026-06-24
 
 ### Added

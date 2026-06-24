@@ -72,12 +72,13 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ~/Ai/
 ├── README.md
 ├── CHANGELOG.md
+├── CONTRIBUTING.md
 ├── .gitignore
 ├── skill/
-│   ├── ai-repo-manager/            ← Ai/ 仓库管理
-│   ├── douyin-video-summary/       ← 抖音视频摘要
-│   ├── getnote/                    ← 得到大脑（Get笔记）
-│   ├── xq-post-fetch/              ← 雪球博主帖子采集
+│   ├── content/                    ← 内容提取
+│   │   ├── douyin-video-summary/   ←   抖音视频摘要
+│   │   ├── getnote/                ←   得到大脑（Get笔记）
+│   │   └── wechat-article/         ←   公众号文章提取
 │   ├── knowledge-framework/        ← 投资知识框架
 │   │   ├── knowledge-pipeline/     ←   全局编排
 │   │   ├── coarse-processor/       ←   粗加工
@@ -85,14 +86,14 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── wiki-review/            ←   维基审查
 │   │   ├── qa-ask/                 ←   知识问答
 │   │   ├── blogger-refine/         ←   博主画像提炼
-│   │   ├── link-ingest/            ←   链接抓取
-│   │   ├── link-analysis/          ←   链接分析
-│   ├── mac-cleaner/                ← macOS 磁盘清理
-│   ├── qmd/                        ← 本地文档索引
-│   ├── serenity-skill/             ← Serenity 供应链研究
-│   ├── skill-guidelines/           ← Skill 准则
-│   ├── wechat-article/             ← 公众号文章提取
-│   └── xueqiu/                     ← 雪球博主系统
+│   │   └── link-ingest/            ←   链接抓取
+│   ├── meta/                       ← 元工具
+│   │   ├── ai-repo-manager/        ←   Ai/ 仓库管理
+│   │   └── skill-guidelines/       ←   Skill 设计准则
+│   ├── office/                     ← 办公工具
+│   │   ├── mac-cleaner/            ←   macOS 磁盘清理
+│   │   └── qmd/                    ←   本地文档索引
+│   └── xq-post-fetch/              ← 雪球博主帖子采集
 └── tools/
     └── autocli/
 ```
@@ -115,7 +116,7 @@ skill-name/
 └── LICENSE           ← 可选：许可证
 ```
 
-参考 `serenity-skill/` 目录作为标准结构的示例。
+参考 `knowledge-framework/knowledge-pipeline/` 目录作为标准结构的示例。
 
 ---
 
@@ -193,6 +194,14 @@ git push origin main
 
 ## 各 Skill 说明
 
+### content/ — 内容提取
+
+| Skill | 说明 |
+|:---|:---|
+| `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
+| `getnote` | 得到大脑（Get笔记）保存/搜索/管理 |
+| `wechat-article` | 微信公众号文章提取与转 Markdown |
+
 ### knowledge-framework/ — 投资知识框架
 
 | Skill | 说明 |
@@ -204,21 +213,26 @@ git push origin main
 | `qa-ask` | 知识问答：基于维基仓库生成分析 |
 | `blogger-refine` | 博主画像提炼（雪球数据管道见 references/） |
 | `link-ingest` | 链接收集与抓取 |
-| `link-analysis` | 链接分析工作流 |
 
-### 通用工具
+### meta/ — 元工具
 
 | Skill | 说明 |
 |:---|:---|
 | `ai-repo-manager` | Ai/ 仓库 GitHub 版本管理 |
-| `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
-| `getnote` | 得到大脑（Get笔记） |
+| `skill-guidelines` | Agent Skill 设计准则（原则 + 规律 + 模板） |
+
+### office/ — 办公工具
+
+| Skill | 说明 |
+|:---|:---|
 | `mac-cleaner` | macOS 磁盘分析与清理 |
-| `qmd` | 本地文档索引与搜索 |
-| `serenity-skill` | Serenity 式供应链瓶颈研究 |
-| `skill-guidelines` | Agent Skill 设计纲领（八原则 + 九规律 + 模板） |
-| `wechat-article` | 微信公众号文章提取 |
-| `xueqiu/` | 雪球投资博主系统 |
+| `qmd` | 本地文档索引与搜索（BM25 + 向量） |
+
+### 独立 Skill
+
+| Skill | 说明 |
+|:---|:---|
+| `xq-post-fetch` | 雪球博主帖子采集（Chrome Extension MCP） |
 
 ---
 
@@ -228,4 +242,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-23*
+*最后更新：2026-06-24*
