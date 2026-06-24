@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "5.2.0"
+  version: "5.3.0"
   short-description: 知识框架全局编排者
 compatibility: 通用
 ---
@@ -108,6 +108,7 @@ pipeline 被加载后，Agent 根据用户意图选择调用链：
 2. **coarse-processor**({ source_path, target_dir: WIKI_RAW, type, template_path: raw-frontmatter })
 3. **wiki-refine**({ source_path, target_dir: WIKI_TARGET, category, content_type, time_sensitivity, template_path })
    → template_path 按 content_type 选择：wiki-method / wiki-case-study / wiki-data-interp / wiki-opinion / wiki-market-overview
+   → 一篇素材可能产出 ≥1 条维基条目（知识萃取后按概念拆分），每条以知识概念命名标题
 
 ### 博主画像全流程
 
