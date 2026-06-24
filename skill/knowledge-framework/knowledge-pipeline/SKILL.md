@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "5.3.0"
+  version: "5.4.0"
   short-description: 知识框架全局编排者
 compatibility: 通用
 ---
@@ -51,6 +51,10 @@ pipeline 被加载后，Agent 根据用户意图选择调用链：
 | 仅问答 | 怎么看、分析、q&a | qa-ask |
 | 仅审查 | 审查、健康度、review | wiki-review |
 | 仅粗加工 | 粗加工、归档 | coarse-processor |
+| 财报分析（双源） | 财报分析、结合框架分析 | qa-ask(source:both) → equity-research → QA_OUTPUT |
+| 财报分析（仅 wiki） | 用 wiki 分析、结合投资框架 | qa-ask(source:wiki) → equity-research → QA_OUTPUT |
+| 财报分析（仅博主） | 结合博主观点分析 | qa-ask(source:blogger) → equity-research → QA_OUTPUT |
+| 财报分析（无背景） | 直接分析财报 | equity-research → QA_OUTPUT |
 
 ### 执行步骤
 
@@ -133,6 +137,18 @@ pipeline 被加载后，Agent 根据用户意图选择调用链：
 
 **wiki-review**({ target_dir: WIKI_TARGET, dimensions, output_dir: REVIEW_OUTPUT, template_path: review-report })
 
+### 财报分析
+
+财报作为分析素材，不进 pipeline 做提炼。pipeline 负责检索知识背景，交给 equity-research 插件做分析，产出存到问答看板。
+
+1. 解析用户输入：确定公司名、财报类型（年报/业绩公告/深度研究）、知识源选择（双源/仅 wiki/仅博主/无背景）
+2. **若需知识背景**：**qa-ask**({ question: "{公司名} {行业} 基本面 竞争格局", source: wiki/blogger/both, output_dir: QA_OUTPUT, template_path: qa-output }) → 检索结果作为 background
+3. **equity-research**：根据财报类型选择对应 skill
+   - 年报 PDF → equity-research:读年报({ pdf, background })
+   - 业绩公告 → equity-research:业绩快评({ pdf, background })
+   - 深度研究 → equity-research:深度报告({ company, materials, background })
+4. 分析产出保存到 {QA_OUTPUT}/YYYY年M月D日-{公司名}-财报分析.md
+
 ---
 
 ## Output Format
@@ -207,3 +223,4 @@ pipeline 向各加工 skill 传参的固定格式：
 - [ ] 所有参数值是否来自路径表/模板表（非硬编码）？
 - [ ] 是否已读 PENDING_QUEUE（粗加工/提炼流程）？
 - [ ] 调用链是否完整执行？
+- [ ] 财报分析路由：source 参数是否已传入 qa-ask？分析产出是否保存到 QA_OUTPUT？
