@@ -75,24 +75,25 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ├── CONTRIBUTING.md
 ├── .gitignore
 ├── skill/
-│   ├── content/                    ← 内容提取
-│   │   ├── douyin-video-summary/   ←   抖音视频摘要
-│   │   ├── getnote/                ←   得到大脑（Get笔记）
-│   │   └── wechat-article/         ←   公众号文章提取
-│   ├── knowledge-framework/        ← 投资知识框架
-│   │   ├── knowledge-pipeline/     ←   全局编排
-│   │   ├── coarse-processor/       ←   粗加工
-│   │   ├── wiki-refine/            ←   知识提炼
-│   │   ├── wiki-review/            ←   维基审查
-│   │   ├── qa-ask/                 ←   知识问答
-│   │   ├── blogger-refine/         ←   博主画像提炼
-│   │   └── link-ingest/            ←   链接抓取
-│   ├── meta/                       ← 元工具
-│   │   ├── ai-repo-manager/        ←   Ai/ 仓库管理
-│   │   └── skill-guidelines/       ←   Skill 设计准则
-│   ├── office/                     ← 办公工具
-│   │   ├── mac-cleaner/            ←   macOS 磁盘清理
-│   │   └── qmd/                    ←   本地文档索引
+│   ├── 内容提取/                  ← 内容提取
+│   │   ├── 抖音视频摘要/           ←   抖音视频摘要
+│   │   ├── 得到笔记/                 ←   得到大脑（Get笔记）
+│   │   └── 微信文章/                 ←   公众号文章提取
+│   ├── 知识框架/                  ← 投资知识框架
+│   │   ├── 知识框架编排/             ←   全局编排
+│   │   ├── 粗加工/                   ←   粗加工
+│   │   ├── 维基提炼/                 ←   知识提炼
+│   │   ├── 维基审查/                 ←   维基审查
+│   │   ├── 知识问答/                 ←   知识问答
+│   │   ├── 博主提炼/                 ←   博主画像提炼
+│   │   └── 链接收集/                 ←   链接抓取
+│   ├── 元工具/                    ← 元工具
+│   │   ├── 仓库管理/                 ←   Ai/ 仓库管理
+│   │   └── 技能准则/                 ←   Skill 设计准则
+│   ├── 办公工具/                  ← 办公工具
+│   │   ├── 磁盘清理/                 ←   macOS 磁盘清理
+│   │   ├── 文档索引/                 ←   本地文档索引
+│   │   └── browser-act/           ←   BrowserAct 浏览器自动化
 │   ├── 投研分析/                    ← 券商投研技能集
 │   │   ├── 深度报告/               ←   公司深度研究报告
 │   │   ├── 行业研究/               ←   行业全景研究
@@ -109,9 +110,10 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── 投决备忘录/             ←   IC Memo 撰写
 │   │   ├── 测收益/                 ←   IRR/MOIC 测算
 │   │   └── 退出分析/               ←   退出路径对比
-│   └── xq-post-fetch/              ← 雪球博主帖子采集
+│   └── 雪球帖子采集/              ← 雪球博主帖子采集
 └── tools/
-    └── autocli/
+    ├── autocli/
+    └── browser-act-cli/
 ```
 
 ---
@@ -132,7 +134,7 @@ skill-name/
 └── LICENSE           ← 可选：许可证
 ```
 
-参考 `knowledge-framework/knowledge-pipeline/` 目录作为标准结构的示例。
+参考 `知识框架/知识框架编排/` 目录作为标准结构的示例。
 
 ---
 
@@ -210,39 +212,40 @@ git push origin main
 
 ## 各 Skill 说明
 
-### content/ — 内容提取
+### 内容提取/ — 内容提取
 
 | Skill | 说明 |
 |:---|:---|
-| `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
-| `getnote` | 得到大脑（Get笔记）保存/搜索/管理 |
-| `wechat-article` | 微信公众号文章提取与转 Markdown |
+| `抖音视频摘要` | 抖音视频摘要（whisper 转录 + AI 总结） |
+| `得到笔记` | 得到大脑（Get笔记）保存/搜索/管理 |
+| `微信文章` | 微信公众号文章提取与转 Markdown |
 
-### knowledge-framework/ — 投资知识框架
-
-| Skill | 说明 |
-|:---|:---|
-| `knowledge-pipeline` | 全局编排者：路径表、模板表、调用链、全局规则 |
-| `coarse-processor` | 粗加工：补全 frontmatter 并归档 |
-| `wiki-refine` | 知识提炼：原始资源 → 维基条目 |
-| `wiki-review` | 维基审查：批量扫描健康度 |
-| `qa-ask` | 知识问答：基于维基仓库生成分析 |
-| `blogger-refine` | 博主画像提炼（雪球数据管道见 references/） |
-| `link-ingest` | 链接收集与抓取 |
-
-### meta/ — 元工具
+### 知识框架/ — 投资知识框架
 
 | Skill | 说明 |
 |:---|:---|
-| `ai-repo-manager` | Ai/ 仓库 GitHub 版本管理 |
-| `skill-guidelines` | Agent Skill 设计准则（原则 + 规律 + 模板） |
+| `知识框架编排` | 全局编排者：路径表、模板表、调用链、全局规则 |
+| `粗加工` | 粗加工：补全 frontmatter 并归档 |
+| `维基提炼` | 知识提炼：原始资源 → 维基条目 |
+| `维基审查` | 维基审查：批量扫描健康度 |
+| `知识问答` | 知识问答：基于维基仓库生成分析 |
+| `博主提炼` | 博主画像提炼（雪球数据管道见 references/） |
+| `链接收集` | 链接收集与抓取 |
 
-### office/ — 办公工具
+### 元工具/ — 元工具
 
 | Skill | 说明 |
 |:---|:---|
-| `mac-cleaner` | macOS 磁盘分析与清理 |
-| `qmd` | 本地文档索引与搜索（BM25 + 向量） |
+| `仓库管理` | Ai/ 仓库 GitHub 版本管理 |
+| `技能准则` | Agent Skill 设计准则（原则 + 规律 + 模板） |
+
+### 办公工具/ — 办公工具
+
+| Skill | 说明 |
+|:---|:---|
+| `磁盘清理` | macOS 磁盘分析与清理 |
+| `文档索引` | 本地文档索引与搜索（BM25 + 向量） |
+| `browser-act` | BrowserAct 浏览器自动化（隐身反检测 + 结构化提取） |
 
 ### 投研分析/ — 券商投研技能集
 
@@ -272,7 +275,7 @@ git push origin main
 
 | Skill | 说明 |
 |:---|:---|
-| `xq-post-fetch` | 雪球博主帖子采集（Chrome Extension MCP） |
+| `雪球帖子采集` | 雪球博主帖子采集（Chrome Extension MCP） |
 
 ---
 
@@ -282,4 +285,4 @@ MIT
 
 ---
 
-*最后更新：2026-06-24*
+*最后更新：2026-06-26*

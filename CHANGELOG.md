@@ -2,6 +2,61 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.20.0 — 2026-06-26
+
+### Added
+- **新增 Skill：browser-act（办公工具/）** — BrowserAct 浏览器自动化 CLI Skill 包装器
+  - 支持 stealth-extract（隐身提取）、Chrome 模式、stealth 隐身浏览器
+  - 支持多浏览器并发、人机协作（remote-assist）、CAPTCHA 处理
+  - 内置内容抓取规则：置顶帖时间处理 + 截断内容自动 navigate 补全
+- **新增工具：browser-act-cli（tools/）** — 安装文档，CLI 通过 `uv tool install browser-act-cli --python 3.12` 安装
+
+## 1.19.0 — 2026-06-25
+
+### Changed
+- **全量 Skill name + 文件夹改英文名**（排除 投研分析/、股权投资/）
+  - 15 个 Skill 的 `name` 字段 + 文件夹名统一改为英文（name = folder name）
+  - 元工具/：仓库管理 → ai-repo-manager、技能准则 → skill-guidelines
+  - 内容提取/：得到笔记 → getnote、微信文章 → wechat-article、抖音视频摘要 → douyin-video-summary
+  - 办公工具/：磁盘清理 → mac-cleaner、文档索引 → qmd
+  - 知识框架/：粗加工 → coarse-processor、博主提炼 → blogger-refine、知识问答 → qa-ask、维基审查 → wiki-review、维基提炼 → wiki-refine、链接收集 → link-ingest、知识框架编排 → knowledge-pipeline
+- **xq-post-fetch 移入 内容提取/**：从 skill/ 根目录移至 内容提取/ 分类下
+- 所有 SKILL.md 间的英文交叉引用 + 内部路径引用同步更新
+
+## 1.18.0 — 2026-06-25
+
+### Changed
+- **全量目录统一中文命名**：14 个 skill 目录 + 4 个分类目录重命名为中文
+  - 分类目录：content/ → 内容提取/、knowledge-framework/ → 知识框架/、meta/ → 元工具/、office/ → 办公工具/
+  - content/：douyin-video-summary → 抖音视频摘要、getnote → 得到笔记、wechat-article → 微信文章
+  - knowledge-framework/：knowledge-pipeline → 知识框架编排、link-ingest → 链接收集、coarse-processor → 粗加工、wiki-refine → 维基提炼、wiki-review → 维基审查、qa-ask → 知识问答、blogger-refine → 博主提炼
+  - meta/：ai-repo-manager → 仓库管理、skill-guidelines → 技能准则
+  - office/：mac-cleaner → 磁盘清理、qmd → 文档索引
+  - 独立：xq-post-fetch → 雪球帖子采集
+  - 所有 SKILL.md 的 `name` 字段同步更新
+  - 所有 SKILL.md 间的交叉引用（区别说明、调用链、文件路径）同步替换为中文
+  - README.md 目录树和 Skill 说明表同步更新
+
+## 1.17.0 — 2026-06-25
+
+### Added
+- **投研分析/** 分类目录：8 个券商投研技能集（从 QoderWork 插件同步至仓库）
+  - `深度报告`、`行业研究`、`读年报`、`业绩快评`、`调研纪要`、`晨会纪要`、`研报摘要`、`可比公司分析`
+- **股权投资/** 分类目录：6 个 PE/VC 投资技能集（从 QoderWork 插件同步至仓库）
+  - `筛项目`、`尽调清单`、`审条款`、`投决备忘录`、`测收益`、`退出分析`
+
+### Changed
+- **qa-ask (v1.1.0)**：新增 `source` 参数控制检索范围
+  - 输入从 `{question, search_dirs, output_dir, template_path}` 改为 `{question, source, output_dir, template_path}`
+  - source → 目录映射：wiki → WIKI_TARGET / blogger → BLOGGER_PROFILE / both → 并行搜索两者
+  - 触发词新增「财报分析」「结合框架分析」
+  - 定位从「纯问答」扩展为「可复用的背景检索前置步骤」
+- **knowledge-pipeline (v5.4.0)**：新增财报分析路由
+  - 路由表新增 4 条财报分析链路（双源/仅wiki/仅博主/无背景）
+  - 调用链新增「财报分析」详情段：qa-ask 背景检索 → equity-research 分析 → QA_OUTPUT
+  - pipeline 定位从「知识加工编排」扩展为「知识加工 + 知识应用编排」
+- **README.md**：目录结构和 Skill 列表新增投研分析/、股权投资/两个分类
+
 ## 1.16.0 — 2026-06-25
 
 ### Changed
