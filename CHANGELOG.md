@@ -2,6 +2,23 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.21.0 — 2026-07-04
+
+### Changed
+- **skill-guidelines（技能准则）重大更新**：吸收鱼香龙虾《Agent 实战：从零写一个 Skill》核心方法论
+  - 新增「核心认知」章节：Skill 是"数字员工入职培训手册"，不是一次性对话设定
+  - 新增「五层认知架构」表格：元数据层→指令层→Reference→Script→动态上下文，每层对应一个"器官"
+  - 新增「分层执行（Hierarchical Execution）」理念：Reference 让 AI "读"（消耗 Token），Script 让 AI "做"（消耗算力）
+  - 新增「认知卸载（Cognitive Offloading）」说明：AI 上下文窗口=工作内存，低频规则放 Reference（外存）
+  - Workflow 新增「四步递进」：SKILL.md 最小闭环 → +Reference → +Script → +Dynamic Context
+  - 审查流程新增「检查机械性验证是否靠 AI 脑补→改成脚本」
+  - Relative files 新增"方式"列：读取 vs 执行，明确区分 Reference 和 Script 的不同使用场景
+  - description 新增触发词「skill四层」「从零写skill」
+  - Source hierarchy 新增文章来源（优先级 2）
+
+### Added
+- **skill/meta/guidelines/** 首次纳入仓库：skill-guidelines SKILL.md + 5 个 references 子文件
+
 ## 1.20.0 — 2026-06-26
 
 ### Added

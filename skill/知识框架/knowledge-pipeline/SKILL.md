@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "6.0.0"
+  version: "7.0.0"
   short-description: 知识框架全局编排者
 compatibility: 通用
 ---
@@ -48,6 +48,7 @@ pipeline 被加载后，Agent 根据用户意图选择调用链：
 | 投资知识全流程 | 粗加工、提炼、归档 | 链接收集 → 粗加工 → 维基提炼；路由决策：若 author 在 BLOGGER_CONSOLE 中，并行触发「博主画像纯提炼」 |
 | 博主画像全流程 | 博主画像、画像更新 | 链接收集 → 粗加工 → 博主提炼 → 更新控制台 |
 | 博主画像纯提炼 | 画像提炼（已有资源） | 博主提炼 → 更新控制台 |
+| 雪球画像采集 | 雪球采集、抓取雪球、采集雪球 | 雪球采集 → 粗加工 → 博主提炼 |
 | 仅问答 | 怎么看、分析、q&a | 知识问答 |
 | 仅审查 | 审查、健康度、review | 维基审查 |
 | 仅粗加工 | 粗加工、归档 | 粗加工 |
@@ -140,6 +141,16 @@ pipeline 被加载后，Agent 根据用户意图选择调用链：
 **第三步**：博主提炼 → `{ source_path, config_snapshot, profile_path, template_path: blogger-profile, rules_path: blogger-rules }` → 返回 { profile_content, console_delta }
 **第四步**：写 profile_content
 **第五步**：更新控制台
+
+### 雪球画像采集
+
+**第一步**：雪球采集 → xq-post-fetch `{ xq_id }`（hours/max_posts/output_dir 有默认值，用户可覆盖）
+- 通过 browser-act chrome 模式采集帖子全文
+- 输出：`{output_dir}/雪球采集-{nickname}-{日期}.md`
+**第二步**：粗加工 → `{ source_path, target_dir: WIKI_RAW, type: "帖子集", template_path: raw-frontmatter, rules_path: coarse-rules }`
+**第三步**：博主提炼 → `{ source_path, config_snapshot, profile_path, template_path: blogger-profile, rules_path: blogger-rules }` → 返回 { profile_content, console_delta }
+**第四步**：写 profile_content → BLOGGER_PROFILE/{name}.md
+**第五步**：用 console_delta 更新 BLOGGER_CONSOLE
 
 ### 审查
 
