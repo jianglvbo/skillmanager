@@ -127,6 +127,7 @@ compatibility: 通用
 |:---|:---|:---|
 | 始终 | references/framework-rules.md | 框架边界规则、全局规则 |
 | 粗加工 | references/preview-table-rules.md | 提炼预览表生成规则 |
+| 提炼 | references/tag-taxonomy.md | 标签分类体系 + 编排派发规则 |
 | 提炼 | assets/{模板名}.md | 对应分类的模板 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 |
 

@@ -87,6 +87,11 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── 知识问答/                 ←   知识问答
 │   │   ├── 博主提炼/                 ←   博主画像提炼
 │   │   └── 链接收集/                 ←   链接抓取
+│   ├── 投资框架/                  ← 投资知识框架（新）
+│   │   ├── investment-framework/   ←   全局编排者
+│   │   ├── investment-coarse-processor/ ← 粗加工
+│   │   ├── investment-refine/      ←   提炼执行器
+│   │   └── investment-review/      ←   审查执行器
 │   ├── 元工具/                    ← 元工具
 │   │   ├── 仓库管理/                 ←   Ai/ 仓库管理
 │   │   └── 技能准则/                 ←   Skill 设计准则
@@ -231,6 +236,15 @@ git push origin main
 | `知识问答` | 知识问答：基于维基仓库生成分析 |
 | `博主提炼` | 博主画像提炼（雪球数据管道见 references/） |
 | `链接收集` | 链接收集与抓取 |
+
+### 投资框架/ — 投资知识框架（新）
+
+| Skill | 说明 |
+|:---|:---|
+| `investment-framework` | 全局编排者：三大归属层 + 六大分类 + 标签体系 + 流水线 |
+| `investment-coarse-processor` | 粗加工：格式整理 + 去广告 + 提炼预览表 |
+| `investment-refine` | 提炼执行器：原始资源 → 框架条目（一对多） |
+| `investment-review` | 审查执行器：内容审查 + 结构审查 |
 
 ### 元工具/ — 元工具
 
