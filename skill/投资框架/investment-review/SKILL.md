@@ -52,7 +52,7 @@ compatibility: 通用
 
 **第一步**：读取参数 `{ scope_dirs }`
 **第二步**：归类正确性——文件是否在正确的归属层和分类下
-**第三步**：frontmatter 完整性——通用必填字段（title/createDate/updateDate/tags）+ 模板特定字段是否齐全（如宏观的 event/时效状态、个股的代码/行业/持仓状态、博主的平台）
+**第三步**：frontmatter 完整性——通用必填字段（title/createDate/updateDate/tags）+ 模板特定字段是否齐全（如宏观的 event/时效状态/时间范围、博主的 platform）
 **第四步**：wikilink 有效性——所有 `[[]]` 链接目标是否存在、双向互链是否完整
 **第五步**：标签匹配——行业标签是否与实际内容匹配、个股的行业标签是否一致
 **第六步**：输出结构审查报告

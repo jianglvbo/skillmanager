@@ -2,6 +2,20 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.26.0 — 2026-07-06
+
+### Changed
+- **frontmatter 字段精简**：清理冗余字段，统一命名规范
+  - **个股模板**：移除 `code`（标题已含代码）和 `industry`（与 tags 中行业标签重复），字段从 6 个精简到 4 个
+  - **博主模板**：`平台` → `platform`，统一英文命名风格
+  - **investment-review**：frontmatter 完整性检查描述同步更新
+
+### Removed
+- 批量清理 vault 中 43 个文件的冗余 frontmatter 字段：
+  - `industry`（9 文件）、`code`（9 文件）、`template`（9 文件）
+  - `recorded` → `createDate` 重命名（32 文件）
+  - `summary`/`content_type`/`sources`（各 2 文件）、`aliases`（1 文件）、`color`（1 文件）
+
 ## 1.25.0 — 2026-07-05
 
 ### Changed
