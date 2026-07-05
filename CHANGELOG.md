@@ -2,6 +2,20 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.24.0 — 2026-07-05
+
+### Changed
+- **投资框架 Skill 同步更新**（已安装版本 → 仓库）
+  - **investment-review → v2.0.0**：新增「关联备注发现」功能，审查时扫描全 vault 条目，为缺少跨条目关联的条目提议补充关联（冲突/增强/补充）
+  - **investment-framework**：宏观双层方案落地——顶层 `宏观/` 存通用框架，归属层下 `宏观/` 存博主具体分析；路径表新增 MACRO_BLOGGER、MACRO_OTHER
+  - **investment-coarse-processor**：新增 YAML Frontmatter 规范（引号规则、7 字段标准、block list 格式约束）
+  - **investment-refine**：新增「可读性优先」「忠实原文」原则；标签规则完善（与文件夹分类互补、宁精勿滥）
+  - **模板同步**：9 个 assets 模板 + framework-rules.md + review-rules.md + tag-taxonomy.md 全量更新
+
+### Removed
+- `investment-framework/references/preview-table-rules.md`：孤儿文件清理（提炼预览表已废弃）
+- `investment-refine/references/template-mapping.md`：孤儿文件清理
+
 ## 1.23.0 — 2026-07-04
 
 ### Changed
