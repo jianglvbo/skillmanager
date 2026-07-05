@@ -20,7 +20,7 @@
 
 ## 全局规则
 
-1. 日期格式：frontmatter 中的日期字段用 YYYY年M月D日；tags 中的日期用 yyyy-MM-dd
+1. 日期格式：原始资源用 `date`（帖子发布日期），框架条目用 `createDate`/`updateDate`（条目创建/更新日期），均用 YYYY年M月D日；tags 中的日期用 yyyy-MM-dd
 2. 文件命名：中文，不带日期前缀
 3. wikilink：完整路径 `[[目录/文件名]]`，不加 emoji
 4. 模板文件统一放在 skill 的 `assets/` 目录（非 vault 内），vault 内不设模板目录
