@@ -2,6 +2,19 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.28.0 — 2026-07-07
+
+### Added
+- **脚注分类体系** `references/footnote-taxonomy.md`：脚注使用的唯一真相源，定义三大类脚注（关联/数据溯源/时效标注），含格式规范、添加阶段、适用场景和示例
+- **模板段落布局指引**：9 个模板全部加入格式提示（段落间空一行、不同论点分段、关键判断加粗）
+- **模板脚注占位符**：7 个内容型模板末尾新增 `## 脚注` section + 写作指引中的脚注使用说明
+
+### Changed
+- **framework-rules #20**：从内联定义改为引用 `footnote-taxonomy.md`，新增 `[^data-N]`（数据溯源）和 `[^date-N]`（时效标注）脚注类型
+- **review-rules.md**：关联备注发现行改为引用 footnote-taxonomy.md
+- **investment-review/SKILL.md**：核心原则和 workflow 第七步改为引用 footnote-taxonomy.md，Relative Files 表新增脚注体系文件
+- **investment-framework/SKILL.md**：Relative Files 表新增 `footnote-taxonomy.md`
+
 ## 1.26.0 — 2026-07-06
 
 ### Changed

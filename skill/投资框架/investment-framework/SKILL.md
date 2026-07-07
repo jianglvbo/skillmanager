@@ -54,10 +54,7 @@ compatibility: 通用
 
 ### 粗加工 → investment-coarse-processor
 
-**第一步**：读取粗制品文件（工作区/粗制品/ 下的原始帖子内容）
-**第二步**：整理格式、去广告、补全 metadata（title/source/author/date/type/status）
-**第三步**：将文件从 工作区/粗制品/ 移动到 工作区/原始资源/
-**第四步**：自检——frontmatter 字段是否完整？
+调用 `investment-coarse-processor`，传入 `{ source_path, target_dir, blogger_console_path }`。该 skill 负责整理格式、去广告、补全 metadata 并移入原始资源目录。
 
 ### 提炼 → investment-refine（两步模式）
 
@@ -126,6 +123,7 @@ compatibility: 通用
 |:---|:---|:---|
 | 始终 | references/framework-rules.md | 框架边界规则、全局规则 |
 | 提炼 | references/tag-taxonomy.md | 标签分类体系 + 编排派发规则 |
+| 提炼/审查 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 |
 | 提炼 | assets/{模板名}.md | 对应分类的模板 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 |
 
