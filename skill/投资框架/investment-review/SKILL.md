@@ -187,8 +187,8 @@ compatibility: 通用
 | 场景 | 加载文件 | 内容 |
 |:---|:---|:---|
 | 审查时 | references/review-rules.md（由编排者传入） | 审查维度和检查清单 |
-| 结构审查回检 | references/verify-format.py（由 investment-framework 编排者传入路径） | 格式回检脚本，批量扫描段落布局、脚注格式、内联标记。用法：`python3 verify-format.py <vault_path>` |
 | 审查时 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 |
+| 可选自动化补充 | references/verify-format.py | 格式回检脚本，可在人工结构审查之外跑一次自动扫描作为补充（9 项检查+自动修复）。用法：`python3 verify-format.py <vault_path> [--fix]` |
 
 ---
 
@@ -205,7 +205,7 @@ compatibility: 通用
 ## 自检
 
 - [ ] 内容审查六个维度是否都已检查？（一致性、知行合一、我的vs博主、经验验证、关联备注、已存在脚注关系依据复核）
-- [ ] 结构审查八个维度是否都已检查？（归类、frontmatter完整性含updateDate、引号有效性、wikilink含source字段、脚注格式、段落布局、脚注内联标记、标签）
+- [ ] 结构审查九个维度是否都已检查？（归类、frontmatter完整性含updateDate、引号有效性、wikilink含source字段、脚注格式、段落布局、脚注内联标记、脚注标题、标签）
 - [ ] 脚注格式是否校验（无多余 `]]`、格式为 `[[target]] — 关系：说明`）？
 - [ ] 已存在脚注是否逐条复核关系依据，编撰关系是否记入报告？
 - [ ] 是否只输出了报告而未修改任何文件？
