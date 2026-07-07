@@ -2,6 +2,14 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.29.4 — 2026-07-07
+
+### Added
+- **investment-review skill 新增结构审查自动扫描脚本** `scripts/vault_review.py`（skill 版本升 2.2.0）：
+  - 覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维 + 扩展检查（禁用 `## 来源` 段、source 为 URL、空壳 junk）
+  - 参数化 `--vault` / `--out`，严格只报告不修改（输出 `vault_review_result.json`）
+  - SKILL.md 结构审查 Workflow 新增「辅助 · 自动预扫」步骤与 Relative Files 加载时机
+
 ## 1.29.3 — 2026-07-07
 
 ### Changed

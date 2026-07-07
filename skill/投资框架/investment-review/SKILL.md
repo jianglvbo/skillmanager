@@ -51,7 +51,9 @@ compatibility: 通用
 
 ### 结构审查
 
-审查维度定义见 `references/review-rules.md`，按以下顺序执行：
+审查维度定义见 `references/review-rules.md`，按以下顺序执行。
+
+**辅助 · 自动预扫（可选）**：可先调用 `scripts/vault_review.py --vault <vault路径>` 自动扫描，生成 `vault_review_result.json`，覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维，外加扩展检查（禁用 `## 来源` 段、source 为 URL、空壳 junk）。脚本严格遵守「只报告不修改」原则，仅输出 JSON。人工据 JSON 撰写报告时，聚焦机器无法判定的部分（如段落缺失是否因确无内容、标签语义是否匹配、关联备注提案）。
 
 **第一步**：读取参数 `{ scope_dirs }`
 **第二步**：归类正确性
@@ -174,6 +176,7 @@ compatibility: 通用
 |:---|:---|:---|
 | 审查时 | references/review-rules.md（由编排者传入） | 审查维度和检查清单 |
 | 审查时 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 |
+| 结构审查预扫 | scripts/vault_review.py | 自动扫描脚本，输出 vault_review_result.json（只报告不修改） |
 
 ---
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0 (2026-07-07)
+- 新增 `scripts/vault_review.py` 结构审查自动扫描器：覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维 + 扩展检查（禁用 `## 来源` 段、source 为 URL、空壳 junk），输出 `vault_review_result.json`，严格只报告不修改
+- SKILL.md 结构审查 Workflow 新增「辅助 · 自动预扫」步骤与 Relative Files 加载时机
+
 ## 2.1.0 (2026-07-07)
 - 结构审查新增「脚注格式」维度：检查脚注定义 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`
 - 结构审查 wikilink 有效性扩展至 frontmatter `source` 字段（此前仅扫正文）
