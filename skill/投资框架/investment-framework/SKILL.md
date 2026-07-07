@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---
@@ -48,17 +48,19 @@ compatibility: 通用
 |:---|:---|:---|
 | 全流程（新帖子） | 粗加工、提炼、归档 | investment-coarse-processor → investment-refine |
 | 仅粗加工 | 粗加工、归档 | investment-coarse-processor |
-| 仅提炼 | 提炼 | investment-refine（前置：源文件须已粗加工入原始资源；若仍在粗制品，先跑粗加工） |
+| 仅提炼 | 提炼 | investment-refine（前置：原始资源须存在该文档且 `status=待提炼`；否则先从粗制品粗加工） |
 | 审查 | 审查、review、健康度 | investment-review |
 | 查看全貌 | 投资框架、框架全貌、pipeline | 输出框架说明 |
 
 ### 粗加工前置规则（重要）
 
-提炼的输入**必须**是已完成粗加工、位于 `工作区/原始资源/`（RAW_DIR）的文件，**禁止**直接在 `工作区/粗制品/`（ROUGH_DIR）上提炼。
+提炼的输入**必须**是已完成粗加工、位于 `工作区/原始资源/` 且 `status=待提炼` 的文件，**禁止**直接在 `工作区/粗制品/` 上提炼。
 
-- 用户要求「提炼」某文档时，编排者先检查该文档是否已在 `RAW_DIR`。
-- **若文档仍在 `ROUGH_DIR`（尚未粗加工）**：必须先调用 `investment-coarse-processor` 完成粗加工，再进入 `investment-refine`。不要跳过粗加工、直接在粗制品上提炼。
-- **若文档已在 `RAW_DIR`**：直接进入 `investment-refine` 两步模式。
+判断以**原始资源为锚点**（不主动扫描粗制品目录，避免无谓的索引开销）：
+
+- 用户要求「提炼」某文档时，编排者先查**原始资源**里是否已存在该文档且 `status=待提炼`。
+- **若原始资源中已存在 `status=待提炼` 的该文档**：直接进入 `investment-refine` 两步模式。
+- **若原始资源中不存在**（即没有 `status=待提炼` 的记录）：说明文档仍在 `工作区/粗制品/`，编排者须先调用 `investment-coarse-processor` 完成粗加工（粗加工会将其移入原始资源并置 `status=待提炼`），再进入 `investment-refine`。**不要跳过粗加工、直接在粗制品上提炼。**
 - 用户说「粗加工+提炼」「全流程」「归档」时，自然走「粗加工 → 提炼」串联，无需额外判断。
 
 ### 粗加工 → investment-coarse-processor
@@ -159,4 +161,4 @@ compatibility: 通用
 - [ ] 博主归属是否仅限博主控制台已登记博主？
 - [ ] "其他"层是否只包含投资相关的投资人内容？
 - [ ] "我的"层是否未做任何修改？
-- [ ] 待提炼文档是否已在原始资源（若仍在粗制品，是否已先触发粗加工）？
+- [ ] 待提炼文档是否在原始资源中存在且 `status=待提炼`？若否，是否已先从粗制品完成粗加工？
