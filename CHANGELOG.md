@@ -2,6 +2,20 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.29.3 — 2026-07-07
+
+### Changed
+- **投资框架系列 skill 同步至本地最新版本**（`investment-framework` / `investment-review` / `investment-coarse-processor` / `investment-refine`）：
+  - **investment-framework/references/framework-rules.md**：正式确立规则——`source` 字段为 YAML 数组（多项 `"[[...]]"` 引号包裹），框架条目正文不再设 `## 来源` 段落，来源统一归口 `source` 数组
+  - **9 个模板（assets）**：同步 `source` 字段数组规范（博主/宏观/行业/个股/交易体系/投资心态/投资心得/分析框架-方法论/分析框架-分析档案）
+  - **investment-refine/SKILL.md**：「来源」字段说明补充"可多个，对应产出文件 `source` 数组"
+  - **investment-framework/references/footnote-taxonomy.md**：新增"格式校验"与"关系依据校验"（审查必查），规范脚注 wikilink 单 `]]` 闭合、孤儿脚注检查
+  - **investment-framework/references/review-rules.md**：新增"已存在脚注关系复核"、frontmatter 加 `updateDate`、`source` 字段 wikilink 校验、脚注格式校验
+  - **investment-review/SKILL.md**：版本 → 2.1.0，新增第七步B 关系依据复核、`updateDate` 检查、`source` 字段 wikilink 扫描、脚注格式校验、`fabricated_footnotes` 字段
+
+### Added
+- **investment-framework/CHANGELOG.md、investment-review/CHANGELOG.md**：补 skill 级版本记录（此前缺失）
+
 ## 1.29.2 — 2026-07-07
 
 ### Changed

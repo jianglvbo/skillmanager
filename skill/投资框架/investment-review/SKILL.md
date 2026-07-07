@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
   short-description: 投资框架审查执行器（含关联备注发现）
 compatibility: 通用
 ---
@@ -46,6 +46,7 @@ compatibility: 通用
 **第五步**：我的 vs 博主冲突检查——"我的"层的方法论 vs "博主"层的方法论是否有冲突
 **第六步**：经验验证检查——投资心得中的教训是否在后续分析档案中被验证
 **第七步**：关联备注——为缺少跨条目关联的条目补充脚注（脚注类型和格式见 `references/footnote-taxonomy.md`），在正文相关论述处嵌入标记，文末脚注定义写 wikilink + 关系类型 + 一句话说明
+**第七步B（关系依据复核）**：逐条打开文件中**已存在**的关联脚注，核对目标文件原文是否支撑其关系声明；无依据的一律记为"编撰关系"，在报告中建议删除或降级为 enhance（见 footnote-taxonomy.md「关系依据校验」）
 **第八步**：输出内容审查报告
 
 ### 结构审查
@@ -54,9 +55,10 @@ compatibility: 通用
 
 **第一步**：读取参数 `{ scope_dirs }`
 **第二步**：归类正确性
-**第三步**：frontmatter 完整性
+**第三步**：frontmatter 完整性——必填字段 title/createDate/**updateDate**/tags 齐全；**updateDate 缺失即标记**
 **第四步**：引号有效性（全局规则 #21）
-**第五步**：wikilink 有效性
+**第五步**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记
+**第五步B（脚注格式）**：检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）
 **第六步**：标签匹配
 **第七步**：输出结构审查报告
 
@@ -72,6 +74,7 @@ compatibility: 通用
 | action_alignment_issues | list | 知行合一问题 |
 | framework_conflicts | list | 我的 vs 博主冲突 |
 | verification_gaps | list | 未验证的经验教训 |
+| fabricated_footnotes | list | 编撰关系脚注（已存在但目标文件无原文依据，建议删除或降级） |
 | cross_reference_proposals | list | 提议的跨条目关联（条目路径 + wikilink + 关系类型 + 一句话说明） |
 
 报告模板：
@@ -100,6 +103,11 @@ compatibility: 通用
 ### 经验验证缺口
 - [[条目路径]] — {该教训尚未在后续分析中被验证}
 
+### 编撰关系脚注
+| 条目 | 脚注 | 问题 | 建议 |
+|:---|:---|:---|:---|
+| [[条目路径]] | `[^type-N]` | 关系声明"X"在目标文件 `[[目标]]` 中无原文支撑 | 删除，或降级为 `[^enhance-N]` |
+
 ### 关联备注提案
 以下条目缺少跨条目关联，建议以脚注形式嵌入正文相关论述处（不用独立 section）：
 
@@ -116,9 +124,10 @@ compatibility: 通用
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
 | misplaced_files | list | 归类错误的文件 |
-| incomplete_frontmatter | list | frontmatter 缺失的文件 |
+| incomplete_frontmatter | list | frontmatter 缺失的文件（含 updateDate 缺失） |
 | quoting_issues | list | frontmatter 引号格式错误的文件 |
-| broken_links | list | 失效的 wikilink |
+| broken_links | list | 失效的 wikilink（正文 + source 字段） |
+| footnote_format_issues | list | 脚注格式错误（多余 `]]`/格式不符 `[[target]] — 关系：说明`） |
 | tag_mismatches | list | 标签不匹配的条目 |
 
 报告模板：
@@ -145,6 +154,11 @@ compatibility: 通用
 | 来源文件 | 失效链接 |
 |:---|:---|
 | [[路径]] | [[失效目标]] |
+
+### 脚注格式错误
+| 文件 | 问题 | 当前片段 | 修正建议 |
+|:---|:---|:---|:---|
+| [[路径]] | 多余 `]]` / 格式不符 | `{...买股票就是买公司]]}` | 删去多余 `]`，改为 `[[target]] — 关系：说明` |
 
 ### 标签不匹配
 | 文件 | 问题 |
@@ -175,8 +189,10 @@ compatibility: 通用
 
 ## 自检
 
-- [ ] 内容审查五个维度是否都已检查？（一致性、知行合一、我的vs博主、经验验证、关联备注）
-- [ ] 结构审查五个维度是否都已检查？（归类、frontmatter完整性、引号有效性、wikilink、标签）
+- [ ] 内容审查六个维度是否都已检查？（一致性、知行合一、我的vs博主、经验验证、关联备注、已存在脚注关系依据复核）
+- [ ] 结构审查六个维度是否都已检查？（归类、frontmatter完整性含updateDate、引号有效性、wikilink含source字段、脚注格式、标签）
+- [ ] 脚注格式是否校验（无多余 `]]`、格式为 `[[target]] — 关系：说明`）？
+- [ ] 已存在脚注是否逐条复核关系依据，编撰关系是否记入报告？
 - [ ] 是否只输出了报告而未修改任何文件？
 - [ ] 审查范围是否覆盖了编排者指定的所有目录？
 - [ ] 关联备注提案中每条是否都有内容层面的依据（非编撰）？
