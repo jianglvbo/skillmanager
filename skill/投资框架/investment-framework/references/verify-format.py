@@ -110,6 +110,33 @@ def check_empty_headings(body):
             issues.append({'line': i+1})
     return issues
 
+def check_footnote_heading(body):
+    """Check if footnote definitions exist without ## 脚注 heading."""
+    has_def = bool(re.search(r'^\[\^[^]]+\]:', body, re.MULTILINE))
+    has_heading = bool(re.search(r'^## 脚注', body, re.MULTILINE))
+    if has_def and not has_heading:
+        return [{'type': 'missing_heading'}]
+    return []
+
+def fix_footnote_heading(body):
+    """Add ## 脚注 heading before footnote definitions if missing."""
+    has_def = bool(re.search(r'^\[\^[^]]+\]:', body, re.MULTILINE))
+    has_heading = bool(re.search(r'^## 脚注', body, re.MULTILINE))
+    if has_def and not has_heading:
+        lines = body.split('\n')
+        for i, line in enumerate(lines):
+            if re.match(r'^\[\^[^]]+\]:', line):
+                # Insert ## 脚注 before this line
+                while i > 0 and lines[i-1].strip() == '':
+                    i -= 1
+                lines.insert(i, '')
+                lines.insert(i+1, '## 脚注')
+                lines.insert(i+2, '')
+                break
+        body = '\n'.join(lines)
+        body = re.sub(r'\n{3,}', '\n\n', body)
+    return body
+
 def check_source_field(fm):
     if 'source' not in fm or fm['source'] is None:
         return [{'type': 'missing'}]
@@ -192,6 +219,7 @@ def verify_file(fpath, rel):
         'footnote_quality': check_footnote_quality(body),
         'residual_sections': check_residual_sections(body),
         'empty_headings': check_empty_headings(body),
+        'footnote_heading': check_footnote_heading(body),
         'source_field': check_source_field(fm) if fm else [],
     }
     issues = {k: v for k, v in issues.items() if v}
@@ -208,6 +236,7 @@ def fix_file(fpath):
     body = fix_heading_spacing(body)
     body = fix_residual_sections(body)
     body = fix_empty_headings(body)
+    body = fix_footnote_heading(body)
     if body != original:
         with open(fpath, 'w', encoding='utf-8') as f:
             f.write(fm_text + body)
@@ -233,7 +262,7 @@ def main():
     fix_count = 0
     counters = {k: 0 for k in ['inline_headings', 'heading_spacing', 'compact_paragraphs',
                                 'footnote_inline', 'footnote_quality', 'residual_sections',
-                                'source_field', 'empty_headings']}
+                                'source_field', 'empty_headings', 'footnote_heading']}
     for root, dirs, files in os.walk(vault):
         dirs[:] = [d for d in dirs if d not in {'.obsidian', '.trash', '附件'}]
         rel_root = os.path.relpath(root, vault)
@@ -267,7 +296,8 @@ def main():
         label = {'inline_headings': '同行标题', 'heading_spacing': '标题间距',
                  'compact_paragraphs': '段落紧凑', 'footnote_inline': '脚注孤儿',
                  'footnote_quality': '脚注废话', 'residual_sections': '残留段落',
-                 'source_field': 'source字段', 'empty_headings': '空#标题'}[k]
+                 'source_field': 'source字段', 'empty_headings': '空#标题',
+                 'footnote_heading': '脚注标题'}[k]
         print(f"{label}: {v}")
     print()
     if total_issues == 0:
