@@ -137,6 +137,60 @@ def fix_footnote_heading(body):
         body = re.sub(r'\n{3,}', '\n\n', body)
     return body
 
+# CJK character range for regex
+_CJK = r'[\u4e00-\u9fff\u3400-\u4dbf]'
+
+def check_bold_spacing(body):
+    """Check for bold markers ** directly adjacent to CJK characters without space."""
+    issues = []
+    for i, line in enumerate(body.split('\n')):
+        if '**' not in line:
+            continue
+        # CJK char directly before ** (opening or closing)
+        if re.search(rf'{_CJK}\*\*', line) or re.search(rf'\*\*{_CJK}', line):
+            issues.append({'line': i+1, 'text': line.strip()[:60]})
+    return issues
+
+def fix_bold_spacing(body):
+    """Add spaces between CJK characters and bold markers **."""
+    # CJK before ** → CJK + space + **
+    body = re.sub(rf'({_CJK})\*\*', r'\1 **', body)
+    # ** before CJK → ** + space + CJK
+    body = re.sub(rf'\*\*({_CJK})', r'** \1', body)
+    return body
+
+def check_list_inline(body):
+    """Check for list items crammed onto the same line (not at line start)."""
+    issues = []
+    for i, line in enumerate(body.split('\n')):
+        # Look for "- **" or "- " pattern NOT at the start of the line
+        # i.e., there's non-whitespace content before the list marker
+        if re.search(r'\S.*?^- ', line) or re.search(r'\S.*?^\* ', line):
+            issues.append({'line': i+1, 'text': line.strip()[:60]})
+    return issues
+
+def fix_list_inline(body):
+    """Split list items that are crammed onto the same line."""
+    lines = body.split('\n')
+    new_lines = []
+    for line in lines:
+        # Check if line has list markers not at the start
+        # Pattern: some text followed by "- " mid-line
+        parts = re.split(r'(?<=\S)(?<!^)(- (?:\*\*|[*\d]))', line)
+        if len(parts) > 1:
+            # Reconstruct with proper line breaks
+            current = parts[0]
+            for j in range(1, len(parts), 2):
+                new_lines.append(current)
+                if j + 1 < len(parts):
+                    current = parts[j] + parts[j+1]
+                else:
+                    current = parts[j]
+            new_lines.append(current)
+        else:
+            new_lines.append(line)
+    return '\n'.join(new_lines)
+
 def check_source_field(fm):
     if 'source' not in fm or fm['source'] is None:
         return [{'type': 'missing'}]
@@ -220,6 +274,8 @@ def verify_file(fpath, rel):
         'residual_sections': check_residual_sections(body),
         'empty_headings': check_empty_headings(body),
         'footnote_heading': check_footnote_heading(body),
+        'bold_spacing': check_bold_spacing(body),
+        'list_inline': check_list_inline(body),
         'source_field': check_source_field(fm) if fm else [],
     }
     issues = {k: v for k, v in issues.items() if v}
@@ -237,6 +293,8 @@ def fix_file(fpath):
     body = fix_residual_sections(body)
     body = fix_empty_headings(body)
     body = fix_footnote_heading(body)
+    body = fix_bold_spacing(body)
+    body = fix_list_inline(body)
     if body != original:
         with open(fpath, 'w', encoding='utf-8') as f:
             f.write(fm_text + body)
@@ -262,7 +320,8 @@ def main():
     fix_count = 0
     counters = {k: 0 for k in ['inline_headings', 'heading_spacing', 'compact_paragraphs',
                                 'footnote_inline', 'footnote_quality', 'residual_sections',
-                                'source_field', 'empty_headings', 'footnote_heading']}
+                                'source_field', 'empty_headings', 'footnote_heading',
+                                'bold_spacing', 'list_inline']}
     for root, dirs, files in os.walk(vault):
         dirs[:] = [d for d in dirs if d not in {'.obsidian', '.trash', '附件'}]
         rel_root = os.path.relpath(root, vault)
@@ -297,7 +356,8 @@ def main():
                  'compact_paragraphs': '段落紧凑', 'footnote_inline': '脚注孤儿',
                  'footnote_quality': '脚注废话', 'residual_sections': '残留段落',
                  'source_field': 'source字段', 'empty_headings': '空#标题',
-                 'footnote_heading': '脚注标题'}[k]
+                 'footnote_heading': '脚注标题',
+                 'bold_spacing': '加粗空格', 'list_inline': '列表同行'}[k]
         print(f"{label}: {v}")
     print()
     if total_issues == 0:
