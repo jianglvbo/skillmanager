@@ -23,7 +23,7 @@ compatibility: 通用
 
 - **两层审查独立执行**：内容审查和结构审查分步进行，各自产出独立报告
 - **只报告不修改**：审查只输出问题清单和关联备注提案，不直接修改文件，由用户决定是否采纳
-- **关联备注在审查阶段发现**：内容审查时扫描全 vault 条目，为缺少跨条目关联的条目提议补充脚注。脚注类型、格式和规则详见 `references/footnote-taxonomy.md`（与 tag-taxonomy.md 同级）。关联脚注以脚注形式嵌入正文相关论述处，不用独立 `## 关联` section。提炼阶段可加 `[^data-N]`（数据溯源）和 `[^date-N]`（时效标注），关联脚注仅在审查阶段添加
+- **关联备注在审查阶段发现**：内容审查时扫描全 vault 条目，为缺少跨条目关联的条目提议补充脚注。脚注类型、格式和规则详见 `investment-framework/references/footnote-taxonomy.md`（与 tag-taxonomy.md 同级，位于 investment-framework/references/）。关联脚注以脚注形式嵌入正文相关论述处，不用独立 `## 关联` section。提炼阶段可加 `[^data-N]`（数据溯源）和 `[^date-N]`（时效标注），关联脚注仅在审查阶段添加
 - **参数全部由编排者传入**：审查范围、目标目录由编排者指定
 
 ### 禁止行为
@@ -45,13 +45,15 @@ compatibility: 通用
 **第四步**：知行合一检查——投资心态中记录的纪律 vs 分析档案中的实际行为
 **第五步**：我的 vs 博主冲突检查——"我的"层的方法论 vs "博主"层的方法论是否有冲突
 **第六步**：经验验证检查——投资心得中的教训是否在后续分析档案中被验证
-**第七步**：关联备注——为缺少跨条目关联的条目补充脚注（脚注类型和格式见 `references/footnote-taxonomy.md`），在正文相关论述处嵌入标记，文末脚注定义写 wikilink + 关系类型 + 一句话说明
+**第七步**：关联备注——为缺少跨条目关联的条目补充脚注（脚注类型和格式见 `investment-framework/references/footnote-taxonomy.md`），在正文相关论述处嵌入标记，文末脚注定义写 wikilink + 关系类型 + 一句话说明
 **第七步B（关系依据复核）**：逐条打开文件中**已存在**的关联脚注，核对目标文件原文是否支撑其关系声明；无依据的一律记为"编撰关系"，在报告中建议删除或降级为 enhance（见 footnote-taxonomy.md「关系依据校验」）
 **第八步**：输出内容审查报告
 
 ### 结构审查
 
-审查维度定义见 `references/review-rules.md`，按以下顺序执行：
+审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
+
+**辅助 · 自动预扫（可选）**：可先调用 `scripts/vault_review.py --vault <vault路径>` 自动扫描，生成 `vault_review_result.json`，覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维，外加扩展检查（禁用 `## 来源` 段、source 为 URL、空壳 junk）。脚本严格遵守「只报告不修改」原则，仅输出 JSON。人工据 JSON 撰写报告时，聚焦机器无法判定的部分（如段落缺失是否因确无内容、标签语义是否匹配、关联备注提案）。
 
 **第一步**：读取参数 `{ scope_dirs }`
 **第二步**：归类正确性
@@ -59,8 +61,6 @@ compatibility: 通用
 **第四步**：引号有效性（全局规则 #21）
 **第五步**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记
 **第五步B（脚注格式）**：检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）
-**第五步C（段落布局）**：检查每个 `##`/`###` 标题前后是否有空行（全局规则 #24）；段落间是否有空行分隔
-**第五步D（脚注内联标记）**：检查每条脚注定义是否有正文内联标记、每个内联标记是否有对应定义（全局规则 #25）
 **第六步**：标签匹配
 **第七步**：输出结构审查报告
 
@@ -130,8 +130,6 @@ compatibility: 通用
 | quoting_issues | list | frontmatter 引号格式错误的文件 |
 | broken_links | list | 失效的 wikilink（正文 + source 字段） |
 | footnote_format_issues | list | 脚注格式错误（多余 `]]`/格式不符 `[[target]] — 关系：说明`） |
-| paragraph_layout_issues | list | 段落布局问题（标题前后无空行、段落间无空行分隔） |
-| footnote_inline_issues | list | 脚注内联标记问题（有定义无标记/有标记无定义） |
 | tag_mismatches | list | 标签不匹配的条目 |
 
 报告模板：
@@ -164,16 +162,6 @@ compatibility: 通用
 |:---|:---|:---|:---|
 | [[路径]] | 多余 `]]` / 格式不符 | `{...买股票就是买公司]]}` | 删去多余 `]`，改为 `[[target]] — 关系：说明` |
 
-### 段落布局问题
-| 文件 | 问题 | 位置 |
-|:---|:---|:---|
-| [[路径]] | 标题前无空行 / 标题后无空行 / 段落间无空行 | L{行号}: `{标题}` |
-
-### 脚注内联标记问题
-| 文件 | 问题 | 脚注 ID |
-|:---|:---|:---|
-| [[路径]] | 有定义无内联标记 / 有标记无定义 | `[^id]` |
-
 ### 标签不匹配
 | 文件 | 问题 |
 |:---|:---|
@@ -186,9 +174,9 @@ compatibility: 通用
 
 | 场景 | 加载文件 | 内容 |
 |:---|:---|:---|
-| 审查时 | references/review-rules.md（由编排者传入） | 审查维度和检查清单 |
-| 审查时 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 |
-| 可选自动化补充 | references/verify-format.py | 格式回检脚本，可在人工结构审查之外跑一次自动扫描作为补充（9 项检查+自动修复）。用法：`python3 verify-format.py <vault_path> [--fix]` |
+| 审查时 | investment-framework/references/review-rules.md（由 investment-framework 编排者传入） | 审查维度和检查清单 |
+| 审查时 | investment-framework/references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 |
+| 结构审查预扫 | scripts/vault_review.py | 自动扫描脚本，输出 vault_review_result.json（只报告不修改） |
 
 ---
 
@@ -205,7 +193,7 @@ compatibility: 通用
 ## 自检
 
 - [ ] 内容审查六个维度是否都已检查？（一致性、知行合一、我的vs博主、经验验证、关联备注、已存在脚注关系依据复核）
-- [ ] 结构审查十一个维度是否都已检查？（归类、frontmatter完整性含updateDate、引号有效性、wikilink含source字段、脚注格式、段落布局、脚注内联标记、脚注标题、加粗空格、列表同行、标签）
+- [ ] 结构审查六个维度是否都已检查？（归类、frontmatter完整性含updateDate、引号有效性、wikilink含source字段、脚注格式、标签）
 - [ ] 脚注格式是否校验（无多余 `]]`、格式为 `[[target]] — 关系：说明`）？
 - [ ] 已存在脚注是否逐条复核关系依据，编撰关系是否记入报告？
 - [ ] 是否只输出了报告而未修改任何文件？

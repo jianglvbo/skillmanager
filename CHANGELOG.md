@@ -2,6 +2,24 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.30.1 — 2026-07-09
+
+### Changed
+- **投资框架系列 skill 同步至本地最新（含今日多轮改动）**：
+  - **9 个模板（assets）**：`## 脚注` 标题统一改为 `---` 脚注分隔线（脚注定义落于 `---` 之下、文档末尾）
+  - **investment-framework/references/footnote-taxonomy.md**：脚注区描述由「文末 `## 脚注` section」改为「文末 `---` 脚注区」
+  - **investment-framework/references/framework-rules.md**：新增/更新 #20（关联脚注随文末 `---` 脚注区写入）、#24（繁体转简体）、#25（删除原始资源连带清理）；修正内部对兄弟文件的 `references/` 自引用（改为 `footnote-taxonomy.md`）
+  - **investment-framework/references/review-rules.md**：同步脚注区描述
+  - **investment-coarse-processor/SKILL.md**：新增「繁体转简体」核心原则 + Workflow 步骤 + 自检（繁转简主责）；版本 2.0.0 → 2.1.0
+  - **investment-refine/SKILL.md**：同步繁转简兜底原则与 `## 脚注`→`---` 脚注区描述；Relative Files 路径修正为 `investment-framework/references/...`；版本 2.2.0
+  - **investment-review/SKILL.md**：Relative Files 及内联引用路径修正为 `investment-framework/references/...`；版本 2.1.0
+  - **investment-framework/SKILL.md**：版本 1.1.1 → 2.0.0
+  - **investment-review/scripts/vault_review.py**：脚注检测逻辑由「空 `## 脚注` 占位」改为「遗留 `## 脚注` 标题」
+
+### Removed
+- **investment-framework/CHANGELOG.md、investment-review/CHANGELOG.md**：移除 skill 级 CHANGELOG（统一归口仓库级 `~/Ai/CHANGELOG.md`，遵循 2026-07-09 约定）
+- **investment-framework/references/verify-format.py**：移除（功能由 `vault_review.py` 取代）
+
 ## 1.30.0 — 2026-07-08
 
 ### Added

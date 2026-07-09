@@ -10,7 +10,7 @@ Obsidian 投资知识库 · 结构审查自动扫描器
   - frontmatter 完整性 → REQUIRED / missing_fields（含 updateDate 必填）
   - 引号有效性      → check_quoting()（全局规则 #21）
   - wikilink 有效性 → resolve_link()（正文 + frontmatter `source` 字段）
-  - 脚注格式        → empty_footnote_placeholder（空 ## 脚注 占位，规则 #20）
+  - 脚注格式        → legacy_footnote_heading（遗留 ## 脚注 标题，新格式改用 --- 分隔线，规则 #20）
   - 标签匹配        → tag_issues（博主禁行业标签、标签禁 emoji）
   - 扩展检查        → 禁用 `## 来源` 段（规则 #23）、source 为 URL（应转 wikilink 数组）、空壳 junk 检测
 
@@ -166,7 +166,7 @@ def check_quoting(raw):
 
 # ---------- 扫描 ----------
 F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
-   "empty_footnote_placeholder":[],"forbidden_source_section":[],"blogger_has_source":[],
+   "legacy_footnote_heading":[],"forbidden_source_section":[],"blogger_has_source":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
    "source_as_url":[],"junk_files":[]}
 summary={"total":0,"by_template":{}}
@@ -220,11 +220,9 @@ for rel in sorted(files):
 
     # 段落
     h2=[h.strip() for h in re.findall(r"^##\s+(.+)$",text,re.MULTILINE)]
-    # 空 ## 脚注 占位（规则#20 禁止）
+    # 遗留 ## 脚注 标题（规则#20：新格式改用 --- 分隔线，不允许 ## 脚注 标题）
     if "脚注" in h2:
-        m=re.search(r"^##\s+脚注\s*$(.*?)(?=^##\s|\Z)",text,re.MULTILINE|re.DOTALL)
-        if m and not m.group(1).strip():
-            F["empty_footnote_placeholder"].append(rel)
+        F["legacy_footnote_heading"].append(rel)
     # 禁止 ## 来源（精确匹配标题，避免误伤"## 数据来源"等合法标题）
     if re.search(r"^##\s+来源\s*$", text, re.MULTILINE):
         F["forbidden_source_section"].append((rel,h2))
