@@ -2,6 +2,22 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.30.2 — 2026-07-10
+
+### Changed
+- **投资框架系列 skill 同步至本地最新（本次多轮审查与修复）**：
+  - **investment-framework/references/framework-rules.md**：
+    - #12 扩写：明令**禁止自动补登**博主控制台、未登记作者一律归「其他」层、Agent 绝不就「是否补登」询问用户
+    - #26 加「Agent 严格自律」条款：不替用户预填/填状态栏、不缩短 30 天冷静期、不单方发起回收
+    - #28 新增：个股标题必须带股票代码（`{名称}({代码})`，代码不加市场前缀）；代码确定优先级——文章给出 → 联网搜索 → A+H/美股双上市且文章无法区分时默认 A 股
+  - **investment-framework/references/review-rules.md**：frontmatter 完整性同步 author/source，与 SKILL.md、脚本 REQUIRED 对齐
+  - **investment-framework/SKILL.md** v2.1.3 → 2.1.4：自检强化博主归属校验、加待回收严格项
+  - **investment-framework/assets/**：9 个模板同步至本地最新（canonical 顺序规范化）
+  - **investment-refine/SKILL.md** v2.3.3 → 2.3.4：禁止行为加补登禁令、内容卡加归属层铁律、自检加个股代码项与博主合规项
+  - **investment-review/SKILL.md** v2.3.0 → 2.3.1：结构审查加博主层登记校验、自检同步 author/source/顺序/禁 date
+  - **investment-review/scripts/vault_review.py**：新增 `stock_code_missing`（#28）与 `blogger_not_registered`（#12）两个检测维度，守门链闭环
+  - **investment-coarse-processor/SKILL.md**：自检加「绝不补登」一条（对齐 #12）
+
 ## 1.30.1 — 2026-07-09
 
 ### Changed

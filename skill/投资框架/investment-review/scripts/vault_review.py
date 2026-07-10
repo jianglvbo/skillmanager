@@ -13,6 +13,8 @@ Obsidian 投资知识库 · 结构审查自动扫描器
   - 脚注格式        → legacy_footnote_heading（遗留 ## 脚注 标题，新格式改用 --- 分隔线，规则 #20）
   - 标签匹配        → tag_issues（博主禁行业标签、标签禁 emoji）
   - 扩展检查        → 禁用 `## 来源` 段（规则 #23）、source 为 URL（应转 wikilink 数组）、空壳 junk 检测
+  - 个股代码        → stock_code_missing（规则 #28：个股文件名须含 (代码)）
+  - 博主层登记校验  → blogger_not_registered（规则 #12：博主文件夹名须在博主控制台登记）
 
 设计原则
 --------
@@ -49,6 +51,25 @@ os.makedirs(OUT, exist_ok=True)
 
 # 框架归属层（镜像 investment-framework 路径表；改框架时同步）
 SCOPE = ["我的", "博主", "其他", "宏观"]
+
+# 博主控制台登记名（镜像 framework-rules #12；改控制台时同步）
+# 用于博主层登记校验：博主文件夹名必须在控制台登记，否则属误挂（应迁移其他层）
+def load_blogger_console():
+    p = os.path.join(VAULT, "工作区", "博主控制台.md")
+    names = set()
+    if not os.path.isfile(p):
+        return names
+    for line in open(p, encoding="utf-8"):
+        line = line.strip()
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) >= 2:
+            nm = cells[1]
+            if nm and nm not in ("博主名", "") and not set(nm) <= set("- "):
+                names.add(nm)
+    return names
+BLOGGERS = load_blogger_console()
 
 # emoji：保留彩色表情块，排除箭头/符号箭头（→ ← ↑ ↓ ➡ 等，属合法标题字符）
 EMOJI_RE = re.compile(
@@ -124,7 +145,10 @@ def template_for(rel,fm):
                      ("行业","行业"),("个股","个股"),("宏观","宏观")]:
             if kw in rel: return tp
         return "博主画像"
-    if rel.startswith("宏观/"): return "宏观"
+    if rel.startswith("宏观/"):
+        # 顶层宏观通用框架（无 event/时效状态/时间范围）用标准 6 字段；
+        # 仅「归属层/宏观/」下的具体事件分析才带三事件字段（事件型）
+        return "宏观" if ("event" in fm or "时效状态" in fm or "时间范围" in fm) else "宏观通用"
     if rel.startswith("我的/") or rel.startswith("其他/"):
         if "分析框架" in rel: return "分析档案" if "标的" in fm else "方法论"
         for kw,tp in [("交易体系","交易体系"),("投资心态","投资心态"),("投资心得","投资心得"),
@@ -133,13 +157,29 @@ def template_for(rel,fm):
     return "未知"
 
 # 必填字段（镜像模板 frontmatter 硬约束；改模板时同步）
+# 注意：博主画像自身即博主，无 author 字段
 REQUIRED={
  "博主画像":["title","platform","createDate","updateDate","tags"],
- "宏观":["title","event","时效状态","时间范围","createDate","updateDate","tags","source"],
- "分析档案":["title","标的","createDate","updateDate","status","tags","source"],
+ "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
+ "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
 }
 for t in ["方法论","交易体系","投资心态","投资心得","行业","个股"]:
-    REQUIRED[t]=["title","createDate","updateDate","tags","source"]
+    REQUIRED[t]=["title","createDate","updateDate","author","tags","source"]
+REQUIRED["宏观通用"]=["title","createDate","updateDate","author","tags","source"]  # 顶层宏观通用框架，无 event 三字段
+
+# canonical 字段顺序（镜像 framework-rules #27；改模板时同步）
+# 用于检测字段顺序漂移——仅比对 canonical 中实际存在的字段
+CANON={
+ "方法论":["title","createDate","updateDate","author","tags","source"],
+ "交易体系":["title","createDate","updateDate","author","tags","source"],
+ "投资心态":["title","createDate","updateDate","author","tags","source"],
+ "投资心得":["title","createDate","updateDate","author","tags","source"],
+ "行业":["title","createDate","updateDate","author","tags","source"],
+ "个股":["title","createDate","updateDate","author","tags","source"],
+ "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
+ "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
+ "宏观通用":["title","createDate","updateDate","author","tags","source"],
+}
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）
 EXPECTED_SECTIONS={
@@ -168,14 +208,17 @@ def check_quoting(raw):
 F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "legacy_footnote_heading":[],"forbidden_source_section":[],"blogger_has_source":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
-   "source_as_url":[],"junk_files":[]}
+   "source_as_url":[],"stray_date":[],"field_order":[],"junk_files":[],
+   "stock_code_missing":[],"blogger_not_registered":[]}
 summary={"total":0,"by_template":{}}
 
 files=[]
 for scope in SCOPE:
     for root,dirs,fs in os.walk(os.path.join(VAULT,scope)):
         rr=os.path.relpath(root,VAULT)
-        if rr.split("/")[0] in (".trash",".space",".smart-env",".makemd"): dirs[:]=[]; continue
+        # 排除隐藏/系统目录（任意层级，含子层 .space/templates 等）
+        dirs[:]=[d for d in dirs if d not in (".trash",".space",".smart-env",".makemd")]
+        if rr.split("/")[0] in (".trash",".space",".smart-env",".makemd"): continue
         for f in fs:
             if f.endswith(".md"): files.append(os.path.relpath(os.path.join(root,f),VAULT))
 
@@ -203,6 +246,18 @@ for rel in sorted(files):
             F["macro_template_mismatch"].append((rel,"通用宏观框架使用了宏观事件模板（缺 event/时效状态/时间范围）"))
         else:
             F["missing_fields"].append((rel,tpl,miss))
+
+    # 流浪 date（层间边界硬约束 framework-rules #27：条目层禁止 date）
+    if "date" in fm:
+        F["stray_date"].append((rel,"条目层含禁止字段 date（应为原始资源层发布日）"))
+
+    # 字段顺序 canonical（framework-rules #27）
+    canon=CANON.get(tpl)
+    if canon:
+        expected=[k for k in canon if k in fm]
+        actual=[k for k in fm.keys() if k in canon]
+        if actual!=expected:
+            F["field_order"].append((rel,tpl,actual))
 
     # 引号
     for k,l in check_quoting(raw_fm): F["quoting"].append((rel,k,l))
@@ -254,6 +309,18 @@ for rel in sorted(files):
         elif st=="emoji_or_quote": F["wikilink_issues"].append((rel,wl,"路径含emoji/引号不匹配",sug))
         elif st=="case": F["wikilink_issues"].append((rel,wl,"大小写不匹配",sug))
         elif st=="short_path": F["wikilink_issues"].append((rel,wl,"路径不完整(仅basename)",sug))
+
+    # 个股代码（framework-rules #28）：文件名须含 (代码)
+    if tpl=="个股":
+        bn=os.path.basename(rel)[:-3]
+        if not re.search(r"\([A-Za-z0-9]{4,6}\)$",bn):
+            F["stock_code_missing"].append((rel,"个股文件名缺股票代码，应为 {名称}({代码})，见规则#28"))
+
+    # 博主层作者登记校验（framework-rules #12）：博主文件夹名须在博主控制台登记
+    if rel.startswith("博主/") and BLOGGERS:
+        bname=parts[1]
+        if bname not in BLOGGERS:
+            F["blogger_not_registered"].append((rel,bname))
 
 # junk：缺全部字段的空壳
 for rel,tpl,miss in F["missing_fields"][:]:
