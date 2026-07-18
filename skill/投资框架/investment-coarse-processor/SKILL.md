@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.1.0"
+  version: "2.1.1"
   short-description: 投资框架粗加工执行器
 compatibility: 通用
 ---
@@ -47,9 +47,9 @@ compatibility: 通用
 ```yaml
 ---
 title: "{帖子标题}"
-source: "{来源链接}"
+source: "{描述性来源，如：AI整理 - 小红书 / 雪球长文}"
 author: "{作者名}"
-date: "{YYYY年M月D日}"
+date: {YYYY-MM-DD}
 type: "帖子/长文/链接/视频整理"
 status: "待提炼"
 tags: []
@@ -131,3 +131,5 @@ tags:
 - [ ] 是否未生成提炼预览表？
 - [ ] 未添加 layer/category 等非原始资源字段？
 - [ ] 是否未将未登记作者「补登」进博主控制台（仅对照判断，绝不自动新增；未登记作者其条目归「其他」层，见 framework-rules #12）？
+- [ ] date 是否为 `yyyy-MM-dd` 裸写无引号（见全局规则 #1）？若带引号或中文格式（如 YYYY年M月D日）即违规
+- [ ] source 是否为描述性来源（如"AI整理 - 小红书"），而非 URL？

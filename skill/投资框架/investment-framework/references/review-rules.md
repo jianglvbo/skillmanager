@@ -24,7 +24,7 @@
 | 审查维度 | 检查什么 |
 |:---|:---|
 | 归类正确性 | 文件是否放在正确的归属层（我的/博主/其他）和分类下 |
-| frontmatter 完整性 | 通用必填字段（title/createDate/updateDate/**author**/tags/**source**）+ 模板特定字段是否齐全；**updateDate 与 author、source 为必填**，缺失即标记 |
+| frontmatter 完整性 | 通用必填字段（title/createDate/updateDate/**author**/tags/**source**）+ 模板特定字段是否齐全；**updateDate 与 author、source 为必填**，缺失即标记；**字段顺序须按所属分类模板 canonical 排列（framework-rules #27，如标准 `title→createDate→updateDate→author→tags→source`）**；**框架条目 frontmatter 禁止出现 `date` 字段（层间边界，framework-rules #27）** |
 | 引号有效性 | frontmatter 中双引号包裹的值内部是否含未转义双引号（违反全局规则 #21） |
 | wikilink 有效性 | **正文与 frontmatter `source` 字段**中的 wikilink 目标是否存在、双向互链是否完整 |
 | 脚注格式 | 脚注定义中 wikilink 是否以单个 `]]` 闭合（禁止 `]]]` 或多余 `]]`）；格式是否为 `[[target]] — 关系：说明`（详见 footnote-taxonomy.md「格式校验」） |

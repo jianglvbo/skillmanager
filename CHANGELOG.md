@@ -2,6 +2,20 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.31.0 — 2026-07-18
+
+### Added
+- **投资框架 skill 新增：雪球帖子采集 `skill/投资框架/xq-post-fetch/`**（v4.0.1，disable: true）：基于 browser-act CLI（chrome 模式）采集雪球博主帖子全文，自动检测截断并补全长文，输出兼容粗加工的结构化 markdown；不内置博主列表、不直连 API（绕阿里云 WAF）
+
+### Changed
+- **投资框架系列 skill 同步至本地最新**：
+  - **investment-coarse-processor/SKILL.md** v2.1.0 → 2.1.1：粗加工模板示例 `source` 改为描述性来源（如"AI整理 - 小红书"）、`date` 改为 `yyyy-MM-dd` 裸写；自检加 date 格式与 source 非 URL 两条
+  - **investment-framework/SKILL.md** v2.1.4 → 2.1.5
+  - **investment-framework/references/framework-rules.md** #27：原始资源层字段顺序建议（title→source→author→date→type→status→tags），粗加工须按序写入防漂移
+  - **investment-framework/references/review-rules.md**：frontmatter 审查加 canonical 字段顺序要求 + 框架条目禁止 `date` 字段（层间边界 #27）
+  - **investment-framework/assets/博主.md**：模板重构——新增 platform_id/following/markets/style_keywords/summary/info_cutoff 字段，新增「身份识别」「擅长与局限」「言论追踪」「预测记录（准确率追踪）」章节，强化「绝不自动补登」
+  - **investment-framework/assets/**：`个股.md`、`分析框架-方法论.md` 同步字段顺序/边界说明
+
 ## 1.30.2 — 2026-07-10
 
 ### Changed

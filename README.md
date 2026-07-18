@@ -291,7 +291,7 @@ git push origin main
 
 | Skill | 说明 |
 |:---|:---|
-| `雪球帖子采集` | 雪球博主帖子采集（Chrome Extension MCP） |
+| `雪球帖子采集` | 雪球博主帖子采集（browser-act chrome 模式） |
 
 ---
 

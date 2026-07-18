@@ -77,7 +77,7 @@
    - **Agent 严格自律**：绝不替用户在控制台预填条目或填 `状态` 栏；绝不缩短 30 天冷静期；超期回收必出理由报告。回收动作严格由「用户填三栏 + 审查超期执行」驱动，Agent 不得单方面发起回收。
 
 27. 层间 frontmatter 字段集边界（防提炼误带字段）：框架条目层与原始资源层使用**不同的 frontmatter 字段集**，提炼时只搬运语义对应的字段，绝不可把原始资源的字段整体照搬进条目：
-   - **原始资源层**（粗加工产出，`工作区/原始资源/`）字段集：`title` / `source` / `author` / `date` / `type` / `status` / `tags`（7 字段；`date` = 帖子发布日，`status` = `待提炼`）。
+   - **原始资源层**（粗加工产出，`工作区/原始资源/`）字段集：`title` / `source` / `author` / `date` / `type` / `status` / `tags`（7 字段；`date` = 帖子发布日，`status` = `待提炼`）。**字段顺序建议（防漂移）**：`title → source → author → date → type → status → tags`——粗加工须按此顺序写入。
    - **框架条目层**（提炼产出，落各分类模板）字段集：各分类模板定义者——`title` / `createDate` / `updateDate` / `author` / `tags` / `source` + 分析档案额外 `标的` / `status` + 宏观额外 `event` / `时效状态` / `时间范围`。
    - **硬约束**：框架条目 frontmatter **禁止出现 `date` 字段**（那是原始资源层的发布日字段）；提炼从原始资源生成条目时，仅取 `author` / `source` 等语义对应字段，**绝不把原始资源的 `date` 带入条目**——否则会在条目层制造"流浪 date"，破坏 frontmatter 规范（呼应 #1 日期格式约定）。
    - **字段顺序（canonical）硬约束**：框架条目 frontmatter 字段必须按所属分类模板的 canonical 顺序排列（各 `assets/*.md` 模板即唯一真相源）。标准 6 字段顺序：`title → createDate → updateDate → author → tags → source`；分析档案：`title → 标的 → createDate → updateDate → author → status → tags → source`；宏观事件型：`title → event → 时效状态 → 时间范围 → createDate → updateDate → author → tags → source`。**禁止打乱顺序**（如 `source` 前置、`tags` 置底）。审查（investment-review 结构审查第三步）与 `vault_review.py` 据此检测顺序漂移。
