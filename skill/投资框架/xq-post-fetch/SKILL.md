@@ -138,6 +138,8 @@ browser-act session close {name}
 
 如果博主文件夹不存在 → 跳过此步，不自动创建
 
+**采集完成即结束**：本 skill 仅负责采集。产出的帖子集按 `framework-rules.md` #29 例外流程提炼（直接提炼、不进原始资源、提炼后删源文件），**精华去糟粕标准与判定清单见 `references/refine-checklist.md`，由 investment-refine 执行**——采集阶段不分析内容（遵守本 skill 禁止行为）。
+
 ---
 
 ## Output Format
@@ -189,6 +191,7 @@ tags: []
 | 场景 | 加载文件 | 内容 |
 |:---|:---|:---|
 | 第四步解析帖子 | `references/page-structure.md` | 帖子 markdown 结构、post_id 提取、时间格式转换、互动数据解析、截断检测、引用内容处理、emoji 清洗 |
+| 采集后提炼帖子集 | `references/refine-checklist.md` | 精华去糟粕价值流水线、灰区裁决、言论追踪 4 类落位、丢弃确认清单（framework-rules #29 例外，由 investment-refine 加载） |
 | 始终 | browser-act SKILL.md | browser-act 命令参考和工作流 |
 | 始终 | `browser-act get-skills core` 输出 | 运行时环境状态和操作指令 |
 
