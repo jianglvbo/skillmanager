@@ -2,6 +2,18 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.31.1 — 2026-07-19
+
+### Changed
+- **内容提取/xq-post-fetch** v4.0.0 → v4.1.0：基于实际采集执行中发现的 9 处缺口优化
+  - 新增 `references/page-structure.md`（149 行）：帖子 markdown 结构 pattern、post_id 正则提取、4 种时间格式转换表、互动数据解析规则、截断检测判断逻辑、引用内容处理策略、emoji 清洗正则
+  - 第三步：会话管理逻辑——先 `session list` 判断归属，复用本对话 session 或新建
+  - 第四步：加滚动加载更多帖子步骤（scroll down + 去重合并）
+  - 第五步：引用内容保留策略、emoji 清洗规则
+  - 第六步：`browser delete` 改为 `session close`（释放资源而非删除浏览器）
+  - 新增第八步：采集后更新博主画像 `info_cutoff` 日期
+  - 自检清单从 7 条扩充至 11 条
+
 ## 1.31.0 — 2026-07-18
 
 ### Added
