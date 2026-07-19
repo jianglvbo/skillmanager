@@ -138,13 +138,13 @@ browser-act session close {name}
 
 如果博主文件夹不存在 → 跳过此步，不自动创建
 
-**采集完成即结束**：本 skill 仅负责采集。产出的帖子集按 `framework-rules.md` #29 例外流程提炼（直接提炼、不进原始资源、提炼后删源文件），**精华去糟粕标准与判定清单见 `references/refine-checklist.md`，由 investment-refine 执行**——采集阶段不分析内容（遵守本 skill 禁止行为）。
+**采集完成即结束**：本 skill 仅负责采集。产出的帖子集按 `framework-rules.md` #29 例外流程，由 investment-refine **直接执行**提炼（不进原始资源、不需用户确认、提炼后源文件移废纸篓）。精华去糟粕判定清单见 `references/refine-checklist.md`（由 investment-refine 加载）。采集阶段不分析内容（遵守本 skill 禁止行为）。
 
 ---
 
 ## Output Format
 
-输出为 markdown 文件，兼容粗加工（coarse-processor）输入格式：
+输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）：
 
 ```markdown
 ---
@@ -154,7 +154,7 @@ author: "{nickname}"
 date: "{YYYY年M月D日}"
 recorded: "{YYYY年M月D日}"
 type: "帖子集"
-status: "待粗加工"
+status: "待提炼"
 tags: []
 ---
 

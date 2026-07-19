@@ -245,7 +245,7 @@ git push origin main
 |:---|:---|
 | `investment-framework` | 全局编排者：三大归属层 + 六大分类 + 标签体系 + 流水线 |
 | `investment-coarse-processor` | 粗加工：格式整理 + 去广告 + metadata 补全 |
-| `investment-refine` | 提炼执行器：原始资源 → 框架条目（一对多，可读性优先） |
+| `investment-refine` | 提炼执行器：直接执行，原始资源/帖子集 → 框架条目（一对多，可读性优先） |
 | `investment-review` | 审查执行器：内容审查 + 结构审查 + 关联备注发现 |
 
 ### 元工具/ — 元工具
