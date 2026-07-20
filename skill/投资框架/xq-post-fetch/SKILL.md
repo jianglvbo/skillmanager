@@ -162,7 +162,7 @@ tags: []
 
 {正文全文}
 
-> 📊 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | ✅ 全文
+> 📊 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | ✅ 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
 
 ---
 
@@ -170,7 +170,7 @@ tags: []
 
 {正文全文}
 
-> 📊 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | ⚠️ 摘要
+> 📊 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | ⚠️ 摘要 | [原文](https://xueqiu.com/{xq_id}/{post_id})
 ```
 
 | 字段 | 类型 | 说明 |
@@ -183,6 +183,7 @@ tags: []
 | like_count | int | 点赞数 |
 | is_pinned | bool | 是否置顶（📌 标记） |
 | completeness | string | ✅ 全文 / ⚠️ 摘要 |
+| post_url | string | 帖子原文链接（`https://xueqiu.com/{xq_id}/{post_id}`） |
 
 ---
 
