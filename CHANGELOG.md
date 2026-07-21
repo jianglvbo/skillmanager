@@ -2,6 +2,14 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.32.1 — 2026-07-21
+
+### Changed
+- **投资框架系列 skill 言论追踪加「原文链接」列**：
+  - **investment-framework/assets/博主.md**：言论追踪 4 子表表头新增「原文链接」列
+  - **investment-framework/references/framework-rules.md** #30：统一列定义加「原文链接」
+  - **xq-post-fetch/references/refine-checklist.md** §3：补原文链接填写说明（帖子 URL，无链接填 —）
+
 ## 1.32.0 — 2026-07-19
 
 ### Changed
