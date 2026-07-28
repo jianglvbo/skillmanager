@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.1.1"
+  version: "2.2.1"
   short-description: 投资框架粗加工执行器
 compatibility: 通用
 ---
@@ -41,7 +41,8 @@ compatibility: 通用
 **第一步**：读取参数 `{ source_path, target_dir, blogger_console_path }`
 **第二步**：读取 source_path 文件内容
 **第三步**：整理格式——去除多余空行、统一标题层级、修复编码；**若正文为繁体中文，转为简体中文**（仅字形转换，不改用词、语气、比喻、案例）
-**第四步**：去广告——移除推广内容、社交媒体分享按钮文本、无关的页脚
+**第四步**：去广告——移除推广内容、社交媒体分享按钮文本、无关的页脚。特别注意 AI 整理工具（笔记同步助手等）产出的固定模式：
+- **尾部广告**：`视频时长 X分X秒 · 消耗 N 积分 · 积分余额 N`、`AI整理设置可以[点此调整](...)`、`内容效果不满意？[点此反馈](...)` 等固定尾部，整段删除
 **第五步**：补全 frontmatter metadata：
 
 ```yaml

@@ -92,7 +92,8 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── investment-framework/   ←   全局编排者
 │   │   ├── investment-coarse-processor/ ← 粗加工
 │   │   ├── investment-refine/      ←   提炼执行器
-│   │   └── investment-review/      ←   审查执行器
+│   │   ├── investment-review/      ←   审查执行器
+│   │   └── xq-post-fetch/          ←   雪球帖子采集
 │   ├── 元工具/                    ← 元工具
 │   │   ├── 仓库管理/                 ←   Ai/ 仓库管理
 │   │   └── 技能准则/                 ←   Skill 设计准则
@@ -247,6 +248,7 @@ git push origin main
 | `investment-coarse-processor` | 粗加工：格式整理 + 去广告 + metadata 补全 |
 | `investment-refine` | 提炼执行器：直接执行，原始资源/帖子集 → 框架条目（一对多，可读性优先） |
 | `investment-review` | 审查执行器：内容审查 + 结构审查 + 关联备注发现 |
+| `xq-post-fetch` | 雪球帖子采集：browser-act 抓全文 + 截断补全 + 结构化 markdown 输出 |
 
 ### 元工具/ — 元工具
 
@@ -301,4 +303,4 @@ MIT
 
 ---
 
-*最后更新：2026-07-10*
+*最后更新：2026-07-28*

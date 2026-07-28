@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.4.0"
+  version: "2.5.1"
   short-description: 投资框架提炼执行器（直接执行）
 compatibility: 通用
 ---
@@ -67,10 +67,21 @@ compatibility: 通用
 按分析结果直接执行：
 
 1. 按归属层和分类确定文件路径
+
+**写入硬约束（创建/修改任何文件前必须满足，违反即重写）**：
+
+- **wikilink 完整路径**：所有 wikilink（正文、source 字段、博主档案言论追踪的具象化指针）必须写完整路径 `[[博主/名/分类/文件名]]`，**禁止仅写 basename**（如 `[[对手盘交易框架]]`）。唯一例外：博主档案内指向自身文件夹下条目时可省略 `博主/{名}/` 前缀（Obsidian 同目录解析）
+- **个股文件名带代码**：个股条目文件名必须为 `{名称}({代码})`（#28），代码缺失时联网检索确认，不得留空
+- **禁止 `## 来源` 段落**：来源信息一律写入 frontmatter `source` 数组（#23），正文不设 `## 来源` section
+- **模板 section 全量输出**：按所属分类模板的 section 结构全量输出（标题 + 内容）。某 section 确实无内容时写一句最小说明（如"暂无验证记录"），**不得省略 section 标题**
+- **frontmatter 字段顺序 canonical**：按模板定义的字段顺序写入，禁止打乱（#27）
+- **日期裸写**：`createDate`/`updateDate` 裸写 `yyyy-MM-dd`，无引号（#1）
+- **原文链接格式**：表格内链接一律用 `[原文](URL)` 格式，**禁止贴裸 URL**（撑宽表格、Obsidian 渲染为纯文本）（#30）
+
 2. 选择对应模板（从编排者传入的 templates）
 3. 创建文件，填写 frontmatter + 正文内容。正文按模板中的写作指引，保留原文的比喻、案例、推理链条，用自然语言段落而非干巴巴的要点罗列
 4. 条目间关联在执行汇报中标注方向即可，**不在文件中创建 `## 关联` 章节或空脚注占位**。该关联的正式落地是审查阶段写入文末 `---` 脚注区的关联脚注（`[^enhance-N]`/`[^complement-N]` 等，见 footnote-taxonomy.md）。仅当正文确有具体数据/时效判断时，提炼阶段才输出 `---` 脚注区并填 `[^data-N]`/`[^date-N]`（脚注区以 `---` 分隔线标识，无 `## 脚注` 标题）
-5. 如涉及已登记博主，读取 `博主/{博主名}/{博主名}.md`，在信息汇总章节追加本次条目
+5. 如涉及已登记博主，读取 `博主/{博主名}/{博主名}.md`，在言论追踪表追加本次条目。**具象化指针必须用完整路径**：`见 [[博主/{名}/{分类}/{文件名}]]`，禁止 `见 [[文件名]]`
 6. 如涉及宏观事件：通用宏观框架放 `宏观/`，博主的具体宏观分析放 `博主/{博主名}/宏观/`，填写 `event` 字段以便跨博主聚合，并在传导路径中关联行业/个股 wikilink
 7. 将源文件的 status 改为 `已提炼`（常规路径）；帖子集路径按 #29 将源文件移入 `~/.Trash`
 
@@ -94,7 +105,9 @@ compatibility: 通用
 
 | 场景 | 加载文件 | 内容 |
 |:---|:---|:---|
-| 提炼时 | investment-framework/references/tag-taxonomy.md（由 investment-framework 编排者加载并传入） | 标签分类体系，用于选择标签 |
+| 提炼时 | investment-framework/references/tag-taxonomy.md（由编排者传入） | 标签分类体系，用于选择标签 |
+| 提炼时 | investment-framework/references/footnote-taxonomy.md（由编排者传入） | 脚注类型定义，用于 [^data-N]/[^date-N] 格式 |
+| 提炼时 | investment-framework/assets/{模板名}.md（由编排者传入） | 对应分类的 frontmatter + 正文模板 |
 
 ---
 
@@ -116,6 +129,7 @@ compatibility: 通用
 - [ ] 产出正文是否为简体中文（若原始资源为繁体，是否已兜底转换）？
 - [ ] 每个条目的标签是否来自标签体系？
 - [ ] 每个条目是否使用了正确的模板？
+- [ ] 写入硬约束是否全部满足？（wikilink 完整路径、个股带代码、无 `## 来源` 段、模板 section 全量、字段顺序 canonical、日期裸写、原文链接 `[原文](URL)` 格式）
 - [ ] frontmatter 是否完整且规范？——`author` 必填；字段顺序符合所属分类模板 canonical（标准 `title→createDate→updateDate→author→tags→source`，见 framework-rules #27）；**无 `date` 字段**（#27 层间边界）；`createDate`/`updateDate` 裸写无引号
 - [ ] 如涉及博主，博主档案是否已更新？
 - [ ] 归属层是否合规？未登记作者是否归入「其他」层（而非博主层、而非被自动补登）？

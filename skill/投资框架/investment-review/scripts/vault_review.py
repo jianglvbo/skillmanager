@@ -144,6 +144,9 @@ def template_for(rel,fm):
                      ("交易体系","交易体系"),("投资心态","投资心态"),("投资心得","投资心得"),
                      ("行业","行业"),("个股","个股"),("宏观","宏观")]:
             if kw in rel: return tp
+        # 直接放在 博主/*/分析框架/ 下（无 方法论/分析档案 子目录）的条目：
+        # 上面带子目录的关键词都不匹配，须在此兜底归类，避免误判为博主画像
+        if "分析框架" in rel: return "分析档案" if "标的" in fm else "方法论"
         return "博主画像"
     if rel.startswith("宏观/"):
         # 顶层宏观通用框架（无 event/时效状态/时间范围）用标准 6 字段；
@@ -183,7 +186,7 @@ CANON={
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）
 EXPECTED_SECTIONS={
- "博主画像":["博主画像","学到的东西"],
+ "博主画像":["博主画像"],
  "方法论":["适用场景","方法步骤","关键指标","案例"],
  "分析档案":["使用的方法论","核心结论","分析过程","估值判断","决策","结果跟踪"],
  "交易体系":["规则","适用条件"],
@@ -284,7 +287,7 @@ for rel in sorted(files):
     # 博主画像
     if tpl=="博主画像":
         if "source" in fm: F["blogger_has_source"].append((rel,"博主画像不应含 source"))
-        if "学到的东西" not in h2: F["missing_core_sections"].append((rel,"博主画像",["学到的东西"]))
+        if "博主画像" not in h2: F["missing_core_sections"].append((rel,"博主画像",["博主画像"]))
     # 缺核心段（非脚注）
     miss_sec=[s for s in EXPECTED_SECTIONS.get(tpl,[]) if s not in h2]
     if miss_sec and tpl!="博主画像":
@@ -310,11 +313,14 @@ for rel in sorted(files):
         elif st=="case": F["wikilink_issues"].append((rel,wl,"大小写不匹配",sug))
         elif st=="short_path": F["wikilink_issues"].append((rel,wl,"路径不完整(仅basename)",sug))
 
-    # 个股代码（framework-rules #28）：文件名须含 (代码)
+    # 个股代码（framework-rules #28）：文件名须为 {名称}({代码})，不带后缀
     if tpl=="个股":
         bn=os.path.basename(rel)[:-3]
         if not re.search(r"\([A-Za-z0-9]{4,6}\)$",bn):
-            F["stock_code_missing"].append((rel,"个股文件名缺股票代码，应为 {名称}({代码})，见规则#28"))
+            if re.search(r"\([A-Za-z0-9]{4,6}\)",bn):
+                F["stock_code_missing"].append((rel,"个股文件名含非标准后缀，应为 {名称}({代码})，见规则#28"))
+            else:
+                F["stock_code_missing"].append((rel,"个股文件名缺股票代码，应为 {名称}({代码})，见规则#28"))
 
     # 博主层作者登记校验（framework-rules #12）：博主文件夹名须在博主控制台登记
     if rel.startswith("博主/") and BLOGGERS:
