@@ -8,7 +8,7 @@ description: |
   依赖条件：browser-act CLI 已安装 + Chrome 浏览器运行中 + 雪球已登录。
   区别于 browser-act：xq-post-fetch 是雪球专用采集引擎，browser-act 是通用浏览器自动化。
 metadata:
-  version: "4.1.0"
+  version: "4.1.1"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---

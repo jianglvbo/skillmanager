@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.4.1"
+  version: "2.4.2"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---

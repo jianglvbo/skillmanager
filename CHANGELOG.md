@@ -2,6 +2,13 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.33.2 — 2026-07-30
+
+### Changed
+- **investment-framework** v2.4.1 → v2.4.2：framework-rules #29 `source` 规则改为「填雪球原文帖子链接（取自批次 `[原文]`），禁止用采集批次文件名」——修复批次删除后 source 悬空/不可追溯问题
+- **investment-refine** v2.5.1 → v2.5.2：写入硬约束新增 `source` 填真实原文链接、禁止批次名
+- **xq-post-fetch** v4.1.0 → v4.1.1：refine-checklist #0 `source` 指引改为原文帖子链接
+
 ## 1.33.1 — 2026-07-30
 
 ### Changed
