@@ -164,7 +164,7 @@ def template_for(rel,fm):
 # 必填字段（镜像模板 frontmatter 硬约束；改模板时同步）
 # 注意：博主画像自身即博主，无 author 字段
 REQUIRED={
- "博主画像":["title","platform","createDate","updateDate","tags"],
+ "博主画像":["title","platform","special_following","createDate","updateDate"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
  "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
 }
@@ -184,6 +184,7 @@ CANON={
  "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
  "宏观通用":["title","createDate","updateDate","author","tags","source"],
+ "博主画像":["title","platform","platform_id","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 8 字段 canonical 顺序（无 following）
 }
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）

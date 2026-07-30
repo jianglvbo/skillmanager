@@ -158,3 +158,5 @@
     - **禁止留空 `-`**：某行原文链接为 `-` / 空值 = **不合格记录**。撰写时若无来源帖链接，**该行不建**（不得建空链接占位行）；已落库但发现空链接的行 = 删除或补链接。
     - **三表列定义**：言论追踪 4 子表见 #30；个股买卖记录见 #31（已含原文链接列）；预测记录列：预测内容 | 时间 | 状态 | 原文链接。
     - **审查联动**：`investment-review` / `vault_review.py` 据此检测「三表是否都含原文链接列」「是否存在空原文链接行」，空链接行标为问题级。
+
+36. 博主画像 frontmatter 仅含「笔记属性」8 字段：`title` / `platform` / `platform_id` / `special_following` / `summary` / `createDate` / `updateDate` / `info_cutoff`（canonical 顺序按此；`vault_review.py` 的 `CANON["博主画像"]` 据此校验）。`special_following`（是否特别关注）取值 `true` / `false`，**取自博主控制台「是否特别关注」列**（控制台为博主层唯一权威清单，见 #12）；「关注」由「在控制台登记」本身隐含，故不单独设 `following` 字段，无 `special_following ⇒ following` 一致性校验。`markets` / `style_keywords` / `tags` 原属内容领域分类，已随用户决定从博主画像移除——**博主画像是全部模板中唯一不含 `tags` 的模板**，`vault_review.py` 对博主画像豁免 `tag_issues` 空标签检查（代码中 `tpl!="博主画像"` 分支）。

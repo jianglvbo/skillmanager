@@ -2,6 +2,12 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.33.4 — 2026-07-30
+
+### Changed
+- **investment-framework** v2.4.3 → v2.4.4：`assets/博主.md` 博主画像 frontmatter 定型为 8 字段（移除 `following` / `markets` / `style_keywords` / `tags` 及字段行 `#` 注释）；`references/framework-rules.md` #36 明确「笔记属性=8 字段、关注由在控制台登记隐含不单设 following、博主画像不含 markets/style_keywords/tags、frontmatter 须为标量无注释不用块列表」
+- **investment-review** v2.4.1 → v2.4.2：`scripts/vault_review.py` 博主画像 `REQUIRED` 去 `following`/`tags`、`CANON` 定为 8 字段顺序；删 `special_following` 一致性校验块与字典键 `blogger_special_follow_consistency`；博主画像豁免 `tag_issues` 空标签检查（`tpl!="博主画像"` 分支）
+
 ## 1.33.3 — 2026-07-30
 
 ### Changed
