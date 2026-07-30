@@ -146,7 +146,7 @@ qmd 搜索返回的是 `qmd://` 前缀的 URI，读/写文件需转换为真实�
 
 ```
 qmd://obsidian/旧文件/个股研究/耀才证券.md
-→ /Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/旧文件/个股研究/耀才证券.md
+→ {你的 Obsidian vault 路径}/旧文件/个股研究/耀才证券.md
 ```
 
 转换方式：`qmd get` 直接输出内容，或用 shell 拼接真实路径。
@@ -167,12 +167,12 @@ qmd update && qmd embed
 
 | 项目 | 值 |
 |------|-----|
-| **Vault 路径** | `/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents` |
+| **Vault 路径** | `{你的 Obsidian vault 路径}` |
 | **qmd Collection 名** | `obsidian` |
 | **URI 前缀** | `qmd://obsidian/` |
 | **文件数** | 45（`**/*.md`） |
 
-> **路径映射**：`qmd://obsidian/旧文件/xxx.md` ↔ `/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/旧文件/xxx.md`
+> **路径映射**：`qmd://obsidian/旧文件/xxx.md` ↔ `{你的 Obsidian vault 路径}/旧文件/xxx.md`
 >
 > 搜索用 qmd URI，读/写文件用真实路径。
 

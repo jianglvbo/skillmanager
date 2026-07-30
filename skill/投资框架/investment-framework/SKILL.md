@@ -67,7 +67,7 @@ compatibility: 通用
 
 ### 粗加工 → investment-coarse-processor
 
-调用 `investment-coarse-processor`，传入 `{ source_path, target_dir, blogger_console_path }`。该 skill 负责整理格式、去广告、补全 metadata 并移入原始资源目录。
+调用 `investment-coarse-processor`，传入 `{ source_path, target_dir, blogger_console_path }`。该 skill 负责整理格式、去广告、补全 metadata 并移入原始资源目录。**硬约束：绝不修改/精简/重组正文内容**——正文（含图片引用、转录稿段落、重复内容）原封不动保留，只动 frontmatter 和末尾工具广告。
 
 ### 提炼 → investment-refine（直接执行）
 
@@ -89,7 +89,7 @@ compatibility: 通用
 
 | 常量 | 值 | 说明 |
 |:---|:---|:---|
-| VAULT_ROOT | /Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库 | vault 根目录 |
+| VAULT_ROOT | {你的 Obsidian vault 路径}/投资知识库 | vault 根目录（安装时按实际路径配置） |
 | MY_DIR | {VAULT_ROOT}/我的 | 用户自管层 |
 | BLOGGER_DIR | {VAULT_ROOT}/博主 | 已登记博主层 |
 | OTHER_DIR | {VAULT_ROOT}/其他 | 未登记投资人层 |

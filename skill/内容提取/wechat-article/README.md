@@ -14,7 +14,7 @@
 ## 安装
 
 ```bash
-cp -r ~/Ai/skill/wechat-article ~/.qoderworkcn/skills/wechat-article
+cp -r ~/Ai/skill/内容提取/wechat-article ~/.qoderwork/skills/wechat-article
 ```
 
 ## 依赖

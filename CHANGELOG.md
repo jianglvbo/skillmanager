@@ -2,6 +2,18 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.33.1 — 2026-07-30
+
+### Changed
+- **investment-framework** v2.4.1 → v2.4.2：粗加工调用段新增硬约束说明（绝不修改/精简/重组正文内容）
+- **investment-coarse-processor** v2.2.1 → v2.2.2：禁止行为新增「绝不修改、精简、重组、删节正文内容」完整条目
+
+### Fixed
+- **清除仓库中所有本地路径泄露**：
+  - investment-framework/SKILL.md：VAULT_ROOT 替换为 `{你的 Obsidian vault 路径}` 占位符
+  - qmd/SKILL.md：3 处 Obsidian 本地路径替换为通用占位符
+  - wechat-article/README.md：安装路径修正为 `~/.qoderwork/skills/`
+
 ## 1.33.0 — 2026-07-28
 
 ### Changed
