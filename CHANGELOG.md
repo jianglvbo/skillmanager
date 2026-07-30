@@ -2,6 +2,16 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.33.3 — 2026-07-30
+
+### Changed
+- **investment-framework** v2.4.2 → v2.4.3：`assets/博主.md` 模板三表（言论追踪/个股买卖/预测）统一补「原文链接」列 + 禁止留空注释；`references/framework-rules.md` 新增 **#35 博主档案三表原文链接统一规范**（三表必含原文链接列、任意行禁止空 `-`、无来源则不建行），并强化 #30/#31 原文链接必填
+- **xq-post-fetch** v4.1.1 → v4.1.2：`references/refine-checklist.md` 原文链接规则改为「取自本帖 `[原文]` 链接、禁止留空 `-`」；SKILL.md 新增「`[原文]` 链接是画像表原文链接唯一权威来源」说明
+- **investment-review** v2.4.0 → v2.4.1：`scripts/vault_review.py` 新增博主画像三表检查（缺原文链接列 `blogger_table_no_link_col` / 空原文链接行 `blogger_empty_link_row`，规则 #35）；SKILL.md 预扫说明同步
+
+### Added
+- 博主画像三表「原文链接」治理闭环：模板定义 → 框架规则 #35 → 采集/提炼流程约束 → 审查脚本检测，防止缺列与空链接行复发（对应 vault 内 40 博主画像已补列、言论追踪删 92 空行、个股买卖/预测删 90 空行）
+
 ## 1.33.2 — 2026-07-30
 
 ### Changed

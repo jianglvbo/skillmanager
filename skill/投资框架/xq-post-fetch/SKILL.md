@@ -8,7 +8,7 @@ description: |
   依赖条件：browser-act CLI 已安装 + Chrome 浏览器运行中 + 雪球已登录。
   区别于 browser-act：xq-post-fetch 是雪球专用采集引擎，browser-act 是通用浏览器自动化。
 metadata:
-  version: "4.1.1"
+  version: "4.1.2"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---
@@ -139,6 +139,8 @@ browser-act session close {name}
 如果博主文件夹不存在 → 跳过此步，不自动创建
 
 **采集完成即结束**：本 skill 仅负责采集。产出的帖子集按 `framework-rules.md` #29 例外流程，由 investment-refine **直接执行**提炼（不进原始资源、不需用户确认、提炼后源文件移废纸篓）。精华去糟粕判定清单见 `references/refine-checklist.md`（由 investment-refine 加载）。采集阶段不分析内容（遵守本 skill 禁止行为）。
+
+> **`[原文]` 链接是画像表原文链接的唯一权威来源**：每帖输出均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})`（见 Output Format），采集阶段须确保**每帖都带 `[原文]` 链接、不得丢弃**——后续提炼填充博主画像三表「原文链接」列（言论追踪/个股买卖/预测，见 framework-rules #35）一律取自此链接，禁止填采集批次名、禁止留空。
 
 ---
 

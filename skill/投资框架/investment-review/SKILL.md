@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.4.0"
+  version: "2.4.1"
   short-description: 投资框架审查执行器（含关联备注发现）
 compatibility: 通用
 ---
@@ -54,7 +54,7 @@ compatibility: 通用
 
 审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
 
-**辅助 · 自动预扫（可选）**：可先调用 `scripts/vault_review.py --vault <vault路径>` 自动扫描，生成 `vault_review_result.json`，覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维，外加扩展检查（禁用 `## 来源` 段、source 为 URL、空壳 junk）。脚本严格遵守「只报告不修改」原则，仅输出 JSON。人工据 JSON 撰写报告时，聚焦机器无法判定的部分（如段落缺失是否因确无内容、标签语义是否匹配、关联备注提案）。
+**辅助 · 自动预扫（可选）**：可先调用 `scripts/vault_review.py --vault <vault路径>` 自动扫描，生成 `vault_review_result.json`，覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维，外加扩展检查（博主画像三表原文链接检查（规则 #35）、禁用 `## 来源` 段、source 为 URL、空壳 junk）。脚本严格遵守「只报告不修改」原则，仅输出 JSON。人工据 JSON 撰写报告时，聚焦机器无法判定的部分（如段落缺失是否因确无内容、标签语义是否匹配、关联备注提案）。
 
 **辅助 · 段落布局预扫（可选）**：可追加调用 `investment-framework/references/verify-format.py <vault路径> --scope 其他,博主,宏观` 扫描段落布局问题（同行标题、标题间距、段落紧凑、脚注内联标记孤儿、脚注模板废话、残留 `## 来源`/空 `## 脚注`），与 vault_review.py 互补——前者覆盖结构/元数据，后者覆盖排版/脚注内联。加 `--fix` 可自动修复可修复项。
 

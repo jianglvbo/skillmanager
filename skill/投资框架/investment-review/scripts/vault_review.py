@@ -13,6 +13,8 @@ Obsidian 投资知识库 · 结构审查自动扫描器
   - 脚注格式        → legacy_footnote_heading（遗留 ## 脚注 标题，新格式改用 --- 分隔线，规则 #20）
   - 标签匹配        → tag_issues（博主禁行业标签、标签禁 emoji）
   - 扩展检查        → 禁用 `## 来源` 段（规则 #23）、source 为 URL（应转 wikilink 数组）、空壳 junk 检测
+  - 博主画像三表    → blogger_table_no_link_col（言论追踪/个股买卖/预测 三表是否都含「原文链接」列）、
+                     blogger_empty_link_row（三表是否存在空原文链接行 `-`/空，规则 #35）
   - 个股代码        → stock_code_missing（规则 #28：个股文件名须含 (代码)）
   - 博主层登记校验  → blogger_not_registered（规则 #12：博主文件夹名须在博主控制台登记）
 
@@ -207,12 +209,54 @@ def check_quoting(raw):
         if m2 and re.search(r"(?<!\\)'",m2.group(2)): issues.append((m2.group(1),line.strip()))
     return issues
 
+# 博主画像三表「原文链接」检查（framework-rules #35）
+# 解析 markdown 表格，按最近 ## 标题归类（言论追踪 / 个股买卖记录 / 预测记录）
+def parse_blogger_tables(text):
+    tables=[]  # (category, header, rows)
+    lines=text.split("\n")
+    last_h2=None
+    i=0
+    while i<len(lines):
+        line=lines[i]
+        m2=re.match(r'^##\s+(.*)',line)
+        if m2: last_h2=m2.group(1).strip()
+        if line.strip().startswith("|") and i+1<len(lines) and re.match(r'^\s*\|[\s:|-]+\|\s*$',lines[i+1]):
+            hdr=[c.strip() for c in line.strip().strip("|").split("|")]
+            cat=None
+            if last_h2 and "言论追踪" in last_h2: cat="言论追踪"
+            elif last_h2 and "个股买卖记录" in last_h2: cat="个股买卖记录"
+            elif last_h2 and "预测记录" in last_h2: cat="预测记录"
+            rows=[]
+            j=i+2
+            while j<len(lines) and lines[j].strip().startswith("|"):
+                rows.append([c.strip() for c in lines[j].strip().strip("|").split("|")])
+                j+=1
+            if cat: tables.append((cat,hdr,rows))
+            i=j
+            continue
+        i+=1
+    return tables
+
+EMPTY_LINK={"","—","-","无"}
+def check_blogger_tables(text,rel):
+    no_col=[]; empty_row=[]
+    for cat,hdr,rows in parse_blogger_tables(text):
+        if "原文链接" not in hdr:
+            no_col.append((rel,cat)); continue
+        li=hdr.index("原文链接")
+        for r in rows:
+            if li<len(r) and r[li] in EMPTY_LINK:
+                ctx=r[0] if r else ""
+                empty_row.append((rel,cat,ctx))
+    return no_col,empty_row
+
 # ---------- 扫描 ----------
 F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "legacy_footnote_heading":[],"forbidden_source_section":[],"blogger_has_source":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
    "source_as_url":[],"stray_date":[],"field_order":[],"junk_files":[],
-   "stock_code_missing":[],"blogger_not_registered":[]}
+   "stock_code_missing":[],"blogger_not_registered":[],
+   "blogger_table_no_link_col":[],"blogger_empty_link_row":[]}
 summary={"total":0,"by_template":{}}
 
 files=[]
@@ -288,6 +332,10 @@ for rel in sorted(files):
     if tpl=="博主画像":
         if "source" in fm: F["blogger_has_source"].append((rel,"博主画像不应含 source"))
         if "博主画像" not in h2: F["missing_core_sections"].append((rel,"博主画像",["博主画像"]))
+        # 三表「原文链接」检查（framework-rules #35）
+        nc,er=check_blogger_tables(text,rel)
+        F["blogger_table_no_link_col"].extend(nc)
+        F["blogger_empty_link_row"].extend(er)
     # 缺核心段（非脚注）
     miss_sec=[s for s in EXPECTED_SECTIONS.get(tpl,[]) if s not in h2]
     if miss_sec and tpl!="博主画像":
