@@ -2,6 +2,12 @@
 
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
+## 1.33.5 — 2026-07-30
+
+### Changed
+- **xq-post-fetch** v4.1.2 → v4.2.0：核心原则「browser-act 唯一」改为「浏览器通道唯一」（browser-act 优先，WebSocket 失败时降级 builtin_browser MCP）；新增禁止行为「绝不未经详情页验证即标注✅全文」；第五步截断检测强化——API text 以……/...结尾、type=3 专栏、truncated=true 时必须导航详情页；标题规则改为取首个完整句子（不硬切 20 字）；自检清单扩充至 13 项
+- **investment-framework** `assets/博主.md`：移除「博主画像」和「身份识别」两个章节（信息已在 frontmatter 的 summary/platform/platform_id 中覆盖，正文重复属冗余）
+
 ## 1.33.4 — 2026-07-30
 
 ### Changed

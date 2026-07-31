@@ -8,7 +8,7 @@ description: |
   依赖条件：browser-act CLI 已安装 + Chrome 浏览器运行中 + 雪球已登录。
   区别于 browser-act：xq-post-fetch 是雪球专用采集引擎，browser-act 是通用浏览器自动化。
 metadata:
-  version: "4.1.2"
+  version: "4.2.0"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---
@@ -18,8 +18,8 @@ compatibility: 通用
 ## Default Stance
 
 ### 核心原则
-- **browser-act 唯一**：只通过 browser-act CLI（chrome 模式）采集，复用 Chrome 登录态绕过阿里云 WAF。
-- **全文优先**：自动检测截断内容，导航到详情页获取完整正文。
+- **浏览器通道唯一**：通过 browser-act CLI（chrome 模式）或 builtin_browser MCP（javascript_tool）采集，复用 Chrome 登录态绕过阿里云 WAF。browser-act 优先；WebSocket 连接失败时降级到 builtin_browser MCP。
+- **全文优先**：每条帖子必须经过完整性验证，未经详情页确认的不得标注"✅ 全文"。
 - **容错优先**：单帖失败不影响整批；置顶帖标注原始日期，不纳入时间窗口统计。
 - **独立可用**：用户直接输入参数即可运行，不依赖 pipeline。
 - **确定性优先**：帖子解析按 `references/page-structure.md` 的 pattern 执行，不靠自由发挥。
@@ -30,6 +30,7 @@ compatibility: 通用
 - 绝不在采集阶段分析或总结帖子内容
 - 绝不跳过截断检测（长文必须补全全文）
 - 绝不将置顶帖归入「今日」时间范围
+- 绝不未经详情页验证即标注"✅ 全文"——timeline API 的 text 字段可能截断，必须以详情页为准
 
 ---
 
@@ -95,13 +96,21 @@ browser-act get-skills core --skill-version 2.0.2
 - 重新解析 markdown，合并新帖子（按 post_id 去重）
 - 重复直到帖子数 ≥ max_posts 或最旧帖子超出时间窗口
 
-**第五步**：截断内容补全
+**第五步**：截断内容补全（强制，不可跳过）
 
 对每条帖子执行截断检测（规则见 `references/page-structure.md` 截断检测章节）：
 
 1. 有 `[展开]()` → **确定截断**，导航详情页补全
 2. 无 `[展开]()` 但正文不完整 → 导航详情页确认
 3. 正文完整 → 保留
+
+**API 采集路径的截断判定**（使用 timeline API 获取帖子列表时）：
+- timeline API 的 `text` 字段**不保证全文**，以下情况必须导航详情页验证：
+  1. `text` 以 "……"/"..."/"....." 结尾
+  2. `text` 为空但 `description` 有内容（type="3" 专栏文章）
+  3. `truncated` 字段为 true
+- 不满足上述条件的帖子，仍需逐帖导航详情页获取完整正文（详情页是唯一权威来源）
+- **禁止仅凭 API 返回即标注"✅ 全文"**
 
 补全流程：
 ```bash
@@ -111,7 +120,7 @@ browser-act --session {name} get markdown
 ```
 - 从详情页提取完整正文（正文在 `来源：雪球App` 和 `风险提示` 之间）
 - 详情页同时提供精确发布时间（`发布于 YYYY-MM-DD HH:MM`），覆盖用户页的模糊时间
-- 补全后标记：「✅ 全文」vs「⚠️ 摘要」
+- 补全后标记：「✅ 全文」（经详情页验证）vs「⚠️ 摘要」（详情页也无法获取全文）
 
 **引用内容处理**：帖子中的引用块（`>` 前缀）保留，区分作者原文和引用原文（详见 references）。
 
@@ -177,7 +186,7 @@ tags: []
 
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
-| title | string | 帖子标题（无标题时用首句前 20 字） |
+| title | string | 帖子标题（有 title 字段用 title；无 title 取正文首个完整句子，不硬切字数） |
 | text | string | 正文全文（截断帖补全后标记） |
 | created_at | string | 发布时间（YYYY年M月D日 HH:MM） |
 | retweet_count | int | 转发数 |
@@ -214,13 +223,15 @@ tags: []
 ## 自检
 
 - [ ] xq_id 已传入且为数字？
-- [ ] browser-act CLI 可用（`--version` 返回版本号）？
-- [ ] `get-skills core` 已执行，环境状态和浏览器列表已确认？
-- [ ] session 归属已判断（本对话历史中有无 `browser open --session` 调用）？
+- [ ] 浏览器通道已确认可用（browser-act 或 builtin_browser MCP）？
 - [ ] 雪球已登录（页面标题含用户昵称）？
 - [ ] `references/page-structure.md` 已加载用于帖子解析？
-- [ ] 当前时间已获取（`date` 命令），用于 48h 窗口计算？
+- [ ] 当前时间已获取（`date` 命令），用于时间窗口计算？
 - [ ] 置顶帖已标注原始日期，未纳入时间窗口统计？
-- [ ] 截断长文（含 `[展开]()`）已导航到详情页补全全文？
+- [ ] **每条帖子都经过详情页验证**（不存在未经详情页确认即标"✅ 全文"的情况）？
+- [ ] 以"……"/"..."结尾的帖子已导航详情页确认完整性？
+- [ ] type="3"（专栏文章）的帖子已通过详情页获取正文（API text 为空）？
+- [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？
+- [ ] 标题使用完整首句（非硬切 20 字）？
 - [ ] 输出文件 frontmatter 完整（title/source/author/date/recorded/type/status）？
 - [ ] 博主画像 info_cutoff 已更新（如画像文件存在）？
