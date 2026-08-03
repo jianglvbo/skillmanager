@@ -3,6 +3,15 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.35.1 — 2026-08-03
+
+### Changed
+- **investment-framework** `references/framework-rules.md` #23：`source` 字段统一为「二选一形态」——内部来源用 wikilink `[[...]]`，外部来源用 markdown 链接 `[标题（作者 日期）](URL)`；新增决策树 + 禁止项（裸 URL / 批次名 / 手写占位）；与 #96（原文链接必填真实 URL）呼应合并
+- **investment-framework** `assets/*.md` 8 个模板：source 段统一为「一行占位 + 短注释指向 #23」，移除冗长演示注释（避免诱导 agent 叠加填写）
+- **investment-review** `scripts/vault_review.py`：source 形态校验升级（`source_as_url` → `source_as_invalid`），识别合法 wikilink / `[标题](URL)`，标记裸 URL、批次名、手写笔记等非法形态
+- **investment-review** SKILL.md：自动预扫说明同步更新（source 形态校验描述）
+- 配套：vault 108 个文件 source 字段批量迁移为 `[标题](URL)` 形态（93 原始资源层单行 + 15 框架条目层数组项）；修复 2 个无引号裸 URL 变体
+
 ## 1.35.0 — 2026-08-03
 
 ### Changed

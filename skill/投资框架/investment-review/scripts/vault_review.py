@@ -255,7 +255,7 @@ def check_blogger_tables(text,rel):
 F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "legacy_footnote_heading":[],"forbidden_source_section":[],"blogger_has_source":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
-   "source_as_url":[],"stray_date":[],"field_order":[],"junk_files":[],
+   "source_as_invalid":[],"stray_date":[],"field_order":[],"junk_files":[],
    "stock_code_missing":[],"blogger_not_registered":[],
    "blogger_table_no_link_col":[],"blogger_empty_link_row":[],
    "info_cutoff_mismatch":[]}
@@ -343,11 +343,33 @@ for rel in sorted(files):
     if miss_sec and tpl!="博主画像":
         F["missing_core_sections"].append((rel,tpl,miss_sec))
 
-    # source 为 URL（非 wikilink）
+    # source 形态校验（framework-rules #23：内部→wikilink，外部→[标题](URL)，二选一）
     src=fm.get("source")
-    if isinstance(src,str) and src.startswith("http"):
-        F["source_as_url"].append((rel,src))
-    # wikilink
+    def source_shape_invalid(item):
+        """返回 None=合法；否则返回原因字符串"""
+        s=str(item).strip()
+        # 剥掉 YAML 引号（单双引号）
+        if len(s)>=2 and s[0] in ('"',"'") and s[-1]==s[0]:
+            s=s[1:-1].strip()
+        # 合法形态1：内部 wikilink
+        if s.startswith("[[") and s.endswith("]]"):
+            return None
+        # 合法形态2：外部 markdown 链接 [标题](URL)
+        if re.match(r'^\[[^\]\n]+\]\(https?://[^)\s]+\)$', s):
+            return None
+        # 裸 URL（无标题）→ 违规
+        if re.match(r'^https?://', s):
+            return "裸URL（应改为 [标题](URL) 或 wikilink，见 #23）"
+        # 其他形态
+        return f"非法source形态（见 #23）：{s[:40]}"
+    if isinstance(src,list):
+        for s in src:
+            reason=source_shape_invalid(s)
+            if reason: F["source_as_invalid"].append((rel,str(s)[:60],reason))
+    elif isinstance(src,str):
+        reason=source_shape_invalid(src)
+        if reason: F["source_as_invalid"].append((rel,src[:60],reason))
+    # wikilink 可追溯性
     wl_sources=[]
     if isinstance(src,list):
         for s in src: wl_sources.extend(extract_wikilinks(str(s)))
