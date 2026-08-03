@@ -258,7 +258,8 @@ F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "source_as_invalid":[],"stray_date":[],"field_order":[],"junk_files":[],
    "stock_code_missing":[],"blogger_not_registered":[],
    "blogger_table_no_link_col":[],"blogger_empty_link_row":[],
-   "info_cutoff_mismatch":[]}
+   "info_cutoff_mismatch":[],
+   "footnote_links_workspace":[]}
 summary={"total":0,"by_template":{}}
 
 files=[]
@@ -384,6 +385,15 @@ for rel in sorted(files):
         elif st=="emoji_or_quote": F["wikilink_issues"].append((rel,wl,"路径含emoji/引号不匹配",sug))
         elif st=="case": F["wikilink_issues"].append((rel,wl,"大小写不匹配",sug))
         elif st=="short_path": F["wikilink_issues"].append((rel,wl,"路径不完整(仅basename)",sug))
+
+    # 脚注 wikilink 目标仅限 wiki 产物（footnote-taxonomy 禁止行为 #6）：仅检查脚注定义行
+    # （[^x-N]: ... 格式，位于文末 --- 脚注区）中的 wikilink，禁止指向 工作区/ 下任何文件
+    for line in text.splitlines():
+        if re.match(r"^\[\^[a-z]*-[0-9]+\]:", line.strip()):
+            for wl in extract_wikilinks(line):
+                target=wl.split("|")[0].split("#")[0].strip()
+                if target.startswith("工作区/"):
+                    F["footnote_links_workspace"].append((rel, wl, "脚注指向工作区文件（仅限wiki产物间引用，见 footnote-taxonomy 禁止行为#6）"))
 
     # 个股代码（framework-rules #28）：文件名须含 {名称}({代码})，代码后可附加描述后缀
     if tpl=="个股":
