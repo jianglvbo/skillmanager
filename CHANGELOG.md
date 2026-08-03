@@ -3,6 +3,13 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.35.2 — 2026-08-04
+
+### Changed
+- **investment-framework**：`verify-format.py` 从 `references/` 迁移至 `scripts/`（Script 层归属修正）；SKILL.md Relative Files 新增「方式」列（读 vs 执行）
+- **investment-review**：SKILL.md 瘦身 237 → 152 行——两段报告模板下沉至新增 `references/report-templates.md`；Relative Files 新增「方式」列
+- **删除 skill 内 CHANGELOG.md**（investment-framework / investment-review，三处副本 + git rm）：版本历史统一归口仓库级 CHANGELOG.md，杜绝双轨记录
+
 ## 1.35.1 — 2026-08-03
 
 ### Changed
