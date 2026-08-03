@@ -51,10 +51,10 @@ version: 1.0.0
 
 ### 2. 写入 Obsidian 粗制品
 
-将输出保存到 Obsidian 粗制品目录，文件名不含日期前缀（日期通过 frontmatter 记录）：
+将输出保存到 Obsidian 粗制品目录（`工作区/粗制品/`，见 investment-framework 路径表 ROUGH_DIR），文件名不含日期前缀（日期通过 frontmatter 记录）：
 
 ```
-投资分析框架/2 原始资源仓库/粗制品/{标题}.md
+工作区/粗制品/{标题}.md
 ```
 
 frontmatter 格式：

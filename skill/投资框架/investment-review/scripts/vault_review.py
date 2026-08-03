@@ -164,7 +164,7 @@ def template_for(rel,fm):
 # 必填字段（镜像模板 frontmatter 硬约束；改模板时同步）
 # 注意：博主画像自身即博主，无 author 字段
 REQUIRED={
- "博主画像":["title","platform","special_following","createDate","updateDate"],
+ "博主画像":["title","platform","platform_id","special_following","createDate","updateDate"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
  "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
 }
@@ -184,7 +184,7 @@ CANON={
  "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
  "宏观通用":["title","createDate","updateDate","author","tags","source"],
- "博主画像":["title","platform","platform_id","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 8 字段 canonical 顺序（无 following）
+ "博主画像":["title","platform","platform_id","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 8 字段 canonical 顺序（含 platform_id，见规则 #36）
 }
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）
@@ -257,7 +257,8 @@ F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
    "source_as_url":[],"stray_date":[],"field_order":[],"junk_files":[],
    "stock_code_missing":[],"blogger_not_registered":[],
-   "blogger_table_no_link_col":[],"blogger_empty_link_row":[]}
+   "blogger_table_no_link_col":[],"blogger_empty_link_row":[],
+   "info_cutoff_mismatch":[]}
 summary={"total":0,"by_template":{}}
 
 files=[]
@@ -362,14 +363,11 @@ for rel in sorted(files):
         elif st=="case": F["wikilink_issues"].append((rel,wl,"大小写不匹配",sug))
         elif st=="short_path": F["wikilink_issues"].append((rel,wl,"路径不完整(仅basename)",sug))
 
-    # 个股代码（framework-rules #28）：文件名须为 {名称}({代码})，不带后缀
+    # 个股代码（framework-rules #28）：文件名须含 {名称}({代码})，代码后可附加描述后缀
     if tpl=="个股":
         bn=os.path.basename(rel)[:-3]
-        if not re.search(r"\([A-Za-z0-9]{4,6}\)$",bn):
-            if re.search(r"\([A-Za-z0-9]{4,6}\)",bn):
-                F["stock_code_missing"].append((rel,"个股文件名含非标准后缀，应为 {名称}({代码})，见规则#28"))
-            else:
-                F["stock_code_missing"].append((rel,"个股文件名缺股票代码，应为 {名称}({代码})，见规则#28"))
+        if not re.search(r"\([A-Za-z0-9]{4,6}\)",bn):
+            F["stock_code_missing"].append((rel,"个股文件名缺股票代码，应为 {名称}({代码})，见规则#28"))
 
     # 博主层作者登记校验（framework-rules #12）：博主文件夹名须在博主控制台登记
     if rel.startswith("博主/") and BLOGGERS:
@@ -381,6 +379,43 @@ for rel in sorted(files):
 for rel,tpl,miss in F["missing_fields"][:]:
     if set(miss)=={"title","event","时效状态","时间范围","createDate","updateDate","tags","source"}:
         F["junk_files"].append(rel)
+
+# 信息截止一致性校验：博主控制台「信息截止」列 vs 画像 info_cutoff
+def load_console_cutoffs():
+    p = os.path.join(VAULT, "工作区", "博主控制台.md")
+    cutoffs = {}
+    if not os.path.isfile(p):
+        return cutoffs
+    for line in open(p, encoding="utf-8"):
+        line = line.strip()
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) >= 7 and cells[0] not in ("编号", "") and not set(cells[0]) <= set("- :"):
+            name = cells[1]
+            cutoff = cells[6]  # 第7列 = 信息截止
+            if name and cutoff and re.match(r"\d{4}-\d{2}-\d{2}", cutoff):
+                cutoffs[name] = cutoff
+    return cutoffs
+
+CONSOLE_CUTOFFS = load_console_cutoffs()
+if CONSOLE_CUTOFFS:
+    for rel in sorted(files):
+        if not rel.startswith("博主/"):
+            continue
+        parts_r = rel.split("/")
+        if len(parts_r) < 3 or parts_r[2] != parts_r[1] + ".md":
+            continue  # 只看 博主/{name}/{name}.md
+        bname = parts_r[1]
+        if bname not in CONSOLE_CUTOFFS:
+            continue
+        full = os.path.join(VAULT, rel)
+        text = open(full, encoding="utf-8").read()
+        m = re.search(r"info_cutoff:\s*(\d{4}-\d{2}-\d{2})", text)
+        profile_cutoff = m.group(1) if m else ""
+        console_cutoff = CONSOLE_CUTOFFS[bname]
+        if profile_cutoff and console_cutoff and profile_cutoff != console_cutoff:
+            F["info_cutoff_mismatch"].append((rel, f"画像={profile_cutoff} vs 控制台={console_cutoff}"))
 
 out_path=os.path.join(OUT,"vault_review_result.json")
 json.dump({"summary":summary,"findings":F},open(out_path,"w",encoding="utf-8"),ensure_ascii=False,indent=2)

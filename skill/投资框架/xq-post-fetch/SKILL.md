@@ -8,12 +8,12 @@ description: |
   依赖条件：browser-act CLI 已安装 + Chrome 浏览器运行中 + 雪球已登录。
   区别于 browser-act：xq-post-fetch 是雪球专用采集引擎，browser-act 是通用浏览器自动化。
 metadata:
-  version: "4.2.0"
+  version: "4.3.0"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---
 
-# 雪球帖子采集 v4.1
+# 雪球帖子采集 v4.3
 
 ## Default Stance
 
@@ -40,10 +40,37 @@ compatibility: 通用
 
 | 参数 | 类型 | 必填 | 默认 | 说明 |
 |:---|:---|:---|:---|:---|
-| xq_id | int | 是 | — | 雪球用户 ID |
-| hours | int | 否 | 48 | 时间窗口（小时） |
-| max_posts | int | 否 | 20 | 最大采集条数 |
-| output_dir | path | 否 | 粗制品目录 | 输出目录 |
+| xq_id | int | 否 | — | 雪球用户 ID（与 blogger_name 二选一；均不传则默认采集全部博主） |
+| blogger_name | string | 否 | — | 博主名称，从博主控制台「雪球ID」列解析（与 xq_id 二选一；均不传则默认全部） |
+| max_posts | int | 否 | 50 | 最大采集条数 |
+| output_dir | path | 否 | {VAULT}/工作区/粗制品 | 输出目录（vault 相对路径 `工作区/粗制品`，见 investment-framework 路径表 ROUGH_DIR） |
+
+**时间窗口**：不再使用固定 hours 参数。采集范围 = 博主控制台「信息截止」列日期 → 今天。新增博主「信息截止」默认为半年前（首次采集拉半年言论）。
+
+> 两个参数都不传 → 默认采集博主控制台中所有「雪球ID」非空的博主（逐博主执行第零步→第七步）。同时传入 → 以 xq_id 为准。
+
+**前置步骤**：同步雪球关注列表 → 更新博主控制台
+
+每次采集会话开始时**必须**先执行此步（无论单博主还是批量）：
+
+1. 获取当前登录用户 ID：导航 `https://xueqiu.com/user/show.json`，从 JSON 提取 `id` 字段
+2. 分页获取关注列表：`https://xueqiu.com/friendships/groups/members.json?gid=0&page={n}&count=50`，逐页直到返回空
+3. 读取博主控制台（`{VAULT}/工作区/博主控制台.md`），解析表格
+4. 对比：
+   - **新增**（在关注列表但不在控制台）→ 向用户报告，确认后追加行（编号递增，雪球ID填入，「是否雪球博主」=是，「是否特别关注」=否，「信息截止」=半年前的今天 YYYY-MM-DD）
+   - **取关**（在控制台但不在关注列表，且「是否雪球博主」=是）→ 向用户报告，确认后从控制台**删除该行**（保留博主画像文件夹和已有 wiki 条目，不删除任何文件）
+   - **无变动** → 报告「关注列表无变化」
+5. 更新控制台 `updateDate` 为当天
+
+> 此步取代原规则 #12 中「Agent 不得自行新增博主」的限制——用户明确授权从雪球关注列表同步。但 Agent 仍不得凭空捏造博主（必须有雪球关注关系作为来源）。
+
+**第零步**：解析雪球 ID
+
+- 传入 `xq_id` → 直接使用，跳到第一步
+- 传入 `blogger_name` → 读取博主控制台（`{VAULT_ROOT}/工作区/博主控制台.md`，VAULT_ROOT 见 investment-framework 路径表），在表格中匹配「博主」或「别名」列，取「雪球ID」列的值作为 `xq_id`
+  - 匹配不到 → 报错停止：「{blogger_name} 未在博主控制台登记，或雪球ID为空」
+  - 雪球ID列为空 → 报错停止：「{blogger_name} 的雪球ID未填写，请先在博主控制台补全」
+- 两个参数都未传入 → 默认「全部博主」模式：从博主控制台取所有「雪球ID」非空的博主，逐博主执行第一步～第七步
 
 **第一步**：检查 browser-act CLI
 ```bash
@@ -83,7 +110,7 @@ browser-act get-skills core --skill-version 2.0.2
    - 从每个帖子块提取：post_id（从 `xueqiu.com/{xq_id}/(\d+)` 正则）、时间、正文、互动数据
    - 时间格式转换（`N小时前`、`昨天 HH:MM`、`MM-DD HH:MM` → 绝对时间，详见 references）
 5. **识别置顶帖**：标注「📌 置顶」+ 原始发布日期，不纳入时间窗口统计
-6. 按时间过滤：仅保留 hours 小时内的帖子
+6. 按时间过滤：仅保留博主控制台「信息截止」日期之后的帖子
 7. 数量限制：不超过 max_posts 条
 
 **滚动加载更多**：
@@ -138,14 +165,14 @@ browser-act session close {name}
 - 格式：见 Output Format
 - 向用户报告摘要：采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文
 
-**第八步**：更新博主画像 info_cutoff
+**第八步**：更新 info_cutoff（画像 + 控制台双写）
 
-如果 vault 中存在该博主的画像文件（`博主/{nickname}/{nickname}.md`）：
-1. 更新 `info_cutoff` 为当前日期
-2. 更新 `updateDate` 为当前日期
-3. 不修改画像的其他内容（分析/提炼由后续环节负责）
+采集完成后，将「信息截止」更新为**今天日期**（YYYY-MM-DD），同时写入两处：
 
-如果博主文件夹不存在 → 跳过此步，不自动创建
+1. **博主画像**（`博主/{nickname}/{nickname}.md`）：更新 frontmatter `info_cutoff` 和 `updateDate` 为今天
+2. **博主控制台**（`工作区/博主控制台.md`）：更新该博主行的「信息截止」列为今天，同时更新控制台 frontmatter `updateDate`
+
+如果博主画像文件不存在 → 仅更新控制台，不自动创建画像。
 
 **采集完成即结束**：本 skill 仅负责采集。产出的帖子集按 `framework-rules.md` #29 例外流程，由 investment-refine **直接执行**提炼（不进原始资源、不需用户确认、提炼后源文件移废纸篓）。精华去糟粕判定清单见 `references/refine-checklist.md`（由 investment-refine 加载）。采集阶段不分析内容（遵守本 skill 禁止行为）。
 
@@ -213,16 +240,17 @@ tags: []
 
 | 优先级 | 来源 |
 |:---|:---|
-| 1 | 用户显式参数（xq_id、hours、max_posts） |
-| 2 | browser-act CLI（chrome 模式页面数据） |
-| 3 | 雪球页面结构（`references/page-structure.md` 中的解析规则） |
-| 4 | browser-act 通用文档 |
+| 1 | 用户显式参数（xq_id、blogger_name、max_posts） |
+| 2 | 博主控制台（`工作区/博主控制台.md`「雪球ID」列，blogger_name → xq_id 解析） |
+| 3 | browser-act CLI（chrome 模式页面数据） |
+| 4 | 雪球页面结构（`references/page-structure.md` 中的解析规则） |
+| 5 | browser-act 通用文档 |
 
 ---
 
 ## 自检
 
-- [ ] xq_id 已传入且为数字？
+- [ ] xq_id 已解析（直接传入、从博主控制台按 blogger_name 查到、或默认全部博主模式逐博主解析）且为数字？
 - [ ] 浏览器通道已确认可用（browser-act 或 builtin_browser MCP）？
 - [ ] 雪球已登录（页面标题含用户昵称）？
 - [ ] `references/page-structure.md` 已加载用于帖子解析？

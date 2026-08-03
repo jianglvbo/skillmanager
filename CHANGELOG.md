@@ -3,6 +3,18 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.35.0 — 2026-08-03
+
+### Changed
+- **xq-post-fetch** v4.2.0 → v4.3.0：无参数默认采集博主控制台全部博主；新增 `blogger_name` 参数（从控制台「雪球ID」列解析，与 `xq_id` 二选一）；时间窗口由固定 `hours` 改为「控制台信息截止列 → 今天」（新博主默认半年）；新增前置步骤——同步雪球关注列表 → 对比控制台 → 报告变动 → 更新控制台；`max_posts` 默认 20 → 50
+- **investment-framework** `references/framework-rules.md`：#12 新增唯一例外（xq-post-fetch 前置步骤经用户授权可从关注列表同步新博主）；#28 允许个股文件名代码后附加描述后缀（如 `海螺水泥(600585)-憨包包不当韭菜`）；#36 博主画像 frontmatter 恢复 `platform_id`（平台永久数字 ID，改名不变），canonical 顺序定为 title→platform→platform_id→special_following→summary→info_cutoff→createDate→updateDate
+- **investment-framework** `references/footnote-taxonomy.md`：新增「禁止行为」硬约束 5 条（非法标签名/标签与描述不一致/孤儿脚注/正文末尾来源 blockquote/模板花括号指引文本）
+- **investment-framework** `assets/*.md` 9 个模板：删除尾部脚注花括号指引行（模板指引不得照搬进产出文件）
+- **investment-refine** SKILL.md：禁止行为新增 3 条（禁花括号指引文本、禁正文末尾来源 blockquote、禁白名单外脚注标签）+ 自检 2 项
+- **investment-review** SKILL.md：第五步 B 脚注格式检查扩充（标签白名单校验、标签与中文关系词一致性、孤儿/悬空检查）+ 自检 2 项
+- **investment-review** `scripts/vault_review.py`：`CANON["博主画像"]` 恢复 `platform_id`；个股文件名正则放宽允许描述后缀（`re.search` 非 `$` 锚定）；新增 `info_cutoff_mismatch` 检查（博主控制台「信息截止」列 vs 画像 `info_cutoff` 双写一致性）
+- **wechat-article** SKILL.md：粗制品输出路径对齐 investment-framework 路径表 ROUGH_DIR（`工作区/粗制品/`）
+
 ## 1.34.0 — 2026-07-31
 
 ### Changed
