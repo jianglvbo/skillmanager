@@ -134,7 +134,7 @@ compatibility: 通用
 - [ ] 每个条目的标签是否来自标签体系？
 - [ ] 每个条目是否使用了正确的模板？
 - [ ] 写入硬约束是否全部满足？（wikilink 完整路径、个股带代码、无 `## 来源` 段、模板 section 全量、字段顺序 canonical、日期裸写、原文链接 `[原文](URL)` 格式）
-- [ ] frontmatter 是否完整且规范？——`author` 必填；字段顺序符合所属分类模板 canonical（标准 `title→createDate→updateDate→author→tags→source`，见 framework-rules #27）；**无 `date` 字段**（#27 层间边界）；`createDate`/`updateDate` 裸写无引号
+- [ ] frontmatter 是否完整且规范？——`author` 必填；字段顺序符合所属分类模板 canonical（标准 `title→createDate→updateDate→author→tags→source`，见 framework-rules #27）；**无 `date` 字段**（#27 层间边界）；`createDate`/`updateDate` 裸写无引号；**`id` 字段（`id: docid_xxx_e`，Visit History 插件写入）保留不动、不删除、不移动、不报错**（#27「id 字段豁免」）
 - [ ] 如涉及博主，博主档案是否已更新？
 - [ ] 归属层是否合规？未登记作者是否归入「其他」层（而非博主层、而非被自动补登）？
 - [ ] 个股条目文件名是否带股票代码 `{名称}({代码})`（见 framework-rules #28）？代码缺失时是否联网检索、A+H/美股双上市且文章无法区分时是否默认 A 股？

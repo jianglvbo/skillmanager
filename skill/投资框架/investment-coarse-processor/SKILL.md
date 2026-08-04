@@ -96,7 +96,7 @@ tags: []
 
 ## YAML Frontmatter 规范
 
-原始资源 frontmatter **仅 7 个字段**：title、source、author、date、type、status、tags（字段顺序 `title → source → author → date → type → status → tags`），不添加 layer/category 等字段。引号嵌套规则（含双引号用单引号包裹等）、tags block list 格式等完整规范见 `references/frontmatter-rules.md`（权威源 framework-rules #27/#21）——执行时**必须加载**，不自造格式。
+原始资源 frontmatter **仅 7 个字段**：title、source、author、date、type、status、tags（字段顺序 `title → source → author → date → type → status → tags`），不添加 layer/category 等字段。**`id` 字段豁免**：若粗制品/原始资源 frontmatter 含 `id`（如 `id: docid_xxx_e`，Visit History 等 Obsidian 插件写入的追踪 ID），**保留不动、不删除、不移动、不报错**——它不属于框架字段集（见 framework-rules #27「id 字段豁免」）。引号嵌套规则（含双引号用单引号包裹等）、tags block list 格式等完整规范见 `references/frontmatter-rules.md`（权威源 framework-rules #27/#21）——执行时**必须加载**，不自造格式。
 
 ---
 

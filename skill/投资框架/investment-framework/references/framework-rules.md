@@ -88,6 +88,7 @@
    - **硬约束**：框架条目 frontmatter **禁止出现 `date` 字段**（那是原始资源层的发布日字段）；提炼从原始资源生成条目时，仅取 `author` / `source` 等语义对应字段，**绝不把原始资源的 `date` 带入条目**——否则会在条目层制造"流浪 date"，破坏 frontmatter 规范（呼应 #1 日期格式约定）。
    - **字段顺序（canonical）硬约束**：框架条目 frontmatter 字段必须按所属分类模板的 canonical 顺序排列（各 `assets/*.md` 模板即唯一真相源）。标准 6 字段顺序：`title → createDate → updateDate → author → tags → source`；分析档案：`title → 标的 → createDate → updateDate → author → status → tags → source`；宏观事件型：`title → event → 时效状态 → 时间范围 → createDate → updateDate → author → tags → source`。**禁止打乱顺序**（如 `source` 前置、`tags` 置底）。审查（investment-review 结构审查第三步）与 `vault_review.py` 据此检测顺序漂移。
    - **`author` 必填**：每个框架条目必须有 `author`——wikilink 来源从原始资源取博主名；外部 URL 来源填原出处，无则填 `待补`。提炼产出条目若漏 `author` 视为 frontmatter 不完整（与审查自检联动）。
+   - **`id` 字段豁免（2026-08-04 新增）**：`id`（形如 `id: docid_xxx_e`）是 Obsidian 第三方插件（如 Visit History 等阅读追踪类插件）写入的文档追踪 ID，**不属于框架字段集，不参与 canonical 顺序校验，不参与必填/缺失/引号检查**。提炼、粗加工、审查、格式校验（vault_review.py / verify-format.py）遇到 `id` 字段时**一律忽略**——不得删除、不得移动、不得报错。frontmatter 解析按"id 为外部字段"处理。
    - 这是当前 vault 内 31 个框架条目误含 `date` 的根因：提炼环节把原始资源的 `date` 一并复制进了条目。
 
 28. 个股文件命名必须带股票代码：文件名格式 `{名称}({代码})`（如 `茅台(600519)`、`苹果(AAPL)`、`Circle(CRCL)`、`融创服务(01516)`、`分众传媒(002027)`），代码后可附加描述后缀（如 `海螺水泥(600585)-憨包包不当韭菜`、`神火股份(000933)-业绩敏感性测算`）。代码不加市场前缀/后缀（即写 `002027` 而非 `SZ002027` 或 `002027.SZ`）。代码确定优先级：

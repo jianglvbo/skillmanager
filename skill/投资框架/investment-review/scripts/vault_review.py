@@ -305,10 +305,12 @@ for rel in sorted(files):
         F["stray_date"].append((rel,"条目层含禁止字段 date（应为原始资源层发布日）"))
 
     # 字段顺序 canonical（framework-rules #27）
+    # id 为外部插件字段（Visit History 等，见 framework-rules #27「id 字段豁免」），
+    # 不在 CANON 中，天然被下列过滤忽略；此处显式防御，防止未来误加。
     canon=CANON.get(tpl)
     if canon:
-        expected=[k for k in canon if k in fm]
-        actual=[k for k in fm.keys() if k in canon]
+        expected=[k for k in canon if k in fm and k != "id"]
+        actual=[k for k in fm.keys() if k in canon and k != "id"]
         if actual!=expected:
             F["field_order"].append((rel,tpl,actual))
 

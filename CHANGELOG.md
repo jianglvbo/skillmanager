@@ -3,6 +3,14 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.36.1 — 2026-08-04
+
+### Changed
+- **investment-framework** `references/framework-rules.md` #27：新增「`id` 字段豁免」——`id: docid_xxx_e` 为 Obsidian 插件（Visit History 等）写入的追踪 ID，不属于框架字段集、不参与 canonical 顺序/必填/引号校验，提炼/粗加工/审查/格式校验一律忽略（不删除、不移动、不报错）
+- **investment-coarse-processor** SKILL.md：YAML frontmatter 规范补充 id 豁免说明（保留不动）
+- **investment-refine** SKILL.md：自检项补充 id 豁免确认（提炼产物含 id 不报错）
+- **investment-review** `scripts/vault_review.py`：字段顺序校验显式防御 id（过滤 `k != "id"`），实测 5 篇带 id 笔记全维度零报错
+
 ## 1.36.0 — 2026-08-04
 
 ### Changed
