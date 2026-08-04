@@ -412,9 +412,11 @@ for rel in sorted(files):
             F["stock_code_missing"].append((rel,"个股文件名缺股票代码，应为 {名称}({代码})，见规则#28"))
 
     # 博主层作者登记校验（framework-rules #12）：博主文件夹名须在博主控制台登记
+    # 豁免名单（用户 2026-08-05 决定）：以下博主保持博主层不迁移，即使未在控制台登记也不报错
+    BLOGGER_EXEMPT = {"段永平", "七彩云龙", "梁宏"}
     if rel.startswith("博主/") and BLOGGERS:
         bname=parts[1]
-        if bname not in BLOGGERS:
+        if bname not in BLOGGERS and bname not in BLOGGER_EXEMPT:
             F["blogger_not_registered"].append((rel,bname))
 
 # junk：缺全部字段的空壳

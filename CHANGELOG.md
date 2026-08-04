@@ -3,6 +3,12 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.36.2 — 2026-08-05
+
+### Changed
+- **investment-review** `scripts/vault_review.py`：新增 BLOGGER_EXEMPT 豁免名单（段永平/七彩云龙/梁宏，用户 2026-08-05 决定保持博主层不迁移，不再报 blogger_not_registered）
+- 配套 vault 修复：2 处失效 wikilink（神火股份悬空补充脚注删除、困境反转卖出纪律冲突脚注删除）、江波龙个股补 supplement-3 关联《江波龙商业模式风险分析》、长城汽车文件名去 SH 前缀（规则#28）、闲来一坐画像补「个股买卖记录」原文链接列、景从lee info_cutoff 控制台对齐 08-04
+
 ## 1.36.1 — 2026-08-04
 
 ### Changed
