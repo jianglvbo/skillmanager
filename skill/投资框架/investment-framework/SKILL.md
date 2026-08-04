@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.4.5"
+  version: "2.5.0"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---
@@ -87,6 +87,20 @@ compatibility: 通用
 
 ---
 
+## 动态上下文（运行时注入）
+
+执行任何流水线步骤前，编排者**必须**先获取以下环境信息（不靠记忆、不靠脑补）：
+
+| 信息 | 获取方式 | 用途 |
+|:---|:---|:---|
+| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、博主控制台「信息截止」更新（xq-post-fetch 第八步） |
+| 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（xq-post-fetch 第四步） |
+| 待提炼文档状态 | 查询原始资源 frontmatter `status` | 判定走粗加工 or 直接提炼（粗加工前置规则） |
+
+> 各执行 skill 在需要时自行获取（如 refine 写 `updateDate` 前、review 算冷静天数前、xq-post-fetch 时间窗口前），编排者不代为传递时间戳。
+
+---
+
 ## 路径表
 
 | 常量 | 值 | 说明 |
@@ -124,11 +138,15 @@ compatibility: 通用
 
 ## Output Format
 
-| 步骤 | 输出 | 位置 |
+编排者自身不产出文件，输出为对下游模块的调度结果与汇报：
+
+| 字段 | 类型 | 说明 |
 |:---|:---|:---|
-| 粗加工 | 整理后的原始帖子 | {RAW_DIR}/{标题}.md |
-| 提炼执行 | 框架条目（≥1个文件） | 归属层/分类/{文件名}.md |
-| 审查 | 审查报告 | 输出到对话中 |
+| routed_skill | string | 本次调度的下游 skill（coarse-processor / refine / review） |
+| output_summary | string | 下游执行结果摘要（产出条目数、更新档案等） |
+| next_action | string | 后续动作提示（如"源文件待提炼"） |
+
+下游具体产出物（粗加工原始帖子、框架条目、审查报告）由各 skill 的 Output Format 定义，位置见下方路径表。
 
 ---
 

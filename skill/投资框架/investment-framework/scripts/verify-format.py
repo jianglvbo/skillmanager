@@ -188,8 +188,8 @@ def fix_list_inline(body):
     return '\n'.join(new_lines)
 
 def check_source_field(fm):
-    """规则#28：source 用描述性标量文字（如"雪球采集-XX-2026年7月"），源文件提炼后即删故不用 wikilink；
-    也允许 wikilink 列表。标量与非 wikilink 值均合法，仅检查 source 是否缺失/为空。"""
+    """规则#23：source 二选一形态——内部来源用 wikilink、外部来源用 markdown 链接。
+    仅检查 source 是否缺失/为空；博主画像不含 source 字段（规则 #36），由调用方豁免。"""
     if 'source' not in fm or fm['source'] is None:
         return [{'type': 'missing'}]
     src = fm['source']
@@ -261,6 +261,8 @@ def verify_file(fpath, rel):
             fm = yaml.safe_load(fm_text[3:fm_text.find('---', 3)].strip()) or {}
         except:
             pass
+    # 博主画像：自身即博主、无 source 字段（规则 #36），豁免 source 检查
+    is_blogger_profile = bool(re.match(r'^博主/[^/]+/[^/]+\.md$', rel))
     issues = {
         'file': rel,
         'inline_headings': check_inline_headings(body),
@@ -273,7 +275,7 @@ def verify_file(fpath, rel):
         'footnote_heading': check_footnote_heading(body),
         'bold_spacing': check_bold_spacing(body),
         'list_inline': check_list_inline(body),
-        'source_field': check_source_field(fm) if fm else [],
+        'source_field': [] if is_blogger_profile else (check_source_field(fm) if fm else []),
     }
     issues = {k: v for k, v in issues.items() if v}
     return issues if len(issues) > 1 else None

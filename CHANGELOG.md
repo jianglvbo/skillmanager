@@ -3,6 +3,17 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.36.0 — 2026-08-04
+
+### Changed
+- **投资框架 skill 组审计优化**（依据 skill-guidelines 五层认知架构 + 6 段模板，用户确认「全部按 A 落地 + P2 一并处理」）：
+- **xq-post-fetch** v4.3.0 → v4.4.0：主文件 265 → 200 行——Workflow 执行细节（关注列表同步/会话管理/滚动加载/API 截断判定/引用与 emoji 处理）下沉至新增 `references/execution-guide.md`，SKILL.md 只留第零~八步骨架 + 跳转指引；截断判定规则去重（权威源 = execution-guide + page-structure）；frontmatter 补 `license: MIT` + `agent_created: true`（此前缺失，无法被 SkillManage 维护）
+- **investment-refine** v2.5.2 → v2.6.0：写入硬约束改「规则编号 + 摘要」（#3/#23/#27/#28/#29/#30/#35），完整规则只在 framework-rules.md 单点维护，消除双源漂移；Relative Files 补「方式」列
+- **investment-review** v2.4.2 → v2.5.0：Workflow 编号消歧义——内容审查 C1-C9 / 结构审查 S1-S8 / 待回收处置 R1-R5，消除「第七步B」「第五步B」不规范命名；自检同步更新
+- **investment-coarse-processor** v2.2.1 → v2.3.0：YAML frontmatter 规范（7 字段/引号嵌套/tags block list）下沉至新增 `references/frontmatter-rules.md`，SKILL.md 留摘要 + 必加载提示；Relative Files 补「方式」列
+- **investment-framework** v2.4.5 → v2.5.0：Output Format 改字段级定义（routed_skill/output_summary/next_action）；新增「动态上下文（运行时注入）」段（第五层挂载：当前日期/时间/待提炼状态获取方式）
+- 清理：investment-framework/ 与 xq-post-fetch/ 下 `.DS_Store` 残留删除
+
 ## 1.35.2 — 2026-08-04
 
 ### Changed

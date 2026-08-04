@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.5.2"
+  version: "2.6.0"
   short-description: 投资框架提炼执行器（直接执行）
 compatibility: 通用
 ---
@@ -71,16 +71,16 @@ compatibility: 通用
 
 1. 按归属层和分类确定文件路径
 
-**写入硬约束（创建/修改任何文件前必须满足，违反即重写）**：
+**写入硬约束（创建/修改任何文件前必须满足，违反即重写）**：完整规则以 `framework-rules.md` 对应编号为权威源，此处为执行摘要——若与 framework-rules 冲突，以 framework-rules 为准：
 
-- **wikilink 完整路径**：所有 wikilink（正文、source 字段、博主档案言论追踪的具象化指针）必须写完整路径 `[[博主/名/分类/文件名]]`，**禁止仅写 basename**（如 `[[对手盘交易框架]]`）。唯一例外：博主档案内指向自身文件夹下条目时可省略 `博主/{名}/` 前缀（Obsidian 同目录解析）
-- **个股文件名带代码**：个股条目文件名必须为 `{名称}({代码})`（#28），代码缺失时联网检索确认，不得留空
-- **禁止 `## 来源` 段落**：来源信息一律写入 frontmatter `source` 数组（#23），正文不设 `## 来源` section
-- **`source` 填真实原文链接**：`source` 数组填雪球原文帖子链接（markdown 格式 `[标题（博主 日期）](https://xueqiu.com/.../XXXXXX)`，取自批次的 `[原文]` 链接），**禁止填采集批次文件名**（如 `雪球采集-metalslime-2026年7月20日`）——批次提炼后即删，会成悬空引用。综合多篇帖则列多个链接。
+- **wikilink 完整路径**（#3）：所有 wikilink（正文、source 字段、博主档案言论追踪的具象化指针）写完整路径 `[[博主/名/分类/文件名]]`，**禁止仅写 basename**。唯一例外：博主档案内指向自身文件夹下条目时可省略 `博主/{名}/` 前缀
+- **个股文件名带代码**（#28）：`{名称}({代码})`，代码缺失时联网检索确认，不得留空
+- **禁止 `## 来源` 段落**（#23）：来源一律写入 frontmatter `source` 数组，正文不设该 section
+- **`source` 填真实原文链接**（#23/#29）：`source` 数组填原文链接（markdown 格式 `[标题（博主 日期）](https://xueqiu.com/.../XXXXXX)`，取自批次 `[原文]` 链接），**禁止填采集批次文件名**（批次提炼后即删，会成悬空引用）；综合多篇帖则列多个链接
 - **模板 section 全量输出**：按所属分类模板的 section 结构全量输出（标题 + 内容）。某 section 确实无内容时写一句最小说明（如"暂无验证记录"），**不得省略 section 标题**
-- **frontmatter 字段顺序 canonical**：按模板定义的字段顺序写入，禁止打乱（#27）
-- **日期裸写**：`createDate`/`updateDate` 裸写 `yyyy-MM-dd`，无引号（#1）
-- **原文链接格式**：表格内链接一律用 `[原文](URL)` 格式，**禁止贴裸 URL**（撑宽表格、Obsidian 渲染为纯文本）（#30）
+- **frontmatter 字段顺序 canonical**（#27）：按模板定义的字段顺序写入，禁止打乱
+- **日期裸写**（#1）：`createDate`/`updateDate` 裸写 `yyyy-MM-dd`，无引号
+- **原文链接格式**（#30/#35）：表格内链接一律用 `[原文](URL)` 格式，**禁止贴裸 URL**
 
 2. 选择对应模板（从编排者传入的 templates）
 3. 创建文件，填写 frontmatter + 正文内容。正文按模板中的写作指引，保留原文的比喻、案例、推理链条，用自然语言段落而非干巴巴的要点罗列
@@ -107,11 +107,11 @@ compatibility: 通用
 
 ## Relative Files
 
-| 场景 | 加载文件 | 内容 |
-|:---|:---|:---|
-| 提炼时 | investment-framework/references/tag-taxonomy.md（由编排者传入） | 标签分类体系，用于选择标签 |
-| 提炼时 | investment-framework/references/footnote-taxonomy.md（由编排者传入） | 脚注类型定义，用于 [^data-N]/[^date-N] 格式 |
-| 提炼时 | investment-framework/assets/{模板名}.md（由编排者传入） | 对应分类的 frontmatter + 正文模板 |
+| 场景 | 加载文件 | 内容 | 方式 |
+|:---|:---|:---|:---|
+| 提炼时 | investment-framework/references/tag-taxonomy.md（由编排者传入） | 标签分类体系，用于选择标签 | 读取 |
+| 提炼时 | investment-framework/references/footnote-taxonomy.md（由编排者传入） | 脚注类型定义，用于 [^data-N]/[^date-N] 格式 | 读取 |
+| 提炼时 | investment-framework/assets/{模板名}.md（由编排者传入） | 对应分类的 frontmatter + 正文模板 | 读取 |
 
 ---
 

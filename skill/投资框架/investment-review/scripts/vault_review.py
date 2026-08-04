@@ -164,7 +164,7 @@ def template_for(rel,fm):
 # 必填字段（镜像模板 frontmatter 硬约束；改模板时同步）
 # 注意：博主画像自身即博主，无 author 字段
 REQUIRED={
- "博主画像":["title","platform","platform_id","special_following","createDate","updateDate"],
+ "博主画像":["title","platform","special_following","createDate","updateDate"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
  "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
 }
@@ -184,12 +184,14 @@ CANON={
  "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
  "宏观通用":["title","createDate","updateDate","author","tags","source"],
- "博主画像":["title","platform","platform_id","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 8 字段 canonical 顺序（含 platform_id，见规则 #36）
+ "博主画像":["title","platform","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 7 字段 canonical 顺序（无 platform_id——统一存博主控制台「雪球ID」列，见规则 #36）
 }
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）
+# 注意：博主画像的核心段落检查走上方硬编码分支（blogger_core，容忍无 emoji 旧写法），
+# 通用 EXPECTED_SECTIONS 检查通过 tpl!="博主画像" 排除博主画像
 EXPECTED_SECTIONS={
- "博主画像":["博主画像"],
+ "博主画像":["擅长与局限","言论追踪","个股买卖记录","预测记录"],
  "方法论":["适用场景","方法步骤","关键指标","案例"],
  "分析档案":["使用的方法论","核心结论","分析过程","估值判断","决策","结果跟踪"],
  "交易体系":["规则","适用条件"],
@@ -254,6 +256,7 @@ def check_blogger_tables(text,rel):
 # ---------- 扫描 ----------
 F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "legacy_footnote_heading":[],"forbidden_source_section":[],"blogger_has_source":[],
+   "blogger_has_platform_id":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
    "source_as_invalid":[],"stray_date":[],"field_order":[],"junk_files":[],
    "stock_code_missing":[],"blogger_not_registered":[],
@@ -334,7 +337,12 @@ for rel in sorted(files):
     # 博主画像
     if tpl=="博主画像":
         if "source" in fm: F["blogger_has_source"].append((rel,"博主画像不应含 source"))
-        if "博主画像" not in h2: F["missing_core_sections"].append((rel,"博主画像",["博主画像"]))
+        if "platform_id" in fm: F["blogger_has_platform_id"].append((rel,f"platform_id 已统一存博主控制台「雪球ID」列，画像不应含此字段（规则 #36）"))
+        # 核心段落检查（新模板段落：擅长与局限/言论追踪⭐/个股买卖记录📈/预测记录；
+        # 用 startswith 容忍无 emoji 的旧写法如「言论追踪」）
+        blogger_core = ["擅长与局限","言论追踪","个股买卖记录","预测记录"]
+        missing_blog = [s for s in blogger_core if not any(h.startswith(s) for h in h2)]
+        if missing_blog: F["missing_core_sections"].append((rel,"博主画像",missing_blog))
         # 三表「原文链接」检查（framework-rules #35）
         nc,er=check_blogger_tables(text,rel)
         F["blogger_table_no_link_col"].extend(nc)
