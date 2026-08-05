@@ -34,7 +34,7 @@ Obsidian 投资知识库 · 结构审查自动扫描器
 
 依赖：Python 3.8+，仅标准库（os/re/json/argparse）。
 """
-import os, re, json, argparse
+import os, re, json, argparse, datetime
 
 DEFAULT_VAULT = os.path.expanduser(
     "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库"
@@ -262,6 +262,7 @@ F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "stock_code_missing":[],"blogger_not_registered":[],
    "blogger_table_no_link_col":[],"blogger_empty_link_row":[],
    "info_cutoff_mismatch":[],
+   "recycle_expired":[],"recycle_pending":[],"recycle_invalid":[],
    "footnote_links_workspace":[]}
 summary={"total":0,"by_template":{}}
 
@@ -303,6 +304,22 @@ for rel in sorted(files):
     # 流浪 date（层间边界硬约束 framework-rules #27：条目层禁止 date）
     if "date" in fm:
         F["stray_date"].append((rel,"条目层含禁止字段 date（应为原始资源层发布日）"))
+
+    # delete 字段（待删除标记，framework-rules #26）：校验取值 + 计算冷静期状态
+    if "delete" in fm:
+        dv=fm["delete"]
+        if isinstance(dv,str) and re.match(r"^\d{4}-\d{2}-\d{2}$",dv):
+            try:
+                d_mark=datetime.date.fromisoformat(dv)
+                days=(datetime.date.today()-d_mark).days
+                if days>7:
+                    F["recycle_expired"].append((rel,dv,days))
+                else:
+                    F["recycle_pending"].append((rel,dv,days))
+            except ValueError:
+                F["recycle_invalid"].append((rel,dv))
+        else:
+            F["recycle_invalid"].append((rel,dv))
 
     # 字段顺序 canonical（framework-rules #27）
     # id 为外部插件字段（Visit History 等，见 framework-rules #27「id 字段豁免」），
