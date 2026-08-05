@@ -52,7 +52,8 @@ if not os.path.isdir(VAULT):
 os.makedirs(OUT, exist_ok=True)
 
 # 框架归属层（镜像 investment-framework 路径表；改框架时同步）
-SCOPE = ["我的", "博主", "其他", "宏观"]
+# 「我的」层由用户自管（规则 #15），Agent 不审查、不维护——扫描范围仅 博主/其他/宏观
+SCOPE = ["博主", "其他", "宏观"]
 
 # 博主控制台登记名（镜像 framework-rules #12；改控制台时同步）
 # 用于博主层登记校验：博主文件夹名必须在控制台登记，否则属误挂（应迁移其他层）
