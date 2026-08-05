@@ -434,9 +434,10 @@ for rel in sorted(files):
                     F["footnote_links_workspace"].append((rel, wl, "脚注指向工作区文件（仅限wiki产物间引用，见 footnote-taxonomy 禁止行为#6）"))
 
     # 个股代码（framework-rules #28）：文件名须含 {名称}({代码})，代码后可附加描述后缀
+    # 代码位数：A股6位/港股4-5位/美股1-5位/澳交所等3位——统一放宽为 2-6 位字母数字（含 .AX 等市场后缀形式）
     if tpl=="个股":
         bn=os.path.basename(rel)[:-3]
-        if not re.search(r"\([A-Za-z0-9]{4,6}\)",bn):
+        if not re.search(r"\([A-Za-z0-9\.]{2,6}\)",bn):
             F["stock_code_missing"].append((rel,"个股文件名缺股票代码，应为 {名称}({代码})，见规则#28"))
 
     # 博主层作者登记校验（framework-rules #12）：博主文件夹名须在博主控制台登记
