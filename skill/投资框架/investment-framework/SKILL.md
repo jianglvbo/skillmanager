@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.6.0"
+  version: "2.7.0"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---
@@ -115,7 +115,7 @@ compatibility: 通用
 | ROUGH_DIR | {VAULT_ROOT}/工作区/粗制品 | 粗制品暂存 |
 | RAW_DIR | {VAULT_ROOT}/工作区/原始资源 | 粗加工后原始资源 |
 | BLOGGER_CONSOLE | {VAULT_ROOT}/工作区/博主控制台.md | 博主注册控制台 |
-| RECYCLE_CONSOLE | {VAULT_ROOT}/工作区/待回收控制台.md | 待回收控制台（质量不佳条目的 30 天冷静期回收） |
+| RECYCLE_CONSOLE | {VAULT_ROOT}/工作区/待回收控制台.md | 待回收控制台（质量不佳条目的 7 天冷静期回收） |
 
 
 ---
@@ -182,7 +182,7 @@ compatibility: 通用
 - [ ] 提炼是否直接执行并汇报结果（无等待确认环节）？
 - [ ] 提炼产出的标签是否来自标签体系？
 - [ ] 博主归属是否仅限博主控制台已登记博主？是否存在 Agent 自动补登（违规）或未登记作者误挂博主层？
-- [ ] 待回收处置是否严格按 #26（用户填三栏、状态由审查计算、30 天冷静期、超期真删+双向清理+理由报告），Agent 不预填、不 shortcut？
+- [ ] 待回收处置是否严格按 #26（用户填三栏、状态由审查计算、7 天冷静期、超期真删+双向清理+理由报告），Agent 不预填、不 shortcut？
 - [ ] "其他"层是否只包含投资相关的投资人内容？
 - [ ] "我的"层是否未做任何修改？
 - [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`；帖子集：粗制品 `type: 帖子集` 按 #29 直接提炼）
