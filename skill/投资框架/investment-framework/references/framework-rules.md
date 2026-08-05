@@ -74,20 +74,20 @@
     - vault 内**其他正文**（含博主档案、其他条目）中指向这些产物的 wikilink、关联脚注引用标记（`[^x]: ... [[产物]]` 类）全部清除；
     - **博主层特例**：若被删产物归属层为博主层，且博主档案（`博主/<名>/<名>.md`）中已无其他内容（即仅记录此条/此批产物），则**连博主档案本体一并删除**；若该博主仍保留有其他产物，则仅清理档案内对该条的引用，保留档案骨架。
 
-26. 待删除标记与 7 天冷静期回收（delete 字段机制）：框架条目若你觉得质量不佳需回收，**在条目 frontmatter 加 `delete: {YYYY-MM-DD}` 字段**（值 = 标记当天的日期，Obsidian Properties 选 date 类型；缺省不写 = 未标记）。**不再使用表格控制台**（`工作区/待回收控制台.md` 保留为回收历史记录，见下）：
-   - **标记**：`delete: 2026-08-05` 即标记该条待回收。**标记操作由用户手动执行**（在 Properties 面板添加字段），Agent 不替用户标记。
-   - **撤销 = 删字段**：标记日期起 7 天内，你随时删除 `delete` 字段即可撤销回收，无任何副作用，条目保持原样。
+26. 待删除标记与 7 天冷静期回收（delete 字段机制）：框架条目若你觉得质量不佳需回收，**在条目 frontmatter 的 `delete` 字段填标记日期**（`delete: {YYYY-MM-DD}`，值 = 标记当天日期，Obsidian Properties 选 date 类型）。**`delete` 为内容型条目常驻字段（2026-08-05 起全条目含之），缺省空值 = 未标记**；空值不参与回收判定。**不再使用表格控制台**（`工作区/待回收控制台.md` 保留为回收历史记录，见下）：
+   - **标记**：`delete: 2026-08-05` 即标记该条待回收。**标记操作由用户手动执行**（在 Properties 面板填日期），Agent 不替用户标记。
+   - **撤销 = 清空字段**：标记日期起 7 天内，你随时清空 `delete` 字段（恢复空值）即可撤销回收，无任何副作用，条目保持原样。
    - **超 7 天自动回收**：审查时扫描全部内容型条目的 `delete` 字段，计算 `today - delete > 7天` 的条目，执行**真删**（文件移出 vault 至系统废纸篓）+ **双向清理**（反查并清除 vault 内所有指向该条目的 wikilink 与关联脚注，含博主档案、其他条目、`source` 字段），保持无悬空链接、不制造孤岛文件。回收后可在 `工作区/待回收控制台.md` 追加一行历史记录（条目 / 标记日期 / 理由 / 已回收）。
    - **审查报告须给理由**：每条回收在「待回收处置报告」中写明「超 7 天冷静期 + 标记日期 + 清理引用数」，供你复核。
-   - **Agent 严格自律**：绝不替用户添加 `delete` 字段（标记是用户动作）；绝不缩短 7 天冷静期；超期回收必出理由报告。回收动作严格由「用户标记 + 审查超期执行」驱动，Agent 不得单方面发起回收。
+   - **Agent 严格自律**：绝不替用户填写 `delete` 字段值（标记是用户动作）；绝不缩短 7 天冷静期；超期回收必出理由报告。回收动作严格由「用户标记 + 审查超期执行」驱动，Agent 不得单方面发起回收。
    - **旧表格记录迁移**：2026-08-05 前控制台表格中已存在的记录（若有）由审查按同规则处置——以表格「添加日期」为标记日期计算冷静期。
 
 27. 层间 frontmatter 字段集边界（防提炼误带字段）：框架条目层与原始资源层使用**不同的 frontmatter 字段集**，提炼时只搬运语义对应的字段，绝不可把原始资源的字段整体照搬进条目：
    - **原始资源层**（粗加工产出，`工作区/原始资源/`）字段集：`title` / `source` / `author` / `date` / `type` / `status` / `tags`（7 字段；`date` = 帖子发布日，`status` = `待提炼`）。**字段顺序建议（防漂移）**：`title → source → author → date → type → status → tags`——粗加工须按此顺序写入。
-   - **框架条目层**（提炼产出，落各分类模板）字段集：各分类模板定义者——`title` / `createDate` / `updateDate` / `author` / `star` / `tags` / `source` + 分析档案额外 `标的` / `status` + 宏观额外 `event` / `时效状态` / `时间范围`。
+   - **框架条目层**（提炼产出，落各分类模板）字段集：各分类模板定义者——`title` / `createDate` / `updateDate` / `author` / `star` / `delete` / `tags` / `source` + 分析档案额外 `标的` / `status` + 宏观额外 `event` / `时效状态` / `时间范围`。
    - **`star` 字段（2026-08-05 新增）**：好文章标记，取值 `true` / `false`（YAML 布尔裸写），**缺省 `false`**——提炼产出默认 `star: false`，用户看到好的文章再改为 `true`。仅内容型模板（方法论/分析档案/交易体系/心态/心得/行业/宏观/个股）含此字段，**博主画像不加**（画像是人物档案非文章）。`star` 是纯用户标记，提炼阶段**不从原文推断**（Agent 不自动打星），由用户手动维护。审查/校验脚本对 `star` 校验取值合法性（true/false，缺省 false 即合法），不参与内容质量判断。
    - **硬约束**：框架条目 frontmatter **禁止出现 `date` 字段**（那是原始资源层的发布日字段）；提炼从原始资源生成条目时，仅取 `author` / `source` 等语义对应字段，**绝不把原始资源的 `date` 带入条目**——否则会在条目层制造"流浪 date"，破坏 frontmatter 规范（呼应 #1 日期格式约定）。
-   - **字段顺序（canonical）硬约束**：框架条目 frontmatter 字段必须按所属分类模板的 canonical 顺序排列（各 `assets/*.md` 模板即唯一真相源）。标准 7 字段顺序：`title → createDate → updateDate → author → star → tags → source`；分析档案：`title → 标的 → createDate → updateDate → author → star → status → tags → source`；宏观事件型：`title → event → 时效状态 → 时间范围 → createDate → updateDate → author → star → tags → source`。**禁止打乱顺序**（如 `source` 前置、`tags` 置底）。审查（investment-review 结构审查第三步）与 `vault_review.py` 据此检测顺序漂移。
+   - **字段顺序（canonical）硬约束**：框架条目 frontmatter 字段必须按所属分类模板的 canonical 顺序排列（各 `assets/*.md` 模板即唯一真相源）。标准 8 字段顺序：`title → createDate → updateDate → author → star → delete → tags → source`；分析档案：`title → 标的 → createDate → updateDate → author → star → delete → status → tags → source`；宏观事件型：`title → event → 时效状态 → 时间范围 → createDate → updateDate → author → star → delete → tags → source`。**禁止打乱顺序**（如 `source` 前置、`tags` 置底）。审查（investment-review 结构审查第三步）与 `vault_review.py` 据此检测顺序漂移。
    - **`author` 必填**：每个框架条目必须有 `author`——wikilink 来源从原始资源取博主名；外部 URL 来源填原出处，无则填 `待补`。提炼产出条目若漏 `author` 视为 frontmatter 不完整（与审查自检联动）。
    - **`id` 字段豁免（2026-08-04 新增）**：`id`（形如 `id: docid_xxx_e`）是 Obsidian 第三方插件（如 Visit History 等阅读追踪类插件）写入的文档追踪 ID，**不属于框架字段集，不参与 canonical 顺序校验，不参与必填/缺失/引号检查**。提炼、粗加工、审查、格式校验（vault_review.py / verify-format.py）遇到 `id` 字段时**一律忽略**——不得删除、不得移动、不得报错。frontmatter 解析按"id 为外部字段"处理。
    - 这是当前 vault 内 31 个框架条目误含 `date` 的根因：提炼环节把原始资源的 `date` 一并复制进了条目。

@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.7.0"
+  version: "2.8.0"
   short-description: 投资框架提炼执行器（直接执行）
 compatibility: 通用
 ---
@@ -79,7 +79,8 @@ compatibility: 通用
 - **`source` 填真实原文链接**（#23/#29）：`source` 数组填原文链接（markdown 格式 `[标题（博主 日期）](https://xueqiu.com/.../XXXXXX)`，取自批次 `[原文]` 链接），**禁止填采集批次文件名**（批次提炼后即删，会成悬空引用）；综合多篇帖则列多个链接
 - **模板 section 全量输出**：按所属分类模板的 section 结构全量输出（标题 + 内容）。某 section 确实无内容时写一句最小说明（如"暂无验证记录"），**不得省略 section 标题**
 - **frontmatter 字段顺序 canonical**（#27）：按模板定义的字段顺序写入，禁止打乱
-- **`star` 缺省 false**（#27）：内容型条目（方法论/分析档案/交易体系/心态/心得/行业/宏观/个股）frontmatter 一律含 `star: false`（位于 author 后 tags 前），**提炼阶段不推断不打星**，由用户手动改为 true
+- **`star` 缺省 false**（#27）：内容型条目（方法论/分析档案/交易体系/心态/心得/行业/宏观/个股）frontmatter 一律含 `star: false`（位于 author 后），**提炼阶段不推断不打星**，由用户手动改为 true
+- **`delete` 常驻空值**（#26/#27）：内容型条目 frontmatter 一律含 `delete: `（空值，位于 star 后），**提炼阶段不填值**——回收标记完全由用户手动填日期，Agent 绝不代填
 - **日期裸写**（#1）：`createDate`/`updateDate` 裸写 `yyyy-MM-dd`，无引号
 - **原文链接格式**（#30/#35）：表格内链接一律用 `[原文](URL)` 格式，**禁止贴裸 URL**
 

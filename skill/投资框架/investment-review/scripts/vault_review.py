@@ -126,6 +126,13 @@ def parse_frontmatter(text):
         m2=re.match(r"^([A-Za-z_\u4e00-\u9fff][\w\u4e00-\u9fff]*):\s*(.*)$",line)
         if not m2: i+=1; continue
         key=m2.group(1); val=m2.group(2).strip()
+        # 行内注释处理（YAML 标准语义）：
+        # - val 以 # 开头（如 `key: # comment`）→ 整行为注释，值为空
+        # - val 中 "空格+#"（如 `key: value # comment`）→ 截断注释；引号包裹的值不截断（如 title: "a # b"）
+        if val.startswith("#"):
+            val=""
+        elif val and val[0] not in ('"',"'"):
+            val=re.sub(r"\s+#.*$","",val).strip()
         if val=="":
             items=[]; j=i+1
             while j<n and re.match(r"^\s*-\s+",lines[j]):
@@ -174,17 +181,18 @@ REQUIRED["宏观通用"]=["title","createDate","updateDate","author","star","tag
 
 # canonical 字段顺序（镜像 framework-rules #27；改模板时同步）
 # 用于检测字段顺序漂移——仅比对 canonical 中实际存在的字段
+# delete 为常驻可选字段（缺省空=未标记），仅进 CANON 不进 REQUIRED（空值合法，不应报缺失）
 CANON={
- "方法论":["title","createDate","updateDate","author","star","tags","source"],
- "交易体系":["title","createDate","updateDate","author","star","tags","source"],
- "投资心态":["title","createDate","updateDate","author","star","tags","source"],
- "投资心得":["title","createDate","updateDate","author","star","tags","source"],
- "行业":["title","createDate","updateDate","author","star","tags","source"],
- "个股":["title","createDate","updateDate","author","star","tags","source"],
- "分析档案":["title","标的","createDate","updateDate","author","star","status","tags","source"],
- "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","star","tags","source"],
- "宏观通用":["title","createDate","updateDate","author","star","tags","source"],
- "博主画像":["title","platform","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 7 字段 canonical 顺序（无 platform_id——统一存博主控制台「雪球ID」列，见规则 #36；无 star——画像是人物档案非文章）
+ "方法论":["title","createDate","updateDate","author","star","delete","tags","source"],
+ "交易体系":["title","createDate","updateDate","author","star","delete","tags","source"],
+ "投资心态":["title","createDate","updateDate","author","star","delete","tags","source"],
+ "投资心得":["title","createDate","updateDate","author","star","delete","tags","source"],
+ "行业":["title","createDate","updateDate","author","star","delete","tags","source"],
+ "个股":["title","createDate","updateDate","author","star","delete","tags","source"],
+ "分析档案":["title","标的","createDate","updateDate","author","star","delete","status","tags","source"],
+ "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","star","delete","tags","source"],
+ "宏观通用":["title","createDate","updateDate","author","star","delete","tags","source"],
+ "博主画像":["title","platform","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 7 字段 canonical 顺序（无 platform_id——统一存博主控制台「雪球ID」列，见规则 #36；无 star/delete——画像是人物档案非文章）
 }
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）
@@ -306,9 +314,12 @@ for rel in sorted(files):
         F["stray_date"].append((rel,"条目层含禁止字段 date（应为原始资源层发布日）"))
 
     # delete 字段（待删除标记，framework-rules #26）：校验取值 + 计算冷静期状态
+    # 2026-08-05 起 delete 为全条目常驻字段（缺省空值 = 未标记），仅非空值参与回收判定
     if "delete" in fm:
         dv=fm["delete"]
-        if isinstance(dv,str) and re.match(r"^\d{4}-\d{2}-\d{2}$",dv):
+        if dv in (None,""):
+            pass  # 缺省空 = 未标记，忽略
+        elif isinstance(dv,str) and re.match(r"^\d{4}-\d{2}-\d{2}$",dv):
             try:
                 d_mark=datetime.date.fromisoformat(dv)
                 days=(datetime.date.today()-d_mark).days
