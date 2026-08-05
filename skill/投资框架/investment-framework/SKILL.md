@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.9.0"
+  version: "2.10.0"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---
@@ -115,8 +115,6 @@ compatibility: 通用
 | ROUGH_DIR | {VAULT_ROOT}/工作区/粗制品 | 粗制品暂存 |
 | RAW_DIR | {VAULT_ROOT}/工作区/原始资源 | 粗加工后原始资源 |
 | BLOGGER_CONSOLE | {VAULT_ROOT}/工作区/博主控制台.md | 博主注册控制台 |
-| RECYCLE_CONSOLE | {VAULT_ROOT}/工作区/待回收控制台.md | 待回收历史记录（2026-08-05 起为 delete 字段机制，此文件仅记回收历史） |
-
 
 ---
 
