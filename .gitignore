@@ -35,3 +35,6 @@ credentials.*
 
 # Large binary models (exceed GitHub 100MB limit)
 *.bin
+
+# 校验脚本运行时产物
+vault_review_result.json

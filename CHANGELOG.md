@@ -3,6 +3,18 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.36.3 — 2026-08-05
+
+### Added
+- **`star` 字段（好文章星标）**：内容型条目（方法论/分析档案/交易体系/心态/心得/行业/宏观/个股）frontmatter 新增 `star: false`（位于 author 后 tags 前，缺省 false，用户看到好文章手动改 true）。博主画像不加（人物档案非文章）。用户 2026-08-05 确认方案 A（frontmatter 字段 vs Obsidian 原生书签）
+
+### Changed
+- **investment-framework** v2.5.0 → v2.6.0：8 个内容型模板 assets/*.md 加 `star: false` 字段；framework-rules #27 字段集/canonical 补 star（标准 7 字段 `title→createDate→updateDate→author→star→tags→source`，分析档案/宏观同序）+ 新增 star 语义说明（提炼不推断不打星，用户手动维护）
+- **investment-refine** v2.6.0 → v2.7.0：写入硬约束补「star 缺省 false」一行
+- **investment-review** v2.5.0 → v2.6.0：vault_review.py REQUIRED + CANON 全部内容型模板补 star（博主画像豁免）
+- 配套 vault：290 个存量内容条目批量补 `star: false`（「我的」层不动、博主画像不加），验证 0 遗漏、field_order: 0
+- .gitignore 新增 `vault_review_result.json`（校验脚本运行时产物不入库）
+
 ## 1.36.2 — 2026-08-05
 
 ### Changed

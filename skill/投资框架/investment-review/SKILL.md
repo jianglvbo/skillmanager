@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.5.0"
+  version: "2.6.0"
   short-description: 投资框架审查执行器（含关联备注发现）
 compatibility: 通用
 ---

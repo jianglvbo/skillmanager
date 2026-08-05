@@ -162,29 +162,29 @@ def template_for(rel,fm):
     return "未知"
 
 # 必填字段（镜像模板 frontmatter 硬约束；改模板时同步）
-# 注意：博主画像自身即博主，无 author 字段
+# 注意：博主画像自身即博主，无 author 字段；star 为内容型通用字段（缺省 false，模板含之）
 REQUIRED={
  "博主画像":["title","platform","special_following","createDate","updateDate"],
- "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
- "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
+ "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","star","tags","source"],
+ "分析档案":["title","标的","createDate","updateDate","author","star","status","tags","source"],
 }
 for t in ["方法论","交易体系","投资心态","投资心得","行业","个股"]:
-    REQUIRED[t]=["title","createDate","updateDate","author","tags","source"]
-REQUIRED["宏观通用"]=["title","createDate","updateDate","author","tags","source"]  # 顶层宏观通用框架，无 event 三字段
+    REQUIRED[t]=["title","createDate","updateDate","author","star","tags","source"]
+REQUIRED["宏观通用"]=["title","createDate","updateDate","author","star","tags","source"]  # 顶层宏观通用框架，无 event 三字段
 
 # canonical 字段顺序（镜像 framework-rules #27；改模板时同步）
 # 用于检测字段顺序漂移——仅比对 canonical 中实际存在的字段
 CANON={
- "方法论":["title","createDate","updateDate","author","tags","source"],
- "交易体系":["title","createDate","updateDate","author","tags","source"],
- "投资心态":["title","createDate","updateDate","author","tags","source"],
- "投资心得":["title","createDate","updateDate","author","tags","source"],
- "行业":["title","createDate","updateDate","author","tags","source"],
- "个股":["title","createDate","updateDate","author","tags","source"],
- "分析档案":["title","标的","createDate","updateDate","author","status","tags","source"],
- "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","tags","source"],
- "宏观通用":["title","createDate","updateDate","author","tags","source"],
- "博主画像":["title","platform","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 7 字段 canonical 顺序（无 platform_id——统一存博主控制台「雪球ID」列，见规则 #36）
+ "方法论":["title","createDate","updateDate","author","star","tags","source"],
+ "交易体系":["title","createDate","updateDate","author","star","tags","source"],
+ "投资心态":["title","createDate","updateDate","author","star","tags","source"],
+ "投资心得":["title","createDate","updateDate","author","star","tags","source"],
+ "行业":["title","createDate","updateDate","author","star","tags","source"],
+ "个股":["title","createDate","updateDate","author","star","tags","source"],
+ "分析档案":["title","标的","createDate","updateDate","author","star","status","tags","source"],
+ "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","star","tags","source"],
+ "宏观通用":["title","createDate","updateDate","author","star","tags","source"],
+ "博主画像":["title","platform","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 7 字段 canonical 顺序（无 platform_id——统一存博主控制台「雪球ID」列，见规则 #36；无 star——画像是人物档案非文章）
 }
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）
