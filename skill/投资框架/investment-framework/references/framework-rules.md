@@ -149,7 +149,7 @@
         - 方法论/心态/体系类 → 按常规提炼流程归入对应分类。
     - **选择性落地**：无借鉴价值的纯调侃/碎碎念不入库，告知用户已跳过。
     - **买卖记录必录**：只要识别出买卖动作，无论内容是否有其他价值，买卖记录必须落地。
-    - **更新博主档案**：录入后更新 frontmatter 的 `updateDate` 和 `info_cutoff`；如内容被提炼为框架条目，在言论追踪信号列标注 `已提炼为框架条目[[条目名]]`。
+    - **更新博主档案**：录入后更新 frontmatter 的 `updateDate` 和 `info_cutoff`（ISO 时间格式 `YYYY-MM-DDTHH:mm:ss`，默认当天 `17:50:00`，采集后按实际完成时间更新，见 #36）；如内容被提炼为框架条目，在言论追踪信号列标注 `已提炼为框架条目[[条目名]]`。
 
 33. 段落布局：框架条目正文须遵守以下排版约束（审查结构维度之一，verify-format.py 自动检测）：
     - **标题前后空行**：`##` / `###` 标题行前后各有一个空行（文件首行标题除外）；
@@ -168,5 +168,5 @@
     - **三表列定义**：言论追踪 4 子表见 #30；个股买卖记录见 #31（已含原文链接列）；预测记录列：预测内容 | 时间 | 状态 | 原文链接。
     - **审查联动**：`investment-review` / `vault_review.py` 据此检测「三表是否都含原文链接列」「是否存在空原文链接行」，空链接行标为问题级。
 
-36. 博主画像 frontmatter 仅含「笔记属性」7 字段：`title` / `platform` / `special_following` / `summary` / `info_cutoff` / `createDate` / `updateDate`（canonical 顺序按此；`vault_review.py` 的 `CANON["博主画像"]` 据此校验）。**无 `platform_id` 字段**——博主平台永久数字 ID 统一存储于博主控制台「雪球ID」列（博主可能改名但 ID 不变），画像不重复存储（2026-08-04 用户确认此设计）；`special_following`（是否特别关注）取值 `true` / `false`，**取自博主控制台「是否特别关注」列**（控制台为博主层唯一权威清单，见 #12）；「关注」由「在控制台登记」本身隐含，故不单独设 `following` 字段。`markets` / `style_keywords` / `tags` 原属内容领域分类，已随用户决定从博主画像移除——**博主画像是全部模板中唯一不含 `tags` 的模板**，`vault_review.py` 对博主画像豁免 `tag_issues` 空标签检查（代码中 `tpl!="博主画像"` 分支）。审查反向校验：画像 frontmatter 出现 `platform_id` 即报错（`blogger_has_platform_id`），防止字段回流。
+36. 博主画像 frontmatter 仅含「笔记属性」7 字段：`title` / `platform` / `special_following` / `summary` / `info_cutoff` / `createDate` / `updateDate`（canonical 顺序按此；`vault_review.py` 的 `CANON["博主画像"]` 据此校验）。**`info_cutoff`（信息截止）为 ISO 时间格式 `YYYY-MM-DDTHH:mm:ss`**（如 `2026-08-04T17:50:00`），表示「已采集信息的时间截止点」，**默认当天 `17:50:00`**，采集完成后按实际完成时间更新——精确到时间是为了支持同日多次采集时窗口去重（后续采集只取 `info_cutoff` 之后的帖子）；博主控制台「信息截止」列同格式，`vault_review.py` 校验画像与控制台一致性。**无 `platform_id` 字段**——博主平台永久数字 ID 统一存储于博主控制台「雪球ID」列（博主可能改名但 ID 不变），画像不重复存储（2026-08-04 用户确认此设计）；`special_following`（是否特别关注）取值 `true` / `false`，**取自博主控制台「是否特别关注」列**（控制台为博主层唯一权威清单，见 #12）；「关注」由「在控制台登记」本身隐含，故不单独设 `following` 字段。`markets` / `style_keywords` / `tags` 原属内容领域分类，已随用户决定从博主画像移除——**博主画像是全部模板中唯一不含 `tags` 的模板**，`vault_review.py` 对博主画像豁免 `tag_issues` 空标签检查（代码中 `tpl!="博主画像"` 分支）。审查反向校验：画像 frontmatter 出现 `platform_id` 即报错（`blogger_has_platform_id`），防止字段回流。
 

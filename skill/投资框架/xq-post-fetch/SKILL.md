@@ -10,7 +10,7 @@ description: |
 license: MIT
 agent_created: true
 metadata:
-  version: "4.4.0"
+  version: "4.5.0"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---
@@ -47,7 +47,7 @@ compatibility: 通用
 | max_posts | int | 否 | 50 | 最大采集条数 |
 | output_dir | path | 否 | {VAULT}/工作区/粗制品 | 输出目录（vault 相对路径 `工作区/粗制品`，见 investment-framework 路径表 ROUGH_DIR） |
 
-**时间窗口**：不再使用固定 hours 参数。采集范围 = 博主控制台「信息截止」列日期 → 今天。新增博主「信息截止」默认为半年前（首次采集拉半年言论）。
+**时间窗口**：不再使用固定 hours 参数。采集范围 = 博主控制台「信息截止」列（ISO 时间格式 `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间可支持同日多次采集去重（只取 info_cutoff 之后的帖子）。新增博主「信息截止」默认为半年前 17:50:00（首次采集拉半年言论）。
 
 > 两个参数都不传 → 默认采集博主控制台中所有「雪球ID」非空的博主（逐博主执行第零步→第七步）。同时传入 → 以 xq_id 为准。
 
@@ -109,7 +109,7 @@ browser-act session close {name}
 
 ### 第八步：更新 info_cutoff（画像 + 控制台双写）
 
-采集完成后，将「信息截止」更新为**今天日期**（YYYY-MM-DD），双写两处：
+采集完成后，将「信息截止」更新为**本次采集实际完成时间**（ISO 格式 `YYYY-MM-DDTHH:mm:ss`，如 `2026-08-04T17:50:00`；无精确时间时默认当天 `17:50:00`），双写两处：
 1. **博主画像** `博主/{nickname}/{nickname}.md`：frontmatter `info_cutoff` + `updateDate`
 2. **博主控制台** `工作区/博主控制台.md`：该博主行「信息截止」列 + 控制台 frontmatter `updateDate`
 

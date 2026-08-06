@@ -468,7 +468,7 @@ def load_console_cutoffs():
         if len(cells) >= 7 and cells[0] not in ("编号", "") and not set(cells[0]) <= set("- :"):
             name = cells[1]
             cutoff = cells[6]  # 第7列 = 信息截止
-            if name and cutoff and re.match(r"\d{4}-\d{2}-\d{2}", cutoff):
+            if name and cutoff and re.match(r"\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?", cutoff):
                 cutoffs[name] = cutoff
     return cutoffs
 
@@ -485,7 +485,7 @@ if CONSOLE_CUTOFFS:
             continue
         full = os.path.join(VAULT, rel)
         text = open(full, encoding="utf-8").read()
-        m = re.search(r"info_cutoff:\s*(\d{4}-\d{2}-\d{2})", text)
+        m = re.search(r"info_cutoff:\s*(\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?)", text)
         profile_cutoff = m.group(1) if m else ""
         console_cutoff = CONSOLE_CUTOFFS[bname]
         if profile_cutoff and console_cutoff and profile_cutoff != console_cutoff:
