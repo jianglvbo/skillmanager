@@ -102,14 +102,14 @@ def check_footnote_inline(body):
 
 def check_footnote_quality(body):
     issues = []
-    for m in re.finditer(r'^\[\^(enhance|supplement|conflict|complement)-\d+\]:\s*(.+)$', body, re.MULTILINE):
+    for m in re.finditer(r'^\[\^(enhance|supplement|conflict|complement|opposite)-\d+\]:\s*(.+)$', body, re.MULTILINE):
         fn_body = m.group(2).strip()
         if '的跨维度关联' in fn_body:
             issues.append({'fn': m.group(1), 'body': fn_body[:80], 'type': 'template'})
         wl_match = re.match(r'\[\[[^\]]+\]\]\s*—\s*(.*)', fn_body)
         if wl_match:
             desc = wl_match.group(1).strip()
-            if desc in ('增强', '补充', '冲突', '互补', ''):
+            if desc in ('增强', '补充', '冲突', '互补', '对立', ''):
                 issues.append({'fn': m.group(1), 'body': fn_body[:80], 'type': 'no_desc'})
     return issues
 

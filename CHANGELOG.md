@@ -3,6 +3,19 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.37.0 — 2026-08-08
+
+### Added
+- **`opposite`（对立）脚注标签**（用户 2026-08-08 方案 A）：关联脚注白名单 6→7 种。用于观点/操作规则**直接对立**的关联（非此即彼、行动相反，如"允许补仓 vs 绝不补仓"），与 `conflict`（有张力可调和）区分，判据见 footnote-taxonomy「冲突 vs 对立」。首个用例：买卖纪律 `[^opposite-1]` 指向景从lee 绝不补仓
+- **source 链式引用约定**（用户 2026-08-08 确认）：wiki 文件（框架条目）`source` → 一律指向原始资源 wikilink；原始资源 `source` → 真实 URL。唯一例外：博主言论直接提炼（#29 帖子集）→ 框架条目可直接指向 URL
+- **方法论标签负面清单**（用户 2026-08-08 纠正）：tags 禁止基本面/价值投资/教训复盘/投资理念等裸标签（framework-rules #17 + vault_review.py METHOD_BANNED 检测）
+
+### Changed
+- **investment-coarse-processor** v2.3.0：新增第五步B「source 字段规则」——粗加工必须提取粗制品 frontmatter `url` 字段（笔记同步助手写入的原始链接）到原始资源 source，禁止渠道名占位（"AI整理 - 抖音"/"雪球长文"）；禁止行为新增「不给原始资源添加方法论/内容性质标签」
+- **investment-framework** v2.12.0：framework-rules #17 补标签负面清单、#20 补 opposite、#23 补链式引用约定；footnote-taxonomy 白名单 7 种 + 冲突vs对立判据表 + 排列顺序；verify-format.py check_footnote_quality 正则加 opposite
+- **investment-review** v2.13.0：vault_review.py 新增 METHOD_BANNED 方法论标签检测
+- 配套 vault 修复：6 处 source 非法形态（4 抖音 URL 从废纸篓粗制品 url 字段恢复 + 2 雪球 URL 检索确认）、5 处违规裸标签清除 + 2 处补合规前缀标签、22 画像表格分隔行错位修复、轮船小水手 4 行具象化列错位、5 处标题间距
+
 ## 1.36.3 — 2026-08-05
 
 ### Added

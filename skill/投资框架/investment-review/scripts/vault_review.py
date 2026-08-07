@@ -354,6 +354,13 @@ for rel in sorted(files):
         if tpl=="博主画像":
             bad=[tg for tg in tags if str(tg).startswith("行业/")]
             if bad: F["tag_issues"].append((rel,"博主带行业标签(违规): "+", ".join(map(str,bad))))
+        # 方法论/内容性质标签违规（framework-rules #17 · 2026-08-08 用户纠正）
+        METHOD_BANNED = {"基本面","价值投资","教训复盘","投资理念","交易系统","心态","仓位管理",
+                          "交易策略","投资策略","投资框架","风控","止损","止盈","复盘","抄作业",
+                          "趋势","波段","短线","长线"}
+        for tg in tags:
+            if str(tg) in METHOD_BANNED:
+                F["tag_issues"].append((rel,"方法论/内容性质标签(违规 #17): "+str(tg)))
         for tg in tags:
             if has_emoji(str(tg)): F["tag_issues"].append((rel,"标签含emoji: "+str(tg)))
 

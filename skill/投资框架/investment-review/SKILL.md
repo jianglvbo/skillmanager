@@ -63,7 +63,7 @@ compatibility: 通用
 **S3**：frontmatter 完整性——必填字段 title/createDate/updateDate/**author**/tags/**source** 齐全（author/source 缺失即标记）；字段顺序须按所属分类模板 canonical 排列（标准 `title→createDate→updateDate→author→tags→source`，分析档案/宏观事件型见 templates）；**禁止出现 `date` 字段**（层间边界硬约束，见 framework-rules #27）；日期字段裸写无引号
 **S4**：引号有效性（全局规则 #21）
 **S5**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记
-**S6**：脚注格式——检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）。**额外必查**：(1) 标签前缀是否在白名单内（enhance/supplement/conflict/complement/data/date），非法标签如 `关联`/`ref` 一律标记；(2) 标签前缀与描述中中文关系词是否一致（enhance=增强、supplement=补充、conflict=冲突、complement=互补）；(3) 孤儿/悬空检查——每条定义必须有对应内联标记，每条内联标记必须有对应定义
+**S6**：脚注格式——检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）。**额外必查**：(1) 标签前缀是否在白名单内（enhance/supplement/conflict/complement/opposite/data/date），非法标签如 `关联`/`ref` 一律标记；(2) 标签前缀与描述中中文关系词是否一致（enhance=增强、supplement=补充、conflict=冲突、complement=互补、opposite=对立、opposite=对立）；(3) 孤儿/悬空检查——每条定义必须有对应内联标记，每条内联标记必须有对应定义
 **S7**：标签匹配
 **S8**：输出结构审查报告
 
@@ -142,7 +142,7 @@ compatibility: 通用
 - [ ] 结构审查 S1-S8 是否全部执行？（读取参数、归类、frontmatter完整性含updateDate/**author**/**source**、**字段顺序canonical(#27)**、**无流浪date(#27)**、引号有效性、wikilink含source字段、脚注格式、标签、输出报告）；归类正确性是否覆盖「博主层条目作者是否均在博主控制台登记，未登记者误挂需迁移其他层」？
 - [ ] 审查范围是否正确排除「我的」层（规则 #15 用户自管）？是否仅覆盖 博主/其他/宏观？
 - [ ] 脚注格式是否校验（无多余 `]]`、格式为 `[[target]] — 关系：说明`）？
-- [ ] 脚注标签前缀是否全部在白名单内（enhance/supplement/conflict/complement/data/date）？标签与中文关系词是否一致？
+- [ ] 脚注标签前缀是否全部在白名单内（enhance/supplement/conflict/complement/opposite/data/date）？标签与中文关系词是否一致？
 - [ ] 是否存在孤儿脚注（有定义无内联标记）或悬空标记（有内联标记无定义）？
 - [ ] 已存在脚注是否逐条复核关系依据，编撰关系是否记入报告？
 - [ ] 是否只输出了报告而未修改任何文件？
