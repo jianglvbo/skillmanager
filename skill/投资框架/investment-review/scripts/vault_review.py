@@ -361,6 +361,12 @@ for rel in sorted(files):
         for tg in tags:
             if str(tg) in METHOD_BANNED:
                 F["tag_issues"].append((rel,"方法论/内容性质标签(违规 #17): "+str(tg)))
+        # 裸标签违规（tag-taxonomy 层级硬约束：最少二级、须挂前缀；日期标签例外）
+        for tg in tags:
+            s = str(tg)
+            is_date = bool(re.match(r'^\d{4}-\d{2}-\d{2}$', s))
+            if '/' not in s and not is_date:
+                F["tag_issues"].append((rel,"裸标签(违规，须带一级前缀): "+s))
         for tg in tags:
             if has_emoji(str(tg)): F["tag_issues"].append((rel,"标签含emoji: "+str(tg)))
 
