@@ -20,6 +20,9 @@
     6. 残留段落：## 来源、空 ## 脚注 占位
     7. source 字段：标量格式（应为 YAML 列表）
     8. 空 # 标题：独占一行的 "#"（无标题文字，不会渲染）
+    9. 空表格占位行：`| | | | |` 全空单元格行（模板骨架泄漏，footnote-taxonomy#5；博主画像豁免——轻创建画像合法保留空表骨架）
+    10. 来源 blockquote：`> 来源/原文链接/发布时间：`（footnote-taxonomy 禁止行为 #4，来源应入 frontmatter source）
+    11. frontmatter 行尾注释：`delete:` / `star:` 行带 `# 注释`（模板注释泄漏，footnote-taxonomy#5）
 """
 
 import os, re, sys, yaml
@@ -199,6 +202,50 @@ def check_source_field(fm):
         return [{'type': 'empty'}]
     return []
 
+def check_empty_table_row(body):
+    """规则 footnote-taxonomy #5：全空单元格占位行（如 `| | | | |`），模板骨架泄漏。
+    注意：表头分隔行 `|:---|:---|` 含 `:---` 不算空；博主画像豁免（轻创建画像合法保留空表骨架）。"""
+    issues = []
+    for i, line in enumerate(body.split('\n')):
+        if re.match(r'^\|(\s*\|)+\s*$', line.strip()):
+            issues.append({'line': i+1})
+    return issues
+
+def check_source_blockquote(body):
+    """footnote-taxonomy 禁止行为 #4：正文末尾/任何位置的 `> 来源/原文链接/发布时间：` blockquote。
+    来源信息一律入 frontmatter source 字段。"""
+    issues = []
+    for i, line in enumerate(body.split('\n')):
+        if re.match(r'^>\s*(来源|原文链接|发布时间)\s*[：:]\s*\S', line):
+            issues.append({'line': i+1, 'text': line.strip()[:60]})
+    return issues
+
+def check_fm_comment_leak(fm_text):
+    """footnote-taxonomy #5：frontmatter 行尾注释泄漏（模板 `star: false  # 好文章标记...`、
+    `delete:  # 待删除标记...` 等注释被带入正式文件）。仅检查 delete/star 两行（模板注释所在行）。"""
+    issues = []
+    for i, line in enumerate(fm_text.split('\n')):
+        if re.match(r'^(delete|star):', line.strip()) and '#' in line:
+            issues.append({'line': i+1, 'text': line.strip()[:60]})
+    return issues
+
+def fix_empty_table_row(body):
+    lines = [ln for ln in body.split('\n') if not re.match(r'^\|(\s*\|)+\s*$', ln.strip())]
+    return '\n'.join(lines)
+
+def fix_source_blockquote(body):
+    lines = [ln for ln in body.split('\n') if not re.match(r'^>\s*(来源|原文链接|发布时间)\s*[：:]\s*\S', ln)]
+    return '\n'.join(lines)
+
+def fix_fm_comment_leak(fm_text):
+    """剥离 delete/star 行行尾注释（保留字段值，如 `delete:  # 待删除...` → `delete:`）。"""
+    new_lines = []
+    for ln in fm_text.split('\n'):
+        if re.match(r'^(delete|star):', ln.strip()):
+            ln = re.sub(r'#.*$', '', ln).rstrip()
+        new_lines.append(ln)
+    return '\n'.join(new_lines)
+
 def fix_inline_headings(body):
     lines = body.split('\n')
     fixed = []
@@ -261,7 +308,7 @@ def verify_file(fpath, rel):
             fm = yaml.safe_load(fm_text[3:fm_text.find('---', 3)].strip()) or {}
         except:
             pass
-    # 博主画像：自身即博主、无 source 字段（规则 #36），豁免 source 检查
+    # 博主画像：自身即博主、无 source 字段（规则 #36），豁免 source 检查；轻创建画像合法保留空表格骨架，豁免空表格行检查
     is_blogger_profile = bool(re.match(r'^博主/[^/]+/[^/]+\.md$', rel))
     issues = {
         'file': rel,
@@ -275,10 +322,13 @@ def verify_file(fpath, rel):
         'footnote_heading': check_footnote_heading(body),
         'bold_spacing': check_bold_spacing(body),
         'list_inline': check_list_inline(body),
+        'empty_table_row': [] if is_blogger_profile else check_empty_table_row(body),
+        'source_blockquote': check_source_blockquote(body),
+        'fm_comment_leak': check_fm_comment_leak(fm_text),
         'source_field': [] if is_blogger_profile else (check_source_field(fm) if fm else []),
     }
     issues = {k: v for k, v in issues.items() if v}
-    return issues if len(issues) > 1 else None
+    return issues if len(issues) > 0 else None
 
 def fix_file(fpath):
     with open(fpath, 'r', encoding='utf-8') as f:
@@ -286,7 +336,7 @@ def fix_file(fpath):
     fm_text, body = split_fm_body(content)
     if not body:
         return False
-    original = body
+    new_fm = fix_fm_comment_leak(fm_text)
     body = fix_inline_headings(body)
     body = fix_heading_spacing(body)
     body = fix_residual_sections(body)
@@ -294,9 +344,12 @@ def fix_file(fpath):
     body = fix_footnote_heading(body)
     body = fix_bold_spacing(body)
     body = fix_list_inline(body)
-    if body != original:
+    body = fix_empty_table_row(body)
+    body = fix_source_blockquote(body)
+    new_content = new_fm + body
+    if new_content != content:
         with open(fpath, 'w', encoding='utf-8') as f:
-            f.write(fm_text + body)
+            f.write(new_content)
         return True
     return False
 
@@ -320,7 +373,8 @@ def main():
     counters = {k: 0 for k in ['inline_headings', 'heading_spacing', 'compact_paragraphs',
                                 'footnote_inline', 'footnote_quality', 'residual_sections',
                                 'source_field', 'empty_headings', 'footnote_heading',
-                                'bold_spacing', 'list_inline']}
+                                'bold_spacing', 'list_inline', 'empty_table_row',
+                                'source_blockquote', 'fm_comment_leak']}
     for root, dirs, files in os.walk(vault):
         dirs[:] = [d for d in dirs if d not in {'.obsidian', '.trash', '附件'}]
         rel_root = os.path.relpath(root, vault)
@@ -356,7 +410,9 @@ def main():
                  'footnote_quality': '脚注废话', 'residual_sections': '残留段落',
                  'source_field': 'source字段', 'empty_headings': '空#标题',
                  'footnote_heading': '脚注标题',
-                 'bold_spacing': '加粗空格', 'list_inline': '列表同行'}[k]
+                 'bold_spacing': '加粗空格', 'list_inline': '列表同行',
+                 'empty_table_row': '空表格占位行', 'source_blockquote': '来源blockquote',
+                 'fm_comment_leak': 'frontmatter注释泄漏'}[k]
         print(f"{label}: {v}")
     print()
     if total_issues == 0:
