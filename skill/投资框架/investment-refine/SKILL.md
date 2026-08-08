@@ -39,7 +39,7 @@ compatibility: 通用
 - 绝不使用标签体系外的标签
 - 绝不捏造、编撰原文没有的内容——比喻和案例必须来自原文
 - 绝不在粗加工/提炼时自动将未登记作者「补登」进博主控制台——未登记作者其条目归「其他」层，且**绝不就「是否补登」询问用户**（见 framework-rules #12）
-- 绝不输出模板中的花括号指引文本（`{...}`）——模板花括号仅为写作提示，产出文件中不得包含
+- 绝不输出模板残留成分（`{...}` 花括号占位、`> 指引` blockquote、frontmatter 行内注释、全空表格占位行）——模板为纯结构骨架，产出文件不得含任何模板解释残留（见 footnote-taxonomy 禁止行为 #5）
 - 绝不在正文末尾添加"来源+原文引用"blockquote——来源信息只写 frontmatter `source` 字段（见 footnote-taxonomy.md 禁止行为 #4）
 - 绝不使用 `enhance`/`supplement`/`conflict`/`complement`/`data`/`date` 以外的脚注标签前缀（见 footnote-taxonomy.md 禁止行为 #1）
 
@@ -85,7 +85,7 @@ compatibility: 通用
 - **原文链接格式**（#30/#35）：表格内链接一律用 `[原文](URL)` 格式，**禁止贴裸 URL**
 
 2. 选择对应模板（从编排者传入的 templates）
-3. 创建文件，填写 frontmatter + 正文内容。正文按模板中的写作指引，保留原文的比喻、案例、推理链条，用自然语言段落而非干巴巴的要点罗列
+3. 创建文件，填写 frontmatter + 正文内容。正文按 template-guide.md 的写作指引填充（模板为纯结构骨架，各 section 写作要求统一在 references/template-guide.md），保留原文的比喻、案例、推理链条，用自然语言段落而非干巴巴的要点罗列
 4. 条目间关联在执行汇报中标注方向即可，**不在文件中创建 `## 关联` 章节或空脚注占位**。该关联的正式落地是审查阶段写入文末 `---` 脚注区的关联脚注（`[^enhance-N]`/`[^complement-N]` 等，见 footnote-taxonomy.md）。仅当正文确有具体数据/时效判断时，提炼阶段才输出 `---` 脚注区并填 `[^data-N]`/`[^date-N]`（脚注区以 `---` 分隔线标识，无 `## 脚注` 标题）
 5. 如涉及已登记博主，读取 `博主/{博主名}/{博主名}.md`，在言论追踪表追加本次条目。**具象化指针必须用完整路径**：`见 [[博主/{名}/{分类}/{文件名}]]`，禁止 `见 [[文件名]]`
 6. 如涉及宏观事件：通用宏观框架放 `宏观/`，博主的具体宏观分析放 `博主/{博主名}/宏观/`，填写 `event` 字段以便跨博主聚合，并在传导路径中关联行业/个股 wikilink
@@ -113,7 +113,8 @@ compatibility: 通用
 |:---|:---|:---|:---|
 | 提炼时 | investment-framework/references/tag-taxonomy.md（由编排者传入） | 标签分类体系，用于选择标签 | 读取 |
 | 提炼时 | investment-framework/references/footnote-taxonomy.md（由编排者传入） | 脚注类型定义，用于 [^data-N]/[^date-N] 格式 | 读取 |
-| 提炼时 | investment-framework/assets/{模板名}.md（由编排者传入） | 对应分类的 frontmatter + 正文模板 | 读取 |
+| 提炼时 | investment-framework/references/template-guide.md（由编排者传入） | 各模板 section 写作指引（模板为纯结构骨架，写作要求统一在此） | 读取 |
+| 提炼时 | investment-framework/assets/{模板名}.md（由编排者传入） | 对应分类的 frontmatter + 正文模板（纯结构骨架） | 读取 |
 
 ---
 
