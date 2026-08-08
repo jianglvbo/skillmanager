@@ -77,7 +77,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── meta/                      ← 元工具（skill 管理类）
 │   │   ├── ai-repo-manager/       ←   Ai/ 仓库管理
 │   │   ├── git-ops/               ←   通用 git 提交管理
-│   │   └── guidelines/            ←   Skill 设计准则（skill-guidelines）
+│   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
 │   ├── content/                   ← 内容提取
 │   │   ├── browser-act/           ←   BrowserAct 浏览器自动化
 │   │   ├── douyin-video-summary/  ←   抖音视频摘要
@@ -198,7 +198,7 @@ git push origin main
 |:---|:---|
 | `ai-repo-manager` | Ai/ 仓库 GitHub 版本管理（README 更新约定、cp -r 安装） |
 | `git-ops` | 通用 git 提交管理（检测变更/提交/自定义信息/历史/推送） |
-| `guidelines` | Agent Skill 设计准则（skill-guidelines，五层认知架构 + 六段模板） |
+| `skill-guidelines` | Agent Skill 设计准则（五层认知架构 + 六段模板） |
 
 ### content/ — 内容提取
 
