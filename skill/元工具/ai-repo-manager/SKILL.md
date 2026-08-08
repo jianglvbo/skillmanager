@@ -63,7 +63,19 @@ git add -A
 git commit --author="<模型名> <49331439+jianglvbo@users.noreply.github.com>" -m "<简洁的提交信息>"
 ```
 
-提交信息要求：中文、一句话概括、无需前缀。
+提交信息要求：**Conventional Commits 格式**（2026-08-08 用户确认）：
+
+```
+<type>(<scope>): <描述>
+```
+
+- **type**（必填，英文）：`feat`（新功能）/ `fix`（修复）/ `docs`（文档）/ `refactor`（重构）/ `chore`（杂项）/ `style`（格式）/ `test`（测试）
+- **scope**（可选）：改动所属 skill 名或模块，如 `investment-framework`、`ai-repo-manager`
+- **描述**：中文，一句话概括，不堆砌、不用 `+` 串联多个点；核心变更点放描述，次要细节可省略
+- 示例：
+  - `fix(investment-framework): 模板 tags 示例对齐 tag-taxonomy`
+  - `feat(ai-repo-manager): 新增自动 push 阈值规则`
+  - `chore(investment-review): 同步三处 skill 副本`
 
 **author 硬约束（2026-08-08 用户纠正）**：提交 author 必须显式指定为**当前模型名**，**不得依赖 git 全局/仓库级 user.name**（全局配置是 `4110`，会让提交作者变成非模型名）。用 `--author` 显式覆盖；committer 可保持 git 配置。
 
