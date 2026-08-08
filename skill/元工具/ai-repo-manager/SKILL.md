@@ -60,10 +60,12 @@ agent_created: true
 ```bash
 cd ~/Ai
 git add -A
-git commit -m "<简洁的提交信息>"
+git commit --author="deepseek-v4-flash <49331439+jianglvbo@users.noreply.github.com>" -m "<简洁的提交信息>"
 ```
 
 提交信息要求：中文、一句话概括、无需前缀。
+
+**author 硬约束（2026-08-08 用户纠正）**：提交 author 必须显式指定为当前模型名（`deepseek-v4-flash`），**不得依赖 git 全局/仓库级 user.name**（全局配置是 `4110`，会让提交作者变成非模型名）。用 `--author` 显式覆盖；committer 可保持 git 配置。提交后 `git log -1 --format="%an"` 自检 author 是否为模型名。
 
 ### 步骤 5：同步远程（推送前）
 
