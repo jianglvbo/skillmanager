@@ -16,7 +16,7 @@ version: 1.0.0
 运行提取脚本：
 
 ```bash
-/opt/homebrew/bin/python3 ~/Ai/skill/内容提取/wechat-article/scripts/wechat_extract.py "<URL>"
+/opt/homebrew/bin/python3 ~/Ai/skill/content/wechat-article/scripts/wechat_extract.py "<URL>"
 ```
 
 ### 输出模式
@@ -38,7 +38,7 @@ version: 1.0.0
 加 `--markdown` 参数直接输出纯 Markdown（含 frontmatter），适合写入文件：
 
 ```bash
-/opt/homebrew/bin/python3 ~/Ai/skill/内容提取/wechat-article/scripts/wechat_extract.py "<URL>" --markdown
+/opt/homebrew/bin/python3 ~/Ai/skill/content/wechat-article/scripts/wechat_extract.py "<URL>" --markdown
 ```
 
 ## 工作流
@@ -46,7 +46,7 @@ version: 1.0.0
 ### 1. 提取文章
 
 ```bash
-/opt/homebrew/bin/python3 ~/Ai/skill/内容提取/wechat-article/scripts/wechat_extract.py "<URL>" --markdown
+/opt/homebrew/bin/python3 ~/Ai/skill/content/wechat-article/scripts/wechat_extract.py "<URL>" --markdown
 ```
 
 ### 2. 写入 Obsidian 粗制品

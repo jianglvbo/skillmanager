@@ -74,33 +74,24 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ├── CONTRIBUTING.md
 ├── .gitignore
 ├── skill/
-│   ├── 内容提取/                  ← 内容提取
-│   │   ├── 抖音视频摘要/           ←   抖音视频摘要
-│   │   ├── 得到笔记/                 ←   得到大脑（Get笔记）
-│   │   ├── 微信文章/                 ←   公众号文章提取
-│   │   └── 全文整理/                 ←   语音转录稿→书面文章
-│   ├── 知识框架/                  ← 投资知识框架
-│   │   ├── 知识框架编排/             ←   全局编排
-│   │   ├── 粗加工/                   ←   粗加工
-│   │   ├── 维基提炼/                 ←   知识提炼
-│   │   ├── 维基审查/                 ←   维基审查
-│   │   ├── 知识问答/                 ←   知识问答
-│   │   ├── 博主提炼/                 ←   博主画像提炼
-│   │   └── 链接收集/                 ←   链接抓取
-│   ├── 投资框架/                  ← 投资知识框架（新）
-│   │   ├── investment-framework/   ←   全局编排者
-│   │   ├── investment-coarse-processor/ ← 粗加工
-│   │   ├── investment-refine/      ←   提炼执行器
-│   │   ├── investment-review/      ←   审查执行器
-│   │   └── xq-post-fetch/          ←   雪球帖子采集
-│   ├── 元工具/                    ← 元工具
-│   │   ├── 仓库管理/                 ←   Ai/ 仓库管理
-│   │   └── 技能准则/                 ←   Skill 设计准则
-│   ├── 办公工具/                  ← 办公工具
-│   │   ├── 磁盘清理/                 ←   macOS 磁盘清理
-│   │   ├── 文档索引/                 ←   本地文档索引
-│   │   └── browser-act/           ←   BrowserAct 浏览器自动化
-│   └── 雪球帖子采集/              ← 雪球博主帖子采集
+│   ├── meta/                      ← 元工具（skill 管理类）
+│   │   ├── ai-repo-manager/       ←   Ai/ 仓库管理
+│   │   ├── git-ops/               ←   通用 git 提交管理
+│   │   └── guidelines/            ←   Skill 设计准则（skill-guidelines）
+│   ├── content/                   ← 内容提取
+│   │   ├── browser-act/           ←   BrowserAct 浏览器自动化
+│   │   ├── douyin-video-summary/  ←   抖音视频摘要
+│   │   ├── wechat-article/        ←   公众号文章提取
+│   │   └── full-text-organizer/   ←   语音转录稿→书面文章
+│   ├── office/                    ← 办公工具
+│   │   ├── mac-cleaner/           ←   macOS 磁盘清理
+│   │   └── qmd/                   ←   本地文档索引
+│   └── investment/                ← 投资知识框架
+│       ├── investment-framework/  ←   全局编排者
+│       ├── investment-coarse-processor/ ← 粗加工
+│       ├── investment-refine/     ←   提炼执行器
+│       ├── investment-review/     ←   审查执行器
+│       └── xq-post-fetch/         ←   雪球帖子采集
 └── tools/
     ├── autocli/
     └── browser-act-cli/
@@ -201,28 +192,31 @@ git push origin main
 
 ## 各 Skill 说明
 
-### 内容提取/ — 内容提取
+### meta/ — 元工具（skill 管理类）
 
 | Skill | 说明 |
 |:---|:---|
-| `抖音视频摘要` | 抖音视频摘要（whisper 转录 + AI 总结） |
-| `得到笔记` | 得到大脑（Get笔记）保存/搜索/管理 |
-| `微信文章` | 微信公众号文章提取与转 Markdown |
-| `全文整理` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
+| `ai-repo-manager` | Ai/ 仓库 GitHub 版本管理（README 更新约定、cp -r 安装） |
+| `git-ops` | 通用 git 提交管理（检测变更/提交/自定义信息/历史/推送） |
+| `guidelines` | Agent Skill 设计准则（skill-guidelines，五层认知架构 + 六段模板） |
 
-### 知识框架/ — 投资知识框架
+### content/ — 内容提取
 
 | Skill | 说明 |
 |:---|:---|
-| `知识框架编排` | 全局编排者：路径表、模板表、调用链、全局规则 |
-| `粗加工` | 粗加工：补全 frontmatter 并归档 |
-| `维基提炼` | 知识提炼：原始资源 → 维基条目 |
-| `维基审查` | 维基审查：批量扫描健康度 |
-| `知识问答` | 知识问答：基于维基仓库生成分析 |
-| `博主提炼` | 博主画像提炼（雪球数据管道见 references/） |
-| `链接收集` | 链接收集与抓取 |
+| `browser-act` | BrowserAct 浏览器自动化（隐身反检测 + 结构化提取） |
+| `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
+| `wechat-article` | 微信公众号文章提取与转 Markdown |
+| `full-text-organizer` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
 
-### 投资框架/ — 投资知识框架（新）
+### office/ — 办公工具
+
+| Skill | 说明 |
+|:---|:---|
+| `mac-cleaner` | macOS 磁盘分析与清理 |
+| `qmd` | 本地文档索引与搜索（BM25 + 向量） |
+
+### investment/ — 投资知识框架
 
 | Skill | 说明 |
 |:---|:---|
@@ -232,27 +226,6 @@ git push origin main
 | `investment-review` | 审查执行器：内容审查 + 结构审查 + 关联备注发现 |
 | `xq-post-fetch` | 雪球帖子采集：browser-act 抓全文 + 截断补全 + 结构化 markdown 输出 |
 
-### 元工具/ — 元工具
-
-| Skill | 说明 |
-|:---|:---|
-| `仓库管理` | Ai/ 仓库 GitHub 版本管理 |
-| `技能准则` | Agent Skill 设计准则（五层认知架构 + 分层执行 + 认知卸载 + 六段模板） |
-
-### 办公工具/ — 办公工具
-
-| Skill | 说明 |
-|:---|:---|
-| `磁盘清理` | macOS 磁盘分析与清理 |
-| `文档索引` | 本地文档索引与搜索（BM25 + 向量） |
-| `browser-act` | BrowserAct 浏览器自动化（隐身反检测 + 结构化提取） |
-
-### 独立 Skill
-
-| Skill | 说明 |
-|:---|:---|
-| `雪球帖子采集` | 雪球博主帖子采集（browser-act chrome 模式） |
-
 ---
 
 ## 许可证
@@ -261,4 +234,4 @@ MIT
 
 ---
 
-*最后更新：2026-08-04*
+*最后更新：2026-08-08*

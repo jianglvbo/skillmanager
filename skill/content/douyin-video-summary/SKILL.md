@@ -12,7 +12,7 @@ Summarize Douyin videos: extract audio → transcribe locally → AI summary.
 Run the setup script to install all dependencies:
 
 ```bash
-bash ~/Ai/skill/内容提取/douyin-video-summary/scripts/setup.sh
+bash ~/Ai/skill/content/douyin-video-summary/scripts/setup.sh
 ```
 
 This installs whisper-cpp, ffmpeg, and downloads the whisper model (ggml-small.bin). Manual install:
@@ -74,7 +74,7 @@ ffmpeg -i audio.mp4 -ar 16000 -ac 1 -c:a pcm_s16le audio.wav
 ### Step 4: Transcribe with whisper.cpp
 
 ```bash
-whisper-cli -m ~/Ai/skill/内容提取/douyin-video-summary/models/ggml-small.bin -l zh -f audio.wav -otxt -of output
+whisper-cli -m ~/Ai/skill/content/douyin-video-summary/models/ggml-small.bin -l zh -f audio.wav -otxt -of output
 ```
 
 - Use `-l zh` for Chinese content (auto-detect if unsure)
