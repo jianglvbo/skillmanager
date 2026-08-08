@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
   short-description: 投资框架粗加工执行器
 compatibility: 通用
 ---

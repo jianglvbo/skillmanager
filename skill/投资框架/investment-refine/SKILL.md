@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.8.0"
+  version: "2.9.0"
   short-description: 投资框架提炼执行器（直接执行）
 compatibility: 通用
 ---

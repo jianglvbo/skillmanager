@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.13.0"
+  version: "2.14.0"
   short-description: 投资框架审查执行器（含关联备注发现）
 compatibility: 通用
 ---
@@ -56,11 +56,11 @@ compatibility: 通用
 
 **辅助 · 自动预扫（可选）**：可先调用 `scripts/vault_review.py --vault <vault路径>` 自动扫描，生成 `vault_review_result.json`，覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维，外加扩展检查（博主画像三表原文链接检查（规则 #35）、禁用 `## 来源` 段、source 形态校验（规则 #23：内部→wikilink、外部→[标题](URL)、禁裸 URL/批次名/手写占位）、空壳 junk）。脚本严格遵守「只报告不修改」原则，仅输出 JSON。人工据 JSON 撰写报告时，聚焦机器无法判定的部分（如段落缺失是否因确无内容、标签语义是否匹配、关联备注提案）。
 
-**辅助 · 段落布局预扫（可选）**：可追加调用 `investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观` 扫描段落布局问题（同行标题、标题间距、段落紧凑、脚注内联标记孤儿、脚注模板废话、残留 `## 来源`/空 `## 脚注`），与 vault_review.py 互补——前者覆盖结构/元数据，后者覆盖排版/脚注内联。加 `--fix` 可自动修复可修复项。
+**辅助 · 段落布局预扫（可选）**：可追加调用 `investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观` 扫描段落布局问题（同行标题、标题间距、段落紧凑、脚注内联标记孤儿、脚注模板废话、残留 `## 来源`/空 `## 脚注`、模板成分残留——空表格占位行/来源blockquote/frontmatter注释/花括号占位），与 vault_review.py 互补——前者覆盖结构/元数据，后者覆盖排版/脚注内联/模板残留。加 `--fix` 可自动修复可修复项。
 
 **S1**：读取参数 `{ scope_dirs }`
 **S2**：归类正确性——含博主层条目其作者是否均在「博主控制台」登记，未登记者误挂博主层须标记迁移至其他层（见 framework-rules #12）
-**S3**：frontmatter 完整性——必填字段 title/createDate/updateDate/**author**/tags/**source** 齐全（author/source 缺失即标记）；字段顺序须按所属分类模板 canonical 排列（标准 `title→createDate→updateDate→author→tags→source`，分析档案/宏观事件型见 templates）；**禁止出现 `date` 字段**（层间边界硬约束，见 framework-rules #27）；日期字段裸写无引号
+**S3**：frontmatter 完整性——必填字段 title/createDate/updateDate/**author**/tags/**source** 齐全（author/source 缺失即标记）；字段顺序须按所属分类模板 canonical 排列（标准 8 字段 `title→createDate→updateDate→author→star→delete→tags→source`，分析档案/宏观事件型见 framework-rules #27）；**禁止出现 `date` 字段**（层间边界硬约束，见 framework-rules #27）；日期字段裸写无引号
 **S4**：引号有效性（全局规则 #21）
 **S5**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记
 **S6**：脚注格式——检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）。**额外必查**：(1) 标签前缀是否在白名单内（enhance/supplement/conflict/complement/opposite/data/date），非法标签如 `关联`/`ref` 一律标记；(2) 标签前缀与描述中中文关系词是否一致（enhance=增强、supplement=补充、conflict=冲突、complement=互补、opposite=对立、opposite=对立）；(3) 孤儿/悬空检查——每条定义必须有对应内联标记，每条内联标记必须有对应定义
@@ -122,7 +122,7 @@ compatibility: 通用
 | 审查时 | investment-framework/references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 | 读取 |
 | 审查时 | references/report-templates.md | 内容/结构/待回收处置三份报告模板 | 读取 |
 | 结构审查预扫 | scripts/vault_review.py | 自动扫描脚本，输出 vault_review_result.json（只报告不修改） | **执行** |
-| 段落布局预扫 | investment-framework/scripts/verify-format.py | 段落布局/脚注内联/模板废话扫描（可 --fix 自动修复） | **执行** |
+| 段落布局预扫 | investment-framework/scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留扫描（可 --fix 自动修复） | **执行** |
 
 ---
 
