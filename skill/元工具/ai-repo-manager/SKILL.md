@@ -30,14 +30,14 @@ agent_created: true
 
 ### 核心原则
 
-- **author 标识当前 agent**：提交 author 显式指定为**当前执行 agent 的模型名**（"修改人是谁"），不依赖 git 全局/仓库级 user.name——那些可能是人类用户或另一 agent 的身份。**如何获取自己的模型名由各 agent 自行决定**（如查询本平台会话记录、环境变量），本 skill 不预设获取方式
+- **author 必须是当前 agent 的模型名**：提交 author 显式指定为**当前执行 agent 的模型名**（"修改人是谁"），**这是唯一合法值**——不依赖 git 全局/仓库级 user.name（那可能是人类用户或另一 agent 的身份），**无法获取模型名时不提交**（停止并询问用户）。如何获取自己的模型名由各 agent 自行决定（如查询本平台会话记录、环境变量），本 skill 不预设获取方式
 - **Conventional Commits**：提交信息用 `<type>(<scope>): <描述>` 标准格式
 - **防积压**：未推送 commit 数超过阈值必须立即 push，不积压、不等待
 - **先本地后远程**：任何推送前先 fetch 检查远端变动，落后则 rebase 合并，绝不 force push
 
 ### 禁止行为
 
-- 绝不依赖 git 全局/仓库级 user.name 作为提交 author（无法保证是当前 agent）
+- 绝不依赖 git 全局/仓库级 user.name 作为提交 author（无法保证是当前 agent）；**无法获取模型名时绝不提交**，停止并询问用户
 - 绝不 force push（`--force`/`--force-with-lease`）——除非用户明确要求
 - 绝不跳过文档更新（README/CHANGELOG，若目标仓库约定要求）
 - 绝不跳过推送后确认（本地 HEAD 与远程 HEAD 必须一致）
@@ -75,7 +75,8 @@ git commit --author="<你的模型名> <邮箱>" -m "<Conventional Commits 信�
 
 **author 规则（通用）**：
 - 邮箱：用目标仓库的 git 配置邮箱（`git config user.email`）或用户指定邮箱
-- 模型名：**由当前 agent 自行获取**（本 skill 不写死获取方式）；若无法获取，用 `git config user.name` 并告知用户
+- 模型名：**必须显式填当前 agent 的模型名**——author 标识的唯一合法值就是模型名。如何获取自己的模型名由各 agent 自行决定（如查询本平台会话记录、环境变量），本 skill 不预设获取方式
+- **禁止兜底**：无法获取模型名时**不得**用 git 全局/仓库级 user.name 顶替提交（那会让 author 变成人类用户或其他 agent 身份）。此时**停止提交**，向用户报告「无法确认当前模型名」，请用户提供后再提交
 - 自检：`git log -1 --format="%an"` 确认 author 是模型名
 
 **Conventional Commits 格式**：
