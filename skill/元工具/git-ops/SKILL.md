@@ -4,8 +4,7 @@ description: >
   通用 Git 提交管理工具。检测 git 仓库变更文件、暂存并提交变更、支持自定义提交信息、查看提交历史、可选推送。
   适用于任何 git 仓库（Ai 仓库、Obsidian 投资知识库等），不绑定特定仓库——目标仓库由调用方指定或从配置层读取。
   触发词：「git 提交」「提交仓库」「commit」「提交管理」「git-ops」「同步仓库」「查看提交历史」。
-  与 ai-repo-manager 边界：ai-repo-manager 管理「~/Ai 仓库」的版本控制与分发约定（README/CHANGELOG）；
-  git-ops 是通用提交管理工具，覆盖任何 git 仓库。
+  与 ai-repo-manager 并存：ai-repo-manager 描述「~/Ai 仓库」的专属管理约定；git-ops 是通用提交管理工具，两者互不依赖，由 agent 按场景自行判断使用。
 agent_created: true
 ---
 
