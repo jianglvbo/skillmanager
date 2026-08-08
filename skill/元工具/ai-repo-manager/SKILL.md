@@ -76,6 +76,17 @@ git commit --author="$MODEL <49331439+jianglvbo@users.noreply.github.com>" -m "<
 
 提交后 `git log -1 --format="%an"` 自检 author 是否为模型名。
 
+**自动 push 阈值（2026-08-08 用户确认）**：每次提交后检查本地未推送 commit 数，**超过 5 个（>5）必须立即 push**，不得继续积压：
+
+```bash
+git rev-list --count origin/main..HEAD
+```
+
+- 结果 > 5：**必须**执行「步骤 5→6」推送到远程（不询问用户、不等待下次机会）
+- 结果 ≤ 5：可暂不 push（用户另有指示除外），下次提交时复查
+
+> 目的：限制未推送 commit 积压，防止本地与远端漂移过大、合并冲突升级。push 是本地命令，不走 AgentKey、不耗 token，无额外成本。
+
 ### 步骤 5：同步远程（推送前）
 
 **先本地提交，再检查远程是否有新变动。**
