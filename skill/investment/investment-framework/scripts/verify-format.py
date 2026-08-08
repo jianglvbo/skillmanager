@@ -133,6 +133,19 @@ def check_empty_headings(body):
             issues.append({'line': i+1})
     return issues
 
+def check_missing_h1(body, rel=''):
+    """模板要求正文首行为 `# 一级标题`（H1）。缺 H1 = 提炼时模板 `# {标题}` 占位未填充
+    （如直接以 `##` 开头）。跳过 `.space/` 目录（Obsidian 插件模板/元数据，非框架产物）。"""
+    if '.space/' in rel:
+        return []
+    stripped = body.strip()
+    if not stripped:
+        return []
+    first_line = stripped.split('\n')[0].strip()
+    if first_line.startswith('# ') or first_line == '#':
+        return []
+    return [{'first_line': first_line[:60]}]
+
 def check_footnote_heading(body):
     """规则#20：脚注定义放 --- 分隔线下，禁止 ## 脚注 标题。检测到遗留 ## 脚注 标题即违规。"""
     has_heading = bool(re.search(r'^## 脚注', body, re.MULTILINE))
@@ -330,6 +343,7 @@ def verify_file(fpath, rel):
         'footnote_quality': check_footnote_quality(body),
         'residual_sections': check_residual_sections(body),
         'empty_headings': check_empty_headings(body),
+        'missing_h1': check_missing_h1(body, rel),
         'footnote_heading': check_footnote_heading(body),
         'bold_spacing': check_bold_spacing(body),
         'list_inline': check_list_inline(body),
@@ -386,7 +400,8 @@ def main():
                                 'footnote_inline', 'footnote_quality', 'residual_sections',
                                 'source_field', 'empty_headings', 'footnote_heading',
                                 'bold_spacing', 'list_inline', 'empty_table_row',
-                                'source_blockquote', 'fm_comment_leak', 'curly_placeholder']}
+                                'source_blockquote', 'fm_comment_leak', 'curly_placeholder',
+                                'missing_h1']}
     for root, dirs, files in os.walk(vault):
         dirs[:] = [d for d in dirs if d not in {'.obsidian', '.trash', '附件'}]
         rel_root = os.path.relpath(root, vault)
@@ -424,7 +439,8 @@ def main():
                  'footnote_heading': '脚注标题',
                  'bold_spacing': '加粗空格', 'list_inline': '列表同行',
                  'empty_table_row': '空表格占位行', 'source_blockquote': '来源blockquote',
-                 'fm_comment_leak': 'frontmatter注释泄漏', 'curly_placeholder': '花括号占位残留'}[k]
+                 'fm_comment_leak': 'frontmatter注释泄漏', 'curly_placeholder': '花括号占位残留',
+                 'missing_h1': '缺一级标题'}[k]
         print(f"{label}: {v}")
     print()
     if total_issues == 0:
