@@ -3,6 +3,18 @@
 本文件记录 `~/Ai/` 仓库的整体版本变更历史。
 
 
+## 1.37.3 — 2026-08-08
+
+### Changed
+- **ai-repo-manager 通用化重构**（用户 2026-08-08 指令）：从「~/Ai 专用仓库管理器」改为**通用 Git 仓库管理器**
+  - 主文件去掉全部个人硬编码（模型名获取的 SQLite 命令、noreply 邮箱、~/Ai 路径、SSH 远程地址）
+  - author 规则改为通用原则：「author 标识当前执行 agent 的模型名，如何获取由各 agent 自行决定」，skill 不预设获取方式
+  - 目标仓库改为调用方传入 `target_repo` 参数，支持任意 git 仓库
+  - 新增 `references/repo-config.md`：登记常用仓库配置（Ai 仓库 / 投资知识库仓库的路径、远程、README/CHANGELOG 约定），作为配置数据按需加载
+  - 保留通用规则：Conventional Commits 格式、push 阈值 >5 自动 push、fetch+rebase 合并、推送后确认
+  - 明确「git 操作规则只属于本 skill，不写入投资框架等业务 skill」
+  - 六段结构对齐 skill-guidelines（Default Stance 统辖核心原则+禁止行为）
+
 ## 1.37.2 — 2026-08-08
 
 ### Changed

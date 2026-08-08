@@ -1,184 +1,187 @@
 ---
 name: ai-repo-manager
-description: ~/Ai/ 本地 Skill 仓库管理器。管理仓库的 GitHub 版本控制流程，包括变更后自动更新 README.md 和 CHANGELOG.md、Git 提交推送、版本号升级。触发词：「存到仓库」「更新仓库」「推送到GitHub」「仓库管理」「同步仓库」「commit」「push to repo」。
+description: >
+  通用 Git 仓库管理器。管理任意本地 git 仓库的版本控制流程：提交（Conventional Commits 格式 + author 标识当前 agent 模型名）、
+  推送（未推送 commit 超阈值自动 push）、远程同步（fetch/rebase 冲突处理）、推送后确认。
+  适用于任何 git 仓库（如 Skill 仓库、知识库仓库），不绑定特定 agent 或特定仓库。
+  触发词：「存到仓库」「更新仓库」「推送到GitHub」「仓库管理」「同步仓库」「commit」「push to repo」「提交」「推送」。
 agent_created: true
 ---
 
-# Ai/ 仓库管理 Skill
+# 通用 Git 仓库管理 Skill
 
-管理 `~/Ai/` 本地 Skill 仓库的 GitHub 版本控制全流程。确保每次变更都正确更新文档并同步到远程。
+管理任意本地 git 仓库的提交与推送全流程。**不绑定特定 agent、不绑定特定仓库**——目标仓库由调用方指定（路径或通过 `target_repo` 参数），本 skill 只承载通用 git 操作规则。
 
 ## 触发条件
 
 当用户提出以下需求时使用本 Skill：
-- 要求将 Skill/工具存入仓库
-- 要求推送到 GitHub
-- 对仓库内容做了变更需要同步
-- 提到「更新 README」「更新 CHANGELOG」
+- 要求将文件/Skill 存入某个仓库
+- 要求推送到 GitHub 或其他远程
+- 对某仓库内容做了变更需要同步
+- 提到「更新 README」「更新 CHANGELOG」「提交」「推送」
 
-## 仓库信息
+## 目标仓库
 
-| 项目 | 值 |
-|------|-----|
-| 本地路径 | `~/Ai/` |
-| 远程仓库 | `https://github.com/jianglvbo/Ai` |
-| 默认分支 | `main` |
-| 安装方式 | `cp -r`（严禁 symlink） |
+本 skill 是通用的，目标仓库由调用方通过 `target_repo` 参数传入（本地路径）。**本 skill 内不写死任何仓库路径**。
 
-## 工作流程
+常见仓库的路径/远程/文档更新约定见 `references/repo-config.md`（按需加载对应仓库小节）。
 
-每次仓库变更都必须严格遵循以下流程，**READMEME.md 和 CHANGELOG.md 的迭代是强制性步骤，不可跳过**：
+## Default Stance
 
-### 步骤 1：变更文件
+### 核心原则
 
-完成实际的代码/文档变更（新增 skill、修改 SKILL.md、更新脚本等）。
+- **author 标识当前 agent**：提交 author 显式指定为**当前执行 agent 的模型名**（"修改人是谁"），不依赖 git 全局/仓库级 user.name——那些可能是人类用户或另一 agent 的身份。**如何获取自己的模型名由各 agent 自行决定**（如查询本平台会话记录、环境变量），本 skill 不预设获取方式
+- **Conventional Commits**：提交信息用 `<type>(<scope>): <描述>` 标准格式
+- **防积压**：未推送 commit 数超过阈值必须立即 push，不积压、不等待
+- **先本地后远程**：任何推送前先 fetch 检查远端变动，落后则 rebase 合并，绝不 force push
 
-### 步骤 2：更新 README.md（强制性）
+### 禁止行为
 
-检查本次变更是否需要更新 README.md，以下情况必须更新：
+- 绝不依赖 git 全局/仓库级 user.name 作为提交 author（无法保证是当前 agent）
+- 绝不 force push（`--force`/`--force-with-lease`）——除非用户明确要求
+- 绝不跳过文档更新（README/CHANGELOG，若目标仓库约定要求）
+- 绝不跳过推送后确认（本地 HEAD 与远程 HEAD 必须一致）
+- 绝不把 commit 信息写入其他 skill（如投资框架）——git 操作规则只属于本 skill
 
-| 变更类型 | README 更新内容 |
-|---------|----------------|
-| 新增 Skill | 更新目录结构和 Skill 说明列表 |
-| 移除 Skill | 从目录结构和列表删除 |
-| 变更仓库规范 | 更新对应章节 |
-| 新增工具 | 更新 tools/ 目录结构 |
-| 修改安装方式 | 更新安装章节 |
+---
 
-同时更新底部的「最后更新」日期。
+## Workflow
 
-### 步骤 3：更新 CHANGELOG.md（强制性）
-
-在文件顶部插入新版本条目。格式参考 `references/changelog-format.md`：
-
-1. **判断版本号**：按 MAJOR.MINOR.PATCH 规则升级
-2. **写条目**：用 Added / Changed / Fixed / Removed 分类
-3. **标注日期**：当前日期 YYYY-MM-DD
-
-### 步骤 4：Git 提交
+### 第一步：确认目标仓库
 
 ```bash
-cd ~/Ai
-git add -A
-git commit --author="<模型名> <49331439+jianglvbo@users.noreply.github.com>" -m "<简洁的提交信息>"
+cd <target_repo 路径>
+git status
+git branch --show-current   # 确认当前分支
 ```
 
-提交信息要求：**Conventional Commits 格式**（2026-08-08 用户确认）：
+- 若调用方未给路径，询问用户目标仓库
+- 确认当前分支（通常 `main`/`master`，以仓库实际为准）
+
+### 第二步：变更文件
+
+完成实际的代码/文档变更。变更前先 `git status` 确认工作区基线。
+
+### 第三步：更新文档（若仓库约定要求）
+
+部分仓库约定每次变更须更新 README.md / CHANGELOG.md（是否必须、更新规则见 `references/repo-config.md` 对应仓库小节）。本 skill 不预设——**以目标仓库约定为准**。
+
+### 第四步：Git 提交
+
+```bash
+git add -A
+git commit --author="<你的模型名> <邮箱>" -m "<Conventional Commits 信息>"
+```
+
+**author 规则（通用）**：
+- 邮箱：用目标仓库的 git 配置邮箱（`git config user.email`）或用户指定邮箱
+- 模型名：**由当前 agent 自行获取**（本 skill 不写死获取方式）；若无法获取，用 `git config user.name` 并告知用户
+- 自检：`git log -1 --format="%an"` 确认 author 是模型名
+
+**Conventional Commits 格式**：
 
 ```
 <type>(<scope>): <描述>
 ```
 
-- **type**（必填，英文）：`feat`（新功能）/ `fix`（修复）/ `docs`（文档）/ `refactor`（重构）/ `chore`（杂项）/ `style`（格式）/ `test`（测试）
-- **scope**（可选）：改动所属 skill 名或模块，如 `investment-framework`、`ai-repo-manager`
-- **描述**：中文，一句话概括，不堆砌、不用 `+` 串联多个点；核心变更点放描述，次要细节可省略
-- 示例：
-  - `fix(investment-framework): 模板 tags 示例对齐 tag-taxonomy`
-  - `feat(ai-repo-manager): 新增自动 push 阈值规则`
-  - `chore(investment-review): 同步三处 skill 副本`
+- **type**（必填，英文）：`feat` / `fix` / `docs` / `refactor` / `chore` / `style` / `test`
+- **scope**（可选）：改动所属模块名
+- **描述**：中文，一句话概括，不堆砌、不用 `+` 串联多个点
+- 示例：`fix(investment-framework): 模板 tags 示例对齐 tag-taxonomy`
 
-**author 硬约束（2026-08-08 用户纠正）**：提交 author 必须显式指定为**当前模型名**，**不得依赖 git 全局/仓库级 user.name**（全局配置是 `4110`，会让提交作者变成非模型名）。用 `--author` 显式覆盖；committer 可保持 git 配置。
+### 第五步：自动 push 阈值检查
 
-**模型名动态获取（不硬编码）**：每次提交前通过 SQLite 获取当前会话模型名，不硬编码、不依赖 system prompt（"powered by" 行是会话创建时注入的初始值，切换模型后不更新）：
+每次提交后检查本地未推送 commit 数：
 
 ```bash
-MODEL=$(sqlite3 ~/.workbuddy/workbuddy.db "SELECT model FROM sessions WHERE cwd='<当前工作区>' AND status='working' ORDER BY updated_at DESC LIMIT 1;")
-git commit --author="$MODEL <49331439+jianglvbo@users.noreply.github.com>" -m "<简洁的提交信息>"
+git rev-list --count origin/<分支>..HEAD
 ```
 
-提交后 `git log -1 --format="%an"` 自检 author 是否为模型名。
-
-**自动 push 阈值（2026-08-08 用户确认）**：每次提交后检查本地未推送 commit 数，**超过 5 个（>5）必须立即 push**，不得继续积压：
-
-```bash
-git rev-list --count origin/main..HEAD
-```
-
-- 结果 > 5：**必须**执行「步骤 5→6」推送到远程（不询问用户、不等待下次机会）
+- 结果 **> 5**：必须立即执行「第六步→第七步」推送（不询问、不等待）
 - 结果 ≤ 5：可暂不 push（用户另有指示除外），下次提交时复查
 
-> 目的：限制未推送 commit 积压，防止本地与远端漂移过大、合并冲突升级。push 是本地命令，不走 AgentKey、不耗 token，无额外成本。
+> 目的：限制未推送 commit 积压，防止本地与远端漂移过大、合并冲突升级。
 
-### 步骤 5：同步远程（推送前）
+### 第六步：同步远程（推送前）
 
 **先本地提交，再检查远程是否有新变动。**
 
 ```bash
 git fetch origin
-```
-
-检查本地是否落后于远程：
-
-```bash
-git rev-list --count HEAD..origin/main
+git rev-list --count HEAD..origin/<分支>
 ```
 
 - 结果为 0：远程无新提交，直接推送
 - 结果为 > 0：远程有新提交，必须先合并：
 
 ```bash
-git pull --rebase origin main
+git pull --rebase origin <分支>
 ```
 
 > ⚠️ rebase 前必须先完成本地 commit（无 unstaged changes）。如遇冲突，解决后 `git add` + `git rebase --continue`，无法解决则报告用户。
 
-### 步骤 6：推送到 GitHub
+### 第七步：推送
 
 ```bash
-git push origin main
+git push origin <分支>
 ```
 
 如遇 RPC 错误（大文件），使用：
 ```bash
-git -c http.postBuffer=2147483648 push origin main
+git -c http.postBuffer=2147483648 push origin <分支>
 ```
 
-### 步骤 7：确认
+### 第八步：确认
 
 推送完成后确认远程已同步：
+
 ```bash
 git log --oneline -1
-git ls-remote origin refs/heads/main | awk '{print $1}'
+git ls-remote origin refs/heads/<分支> | awk '{print $1}'
 ```
 
 两个哈希值应一致。
 
-## 常见场景
+---
 
-### 场景 A：新增 Skill 到仓库
+## Output Format
 
-```text
-1. cp -r ~/.workbuddy/skills/skill-name ~/Ai/skill/skill-name
-2. 更新 README.md：目录结构 + Skill 说明列表
-3. 更新 CHANGELOG.md：版本号 +1 MINOR，Added 条目
-4. git add -A && git commit -m "..."
-5. git fetch origin && git pull --rebase origin main（如有远程更新）
-6. git push origin main
-```
+| 字段 | 类型 | 说明 |
+|:---|:---|:---|
+| repo | string | 目标仓库路径 |
+| branch | string | 推送分支 |
+| commits_pushed | int | 本次推送的 commit 数 |
+| remote_synced | boolean | 本地与远程 HEAD 是否一致 |
 
-### 场景 B：修改已有 Skill
+---
 
-```text
-1. 编辑 Skill 文件
-2. 更新 CHANGELOG.md：版本号 +1 PATCH，Changed 条目
-3. git add -A && git commit -m "..."
-4. git fetch origin && git pull --rebase origin main（如有远程更新）
-5. git push origin main
-```
+## Relative Files
 
-### 场景 C：仅文档更新
+| 场景 | 加载文件 | 内容 | 方式 |
+|:---|:---|:---|:---|
+| 确认目标仓库约定 | references/repo-config.md | 各仓库路径/远程/文档更新约定 | 读取（按目标仓库选小节） |
+| 查 CHANGELOG 格式 | references/repo-config.md | 各仓库 CHANGELOG 格式约定 | 读取 |
 
-```text
-1. 编辑 README.md / CHANGELOG.md
-2. 更新 CHANGELOG.md：记录本次文档更新
-3. git add -A && git commit -m "..."
-4. git fetch origin && git pull --rebase origin main（如有远程更新）
-5. git push origin main
-```
+---
 
-## 注意事项
+## Source Hierarchy
 
-- **READMEME.md 和 CHANGELOG.md 是每次推送的必备产物**，不可遗漏
-- 不要跳过版本号（从 1.3.0 直接跳 1.5.0 不可取）
-- Skill 安装到仓库用 `cp -r`，不要用 symlink
-- 推送前确认没有遗漏文件（`git status`）
+| 优先级 | 来源 |
+|:---|:---|
+| 1 | 调用方传入的 target_repo 参数（目标仓库路径） |
+| 2 | 用户显式约定（author 用模型名、Conventional Commits、push 阈值 >5） |
+| 3 | Conventional Commits 规范（业界标准） |
+| 4 | 目标仓库自身约定（README/CHANGELOG 规则，见 repo-config） |
+
+---
+
+## 自检
+
+- [ ] 目标仓库路径已确认？
+- [ ] author 是否为当前 agent 模型名（非 git 全局 user.name）？
+- [ ] 提交信息是否为 Conventional Commits 格式（type(scope): 描述）？
+- [ ] 未推送 commit 数是否 ≤5（超了是否已 push）？
+- [ ] 推送前是否 fetch + 落后检查？
+- [ ] 本地 HEAD 与远程 HEAD 是否一致？
+- [ ] 是否未 force push？
+- [ ] 是否有 commit 信息误写入其他 skill（如投资框架）？
