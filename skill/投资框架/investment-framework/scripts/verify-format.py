@@ -23,6 +23,7 @@
     9. 空表格占位行：`| | | | |` 全空单元格行（模板骨架泄漏，footnote-taxonomy#5；博主画像豁免——轻创建画像合法保留空表骨架）
     10. 来源 blockquote：`> 来源/原文链接/发布时间：`（footnote-taxonomy 禁止行为 #4，来源应入 frontmatter source）
     11. frontmatter 行尾注释：`delete:` / `star:` 行带 `# 注释`（模板注释泄漏，footnote-taxonomy#5）
+    12. 花括号占位残留：`{作者名}`、`{YYYY-MM-DD}` 等模板占位指引文本（footnote-taxonomy#5；仅报告不自动修复）
 """
 
 import os, re, sys, yaml
@@ -229,6 +230,16 @@ def check_fm_comment_leak(fm_text):
             issues.append({'line': i+1, 'text': line.strip()[:60]})
     return issues
 
+def check_curly_placeholder(text):
+    """footnote-taxonomy #5：模板花括号占位指引残留（`{作者名}`、`{YYYY-MM-DD}` 等）。
+    检测花括号内含中文或 YYYY 的占位文本（避免误报代码/公式中的合法花括号）。
+    仅报告不自动修复（出现即说明整段模板结构未填充，需人工重写该节）。"""
+    issues = []
+    for i, line in enumerate(text.split('\n')):
+        if re.search(r'\{[^{}]*(?:[\u4e00-\u9fff]|YYYY)[^{}]*\}', line):
+            issues.append({'line': i+1, 'text': line.strip()[:60]})
+    return issues
+
 def fix_empty_table_row(body):
     lines = [ln for ln in body.split('\n') if not re.match(r'^\|(\s*\|)+\s*$', ln.strip())]
     return '\n'.join(lines)
@@ -325,6 +336,7 @@ def verify_file(fpath, rel):
         'empty_table_row': [] if is_blogger_profile else check_empty_table_row(body),
         'source_blockquote': check_source_blockquote(body),
         'fm_comment_leak': check_fm_comment_leak(fm_text),
+        'curly_placeholder': check_curly_placeholder(fm_text + body),
         'source_field': [] if is_blogger_profile else (check_source_field(fm) if fm else []),
     }
     issues = {k: v for k, v in issues.items() if v}
@@ -374,7 +386,7 @@ def main():
                                 'footnote_inline', 'footnote_quality', 'residual_sections',
                                 'source_field', 'empty_headings', 'footnote_heading',
                                 'bold_spacing', 'list_inline', 'empty_table_row',
-                                'source_blockquote', 'fm_comment_leak']}
+                                'source_blockquote', 'fm_comment_leak', 'curly_placeholder']}
     for root, dirs, files in os.walk(vault):
         dirs[:] = [d for d in dirs if d not in {'.obsidian', '.trash', '附件'}]
         rel_root = os.path.relpath(root, vault)
@@ -412,7 +424,7 @@ def main():
                  'footnote_heading': '脚注标题',
                  'bold_spacing': '加粗空格', 'list_inline': '列表同行',
                  'empty_table_row': '空表格占位行', 'source_blockquote': '来源blockquote',
-                 'fm_comment_leak': 'frontmatter注释泄漏'}[k]
+                 'fm_comment_leak': 'frontmatter注释泄漏', 'curly_placeholder': '花括号占位残留'}[k]
         print(f"{label}: {v}")
     print()
     if total_issues == 0:

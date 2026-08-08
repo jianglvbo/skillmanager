@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.13.0"
+  version: "2.14.0"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---
@@ -122,15 +122,17 @@ compatibility: 通用
 
 | 模板 | 路径 | 用途 |
 |:---|:---|:---|
-| 分析框架-方法论 | investment-framework/assets/分析框架-方法论.md | 分析方法论条目 |
-| 分析框架-分析档案 | investment-framework/assets/分析框架-分析档案.md | 具体标的分析记录 |
-| 交易体系 | investment-framework/assets/交易体系.md | 交易规则条目 |
-| 投资心态 | investment-framework/assets/投资心态.md | 心态问题/教训条目 |
-| 投资心得 | investment-framework/assets/投资心得.md | 经验教训条目 |
-| 宏观 | investment-framework/assets/宏观.md | 宏观事件分析条目 |
-| 行业 | investment-framework/assets/行业.md | 行业分析条目 |
-| 个股 | investment-framework/assets/个股.md | 个股信息枢纽条目 |
-| 博主 | investment-framework/assets/博主.md | 博主档案条目 |
+| 分析框架-方法论 | investment-framework/assets/分析框架-方法论.md | 分析方法论条目（纯结构骨架） |
+| 分析框架-分析档案 | investment-framework/assets/分析框架-分析档案.md | 具体标的分析记录（纯结构骨架） |
+| 交易体系 | investment-framework/assets/交易体系.md | 交易规则条目（纯结构骨架） |
+| 投资心态 | investment-framework/assets/投资心态.md | 心态问题/教训条目（纯结构骨架） |
+| 投资心得 | investment-framework/assets/投资心得.md | 经验教训条目（纯结构骨架） |
+| 宏观 | investment-framework/assets/宏观.md | 宏观事件分析条目（纯结构骨架） |
+| 行业 | investment-framework/assets/行业.md | 行业分析条目（纯结构骨架） |
+| 个股 | investment-framework/assets/个股.md | 个股信息枢纽条目（纯结构骨架） |
+| 博主 | investment-framework/assets/博主.md | 博主档案条目（纯结构骨架） |
+
+> 模板 = 纯结构骨架（字段 + section 标题 + 表格表头），**不含解释**。各 section 的写作指引统一在 `references/template-guide.md`；字段/标签/来源/脚注规则见 framework-rules / tag-taxonomy / footnote-taxonomy。产出文件可保留模板空结构（空 section / 空表格表头），但不得出现模板解释残留（花括号占位、blockquote 指引、frontmatter 注释、全空占位行，verify-format.py 检测）。
 
 ---
 
@@ -153,11 +155,12 @@ compatibility: 通用
 | 场景 | 加载文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
 | 始终 | references/framework-rules.md | 框架边界规则、全局规则 | 读取 |
+| 提炼 | references/template-guide.md | 各模板 section 写作指引（模板为纯结构骨架，写作要求统一在此） | 读取 |
 | 提炼 | references/tag-taxonomy.md | 标签分类体系 + 编排派发规则 | 读取 |
 | 提炼/审查 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 | 读取 |
-| 提炼 | assets/{模板名}.md | 对应分类的模板 | 读取 |
+| 提炼 | assets/{模板名}.md | 对应分类的模板（纯结构骨架） | 读取 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 | 读取 |
-| 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分泄漏（空表格行/来源blockquote/frontmatter注释）扫描（可 --fix 自动修复） | **执行** |
+| 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复） | **执行** |
 
 ---
 
