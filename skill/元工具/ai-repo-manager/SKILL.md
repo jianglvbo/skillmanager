@@ -18,7 +18,7 @@ agent_created: true
 - 要求将文件/Skill 存入某个仓库
 - 要求推送到 GitHub 或其他远程
 - 对某仓库内容做了变更需要同步
-- 提到「更新 README」「更新 CHANGELOG」「提交」「推送」
+- 提到「更新 README」「提交」「推送」
 
 ## 目标仓库
 
@@ -39,7 +39,7 @@ agent_created: true
 
 - 绝不依赖 git 全局/仓库级 user.name 作为提交 author（无法保证是当前 agent）；**无法获取模型名时绝不提交**，停止并询问用户
 - 绝不 force push（`--force`/`--force-with-lease`）——除非用户明确要求
-- 绝不跳过文档更新（README/CHANGELOG，若目标仓库约定要求）
+- 绝不跳过文档更新（README，若目标仓库约定要求）
 - 绝不跳过推送后确认（本地 HEAD 与远程 HEAD 必须一致）
 - 绝不把 commit 信息写入其他 skill（如投资框架）——git 操作规则只属于本 skill
 
@@ -64,7 +64,7 @@ git branch --show-current   # 确认当前分支
 
 ### 第三步：更新文档（若仓库约定要求）
 
-部分仓库约定每次变更须更新 README.md / CHANGELOG.md（是否必须、更新规则见 `references/repo-config.md` 对应仓库小节）。本 skill 不预设——**以目标仓库约定为准**。
+部分仓库约定每次变更须更新 README.md（是否必须、更新规则见 `references/repo-config.md` 对应仓库小节）。**变更历史统一由 git log 承担（Conventional Commits 已结构化），不维护 CHANGELOG.md**。本 skill 不预设——**以目标仓库约定为准**。
 
 ### 第四步：Git 提交
 
@@ -165,7 +165,6 @@ git ls-remote origin refs/heads/<分支> | awk '{print $1}'
 | 场景 | 加载文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
 | 确认目标仓库约定 | references/repo-config.md | 各仓库路径/远程/文档更新约定 | 读取（按目标仓库选小节） |
-| 查 CHANGELOG 格式 | references/repo-config.md | 各仓库 CHANGELOG 格式约定 | 读取 |
 
 ---
 
@@ -176,7 +175,7 @@ git ls-remote origin refs/heads/<分支> | awk '{print $1}'
 | 1 | 调用方传入的 target_repo 参数（目标仓库路径） |
 | 2 | 用户显式约定（author 用模型名、Conventional Commits、push 阈值 >5） |
 | 3 | Conventional Commits 规范（业界标准） |
-| 4 | 目标仓库自身约定（README/CHANGELOG 规则，见 repo-config） |
+| 4 | 目标仓库自身约定（README 规则，见 repo-config） |
 
 ---
 

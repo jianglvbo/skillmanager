@@ -1,7 +1,7 @@
 # 仓库配置登记
 
 > 本文件登记常用 git 仓库的配置（路径、远程、文档更新约定）。**本文件是配置数据，不是通用规则**——通用 git 操作规则在 SKILL.md，本文件只提供「各仓库特有的约定」。
-> 使用方式：确认 target_repo 后，按仓库名加载对应小节。未登记的仓库直接按 SKILL.md 通用流程执行，无 README/CHANGELOG 强制要求。
+> 使用方式：确认 target_repo 后，按仓库名加载对应小节。未登记的仓库直接按 SKILL.md 通用流程执行，无 README 强制要求。
 
 ## 1. Ai 仓库（~/Ai）
 
@@ -15,19 +15,10 @@
 
 ### 文档更新约定（强制性）
 
-每次推送前必须更新 README.md 和 CHANGELOG.md，不可跳过：
+每次推送前更新 README.md（**变更历史由 git log 承担，无 CHANGELOG.md**——2026-08-08 用户确认删除，commit 已用 Conventional Commits 结构化，`git log --oneline` 即变更历史）：
 
 - **README.md**：变更影响目录结构/Skill 列表/仓库规范/工具/安装方式时更新对应章节，并更新底部「最后更新」日期
-- **CHANGELOG.md**：文件顶部插入新版本条目，格式：
-
-```markdown
-## X.Y.Z — YYYY-MM-DD
-
-### Added / Changed / Fixed / Removed
-- 变更描述
-```
-
-版本号规则：MAJOR（结构重大变更）/ MINOR（新增 skill、功能级）/ PATCH（修正、文档更新），不跳过。
+- **CHANGELOG.md**：不存在（已删除），变更历史见 `git log --oneline`
 
 ### 提交 author
 
@@ -50,7 +41,7 @@
 
 ### 文档更新约定
 
-- 无 README/CHANGELOG 强制要求（Obsidian vault，以内容文件为主）
+- 无 README 强制要求（Obsidian vault，以内容文件为主）
 - `.gitignore` 已排除：`.smart-env/`、`.obsidian/workspace*.json`、`.obsidian/plugins/`、`.trash/`、`__visit_history/`、`.space/*.mdb`、`.makemd/`、`.DS_Store`
 - 知识库变动后提交/推送进此仓库
 
@@ -60,4 +51,4 @@
 
 ## 3. 新增仓库
 
-未登记的仓库：直接按 SKILL.md 通用流程执行（无 README/CHANGELOG 强制要求），首次使用后如需长期维护，可在此追加小节。
+未登记的仓库：直接按 SKILL.md 通用流程执行（无 README 强制要求），首次使用后如需长期维护，可在此追加小节。

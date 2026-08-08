@@ -23,7 +23,7 @@
 - **本地 Skill 仓库**：所有自建 skill 的单一真相来源（single source of truth）
 - **GitHub 远程托管**：推送到 [github.com/jianglvbo/Ai](https://github.com/jianglvbo/Ai)，支持版本管理和多设备同步
 - **Agent 无关**：不绑定任何特定 Agent 框架，任何支持 Agent Skills 协议的客户端都可以使用
-- **版本管理**：变更通过 Git 追踪，推送前更新 CHANGELOG.md
+- **版本管理**：变更通过 Git 追踪（Conventional Commits），历史见 `git log --oneline`
 - **只按需更新**：仓库内的 skill 仅在用户明确要求时更新或推送
 
 ---
@@ -71,7 +71,6 @@ cat ~/.agent/skills/skill名称/SKILL.md
 ```text
 ~/Ai/
 ├── README.md
-├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── .gitignore
 ├── skill/
@@ -133,7 +132,6 @@ cat ~/.agent/skills/skill名称/SKILL.md
 skill-name/
 ├── SKILL.md          ← 必需：技能定义（Agent 加载入口）
 ├── README.md         ← 建议：人类可读的说明文档
-├── CHANGELOG.md      ← 建议：版本变更记录
 ├── scripts/          ← 可选：辅助脚本
 ├── references/       ← 可选：参考资料
 ├── assets/           ← 可选：模板、数据文件
@@ -169,8 +167,8 @@ skill-name/
 
 - **远程仓库**：[github.com/jianglvbo/Ai](https://github.com/jianglvbo/Ai)（主分支：`main`）
 - **本地路径**：`~/Ai/`
-- 使用 Git 追踪所有变更
-- Skill 更新后，提交到仓库并更新 CHANGELOG.md
+- 使用 Git 追踪所有变更（Conventional Commits，历史见 `git log --oneline`）
+- Skill 更新后，提交到仓库（满 5 次 commit 自动 push 一次）
 - 合并时如遇冲突，自行处理的由 Agent 解决；无法自动处理的需提交给用户确认
 - **仅在用户明确要求时更新或推送仓库内容**
 
