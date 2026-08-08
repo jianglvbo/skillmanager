@@ -1,219 +1,113 @@
 ---
 name: qmd
-description: QMD 本地文档索引与搜索工具。对本地 Markdown/文本文件建立全文索引、向量嵌入和语义搜索。支持 collection 管理、BM25 关键词搜索、向量语义搜索、混合查询（LLM 重排序）以及 MCP Server 模式。触发词：「搜索我的文档」「用qmd」「qmd search」「qmd query」「索引文档」「文档搜索」「语义搜索本地文件」。
+description: >
+  QMD 本地文档索引与搜索工具。对本地 Markdown/文本文件建立全文索引、向量嵌入和语义搜索。
+  支持 collection 管理、BM25 关键词搜索、向量语义搜索、混合查询（LLM 重排序）以及 MCP Server 模式。
+  触发词：「搜索我的文档」「用qmd」「qmd search」「qmd query」「索引文档」「文档搜索」「语义搜索本地文件」。
+  排除条件：搜索结果读取走 qmd get（qmd:// URI 转真实路径）；非本地文档检索（如网页/API）不归本 skill。
 agent_created: true
 ---
 
 # QMD — 本地文档索引与搜索
 
-`qmd` 是一个本地命令行文档搜索引擎，对指定目录下的文件建立全文索引和向量嵌入，支持三种搜索模式。
+`qmd` 是本地命令行文档搜索引擎：全文检索（BM25）→ 向量语义搜索 → 混合查询 + LLM 重排序。完整命令清单见 `references/commands.md`。
 
-**核心能力**：全文检索（BM25） → 向量语义搜索 → 混合查询 + LLM 重排序。
+## Default Stance
 
-## 触发条件
+### 核心原则
 
-当用户提出以下需求时使用本 Skill：
-- 在本地文档/笔记中搜索内容
-- 语义搜索 Obsidian 或其他 Markdown 仓库
-- 管理文档索引（添加/更新/删除 collection）
-- 查看索引状态
-- 启动 qmd MCP Server
+- **先搜后读**：搜索返回 `qmd://` URI，读文件用 `qmd get` 或转真实路径——URI 不可直接用于文件操作
+- **语义搜索先 embed**：`query`/`vsearch` 依赖向量嵌入，必须先 `qmd embed`；`search`（BM25）不依赖
+- **Collection 为界**：搜索用 `-c <collection名>` 限定范围，避免跨库噪音
+- **Agent 主动触发**：对话中需查本地文档/笔记时主动使用，无需等用户提「qmd」
 
-**Agent 自动化触发**：当对话中需要查找用户的 Obsidian 笔记或本地文档时，Agent 应主动使用本 Skill 进行搜索，无需等待用户明确提及「qmd」。
+### 禁止行为
 
-## 工作模式（路由表）
+- 绝不把 `qmd://` URI 当真实路径直接读/写（先 `qmd get` 或转换）
+- 绝不跳过 `qmd embed` 直接用向量搜索（结果为空或报错）
+- 绝不直接操作 `~/.cache/qmd/index.sqlite`（用 qmd 命令管理）
+- 绝不修改用户文档内容——qmd 只读索引与搜索
 
-| 用户意图 | 对应命令 | 说明 |
-|---------|---------|------|
+---
+
+## Workflow
+
+### 第一步：识别意图（路由表）
+
+| 用户意图 | 命令 | 说明 |
+|:---|:---|:---|
 | "搜索 XX"、"找一下 XX" | `qmd query` | 混合搜索+重排序（推荐，需先 embed） |
 | "搜关键词 XX"、"精确搜" | `qmd search` | BM25 全文检索，不依赖 embedding |
-| "语义搜索 XX"、"意思相近的" | `qmd vsearch` | 纯向量相似度搜索 |
+| "语义搜索 XX" | `qmd vsearch` | 纯向量相似度搜索 |
 | "看看索引状态" | `qmd status` | 查看索引统计 |
 | "更新索引"、"同步文档" | `qmd update` | 重新扫描文件 |
-| "跑 embedding"、"生成向量" | `qmd embed` | 生成向量嵌入 |
+| "跑 embedding" | `qmd embed` | 生成向量嵌入 |
 
-## 核心命令
+### 第二步：关键词快速定位（模式一）
 
-### 索引管理
+用户提到具体主题/股票/公司名时：
 
 ```bash
-# 查看状态
-qmd status
-
-# 添加 collection（对目录建索引）
-qmd collection add /path/to/dir --name <名称> --mask "**/*.md"
-
-# 列出所有 collection
-qmd collection list
-
-# 重命名
-qmd collection rename <旧名> <新名>
-
-# 删除
-qmd collection remove <名称>
-
-# 浏览 collection 中的文件
-qmd ls <collection名>
-
-# 更新索引（--pull 会先 git pull）
-qmd update [--pull]
-
-# 生成向量嵌入（搜索前必须执行）
-qmd embed [-f]
-
-# 清理缓存和孤儿数据
-qmd cleanup
+qmd search "关键词" -c obsidian --json -n 10   # 不依赖 embedding，立即可用
+qmd get qmd://obsidian/旧文件/个股研究/xxx.md   # 读取内容
 ```
 
-### 搜索
+### 第三步：语义理解搜索（模式二）
+
+用户描述概念/场景而非精确关键词时：
 
 ```bash
-# 推荐：混合搜索 + LLM 重排序（需先 qmd embed）
-qmd query "查询内容" [-n 10] [-c collection名] [--full] [--json]
-
-# BM25 全文关键词搜索
-qmd search "关键词" [-n 10] [-c collection名] [--full]
-
-# 向量相似度搜索
-qmd vsearch "语义查询" [-n 10]
-```
-
-**搜索选项**：
-- `-n <N>`：返回 N 条结果（默认 5，`--files` 模式默认 20）
-- `-c <名称>`：限定搜索范围到指定 collection
-- `--full`：输出完整文档而非片段
-- `--line-numbers`：显示行号
-- `--json` / `--csv` / `--md` / `--xml`：指定输出格式
-- `--min-score <0-1>`：最低相似度阈值
-- `--all`：返回所有匹配项
-
-### 文档获取
-
-```bash
-# 获取单篇文档（支持指定行范围和行数）
-qmd get qmd://collection名/路径/文件.md
-qmd get qmd://collection名/路径/文件.md:42       # 从第 42 行开始
-qmd get qmd://collection名/路径/文件.md -l 20     # 最多 20 行
-
-# 批量获取（glob 或逗号分隔）
-qmd multi-get "qmd://obsidian/旧文件/**/*.md" -l 50
-```
-
-### MCP Server
-
-```bash
-# stdio 模式
-qmd mcp
-
-# HTTP 模式（前台）
-qmd mcp --http [--port 8181]
-
-# 后台守护进程
-qmd mcp --http --daemon
-
-# 停止后台
-qmd mcp stop
-```
-
-## Agent 使用模式
-
-Agent 在对话中检索用户的 Obsidian/本地文档时，遵循以下流程：
-
-### 模式一：关键词快速定位
-
-当用户提到某个具体主题、股票、公司名时：
-
-```bash
-# 先用 search 找相关文件（不依赖 embedding，立即可用）
-qmd search "关键词" -c obsidian --json -n 10
-
-# 拿到文件列表后，用 qmd get 读取内容
-qmd get qmd://obsidian/旧文件/个股研究/xxx.md
-```
-
-### 模式二：语义理解搜索
-
-当用户描述概念、场景而非精确关键词时：
-
-```bash
-# 需先 embed
+qmd embed   # 确保向量已生成
 qmd query "语义查询" -c obsidian -n 10 --json
 ```
 
-### 模式三：URI → 真实路径转换
+### 第四步：URI → 真实路径转换（模式三）
 
-qmd 搜索返回的是 `qmd://` 前缀的 URI，读/写文件需转换为真实路径：
+`qmd://` 前缀 URI 转真实路径规则：`qmd://obsidian/旧文件/个股研究/耀才证券.md` ↔ `{vault 路径}/旧文件/个股研究/耀才证券.md`。用 `qmd get` 直接输出内容，或用 shell 拼接真实路径。
 
-```
-qmd://obsidian/旧文件/个股研究/耀才证券.md
-→ {你的 Obsidian vault 路径}/旧文件/个股研究/耀才证券.md
-```
-
-转换方式：`qmd get` 直接输出内容，或用 shell 拼接真实路径。
-
-### 模式四：检查索引是否最新
+### 第五步：检查索引新鲜度（模式四）
 
 ```bash
-# 查看状态确认文件是否已索引
-qmd status
-
-# 如有新文件未索引
-qmd update && qmd embed
+qmd status            # 确认文件已索引
+qmd update && qmd embed   # 有新文件未索引时
 ```
 
-## 当前状态
+---
 
-### Obsidian Vault
+## Output Format
 
-| 项目 | 值 |
-|------|-----|
-| **Vault 路径** | `{你的 Obsidian vault 路径}` |
-| **qmd Collection 名** | `obsidian` |
-| **URI 前缀** | `qmd://obsidian/` |
-| **文件数** | 45（`**/*.md`） |
+| 字段 | 类型 | 说明 |
+|:---|:---|:---|
+| command_used | string | 实际执行的 qmd 命令 |
+| results | list[string] | 搜索结果（`qmd://` URI 或内容片段） |
+| collection | string | 搜索范围（如 obsidian） |
+| files_read | list[string] | 通过 qmd get 读取的文件真实路径 |
+| needs_embed | boolean | 是否需要先执行 qmd embed |
 
-> **路径映射**：`qmd://obsidian/旧文件/xxx.md` ↔ `{你的 Obsidian vault 路径}/旧文件/xxx.md`
->
-> 搜索用 qmd URI，读/写文件用真实路径。
+---
 
-### 系统信息
+## Relative Files
 
-| 项目 | 值 |
-|------|-----|
-| **索引位置** | `~/.cache/qmd/index.sqlite` |
-| **已建 collection** | `obsidian`（`**/*.md`，45 文件） |
-| **嵌入状态** | 待执行（`qmd embed`） |
-| **模型** | embeddinggemma-300M / qwen3-reranker-0.6b / Qwen3-0.6B |
+| 场景 | 加载文件 | 内容 | 方式 |
+|:---|:---|:---|:---|
+| 查完整命令/参数 | references/commands.md | 索引管理/搜索/文档获取/MCP/工作流速查 | 读取 |
+| 执行搜索 | qmd CLI（全局安装） | 实际查询命令 | **执行** |
 
-## 工作流
+---
 
-### 首次使用
+## Source Hierarchy
 
-```
-qmd collection add /path/to/vault --name my-notes --mask "**/*.md"
-qmd embed          # 生成向量嵌入
-qmd query "测试查询"  # 验证搜索可用
-```
+| 优先级 | 来源 |
+|:---|:---|
+| 1 | 用户意图（路由表匹配） |
+| 2 | qmd CLI 实际输出（索引状态、搜索结果） |
+| 3 | references/commands.md（命令参数） |
 
-### 日常使用
+---
 
-```
-qmd update         # 扫描新增/变更文件
-qmd embed          # 增量更新向量（仅处理新文件，除非 -f 全量重建）
-qmd query "要搜的内容"
-```
+## 自检
 
-### 搜索 Obsidian 笔记
-
-```bash
-# 当前 collection 名是 obsidian
-qmd search "个股研究" -c obsidian --full
-qmd query "耀才证券的商业模式" -c obsidian -n 10
-```
-
-## 注意事项
-
-- **搜索前必须 `qmd embed`**，否则 `query` 和 `vsearch` 不可用（`search` 不依赖 embedding）
-- 模型首次运行会自动从 HuggingFace 下载（约 1-2GB），只下载一次
-- `qmd get` 使用 `qmd://` 协议，获取文件用绝对路径或 qmd:// URI 均可
-- `qmd --help` 查看完整命令列表
+- [ ] 搜索前是否确认 embedding 状态（query/vsearch 需 embed）？
+- [ ] 返回的 `qmd://` URI 是否已转换/用 qmd get 读取？
+- [ ] 是否用 `-c` 限定了 collection？
+- [ ] 索引是否最新（新文件是否需 update）？

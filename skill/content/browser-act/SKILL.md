@@ -154,3 +154,45 @@ browser-act auth login
 | 反爬严格（亚马逊、淘宝等）、需隐身 | **BrowserAct** |
 | 需登录态、复杂表单交互 | **BrowserAct** (chrome 模式) |
 | 批量数据提取、结构化输出 | **BrowserAct** (stealth-extract) |
+
+---
+
+## Output Format
+
+| 字段 | 类型 | 说明 |
+|:---|:---|:---|
+| extracted_content | string/markdown | 抓取/提取的内容（含「✅ 全文」/「⚠️ 摘要」标记） |
+| structured_data | object | stealth-extract 的结构化输出（JSON） |
+| session_name | string | 使用的浏览器会话名 |
+| truncated | boolean | 内容是否截断（需 navigate 补全） |
+| pinned_post_dates | list[string] | 置顶帖原始发布日期（不纳入"今日"统计） |
+| user_confirm_required | boolean | 是否触发需用户确认的操作（建/删浏览器等） |
+
+---
+
+## Relative Files
+
+| 场景 | 加载文件 | 内容 | 方式 |
+|:---|:---|:---|:---|
+| 启动前 | browser-act CLI（uv 安装） | `get-skills core` 返回环境状态与操作指令 | **执行** |
+| 抓取/交互 | browser-act CLI | stealth-extract / session 操作 | **执行** |
+
+---
+
+## Source Hierarchy
+
+| 优先级 | 来源 |
+|:---|:---|
+| 1 | 用户请求（URL / 抓取目标 / 交互意图） |
+| 2 | browser-act CLI 输出（真实页面数据） |
+| 3 | 本文件内容抓取规则（置顶帖/截断补全） |
+
+---
+
+## 自检
+
+- [ ] 启动前是否执行 `browser-act get-skills core`（未跳过）？
+- [ ] 涉及建/删浏览器、登录、表单提交是否已获用户确认？
+- [ ] 置顶帖是否标注原始发布日期（未误归"今日"）？
+- [ ] 内容截断时是否 navigate 详情页补全并标记「✅ 全文」/「⚠️ 摘要」？
+- [ ] Cookie/登录态是否仅存本地（未上传）？
