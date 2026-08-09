@@ -147,14 +147,14 @@ def check_missing_h1(body, rel=''):
     return [{'first_line': first_line[:60]}]
 
 def check_footnote_heading(body):
-    """规则#20：脚注定义放 --- 分隔线下，禁止 ## 脚注 标题。检测到遗留 ## 脚注 标题即违规。"""
+    """规则#20：脚注定义放文末（无 ## 脚注 标题、无 --- 分隔线），检测到遗留 ## 脚注 标题即违规。"""
     has_heading = bool(re.search(r'^## 脚注', body, re.MULTILINE))
     if has_heading:
         return [{'type': 'legacy_heading'}]
     return []
 
 def fix_footnote_heading(body):
-    """移除遗留的 ## 脚注 标题（规则#20 要求用 --- 分隔线，不用标题）。"""
+    """移除遗留的 ## 脚注 标题（规则#20：脚注定义放文末，无 ## 脚注 标题、无 --- 分隔线）。"""
     if re.search(r'^## 脚注', body, re.MULTILINE):
         body = re.sub(r'^## 脚注[^\n]*\n', '', body, flags=re.MULTILINE)
         body = re.sub(r'\n{3,}', '\n\n', body)

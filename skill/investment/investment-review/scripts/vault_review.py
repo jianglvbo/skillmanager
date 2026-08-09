@@ -10,7 +10,7 @@ Obsidian 投资知识库 · 结构审查自动扫描器
   - frontmatter 完整性 → REQUIRED / missing_fields（含 updateDate 必填）
   - 引号有效性      → check_quoting()（全局规则 #21）
   - wikilink 有效性 → resolve_link()（正文 + frontmatter `source` 字段）
-  - 脚注格式        → legacy_footnote_heading（遗留 ## 脚注 标题，新格式改用 --- 分隔线，规则 #20）
+  - 脚注格式        → legacy_footnote_heading（遗留 ## 脚注 标题，新格式脚注定义放文末无标题，规则 #20）
   - 标签匹配        → tag_issues（博主禁行业标签、标签禁 emoji）
   - 扩展检查        → 禁用 `## 来源` 段（规则 #23）、source 为 URL（应转 wikilink 数组）、空壳 junk 检测
   - 博主画像三表    → blogger_table_no_link_col（言论追踪/个股买卖/预测 三表是否都含「原文链接」列）、
