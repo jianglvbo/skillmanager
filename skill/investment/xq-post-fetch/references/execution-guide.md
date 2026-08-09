@@ -81,4 +81,4 @@ browser-act --session {name} get markdown
 ## 引用内容与 Emoji 处理
 
 - **引用块**（`>` 前缀）：保留，区分作者原文和引用原文（规则见 `page-structure.md`「引用内容处理」）
-- **Emoji 清洗**：雪球表情图片 `![表情](url)` 替换为 `[表情]` 或删除（规则见 `page-structure.md`「Emoji 清洗」）
+- **Emoji 处理**：雪球表情图片 `![表情](url)` 替换为 `[表情]` 文本占位（规则见 `page-structure.md`「Emoji 处理」）。**保持原文原则**：采集阶段一律保留表情（转文本占位），禁止删除；Unicode 表情字符原样保留

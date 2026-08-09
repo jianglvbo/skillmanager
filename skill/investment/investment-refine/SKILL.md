@@ -83,6 +83,7 @@ compatibility: 通用
 - **`delete` 常驻空值**（#26/#27）：内容型条目 frontmatter 一律含 `delete: `（空值，位于 star 后），**提炼阶段不填值**——回收标记完全由用户手动填日期，Agent 绝不代填
 - **日期裸写**（#1）：`createDate`/`updateDate` 裸写 `yyyy-MM-dd`，无引号
 - **原文链接格式**（#30/#35）：表格内链接一律用 `[原文](URL)` 格式，**禁止贴裸 URL**
+- **产出物去 emoji**（2026-08-09 用户确认边界）：wiki 产物（框架条目、博主画像）**禁止任何 emoji 表情**——标题（如 `## 言论追踪` 不带 ⭐、`## 个股买卖记录` 不带 📈）、正文、frontmatter 均不得含 emoji 表情字符；`→` 流程箭头、表格 `---` 分隔线等非表情符号不受限。**该边界只影响提炼环节**：采集（xq-post-fetch）与粗加工（coarse-processor）必须保持原文（含原文 emoji），不得清洗
 
 2. 选择对应模板（从编排者传入的 templates）
 3. 创建文件，填写 frontmatter + 正文内容。正文按 template-guide.md 的写作指引填充（模板为纯结构骨架，各 section 写作要求统一在 references/template-guide.md），保留原文的比喻、案例、推理链条，用自然语言段落而非干巴巴的要点罗列
@@ -136,7 +137,7 @@ compatibility: 通用
 - [ ] 产出正文是否为简体中文（若原始资源为繁体，是否已兜底转换）？
 - [ ] 每个条目的标签是否来自标签体系？
 - [ ] 每个条目是否使用了正确的模板？
-- [ ] 写入硬约束是否全部满足？（wikilink 完整路径、个股带代码、无 `## 来源` 段、模板 section 全量、字段顺序 canonical、日期裸写、原文链接 `[原文](URL)` 格式）
+- [ ] 写入硬约束是否全部满足？（wikilink 完整路径、个股带代码、无 `## 来源` 段、模板 section 全量、字段顺序 canonical、日期裸写、原文链接 `[原文](URL)` 格式、产出物无 emoji）
 - [ ] frontmatter 是否完整且规范？——`author` 必填；字段顺序符合所属分类模板 canonical（标准 `title→createDate→updateDate→author→tags→source`，见 framework-rules #27）；**无 `date` 字段**（#27 层间边界）；`createDate`/`updateDate` 裸写无引号；**`id` 字段（`id: docid_xxx_e`，Visit History 插件写入）保留不动、不删除、不移动、不报错**（#27「id 字段豁免」）
 - [ ] 如涉及博主，博主档案是否已更新？
 - [ ] 归属层是否合规？未登记作者是否归入「其他」层（而非博主层、而非被自动补登）？

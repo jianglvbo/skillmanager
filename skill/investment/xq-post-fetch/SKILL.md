@@ -10,7 +10,7 @@ description: |
 license: MIT
 agent_created: true
 metadata:
-  version: "4.5.0"
+  version: "4.6.0"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---
