@@ -21,7 +21,7 @@ compatibility: 通用
 
 ### 核心原则
 - **浏览器通道唯一**：通过 browser-act CLI（chrome 模式）或 builtin_browser MCP（javascript_tool）采集，复用 Chrome 登录态绕过阿里云 WAF。browser-act 优先；WebSocket 连接失败时降级到 builtin_browser MCP。
-- **全文优先**：每条帖子必须经过完整性验证，未经详情页确认的不得标注"✅ 全文"。
+- **全文优先**：每条帖子必须经过完整性验证，未经详情页确认的不得标注「全文」。
 - **容错优先**：单帖失败不影响整批；置顶帖标注原始日期，不纳入时间窗口统计。
 - **独立可用**：用户直接输入参数即可运行，不依赖 pipeline。
 - **确定性优先**：帖子解析按 `references/page-structure.md` 的 pattern 执行，不靠自由发挥。
@@ -32,7 +32,7 @@ compatibility: 通用
 - 绝不在采集阶段分析或总结帖子内容
 - 绝不跳过截断检测（长文必须补全全文）
 - 绝不将置顶帖归入「今日」时间范围
-- 绝不未经详情页验证即标注"✅ 全文"——timeline API 的 text 字段可能截断，必须以详情页为准
+- 绝不未经详情页验证即标注「全文」——timeline API 的 text 字段可能截断，必须以详情页为准
 
 ---
 
@@ -91,7 +91,7 @@ browser-act get-skills core --skill-version 2.0.2
 - 用户页 markdown 侧：`references/page-structure.md`「截断检测」（`[展开]()` 标记判定）
 - API 采集路径侧：`references/execution-guide.md`「第五步」（timeline API text 截断判定 + 详情页补全流程）
 
-**铁律**：详情页是全文的唯一权威来源——**禁止仅凭 API 返回即标注"✅ 全文"**，每条帖子必须经详情页验证后标记「✅ 全文」/「⚠️ 摘要」。引用块保留（`>` 前缀区分作者原文），Emoji 图片按 page-structure.md 规则清洗。
+**铁律**：详情页是全文的唯一权威来源——**禁止仅凭 API 返回即标注「全文」**，每条帖子必须经详情页验证后标记「全文」/「摘要」。引用块保留（`>` 前缀区分作者原文），Emoji 图片按 page-structure.md 规则清洗。
 
 ### 第六步：关闭浏览器
 
@@ -125,7 +125,7 @@ browser-act session close {name}
 
 ## Output Format
 
-输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。每帖为 `## N. 标题 + 正文 + 📊 摘要行` 三件套，帖间以 `---` 分隔；摘要行标记「✅ 全文」或「⚠️ 摘要」：
+输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。每帖为 `## N. 标题 + 正文 + 摘要行` 三件套，帖间以 `---` 分隔；摘要行标记「全文」或「摘要」：
 
 ```markdown
 ---
@@ -143,7 +143,7 @@ tags: []
 
 {正文全文}
 
-> 📊 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | ✅ 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
+> 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
 ```
 
 | 字段 | 类型 | 说明 |
@@ -154,8 +154,8 @@ tags: []
 | retweet_count | int | 转发数 |
 | reply_count | int | 回复数 |
 | like_count | int | 点赞数 |
-| is_pinned | bool | 是否置顶（📌 标记） |
-| completeness | string | ✅ 全文 / ⚠️ 摘要 |
+| is_pinned | bool | 是否置顶 |
+| completeness | string | 全文 / 摘要 |
 | post_url | string | 帖子原文链接（`https://xueqiu.com/{xq_id}/{post_id}`） |
 
 ---
@@ -191,7 +191,7 @@ tags: []
 - [ ] `references/page-structure.md` + `references/execution-guide.md` 已加载用于帖子解析与执行细节？
 - [ ] 当前时间已获取（`date` 命令），用于时间窗口计算？
 - [ ] 置顶帖已标注原始日期，未纳入时间窗口统计？
-- [ ] **每条帖子都经过详情页验证**（不存在未经详情页确认即标"✅ 全文"的情况）？
+- [ ] **每条帖子都经过详情页验证**（不存在未经详情页确认即标「全文」的情况）？
 - [ ] 以"……"/"..."结尾的帖子已导航详情页确认完整性？
 - [ ] type="3"（专栏文章）的帖子已通过详情页获取正文（API text 为空）？
 - [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？

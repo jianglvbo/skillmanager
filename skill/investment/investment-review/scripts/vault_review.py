@@ -23,7 +23,7 @@ Obsidian 投资知识库 · 结构审查自动扫描器
 - 只报告不修改：仅输出 JSON + 计数，绝不写盘（符合 skill「绝不直接修改文件」原则）。
 - 规则镜像：下方 REQUIRED / EXPECTED_SECTIONS / SCOPE / template_for() 镜像自
   `investment-framework` 的 framework-rules.md 与 9 个模板文件。
-  ⚠️ 若框架规则或模板调整（新增必填字段、改段落名），须同步更新本文件对应常量。
+  注意：若框架规则或模板调整（新增必填字段、改段落名），须同步更新本文件对应常量。
 - 框架结构驱动：除 VAULT 路径外，不硬编码任何具体博主名 / 文件名 / URL。
 
 用法
@@ -382,7 +382,7 @@ for rel in sorted(files):
     if tpl=="博主画像":
         if "source" in fm: F["blogger_has_source"].append((rel,"博主画像不应含 source"))
         if "platform_id" in fm: F["blogger_has_platform_id"].append((rel,f"platform_id 已统一存博主控制台「雪球ID」列，画像不应含此字段（规则 #36）"))
-        # 核心段落检查（新模板段落：擅长与局限/言论追踪⭐/个股买卖记录📈/预测记录；
+        # 核心段落检查（新模板段落：擅长与局限/言论追踪/个股买卖记录/预测记录；
         # 用 startswith 容忍无 emoji 的旧写法如「言论追踪」）
         blogger_core = ["擅长与局限","言论追踪","个股买卖记录","预测记录"]
         missing_blog = [s for s in blogger_core if not any(h.startswith(s) for h in h2)]
