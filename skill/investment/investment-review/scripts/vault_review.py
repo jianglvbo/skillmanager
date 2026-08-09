@@ -23,7 +23,7 @@ Obsidian 投资知识库 · 结构审查自动扫描器
 - 只报告不修改：仅输出 JSON + 计数，绝不写盘（符合 skill「绝不直接修改文件」原则）。
 - 规则镜像：下方 REQUIRED / EXPECTED_SECTIONS / SCOPE / template_for() 镜像自
   `investment-framework` 的 framework-rules.md 与 9 个模板文件。
-  注意：若框架规则或模板调整（新增必填字段、改段落名），须同步更新本文件对应常量。
+  ⚠️ 若框架规则或模板调整（新增必填字段、改段落名），须同步更新本文件对应常量。
 - 框架结构驱动：除 VAULT 路径外，不硬编码任何具体博主名 / 文件名 / URL。
 
 用法
@@ -372,7 +372,7 @@ for rel in sorted(files):
 
     # 段落
     h2=[h.strip() for h in re.findall(r"^##\s+(.+)$",text,re.MULTILINE)]
-    # 遗留 ## 脚注 标题（规则#20：新格式改用 --- 分隔线，不允许 ## 脚注 标题）
+    # 遗留 ## 脚注 标题（规则#20：新格式脚注定义放文末，无 ## 脚注 标题）
     if "脚注" in h2:
         F["legacy_footnote_heading"].append(rel)
     # 禁止 ## 来源（精确匹配标题，避免误伤"## 数据来源"等合法标题）
@@ -439,7 +439,7 @@ for rel in sorted(files):
         elif st=="short_path": F["wikilink_issues"].append((rel,wl,"路径不完整(仅basename)",sug))
 
     # 脚注 wikilink 目标仅限 wiki 产物（footnote-taxonomy 禁止行为 #6）：仅检查脚注定义行
-    # （[^x-N]: ... 格式，位于文末 --- 脚注区）中的 wikilink，禁止指向 工作区/ 下任何文件
+    # （[^x-N]: ... 格式，位于文末脚注区）中的 wikilink，禁止指向 工作区/ 下任何文件
     for line in text.splitlines():
         if re.match(r"^\[\^[a-z]*-[0-9]+\]:", line.strip()):
             for wl in extract_wikilinks(line):
