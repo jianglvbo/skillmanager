@@ -26,7 +26,41 @@
     12. 花括号占位残留：`{作者名}`、`{YYYY-MM-DD}` 等模板占位指引文本（footnote-taxonomy#5；仅报告不自动修复）
 """
 
-import os, re, sys, yaml
+import os, re, sys
+
+def parse_fm_light(fm_text):
+    """轻量 frontmatter 解析（替代 yaml，无第三方依赖）：仅提取 source 字段供 check_source_field 使用。
+    返回 {'source': list|None}——非空列表 / 空列表（source: [] 或 source: 后无值）视为 None（missing）。
+    2026-08-14 优化：原依赖 PyYAML，部分环境未预装导致脚本无法运行。"""
+    fm = {}
+    if not fm_text:
+        return fm
+    lines = fm_text.strip().split('\n')
+    in_source = False
+    items = []
+    for line in lines:
+        s = line.strip()
+        if in_source:
+            if s.startswith('- '):
+                items.append(s[2:].strip())
+            elif s:
+                in_source = False
+            continue
+        if s.startswith('source:'):
+            rest = s[len('source:'):].strip()
+            if not rest:
+                in_source = True  # source: 后换行列表项
+            elif rest.startswith('- '):
+                in_source = True
+                items.append(rest[2:].strip())
+            elif rest.startswith('[') and rest.endswith(']'):
+                inner = rest[1:-1].strip()
+                if inner:
+                    items = [x.strip().strip('"').strip("'") for x in inner.split(',')]
+            else:
+                items.append(rest)
+    fm['source'] = items if items else None
+    return fm
 
 def split_fm_body(content):
     if content.startswith('---'):
@@ -328,10 +362,7 @@ def verify_file(fpath, rel):
         return None
     fm = {}
     if fm_text:
-        try:
-            fm = yaml.safe_load(fm_text[3:fm_text.find('---', 3)].strip()) or {}
-        except:
-            pass
+        fm = parse_fm_light(fm_text[3:fm_text.find('---', 3)].strip())
     # 博主画像：自身即博主、无 source 字段（规则 #36），豁免 source 检查；轻创建画像合法保留空表格骨架，豁免空表格行检查
     is_blogger_profile = bool(re.match(r'^博主/[^/]+/[^/]+\.md$', rel))
     issues = {

@@ -85,6 +85,19 @@ compatibility: 通用
 **第四步**：输出审查报告，标记问题项
 **第五步（待回收处置 · 默认执行）**：审查扫描全部内容型条目的 `delete` 字段（见 framework-rules #26），按 7 天冷静期处置超期条目（真删 + 双向清理）并出「待回收处置报告」给出理由；未到期条目在报告中提示剩余天数
 
+### 操作门（事前校验 · 2026-08-14 新增）
+
+原则：**问题在产生当天拦截，不等每周审查**——每个流水线操作在出口必须过校验门，审查降级为兜底网（2026-08-14 教训：13 处悬空引用/29 处 info_cutoff/34 处模板段落全部机器可检，却积压 7 周至审查才暴露）。
+
+| 操作 | 出口校验门 | 工具 |
+|:---|:---|:---|
+| 采集/同步后（xq-post-fetch 前置步骤） | 控制台-画像 info_cutoff 一致 + 博主层残留检测 | execution-guide 第 6-7 步 |
+| 提炼后（refine 第二步收尾） | 段落布局/模板段落完整 0 问题 | scripts/verify-format.py |
+| **删除/回收/移动前**（#25/#26） | inbound 引用反查，清理完才允许删 | scripts/check_inbound.py |
+| 任意批量操作后 / 提交前 | 增量扫描 git 变更文件（秒级） | investment-review/scripts/vault_review.py --incremental |
+
+每周审查仍保留：内容层（C3 一致性 / C4 知行合一 / C6 经验验证 / C7 关联备注）+ 待回收处置，是操作门覆盖不到的兜底网。
+
 ---
 
 ## 动态上下文（运行时注入）
@@ -160,7 +173,8 @@ compatibility: 通用
 | 提炼/审查 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 | 读取 |
 | 提炼 | assets/{模板名}.md | 对应分类的模板（纯结构骨架） | 读取 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 | 读取 |
-| 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复） | **执行** |
+| 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复）。**纯标准库无第三方依赖**（2026-08-14 起，原依赖 PyYAML） | **执行** |
+| 删除/回收/移动前（#25/#26） | scripts/check_inbound.py | inbound 引用反查（wikilink/脚注/source 字段），双向清理范围确认工具 | **执行** |
 
 ---
 
@@ -187,3 +201,4 @@ compatibility: 通用
 - [ ] "其他"层是否只包含投资相关的投资人内容？
 - [ ] "我的"层是否未做任何修改？
 - [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`；帖子集：粗制品 `type: 帖子集` 按 #29 直接提炼）
+- [ ] **操作门是否已过**（2026-08-14 新增）？——删除/回收/移动前是否已运行 `check_inbound.py` 反查并清理引用？批量操作后是否已运行 `vault_review.py --incremental` 增量校验？

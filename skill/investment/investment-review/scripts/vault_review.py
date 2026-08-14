@@ -28,13 +28,16 @@ Obsidian 投资知识库 · 结构审查自动扫描器
 
 用法
 ----
-  python3 vault_review.py --vault "<vault路径>" [--out "<输出目录>"]
+  python3 vault_review.py --vault "<vault路径>" [--out "<输出目录>"] [--incremental]
   # 不设 --vault 时：优先读环境变量 VAULT，否则退回 iCloud 默认路径
-  # 不设 --out  时：结果输出到当前工作目录，文件名 vault_review_result.json
+  # 不设 --out  时：结果输出到系统临时目录（/tmp），文件名 vault_review_result.json
+  #              ——2026-08-14 优化：原默认输出当前工作目录，会污染 vault 仓库（曾误提交入库）
+  # --incremental：增量模式，仅扫描 git 工作区变更的 .md 文件（操作收尾快速定向校验，
+  #                2026-08-14 新增，配合「操作门」机制在问题产生当天拦截）
 
 依赖：Python 3.8+，仅标准库（os/re/json/argparse）。
 """
-import os, re, json, argparse, datetime
+import os, re, json, argparse, datetime, tempfile
 
 DEFAULT_VAULT = os.path.expanduser(
     "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库"
@@ -42,8 +45,10 @@ DEFAULT_VAULT = os.path.expanduser(
 ap = argparse.ArgumentParser(description="Obsidian 投资知识库结构审查扫描器")
 ap.add_argument("--vault", default=os.environ.get("VAULT", DEFAULT_VAULT),
                 help="vault 根目录路径（默认环境变量 VAULT 或 iCloud 默认路径）")
-ap.add_argument("--out", default=os.getcwd(),
-                help="结果 JSON 输出目录（默认当前工作目录）")
+ap.add_argument("--out", default=tempfile.gettempdir(),
+                help="结果 JSON 输出目录（默认系统临时目录，避免污染 vault 仓库；需留存可传 --out 指定目录）")
+ap.add_argument("--incremental", action="store_true",
+                help="增量模式：仅扫描 git 工作区变更的 .md 文件（流水线操作收尾快速定向校验）")
 _args = ap.parse_args()
 VAULT = os.path.expanduser(_args.vault)
 OUT = _args.out
@@ -284,6 +289,22 @@ for scope in SCOPE:
         if rr.split("/")[0] in (".trash",".space",".smart-env",".makemd"): continue
         for f in fs:
             if f.endswith(".md"): files.append(os.path.relpath(os.path.join(root,f),VAULT))
+
+# 增量模式（2026-08-14 新增）：仅扫描 git 工作区变更的 .md 文件——
+# 供流水线操作收尾（采集/提炼/删除后）快速定向校验，问题在产生当天拦截，不等每周审查
+if _args.incremental:
+    import subprocess
+    r = subprocess.run(["git", "-C", VAULT, "-c", "core.quotepath=false", "status", "--short"],
+                       capture_output=True, text=True)
+    changed = set()
+    for line in r.stdout.splitlines():
+        p = line[3:].strip()
+        if " -> " in p:  # 重命名：取新路径
+            p = p.split(" -> ")[-1]
+        if p.endswith(".md") and not p.startswith(".") and "/" in p:
+            changed.add(p)
+    files = [f for f in files if f in changed]
+    print(f"[增量模式] git 变更 .md 文件 {len(files)} 个")
 
 for rel in sorted(files):
     summary["total"]+=1
