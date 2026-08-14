@@ -97,7 +97,7 @@ compatibility: 通用
 | fabricated_footnotes | list | 编撰关系脚注（已存在但目标文件无原文依据，建议删除或降级） |
 | cross_reference_proposals | list | 提议的跨条目关联（条目路径 + wikilink + 关系类型 + 一句话说明） |
 
-报告模板见 `references/report-templates.md`（内容审查报告模板），输出到对话中。
+报告模板见 `references/report-templates.md`（内容审查报告模板），写入 `{VAULT_ROOT}/工作区/审查报告/审查报告-{YYYY-MM-DD}.md`（只读审查快照，不含修复动作）。
 
 ### 结构审查报告
 
@@ -110,7 +110,7 @@ compatibility: 通用
 | footnote_format_issues | list | 脚注格式错误（多余 `]]`/格式不符 `[[target]] — 关系：说明`） |
 | tag_mismatches | list | 标签不匹配的条目 |
 
-报告模板见 `references/report-templates.md`（结构审查报告模板 + 待回收处置报告模板），输出到对话中。
+报告模板见 `references/report-templates.md`（结构审查报告模板 + 待回收处置报告模板），写入 `{VAULT_ROOT}/工作区/审查报告/审查报告-{YYYY-MM-DD}.md`。**修复动作不写入审查报告**：用户授权修复后另建 `修复记录-{YYYY-MM-DD}.md`（执行日志），wikilink 关联回审查报告。
 
 ---
 
