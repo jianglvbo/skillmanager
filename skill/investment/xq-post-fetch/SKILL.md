@@ -10,17 +10,18 @@ description: |
 license: MIT
 agent_created: true
 metadata:
-  version: "4.6.0"
+  version: "4.5.0"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---
 
-# 雪球帖子采集 v4.4
+# 雪球帖子采集 v4.5
 
 ## Default Stance
 
 ### 核心原则
-- **浏览器通道唯一**：通过 browser-act CLI（chrome 模式）或 builtin_browser MCP（javascript_tool）采集，复用 Chrome 登录态绕过阿里云 WAF。browser-act 优先；WebSocket 连接失败时降级到 builtin_browser MCP。
+- **浏览器通道唯一**：通过 browser-act CLI（chrome 模式）采集，复用 Chrome 登录态。browser-act 优先；WebSocket 连接失败时降级到 builtin_browser MCP。
+- **用户页方案优先（2026-08-15 定案）**：完整采集走「用户页滚动加载 + 详情页补全」，**不用 timeline API 翻页**——API 分页裸 URL 被 WAF 拦截、连续请求触发滑块（详见 execution-guide 第〇章「风控规避」）。
 - **全文优先**：每条帖子必须经过完整性验证，未经详情页确认的不得标注「全文」。
 - **容错优先**：单帖失败不影响整批；置顶帖标注原始日期，不纳入时间窗口统计。
 - **独立可用**：用户直接输入参数即可运行，不依赖 pipeline。
@@ -29,9 +30,11 @@ compatibility: 通用
 ### 禁止行为
 - 绝不内置或硬编码博主列表
 - 绝不直接 curl / requests 调 API（阿里云 WAF 拦截）
+- **绝不用裸 URL 翻页调 timeline API**（`page>=2` 被 WAF 拦截，走用户页滚动）
+- **绝不在采集任务运行时并行操作同一 session**（争用会中断任务；并行需开第二个 session）
 - 绝不在采集阶段分析或总结帖子内容
 - 绝不跳过截断检测（长文必须补全全文）
-- 绝不将置顶帖归入「今日」时间范围
+- 绝不将置顶帖归入「今日」时间范围（置顶帖 pinned 字段不可靠，按完整日期 + 「置顶」标记识别）
 - 绝不未经详情页验证即标注「全文」——timeline API 的 text 字段可能截断，必须以详情页为准
 
 ---
@@ -81,19 +84,28 @@ browser-act get-skills core --skill-version 2.0.2
 - 创建：`browser-act --session xq browser open {browser_id} "https://xueqiu.com/u/{xq_id}"`
 - **验证登录态**：`get title` 含用户昵称 → 已登录；含「登录」→ **停止，提示用户在 Chrome 中登录雪球**
 
-### 第四步：获取当前时间 + 提取帖子列表
+### 第四步：获取当前时间 + 提取帖子列表（用户页方案）
 
 1. 获取基准时间：`date "+%Y-%m-%d %H:%M"`
-2. `browser-act --session {name} wait stable` + `get markdown`
-3. **加载 `references/page-structure.md`** 解析：识别帖子区域、提取 post_id/时间/正文/互动、时间格式转换、置顶帖标注
-4. 按时间过滤（仅保留「信息截止」之后）+ max_posts 数量限制
-5. 帖子不足时滚动加载（见 `references/execution-guide.md`「第四步」）
+2. `browser-act --session {name} navigate "https://xueqiu.com/u/{xq_id}"` + 等待 4s + `get markdown`
+3. **加载 `references/page-structure.md`** 解析：识别帖子区域、提取 post_id/时间/正文/互动、时间格式转换（含完整日期格式）、置顶帖识别。**时间戳用 `re.search` 全局搜索，禁止行首锚定**
+4. 按时间过滤（仅保留「信息截止」之后，排除置顶帖）+ max_posts 数量限制
+5. 帖子不足时**滚动加载**：`scroll down --amount 2500` + 等待 2s + 重新 `get markdown`（滚动触发带签名请求，不触发 WAF；详见 execution-guide 第〇章）
 
 ### 第五步：截断内容补全（强制，不可跳过）
 
-截断检测与补全的完整规则见两处权威源：
-- 用户页 markdown 侧：`references/page-structure.md`「截断检测」（`[展开]()` 标记判定）
-- API 采集路径侧：`references/execution-guide.md`「第五步」（timeline API text 截断判定 + 详情页补全流程）
+截断检测与补全规则见 `references/page-structure.md`「截断检测」（`[展开]()` 标记判定）+ `references/execution-guide.md`「第五步」：
+
+**补全流程（详情页 HTML，非 API）**：
+```bash
+browser-act --session {name} navigate "https://xueqiu.com/{xq_id}/{post_id}"
+browser-act --session {name} wait stable
+browser-act --session {name} get markdown
+```
+- 提取「来源：雪球App」与「风险提示」之间正文（完整全文）
+- 详情页同时提供精确发布时间（`发布于 YYYY-MM-DD HH:MM`），覆盖用户页的模糊时间
+- 补全后标记：「全文」（经详情页验证）vs「摘要」（详情页也无法获取全文）
+- **禁止用 `statuses/show.json` API 补全**（连续请求触发滑块；详情页 HTML 实测零风控）
 
 **铁律**：详情页是全文的唯一权威来源——**禁止仅凭 API 返回即标注「全文」**，每条帖子必须经详情页验证后标记「全文」/「摘要」。引用块保留（`>` 前缀区分作者原文），Emoji 图片按 page-structure.md 规则清洗。
 
@@ -129,7 +141,7 @@ browser-act session close {name}
 
 ## Output Format
 
-输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。每帖为 `## N. 标题 + 正文 + 摘要行` 三件套，帖间以 `---` 分隔；摘要行标记「全文」或「摘要」：
+输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。完整格式规范（frontmatter/三件套/字段表/铁律）见 `references/output-format.md`，核心模板：
 
 ```markdown
 ---
@@ -150,27 +162,18 @@ tags: []
 > 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
 ```
 
-| 字段 | 类型 | 说明 |
-|:---|:---|:---|
-| title | string | 帖子标题（有 title 字段用 title；无 title 取正文首个完整句子，不硬切字数） |
-| text | string | 正文全文（截断帖补全后标记） |
-| created_at | string | 发布时间（YYYY年M月D日 HH:MM） |
-| retweet_count | int | 转发数 |
-| reply_count | int | 回复数 |
-| like_count | int | 点赞数 |
-| is_pinned | bool | 是否置顶 |
-| completeness | string | 全文 / 摘要 |
-| post_url | string | 帖子原文链接（`https://xueqiu.com/{xq_id}/{post_id}`） |
-
 ---
 
 ## Relative Files
 
 | 场景 | 加载文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
-| 前置步骤/会话管理/滚动加载/API截断判定 | `references/execution-guide.md` | 关注列表同步、会话管理、滚动加载、API 截断判定、引用与 emoji 处理细节 | 读取 |
-| 第四步解析帖子 | `references/page-structure.md` | 帖子 markdown 结构、post_id 提取、时间格式转换、互动数据解析、截断检测、引用内容处理、emoji 清洗 | 读取 |
+| **风控规避/主路径/会话管理/滚动加载** | `references/execution-guide.md` | **WAF 与滑块规避（第〇章）、用户页采集主路径、chrome 启动失败处理、session 独占铁律**、关注列表同步、API 截断判定、引用与 emoji 处理 | 读取 |
+| 第四步解析帖子 | `references/page-structure.md` | 帖子 markdown 结构、post_id 提取、**时间戳前缀陷阱、完整日期格式、置顶帖识别**、截断检测、引用内容处理、emoji 清洗 | 读取 |
 | 采集后提炼帖子集 | `references/refine-checklist.md` | 精华去糟粕价值流水线、灰区裁决、言论追踪 4 类落位、丢弃确认清单（framework-rules #29 例外，由 investment-refine 加载） | 读取 |
+| **逐博主完整采集** | `scripts/xq_user_collect.py` | 用户页滚动 + 详情页补全采集器（参数：xq_id/nickname/cutoff/outfile），实战验证零风控 | **执行** |
+| **info_cutoff 双写** | `scripts/xq_update_cutoff.py` | 画像 + 控制台双写更新（参数：nickname/ISO时间） | **执行** |
+| 输出格式规范 | `references/output-format.md` | 帖子集 frontmatter/三件套/字段表/原文链接铁律 | 读取 |
 | 始终 | browser-act SKILL.md + `get-skills core` 输出 | browser-act 命令参考、运行时环境状态和操作指令 | 读取 |
 
 ---
@@ -190,11 +193,14 @@ tags: []
 ## 自检
 
 - [ ] xq_id 已解析（直接传入、从博主控制台按 blogger_name 查到、或默认全部博主模式逐博主解析）且为数字？
-- [ ] 浏览器通道已确认可用（browser-act 或 builtin_browser MCP）？
+- [ ] 浏览器通道已确认可用（browser-act 或 builtin_browser MCP）？chrome 模式启动失败时是否已处理本地 Chrome 占用（关闭后重试）？
 - [ ] 雪球已登录（页面标题含用户昵称）？
-- [ ] `references/page-structure.md` + `references/execution-guide.md` 已加载用于帖子解析与执行细节？
+- [ ] `references/page-structure.md` + `references/execution-guide.md` 已加载（含第〇章风控规避）？
+- [ ] 采集路径是否为**用户页滚动 + 详情页补全**（未用裸 URL 翻页调 API）？
+- [ ] 采集任务运行时是否**未并行操作同一 session**（需并行时开了第二个 session）？
 - [ ] 当前时间已获取（`date` 命令），用于时间窗口计算？
-- [ ] 置顶帖已标注原始日期，未纳入时间窗口统计？
+- [ ] 置顶帖已识别排除（按完整日期 + 「置顶」标记，**不依赖 pinned 字段**）？未纳入时间窗口统计？
+- [ ] 时间戳解析是否用 `re.search` 全局搜索（未用行首锚定导致漏采）？
 - [ ] **每条帖子都经过详情页验证**（不存在未经详情页确认即标「全文」的情况）？
 - [ ] 以"……"/"..."结尾的帖子已导航详情页确认完整性？
 - [ ] type="3"（专栏文章）的帖子已通过详情页获取正文（API text 为空）？

@@ -1,8 +1,42 @@
 # 采集执行细节指南
 
-> 本文件承载 xq-post-fetch Workflow 的完整执行细节（关注列表同步、会话管理、滚动加载、API 截断判定）。
+> 本文件承载 xq-post-fetch Workflow 的完整执行细节（关注列表同步、会话管理、滚动加载、API 截断判定、**风控规避**）。
 > SKILL.md 仅保留「第零步~第八步」摘要骨架，细节一律以本文件 + `page-structure.md` 为准，避免双源漂移。
 > 权威规则：`framework-rules.md` #12（博主补登/移除例外）、#29（帖子集例外流程）、#35（原文链接必填）。
+> 2026-08-15 批量采集 40 位博主实战后修订：新增「风控规避」章节 + 用户页采集主路径，替代原「API 翻页」路径。
+
+---
+
+## 〇、风控规避（2026-08-15 实战核心经验）
+
+雪球对采集有**两层反爬**，必须提前规避：
+
+### 第一层：WAF URL 拦截（分页裸 URL）
+
+- **现象**：直接 navigate `https://xueqiu.com/v4/statuses/user_timeline.json?page=2&user_id=xxx` 返回「很抱歉，由于您访问的URL有可能对网站造成安全威胁，您的访问被阻断」，页面 body 是 WAF 拦截页
+- **规律**：`page=1` 裸 URL 通常可访问；`page>=2` 裸 URL 被 WAF 拦截（分页参数触发）；带签名参数（`md5__1038`、`u_atoken`）的请求是页面自身发出的，可成功
+- **规避**：**放弃 API 翻页，改用用户页滚动加载**（浏览器真实滚动触发带签名请求，不触发 WAF）
+
+### 第二层：阿里云滑块验证（连续请求触发）
+
+- **现象**：连续 ~90 次 show.json/API 请求后触发「访问验证：请按住滑块，拖动到最右边」；页面 body 含 `aliyunCaptcha-sliding-slider`
+- **限制**：`solve-captcha` 与 `remote-assist` 均需 API key（browser-act 未配置时不可用）——**不要依赖自动解决**
+- **规避**：
+  1. **优先用户页方案**（见下）——浏览器渲染页面，实测 40 位博主全程零滑块
+  2. 若已触发：请用户人工拖滑块；或 **关闭 session 重开**（`browser-act session close xq` + 重新 `browser open`），新 session 用户页可恢复访问（API 端点仍可能被拦）
+
+### 采集主路径（2026-08-15 定案）：用户页滚动加载 + 详情页补全
+
+替代原「timeline API 翻页」路径，实测最稳：
+
+1. `navigate https://xueqiu.com/u/{xq_id}` + 等待 4s
+2. `get markdown` → 按 `page-structure.md` 解析帖子（时间戳用 `re.search` 非行首锚定）
+3. 帖子数不足 → `scroll down --amount 2500` + 等待 2s + 重新 `get markdown`（滚动触发带签名请求，不触发 WAF）
+4. 按 cutoff 过滤（**必须排除置顶帖**：完整日期 + 链接后「置顶」标记）
+5. 截断帖（正文含「展开」）→ `navigate https://xueqiu.com/{xq_id}/{post_id}` 详情页补全（提取「来源：雪球App」与「风险提示」之间正文）
+6. 生成帖子集文件（每帖带 `[原文]` 链接）
+
+> timeline API 仍可用于**快速预扫**（page=1 判断博主是否有新帖），但完整采集走用户页方案。
 
 ---
 
@@ -35,10 +69,18 @@
 3. 没有我的 session → 用 `browser-act --session xq browser open {browser_id} "https://xueqiu.com/u/{xq_id}"` 创建新 session
 4. 有我的 session → 直接 `browser-act --session {name} navigate "https://xueqiu.com/u/{xq_id}"`
 
+**chrome 模式启动失败处理（2026-08-15 实战）**：`browser open` 报 `Error 230404: Chrome did not start within 30.0s` 时，根因多为**本地 Chrome 正在运行**（profile 锁）。处理：
+1. `pgrep -x "Google Chrome" | wc -l` 确认本地 Chrome 进程
+2. `osascript -e 'tell application "Google Chrome" to quit'` 优雅退出 + `pkill -x "Google Chrome"` 清理残留（需用户同意让出本地 Chrome）
+3. 重试 `browser open`（此前 4 次失败，关 Chrome 后一次成功）
+4. 备选：`--headed` 模式打开（窗口可见，用户可操作滑块验证）
+
 **验证登录态**：
 - `browser-act --session {name} get title`
 - 标题含用户昵称 → 已登录
 - 标题不含昵称或含「登录」→ **停止，提示用户在 Chrome 中登录雪球**
+
+**session 独占铁律（2026-08-15 实战教训）**：一个 session 同一时刻只允许一个采集任务操作。批量验证脚本后台运行时，**禁止并行 navigate/eval 测试**——会争用 session 导致任务中断（本次曾因此丢失验证进度）。如需并行，创建第二个 session（`--session xq2`）。
 
 ---
 
