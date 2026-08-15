@@ -86,12 +86,14 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── office/                    ← 办公工具
 │   │   ├── mac-cleaner/           ←   macOS 磁盘清理
 │   │   └── qmd/                   ←   本地文档索引
-│   └── investment/                ← 投资知识框架
-│       ├── investment-framework/  ←   全局编排者
-│       ├── investment-coarse-processor/ ← 粗加工
-│       ├── investment-refine/     ←   提炼执行器
-│       ├── investment-review/     ←   审查执行器
-│       └── xq-post-fetch/         ←   雪球帖子采集
+│   ├── investment/                ← 投资知识框架
+│   │   ├── investment-framework/  ←   全局编排者
+│   │   ├── investment-coarse-processor/ ← 粗加工
+│   │   ├── investment-refine/     ←   提炼执行器
+│   │   ├── investment-review/     ←   审查执行器
+│   │   └── xq-post-fetch/         ←   雪球帖子采集
+│   └── frontend/                  ← 前端开发（console-style 风格）
+│       └── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
 └── tools/
     ├── autocli/
     └── browser-act-cli/
@@ -216,6 +218,12 @@ git push origin main
 | `mac-cleaner` | macOS 磁盘分析与清理 |
 | `qmd` | 本地文档索引与搜索（BM25 + 向量） |
 
+### frontend/ — 前端开发（console-style 风格）
+
+| Skill | 说明 |
+|:---|:---|
+| `console-style-fitness` | 控制台风格健身应用：玻璃拟态 + 极光渐变 + 10 主题 token 体系、单文件架构与数据模型、AI 生成链路、校验脚本（validate.py） |
+
 ### investment/ — 投资知识框架
 
 | Skill | 说明 |
@@ -234,4 +242,4 @@ MIT
 
 ---
 
-*最后更新：2026-08-08*
+*最后更新：2026-08-15*
