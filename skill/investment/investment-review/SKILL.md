@@ -86,31 +86,36 @@ compatibility: 通用
 
 ## Output Format
 
-### 内容审查报告
+> **2026-08-16 起：审查不再产出 md 报告文件，直接落库投资看板**。审查完成后按 `references/report-templates.md`（落库 schema 模板）组装结构化 record，`POST http://127.0.0.1:8698/api/review/record` 写入看板 `data/review.json`（幂等：同 date 覆盖）。落库失败不阻断主流程，但汇报中明确提示「审查数据未落入看板，需补录」。
+
+### 内容审查（C 维度）
 
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
-| consistency_issues | list | 内部一致性问题 |
-| action_alignment_issues | list | 知行合一问题 |
-| framework_conflicts | list | 我的 vs 博主冲突 |
-| verification_gaps | list | 未验证的经验教训 |
-| fabricated_footnotes | list | 编撰关系脚注（已存在但目标文件无原文依据，建议删除或降级） |
-| cross_reference_proposals | list | 提议的跨条目关联（条目路径 + wikilink + 关系类型 + 一句话说明） |
+| c_groups | array | 内容审查分组（C3 内部一致性 / C4 知行合一 / C6 经验验证 / C8 编撰脚注 / C7 关联提案），每项 `{title, severity, tag, headers, rows, text}` 入 `groups` 数组 |
 
-报告模板见 `references/report-templates.md`（内容审查报告模板），写入 `{VAULT_ROOT}/工作区/审查报告/审查报告-{YYYY-MM-DD}.md`（只读审查快照，不含修复动作）。
-
-### 结构审查报告
+### 结构审查（S 维度）
 
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
-| misplaced_files | list | 归类错误的文件 |
-| incomplete_frontmatter | list | frontmatter 缺失的文件（含 updateDate 缺失） |
-| quoting_issues | list | frontmatter 引号格式错误的文件 |
-| broken_links | list | 失效的 wikilink（正文 + source 字段） |
-| footnote_format_issues | list | 脚注格式错误（多余 `]]`/格式不符 `[[target]] — 关系：说明`） |
-| tag_mismatches | list | 标签不匹配的条目 |
+| s_groups | array | 结构审查分组（S2 归类错误 / S5 失效 Wikilink / S6 脚注格式 / S7 标签 / 模板段落缺失 / 其他结构问题），每项 `{title, severity, tag, headers, rows, text}` 入 `groups` 数组 |
+| checks | array | 脚本指标（vault_review.py 输出表逐行）：`{item, result, compare, status}` |
 
-报告模板见 `references/report-templates.md`（结构审查报告模板 + 待回收处置报告模板），写入 `{VAULT_ROOT}/工作区/审查报告/审查报告-{YYYY-MM-DD}.md`。**修复动作不写入审查报告**：用户授权修复后另建 `修复记录-{YYYY-MM-DD}.md`（执行日志），wikilink 关联回审查报告。
+### 落库 record（组装规则）
+
+| 字段 | 来源 |
+|:---|:---|
+| date / title | 审查日期与标题 |
+| meta | 审查范围/扫描文件数/工具/对比基线/原则 |
+| method | 审查方法简述 |
+| mainProblems | 总体结论 |
+| checks | 脚本指标表 |
+| groups | **s_groups + c_groups 合并**（通用分组，看板自动渲染） |
+| recycle | 待回收处置（done/cooling/doneHist/rows） |
+| actions | 建议动作表（num/text/status） |
+| summary | 总结与建议 |
+
+> 落库 schema 见 `references/report-templates.md`。**修复动作不落库**：用户授权修复后另写 `修复记录-{YYYY-MM-DD}.md`（vault 执行日志），对应审查用 date 文字引用。
 
 ---
 
@@ -120,7 +125,7 @@ compatibility: 通用
 |:---|:---|:---|:---|
 | 审查时 | investment-framework/references/review-rules.md（由 investment-framework 编排者传入） | 审查维度和检查清单 | 读取 |
 | 审查时 | investment-framework/references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 | 读取 |
-| 审查时 | references/report-templates.md | 内容/结构/待回收处置三份报告模板 | 读取 |
+| 审查时 | references/report-templates.md | 审查落库 schema 模板（字段规范 + status 取值 + 落库调用规范 + 扩展机制） | 读取 |
 | 结构审查预扫 | scripts/vault_review.py | 自动扫描脚本，输出 vault_review_result.json（只报告不修改） | **执行** |
 | 段落布局预扫 | investment-framework/scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留扫描（可 --fix 自动修复） | **执行** |
 

@@ -82,8 +82,8 @@ compatibility: 通用
 **第一步**：确定审查范围（内容审查 or 结构审查，见 references/review-rules.md）
 **第二步**：内容审查——检查框架一致性、知行合一、我的 vs 博主冲突、经验验证
 **第三步**：结构审查——检查归类正确性、frontmatter 完整性、wikilink 有效性、标签匹配
-**第四步**：输出审查报告，标记问题项
-**第五步（待回收处置 · 默认执行）**：审查扫描全部内容型条目的 `delete` 字段（见 framework-rules #26），按 7 天冷静期处置超期条目（真删 + 双向清理）并出「待回收处置报告」给出理由；未到期条目在报告中提示剩余天数
+**第四步**：组装结构化落库数据（按 investment-review/references/report-templates.md 的 schema），`POST http://127.0.0.1:8698/api/review/record` 写入投资看板 `data/review.json`（2026-08-16 起不再产出 md 审查报告）
+**第五步（待回收处置 · 默认执行）**：审查扫描全部内容型条目的 `delete` 字段（见 framework-rules #26），按 7 天冷静期处置超期条目（真删 + 双向清理）并出「待回收处置」数据（入落库 recycle 字段）给出理由；未到期条目在数据中提示剩余天数
 
 ### 操作门（事前校验 · 2026-08-14 新增）
 
@@ -159,7 +159,7 @@ compatibility: 通用
 | output_summary | string | 下游执行结果摘要（产出条目数、更新档案等） |
 | next_action | string | 后续动作提示（如"源文件待提炼"） |
 
-下游具体产出物（粗加工原始帖子、框架条目、审查报告）由各 skill 的 Output Format 定义，位置见下方路径表。
+下游具体产出物（粗加工原始帖子、框架条目、审查落库数据）由各 skill 的 Output Format 定义，位置见下方路径表。
 
 ---
 
