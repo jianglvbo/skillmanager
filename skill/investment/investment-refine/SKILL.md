@@ -99,15 +99,44 @@ compatibility: 通用
 
 向用户报告：创建了哪些条目（标题 + 分类 + 归属层）、是否更新博主档案、条目间关联方向、可验证判断提示（第一步第 5 条）、产出校验结果。
 
-### 第四步：同步数据看板（2026-08-15 新增）
+### 第四步：同步数据看板（2026-08-15 新增，08-16 扩展决策链路）
 
-提炼完成后，**自动调用投资看板 API 写入链路记录**，确保 `提炼` 看板模块即时呈现本次提炼：
+提炼完成后，**自动调用投资看板 API 写入链路记录**，确保 `提炼` 看板模块完整呈现本次提炼（产物 + 决策链路）：
 
-- **端点**：`POST http://127.0.0.1:8698/api/refine/record`
-- **请求体**：`{"from":"工作区/原始资源/<源文件>.md","to":["我的/分类/<条目>.md",...],"reason":"<拆分/归类/关联决策一句话中文说明>"}`
-- **机制**：看板服务端写入 `data/refine.json` 并按 `at` 倒序展示在提炼页（默认显示最近一个月）
+- **端点**：`POST http://127.0.0.1:8698/api/refine/record`，`Content-Type: application/json`
+- **请求体（完整 schema）**：
+
+```json
+{
+  "from": "工作区/原始资源/<源文件>.md",
+  "sourceType": "raw",          // raw=原始资源 / coarse=粗制品直提（帖子集 #29/直投 #30）
+  "source": "[原文](https://xueqiu.com/.../XXXXXX)",
+  "targets": [
+    {
+      "path": "我的/行业/<条目>.md",
+      "type": "wiki",            // wiki=框架条目 / blogger=博主画像言论追踪 / macro=宏观
+      "layer": "我的",           // 归属层判断（我的/博主/其他/宏观）
+      "category": "行业",        // 分类判断
+      "tags": ["行业", "周期"],
+      "basis": "原文「<支撑该条目的关键句>」",   // 依据：从原文哪句话提炼
+      "why": "<拆分/归类/标签决策一句话>",      // 为什么提炼成这个
+      "relation": "<与库内条目关系：新建/追加/互补/矛盾预检>"  // 与 C7 联动
+    }
+  ],
+  "reason": "<整体拆分决策说明>",
+  "steps": ["读取原文", "归属层判断", "创建条目", "更新博主档案", "校验"],
+  "bloggerUpdated": true,
+  "bloggerName": "雪月霜",
+  "verify": { "ok": true, "detail": "verify-format.py 0 问题" },
+  "verificationHints": ["该判断可后续建分析档案做结果跟踪"]
+}
+```
+
+- **多对多拆分**：一篇原文拆为多条条目时，`targets` 数组写全部产出，**每条必填 `basis`（依据原文句）+ `why`（决策）**——看板产物卡展示「依据 + 决策 + 关系」三层，回答"为什么提炼成这个"
+- **博主言论**：涉及已登记博主时，`targets` 同时含 `type:"blogger"` 的画像条目（言论追踪追加），`bloggerUpdated: true`；看板粉色「言论追踪」标记
+- **机制**：看板服务端写入 `data/refine.json` 并按 `at` 倒序展示（默认最近一个月）；旧 `to[]` 字符串数组自动兼容归一化
 - **失败处理**：API 调用失败（如看板未启动）不阻断提炼主流程；汇报中提示「看板数据未写入」
-- **多对多拆分**：一篇原文拆为多条条目时，`to` 数组写所有产出路径，`reason` 描述拆分依据（与 C7 关联备注提案联动）
+- **决策一致性**：`basis/why/relation` 必须来自第一步分析的真实判断（归属层铁律、标签体系、同作者预检），**禁止事后编撰**——与审查 C7 关联提案、C3 矛盾预检联动
 
 ---
 
@@ -128,6 +157,7 @@ compatibility: 通用
 | 提炼时 | investment-framework/references/tag-taxonomy.md（由编排者传入） | 标签分类体系，用于选择标签 | 读取 |
 | 提炼时 | investment-framework/references/footnote-taxonomy.md（由编排者传入） | 脚注类型定义，用于 [^data-N]/[^date-N] 格式 | 读取 |
 | 提炼时 | investment-framework/references/template-guide.md（由编排者传入） | 各模板 section 写作指引（模板为纯结构骨架，写作要求统一在此） | 读取 |
+| 提炼后落库 | references/refine-schema.md | 提炼落库 schema 模板（字段规范 + targets 决策三层 + type 取值 + 决策一致性） | 读取 |
 | 提炼时 | investment-framework/assets/{模板名}.md（由编排者传入） | 对应分类的 frontmatter + 正文模板（纯结构骨架） | 读取 |
 
 ---
