@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.14.0"
+  version: "2.15.0"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---
@@ -98,6 +98,17 @@ compatibility: 通用
 
 每周审查仍保留：内容层（C3 一致性 / C4 知行合一 / C6 经验验证 / C7 关联备注）+ 待回收处置，是操作门覆盖不到的兜底网。
 
+### 看板联动（investment-console · 2026-08-17 新增）
+
+流水线结果写入本地看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管），看板不产生知识、只呈现结果：
+
+- **提炼** → `POST /api/refine/record`（refine 第四步已实现，targets 含 thinking 5 步/basis/why/relation）→ 提炼时间轴 + 决策链路图
+- **审查** → `POST /api/review/record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
+- **决策链路图 10 节点规范**（用户拍板）：源→识别→◆归属层判断◆→拆分决策→三列分叉（价值/归类/◆关系判断◆/生成/产物卡）→汇合→校验；**判断只留给有真实分叉的节点**（归属层/关系）；关系判断=生成决策（thinking[3]），审查 C3/C7=写后质检，不重复
+- **产物展示**：多产物**横向并联**（产物徽章并排、无箭头，不用 SVG 分叉图——用户试用后否决）
+- 失败处理：API 失败不阻断主流程，汇报提示「看板数据未写入」
+- 完整契约/渲染要点/设计铁律 → `references/console-guide.md`
+
 ---
 
 ## 动态上下文（运行时注入）
@@ -173,6 +184,7 @@ compatibility: 通用
 | 提炼/审查 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 | 读取 |
 | 提炼 | assets/{模板名}.md | 对应分类的模板（纯结构骨架） | 读取 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 | 读取 |
+| 看板联动 | references/console-guide.md | 看板数据契约（refine/review 落库）、决策链路图 10 节点规范、产物展示约定、前端设计铁律 | 读取 |
 | 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复）。**纯标准库无第三方依赖**（2026-08-14 起，原依赖 PyYAML） | **执行** |
 | 删除/回收/移动前（#25/#26） | scripts/check_inbound.py | inbound 引用反查（wikilink/脚注/source 字段），双向清理范围确认工具 | **执行** |
 
@@ -202,3 +214,4 @@ compatibility: 通用
 - [ ] "我的"层是否未做任何修改？
 - [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`；帖子集：粗制品 `type: 帖子集` 按 #29 直接提炼）
 - [ ] **操作门是否已过**（2026-08-14 新增）？——删除/回收/移动前是否已运行 `check_inbound.py` 反查并清理引用？批量操作后是否已运行 `vault_review.py --incremental` 增量校验？
+- [ ] **看板是否已联动**（2026-08-17 新增）？——提炼后是否 `POST /api/refine/record`（targets 含 thinking 5 步/basis/why/relation）？审查后是否 `POST /api/review/record`？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md）
