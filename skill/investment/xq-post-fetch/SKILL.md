@@ -4,7 +4,7 @@ description: |
   雪球帖子采集。通过 browser-act CLI（chrome 模式）采集指定博主的帖子全文，
   自动检测截断并补全长文，输出结构化 markdown 文件。
   触发词：「抓取雪球」「雪球帖子」「采集雪球」「xq fetch」「雪球动态」
-  排除条件：含「分析」「提炼」「画像」等关键词时交给 blogger-refine / wiki-refine。
+  排除条件：含「分析」「提炼」「画像」等关键词时交给 investment-refine。
   依赖条件：browser-act CLI 已安装 + Chrome 浏览器运行中 + 雪球已登录。
   区别于 browser-act：xq-post-fetch 是雪球专用采集引擎，browser-act 是通用浏览器自动化。
 license: MIT
@@ -77,14 +77,14 @@ browser-act get-skills core --skill-version 2.0.2
 - CLI 不可用 → 报错停止，提示 `uv tool install browser-act-cli --python 3.12`
 - **get-skills 禁止跳过**——解析输出，确认可用浏览器 ID 和已有 session
 
-### 第三步：打开浏览器，导航到雪球用户页
+### 第二步：打开浏览器，导航到雪球用户页
 
-会话管理（session 归属判定、创建/复用、登录验证）完整流程见 `references/execution-guide.md`「第三步」。要点：
+会话管理（session 归属判定、创建/复用、登录验证）完整流程见 `references/execution-guide.md`「第二步」。要点：
 - 按「本对话历史中是否已有我的 session」判断复用或新建（他人 session 不操作）
 - 创建：`browser-act --session xq browser open {browser_id} "https://xueqiu.com/u/{xq_id}"`
 - **验证登录态**：`get title` 含用户昵称 → 已登录；含「登录」→ **停止，提示用户在 Chrome 中登录雪球**
 
-### 第四步：获取当前时间 + 提取帖子列表（用户页方案）
+### 第三步：获取当前时间 + 提取帖子列表（用户页方案）
 
 1. 获取基准时间：`date "+%Y-%m-%d %H:%M"`
 2. `browser-act --session {name} navigate "https://xueqiu.com/u/{xq_id}"` + 等待 4s + `get markdown`
@@ -92,9 +92,9 @@ browser-act get-skills core --skill-version 2.0.2
 4. 按时间过滤（仅保留「信息截止」之后，排除置顶帖）+ max_posts 数量限制
 5. 帖子不足时**滚动加载**：`scroll down --amount 2500` + 等待 2s + 重新 `get markdown`（滚动触发带签名请求，不触发 WAF；详见 execution-guide 第〇章）
 
-### 第五步：截断内容补全（强制，不可跳过）
+### 第四步：截断内容补全（强制，不可跳过）
 
-截断检测与补全规则见 `references/page-structure.md`「截断检测」（`[展开]()` 标记判定）+ `references/execution-guide.md`「第五步」：
+截断检测与补全规则见 `references/page-structure.md`「截断检测」（`[展开]()` 标记判定）+ `references/execution-guide.md`「第四步」：
 
 **补全流程（详情页 HTML，非 API）**：
 ```bash
@@ -109,7 +109,7 @@ browser-act --session {name} get markdown
 
 **铁律**：详情页是全文的唯一权威来源——**禁止仅凭 API 返回即标注「全文」**，每条帖子必须经详情页验证后标记「全文」/「摘要」。引用块保留（`>` 前缀区分作者原文），Emoji 图片按 page-structure.md 规则清洗。
 
-### 第六步：关闭浏览器
+### 第五步：关闭浏览器
 
 ```bash
 browser-act session close {name}
@@ -117,13 +117,13 @@ browser-act session close {name}
 - 采集完成后关闭 session 释放资源
 - 若后续还需复用（如连续采集多个博主）→ 不关闭，提示用户
 
-### 第七步：写入输出文件
+### 第六步：写入输出文件
 
 - 位置：`{output_dir}/雪球采集-{nickname}-{YYYY年M月D日}.md`
 - 格式：见 Output Format
 - 向用户报告摘要：采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文
 
-### 第八步：更新 info_cutoff（画像 + 控制台双写）
+### 第七步：更新 info_cutoff（画像 + 控制台双写）
 
 采集完成后，将「信息截止」更新为**本次采集实际完成时间**（ISO 格式 `YYYY-MM-DDTHH:mm:ss`，如 `2026-08-04T17:50:00`；无精确时间时默认当天 `17:50:00`），双写两处：
 1. **博主画像** `博主/{nickname}/{nickname}.md`：frontmatter `info_cutoff` + `updateDate`
@@ -141,26 +141,7 @@ browser-act session close {name}
 
 ## Output Format
 
-输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。完整格式规范（frontmatter/三件套/字段表/铁律）见 `references/output-format.md`，核心模板：
-
-```markdown
----
-title: "雪球帖子采集：{nickname} {YYYY年M月D日}"
-source: "https://xueqiu.com/u/{xq_id}"
-author: "{nickname}"
-date: "{YYYY年M月D日}"
-recorded: "{YYYY年M月D日}"
-type: "帖子集"
-status: "待提炼"
-tags: []
----
-
-## 1. {帖子标题}
-
-{正文全文}
-
-> 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
-```
+输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。完整格式规范（frontmatter/三件套/字段表/铁律/模板）见 `references/output-format.md`，执行时按该文件输出，此处不重复模板。
 
 ---
 
@@ -169,7 +150,7 @@ tags: []
 | 场景 | 加载文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
 | **风控规避/主路径/会话管理/滚动加载** | `references/execution-guide.md` | **WAF 与滑块规避（第〇章）、用户页采集主路径、chrome 启动失败处理、session 独占铁律**、关注列表同步、API 截断判定、引用与 emoji 处理 | 读取 |
-| 第四步解析帖子 | `references/page-structure.md` | 帖子 markdown 结构、post_id 提取、**时间戳前缀陷阱、完整日期格式、置顶帖识别**、截断检测、引用内容处理、emoji 清洗 | 读取 |
+| 第三步解析帖子 | `references/page-structure.md` | 帖子 markdown 结构、post_id 提取、**时间戳前缀陷阱、完整日期格式、置顶帖识别**、截断检测、引用内容处理、emoji 清洗 | 读取 |
 | 采集后提炼帖子集 | `references/refine-checklist.md` | 精华去糟粕价值流水线、灰区裁决、言论追踪 4 类落位、丢弃确认清单（framework-rules #29 例外，由 investment-refine 加载） | 读取 |
 | **逐博主完整采集** | `scripts/xq_user_collect.py` | 用户页滚动 + 详情页补全采集器（参数：xq_id/nickname/cutoff/outfile），实战验证零风控 | **执行** |
 | **info_cutoff 双写** | `scripts/xq_update_cutoff.py` | 画像 + 控制台双写更新（参数：nickname/ISO时间） | **执行** |

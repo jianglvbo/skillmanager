@@ -35,13 +35,15 @@
 title: "雪球帖子采集：{nickname} {YYYY年M月D日}"
 source: "https://xueqiu.com/u/{xq_id}"
 author: "{nickname}"
-date: "{YYYY年M月D日}"
-recorded: "{YYYY年M月D日}"
+date: {YYYY-MM-DD}
+recorded: {YYYY-MM-DD}
 type: "帖子集"
 status: "待提炼"
 tags: []
 ---
 ```
+
+> **date/recorded 裸写无引号 `YYYY-MM-DD`**（全局规则 #1：日期字段唯一例外，必须裸写否则退化为 Text；帖子集虽为中间产物，仍统一遵守）
 
 ## 铁律
 

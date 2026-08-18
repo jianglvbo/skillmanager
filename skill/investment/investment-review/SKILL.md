@@ -63,7 +63,7 @@ compatibility: 通用
 **S3**：frontmatter 完整性——必填字段 title/createDate/updateDate/**author**/tags/**source** 齐全（author/source 缺失即标记）；字段顺序须按所属分类模板 canonical 排列（标准 8 字段 `title→createDate→updateDate→author→star→delete→tags→source`，分析档案/宏观事件型见 framework-rules #27）；**禁止出现 `date` 字段**（层间边界硬约束，见 framework-rules #27）；日期字段裸写无引号
 **S4**：引号有效性（全局规则 #21）
 **S5**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记
-**S6**：脚注格式——检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）。**额外必查**：(1) 标签前缀是否在白名单内（enhance/supplement/conflict/complement/opposite/data/date），非法标签如 `关联`/`ref` 一律标记；(2) 标签前缀与描述中中文关系词是否一致（enhance=增强、supplement=补充、conflict=冲突、complement=互补、opposite=对立、opposite=对立）；(3) 孤儿/悬空检查——每条定义必须有对应内联标记，每条内联标记必须有对应定义
+**S6**：脚注格式——检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）。**额外必查**：(1) 标签前缀是否在白名单内（enhance/supplement/conflict/complement/opposite/data/date），非法标签如 `关联`/`ref` 一律标记；(2) 标签前缀与描述中中文关系词是否一致（enhance=增强、supplement=补充、conflict=冲突、complement=互补、opposite=对立、data=数据溯源、date=时效标注）；(3) 孤儿/悬空检查——每条定义必须有对应内联标记，每条内联标记必须有对应定义
 **S7**：标签匹配
 **S8**：输出结构审查报告
 
@@ -77,7 +77,7 @@ compatibility: 通用
 - 若 `冷静天数 > 7` → 标记「本次将回收」，执行 R4
 - 若 `冷静天数 ≤ 7` → 跳过，报告中提示剩余天数（`待回收（剩 N 天）`）
 **R4（回收执行 · 真删 + 双向清理）**：对超期条目
-- 反查 vault 中所有**指向该条目**的 wikilink 与关联脚注（含博主档案、其他条目、frontmatter `source` 字段），列出清单
+- **先运行 `investment-framework/scripts/check_inbound.py` 反查**（见 Relative Files），列出 vault 中所有**指向该条目**的 wikilink 与关联脚注（含博主档案、其他条目、frontmatter `source` 字段）
 - 清理这些 inbound 引用（移除脚注定义 + 正文标记，或档案 wikilink 行），保持无悬空链接
 - 将条目文件移出 vault（移至系统废纸篓，完成真删），记录清理了 M 处引用
 **R5**：输出「待回收处置报告」，**必须给出每条回收的理由**（超 7 天冷静期 + 标记日期 + 清理引用数）；未到期者提示剩余天数
@@ -142,10 +142,7 @@ compatibility: 通用
 
 ### 总结与主要问题（结构化，便于看板直观展示）
 
-`summary` 与 `mainProblems` 建议用结构化 markdown（看板渲染为小节标题 + 圆点列表 + 段落）：
-- `###` 分小节（看板渲染为主题色小节标题）
-- `- ` 无序列表 / `1. ` 有序列表（看板渲染为圆点列表）
-- 普通段落一行一句，避免超长无断句段落
+`summary` 与 `mainProblems` 用结构化 markdown：`###` 分小节（看板渲染为主题色标题）、`- `/`1. ` 列表（渲染为圆点列表）、普通段落一行一句（避免超长无断句段落）。
 
 ### 落库 record（组装规则）
 
@@ -174,6 +171,7 @@ compatibility: 通用
 | 审查时 | references/report-templates.md | 审查落库 schema 模板（字段规范 + status 取值 + 落库调用规范 + 扩展机制） | 读取 |
 | 结构审查预扫 | scripts/vault_review.py | 自动扫描脚本，输出 vault_review_result.json（只报告不修改） | **执行** |
 | 段落布局预扫 | investment-framework/scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留扫描（可 --fix 自动修复） | **执行** |
+| 回收执行前（R4） | investment-framework/scripts/check_inbound.py | inbound 引用反查（wikilink/脚注/source 字段），双向清理范围确认工具 | **执行** |
 
 ---
 

@@ -108,40 +108,7 @@ compatibility: 通用
 提炼完成后，**自动调用投资看板 API 写入链路记录**，确保 `提炼` 看板模块完整呈现本次提炼（产物 + 决策链路）：
 
 - **端点**：`POST http://127.0.0.1:8698/api/refine/record`，`Content-Type: application/json`
-- **请求体（完整 schema）**：
-
-```json
-{
-  "from": "工作区/原始资源/<源文件>.md",
-  "sourceType": "raw",          // raw=原始资源 / coarse=粗制品直提（帖子集 #29/直投 #30）
-  "source": "[原文](https://xueqiu.com/.../XXXXXX)",
-  "targets": [
-    {
-      "path": "我的/行业/<条目>.md",
-      "type": "wiki",            // wiki=框架条目 / blogger=博主画像言论追踪 / macro=宏观
-      "layer": "我的",           // 归属层判断（我的/博主/其他/宏观）
-      "category": "行业",        // 分类判断
-      "tags": ["行业", "周期"],
-      "basis": "原文「<支撑该条目的关键句>」",   // 依据：从原文哪句话提炼
-      "thinking": [                            // 思考链：标准 5 步（识别/价值/归类/关系/生成）
-        "识别：<从原文哪部分发现该内容点>",
-        "价值：<为什么值得提炼（价值/可复用性）>",
-        "归类：<归属层 + 为什么归此分类 + 用何模板>",
-        "关系：<与库内条目 新建/追加/互补/矛盾预检>",
-        "生成：<新建/追加的产物路径>"
-      ],
-      "why": "<拆分/归类/标签决策一句话>",      // 为什么提炼成这个（结论摘要）
-      "relation": "<与库内条目关系：新建/追加/互补/矛盾预检>"  // 与 C7 联动
-    }
-  ],
-  "reason": "<整体拆分决策说明>",
-  "steps": ["读取原文", "归属层判断", "创建条目", "更新博主档案", "校验"],
-  "bloggerUpdated": true,
-  "bloggerName": "雪月霜",
-  "verify": { "ok": true, "detail": "verify-format.py 0 问题" },
-  "verificationHints": ["该判断可后续建分析档案做结果跟踪"]
-}
-```
+- **请求体 schema**：完整字段规范见 `references/refine-schema.md`（targets 每项必填 `path/type/basis/thinking/why`，建议 `layer/category/tags/relation`；顶层 `from/sourceType/source/reason/steps/bloggerUpdated/bloggerName/verify/verificationHints`），此处不重复
 
 - **多对多拆分**：一篇原文拆为多条条目时，`targets` 数组写全部产出，**每条必填 `basis`（依据原文句）+ `thinking`（思考链）+ `why`（决策）**——看板产物卡展示「思考轨迹（识别→判断→归类→生成）+ 依据 + 决策 + 关系」，回答"为什么提炼成这个"
 - **思考链（thinking）规范**：每条产物必须生成标准 5 步思考链（2026-08-17 用户确认扩展）——① 识别（从原文哪部分发现该内容点）② 价值（为什么值得提炼——价值/可复用性）③ 归类（归属层 + 为什么归此分类 + 用何模板）④ 关系（与库内条目 新建/追加/互补/矛盾预检——**对应审查 C3/C7 联动**）⑤ 生成（新建/追加的产物路径）。**每一步来自第一步分析已产出的真实判断**（归属层铁律、标签体系、模板选择、同作者预检），禁止事后编撰；看板决策链路图按此渲染 agent 思考轨迹（归属层判断为菱形、关系判断带状态标注）
@@ -193,7 +160,7 @@ compatibility: 通用
 - [ ] 每个条目的标签是否来自标签体系？**是否全部挂一级前缀（无裸标签如 `AI`/`泡沫`，见 tag-taxonomy 层级硬约束）？**（2026-08-17 全库体检发现 3 处裸标签后强化）
 - [ ] 每个条目是否使用了正确的模板？
 - [ ] 写入硬约束是否全部满足？（wikilink 完整路径、个股带代码、无 `## 来源` 段、模板 section 全量、字段顺序 canonical、日期裸写、原文链接 `[原文](URL)` 格式、产出物无 emoji）
-- [ ] frontmatter 是否完整且规范？——`author` 必填；字段顺序符合所属分类模板 canonical（标准 `title→createDate→updateDate→author→tags→source`，见 framework-rules #27）；**无 `date` 字段**（#27 层间边界）；`createDate`/`updateDate` 裸写无引号；**`id` 字段（`id: docid_xxx_e`，Visit History 插件写入）保留不动、不删除、不移动、不报错**（#27「id 字段豁免」）
+- [ ] frontmatter 是否完整且规范？——`author` 必填；字段顺序符合所属分类模板 canonical（标准 8 字段 `title→createDate→updateDate→author→star→delete→tags→source`，见 framework-rules #27）；**无 `date` 字段**（#27 层间边界）；`createDate`/`updateDate` 裸写无引号；**`id` 字段（`id: docid_xxx_e`，Visit History 插件写入）保留不动、不删除、不移动、不报错**（#27「id 字段豁免」）
 - [ ] 如涉及博主，博主档案是否已更新？
 - [ ] 归属层是否合规？未登记作者是否归入「其他」层（而非博主层、而非被自动补登）？
 - [ ] 个股条目文件名是否带股票代码 `{名称}({代码})`（见 framework-rules #28）？代码缺失时是否联网检索、A+H/美股双上市且文章无法区分时是否默认 A 股？
