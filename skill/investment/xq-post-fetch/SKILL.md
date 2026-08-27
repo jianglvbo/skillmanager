@@ -10,7 +10,7 @@ description: |
 license: MIT
 agent_created: true
 metadata:
-  version: "4.6.0"
+  version: "4.6.1"
   short-description: 通过 browser-act chrome 模式采集雪球博主帖子全文
 compatibility: 通用
 ---
@@ -26,6 +26,7 @@ compatibility: 通用
 - **容错优先**：单帖失败不影响整批；置顶帖标注原始日期，不纳入时间窗口统计。
 - **独立可用**：用户直接输入参数即可运行，不依赖 pipeline。
 - **确定性优先**：帖子解析按 `references/page-structure.md` 的 pattern 执行，不靠自由发挥。
+- **收尾必清理（2026-08-27 新增，硬约束）**：采集全部结束（session 关闭）后，**必须清理采集产生的 headless Chrome 进程**（`--headless=new`，browser-act chrome 模式启动的自动化实例），禁止遗留——教训：遗留 headless 进程曾阻塞用户图形界面 Chrome 启动（详见第五步清理命令）。
 
 ### 禁止行为
 - 绝不内置或硬编码博主列表
@@ -120,6 +121,15 @@ browser-act session close {name}
 - 采集完成后关闭 session 释放资源
 - 若后续还需复用（如连续采集多个博主）→ 不关闭，提示用户
 
+**headless 进程清理（2026-08-27 新增，硬约束）**：**全部采集任务结束后**（单博主完成或批量最后一个博主完成后），必须执行以下清理，确认 headless 进程已清空：
+
+```bash
+# 仅清理采集用的 headless 自动化实例（精确匹配 headless=new，绝不误杀用户 GUI Chrome）
+pkill -f "headless=new" 2>/dev/null; sleep 1; pgrep -f "headless" | wc -l   # 输出必须为 0
+```
+- 输出非 0 → 继续 `pkill -9 -f "headless=new"` 后再验证
+- **禁止遗留**：采集结束但 headless 进程残留 = 违规（2026-08-27 曾因遗留 14 个 headless 进程阻塞用户 GUI Chrome 启动）
+
 ### 第六步：写入输出文件
 
 - 位置：`{output_dir}/雪球采集-{nickname}-{YYYY年M月D日}.md`；格式见 Output Format
@@ -196,5 +206,6 @@ browser-act session close {name}
 - [ ] type="3"（专栏文章）的帖子已通过详情页获取正文（API text 为空）？
 - [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？
 - [ ] 标题使用完整首句（非硬切 20 字）？
+- [ ] **headless Chrome 进程已清理**（`pgrep -f "headless"` 无输出；采集结束禁止遗留，防阻塞 GUI Chrome）？
 - [ ] 输出文件 frontmatter 完整（title/source/author/date/recorded/type/status）？
 - [ ] 博主画像 info_cutoff 已更新（如画像文件存在）？
