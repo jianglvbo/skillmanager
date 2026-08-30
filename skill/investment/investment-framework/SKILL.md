@@ -35,7 +35,8 @@ compatibility: 通用
 - 绝不预建或保留任何层级的空文件夹——有内容写入时再建
 - 绝不将非投资相关内容放入"其他"层——直接丢弃
 - 绝不在"我的"层创建或修改文件——由用户自己管理
-- 绝不丢弃有借鉴意义的内容——提炼时绝不遗漏
+- 绝不丢弃有借鉴意义的内容
+- 绝不在提炼时遗漏有借鉴意义的内容
 
 ---
 
@@ -55,29 +56,38 @@ compatibility: 通用
 
 ### 粗加工前置规则（重要）
 
-提炼输入**必须**来自 `工作区/原始资源/` 且 `status=待提炼`（**禁止直接在 `工作区/粗制品/` 上提炼**）。判断以**原始资源为锚点**（不主动扫描粗制品目录，避免无谓索引开销）：
+提炼的输入**必须**是已完成粗加工、位于 `工作区/原始资源/` 且 `status=待提炼` 的文件，**禁止**直接在 `工作区/粗制品/` 上提炼。
 
-- 用户要求「提炼」某文档时，先查**原始资源**是否已存在该文档且 `status=待提炼`：存在 → 直接进入 `investment-refine`；不存在（仍在粗制品）→ 先调用 `investment-coarse-processor` 粗加工（置 `status=待提炼`）再进入 `investment-refine`。**不要跳过粗加工直接提炼。**
+判断以**原始资源为锚点**（不主动扫描粗制品目录，避免无谓的索引开销）：
+
+- 用户要求「提炼」某文档时，编排者先查**原始资源**里是否已存在该文档且 `status=待提炼`。
+- **若原始资源中已存在 `status=待提炼` 的该文档**：直接进入 `investment-refine`。
+- **若原始资源中不存在**（即没有 `status=待提炼` 的记录）：说明文档仍在 `工作区/粗制品/`，编排者须先调用 `investment-coarse-processor` 完成粗加工（粗加工会将其移入原始资源并置 `status=待提炼`），再进入 `investment-refine`。**不要跳过粗加工、直接在粗制品上提炼。**
 - 用户说「粗加工+提炼」「全流程」「归档」时，自然走「粗加工 → 提炼」串联，无需额外判断。
-- **例外（#29 帖子集）**：`type: 帖子集` 直接从粗制品提炼，提炼后源文件移废纸篓。
-- **例外（#30 截图/链接直投）**：用户发送雪球截图（可能多张）+ 出处链接 + 关联股票，等同采集言论，跳过粗加工/原始资源。
-- #29/#30 提炼路由相同：言论追踪 / 买卖记录 / 预测记录 → 对应博主画像文件；有框架价值 → 同时产出 wiki 条目；可兼得。
+- **例外（#29 帖子集）**：`type: 帖子集` 直接从粗制品提炼，跳过粗加工和原始资源，提炼后源文件移废纸篓。提炼路由同 #30：言论追踪 / 买卖记录 / 预测记录 → 对应博主画像文件；有框架价值 → 同时产出 wiki 条目；二者可兼得。
+- **例外（#30 截图/链接直投）**：用户直接发送雪球截图（可能多张）+ 出处链接 + 关联股票。等同于 xq-post-fetch 采集的博主言论，跳过粗加工和原始资源。路径：粗制品(临时) → 直接提炼 → 删源文件。提炼路由由 agent 判断内容类型：言论追踪 / 买卖记录 / 预测记录 → 对应博主画像文件；有框架价值 → 同时产出 wiki 条目。
 
 ### 粗加工 → investment-coarse-processor
 
-调用 `investment-coarse-processor`，传入 `{ source_path, target_dir, blogger_console_path }`。**硬约束：绝不修改/精简/重组正文内容**——正文（含图片引用、转录稿段落、重复内容）原封不动保留，只动 frontmatter 和末尾工具广告。
+调用 `investment-coarse-processor`，传入 `{ source_path, target_dir, blogger_console_path }`。该 skill 负责整理格式、去广告、补全 metadata 并移入原始资源目录。**硬约束：绝不修改/精简/重组正文内容**——正文（含图片引用、转录稿段落、重复内容）原封不动保留，只动 frontmatter 和末尾工具广告。
 
 ### 提炼 → investment-refine（直接执行）
 
-**第一步：分析原文** → **第二步：创建条目**（按分析直接创建，涉及博主更新档案、涉及宏观创建/更新宏观文件）→ **第三步：汇报 + 收尾**（status 改 `已提炼`；帖子集 #29 移废纸篓）。细节由 investment-refine 执行，此处不重复。
+**第一步：分析原文**——读取源文件全文（常规：原始资源；帖子集：粗制品），分析内容，判断归属层、分类、标签、库内关系。
+**第二步：创建条目**——按分析结果直接创建框架条目文件。如涉及已登记博主，更新博主档案；如涉及宏观事件，创建/更新宏观文件。
+**第三步：汇报 + 收尾**——向用户报告产出条目；将源文件 status 改为 `已提炼`（常规）或移入废纸篓（帖子集 #29）。
 
 ### 审查 → investment-review
 
-按 `references/review-rules.md` 确定范围后执行：内容审查（C 维度）→ 结构审查（S 维度）→ 组装结构化数据 `MCP review_record` 落库看板（2026-08-16 起不再产出 md 报告）→ 待回收处置（#26：7 天冷静期，超期真删 + 双向清理，理由入 recycle 字段）。
+**第一步**：确定审查范围（内容审查 or 结构审查，见 references/review-rules.md）
+**第二步**：内容审查——检查框架一致性、知行合一、我的 vs 博主冲突、经验验证
+**第三步**：结构审查——检查归类正确性、frontmatter 完整性、wikilink 有效性、标签匹配
+**第四步**：组装结构化落库数据（按 investment-review/references/report-templates.md 的 schema），`MCP 工具 `review_record`（REST POST /api/review/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）` 写入投资看板（2026-08-16 起不再产出 md 审查报告）
+**第五步（待回收处置 · 默认执行）**：审查扫描全部内容型条目的 `delete` 字段（见 framework-rules #26），按 7 天冷静期处置超期条目（真删 + 双向清理）并出「待回收处置」数据（入落库 recycle 字段）给出理由；未到期条目在数据中提示剩余天数
 
 ### 操作门（事前校验 · 2026-08-14 新增）
 
-原则：**问题在产生当天拦截，不等每周审查**——每个流水线操作在出口必须过校验门，审查降级为兜底网（2026-08-14 教训：13 处悬空引用/29 处 info_cutoff/34 处模板段落全部机器可检，却积压 7 周至审查才暴露）。每周审查仍保留内容层（C3/C4/C6/C7）+ 待回收处置，是操作门覆盖不到的兜底网。
+原则：**问题在产生当天拦截，不等每周审查**——每个流水线操作在出口必须过校验门，审查降级为兜底网（2026-08-14 教训：13 处悬空引用/29 处 info_cutoff/34 处模板段落全部机器可检，却积压 7 周至审查才暴露）。
 
 | 操作 | 出口校验门 | 工具 |
 |:---|:---|:---|
@@ -86,13 +96,18 @@ compatibility: 通用
 | **删除/回收/移动前**（#25/#26） | inbound 引用反查，清理完才允许删 | scripts/check_inbound.py |
 | 任意批量操作后 / 提交前 | 增量扫描 git 变更文件（秒级） | investment-review/scripts/vault_review.py --incremental |
 
+每周审查仍保留：内容层（C3 一致性 / C4 知行合一 / C6 经验验证 / C7 关联备注）+ 待回收处置，是操作门覆盖不到的兜底网。
+
 ### 看板联动（investment-console · 2026-08-17 新增）
 
 流水线结果写入本地看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管），看板不产生知识、只呈现结果：
 
-- **提炼** → `MCP refine_record`（refine 第四步已实现）→ 提炼时间轴 + 决策链路图
+- **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking 5 步/basis/why/relation）→ 提炼时间轴 + 决策链路图
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
-- **决策链路图 10 节点规范**（判断只留给有真实分叉的节点：归属层/关系）+ **多产物横向并联**（不用 SVG 分叉图）+ API 失败不阻断主流程（提示「看板数据未写入」）——完整契约/渲染要点/设计铁律见 `references/console-guide.md`
+- **决策链路图 10 节点规范**（用户拍板）：源→识别→◆归属层判断◆→拆分决策→三列分叉（价值/归类/◆关系判断◆/生成/产物卡）→汇合→校验；**判断只留给有真实分叉的节点**（归属层/关系）；关系判断=生成决策（thinking[3]），审查 C3/C7=写后质检，不重复
+- **产物展示**：多产物**横向并联**（产物徽章并排、无箭头，不用 SVG 分叉图——用户试用后否决）
+- 失败处理：API 失败不阻断主流程，汇报提示「看板数据未写入」
+- 完整契约/渲染要点/设计铁律 → `references/console-guide.md`
 
 ---
 
@@ -102,11 +117,11 @@ compatibility: 通用
 
 | 信息 | 获取方式 | 用途 |
 |:---|:---|:---|
-| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、博主控制台「信息截止」更新（xq-post-fetch 第七步） |
-| 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（xq-post-fetch 第三步） |
+| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、博主控制台「信息截止」更新（xq-post-fetch 第八步） |
+| 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（xq-post-fetch 第四步） |
 | 待提炼文档状态 | 查询原始资源 frontmatter `status` | 判定走粗加工 or 直接提炼（粗加工前置规则） |
 
-> 各执行 skill 在需要时自行获取时间戳（refine 写 `updateDate` 前、review 算冷静天数前、xq-post-fetch 时间窗口前），编排者不代为传递。
+> 各执行 skill 在需要时自行获取（如 refine 写 `updateDate` 前、review 算冷静天数前、xq-post-fetch 时间窗口前），编排者不代为传递时间戳。
 
 ---
 
@@ -141,7 +156,7 @@ compatibility: 通用
 | 个股 | investment-framework/assets/个股.md | 个股信息枢纽条目（纯结构骨架） |
 | 博主 | investment-framework/assets/博主.md | 博主档案条目（纯结构骨架） |
 
-> 模板 = 纯结构骨架（字段 + section 标题 + 表格表头），**不含解释**。写作指引见 template-guide.md；字段/标签/来源/脚注规则见 framework-rules / tag-taxonomy / footnote-taxonomy。产出文件可保留空结构，但不得出现模板解释残留（花括号/blockquote/注释/全空占位行，verify-format.py 检测）。
+> 模板 = 纯结构骨架（字段 + section 标题 + 表格表头），**不含解释**。各 section 的写作指引统一在 `references/template-guide.md`；字段/标签/来源/脚注规则见 framework-rules / tag-taxonomy / footnote-taxonomy。产出文件可保留模板空结构（空 section / 空表格表头），但不得出现模板解释残留（花括号占位、blockquote 指引、frontmatter 注释、全空占位行，verify-format.py 检测）。
 
 ---
 
@@ -154,6 +169,8 @@ compatibility: 通用
 | routed_skill | string | 本次调度的下游 skill（coarse-processor / refine / review） |
 | output_summary | string | 下游执行结果摘要（产出条目数、更新档案等） |
 | next_action | string | 后续动作提示（如"源文件待提炼"） |
+
+下游具体产出物（粗加工原始帖子、框架条目、审查落库数据）由各 skill 的 Output Format 定义，位置见下方路径表。
 
 ---
 
@@ -168,7 +185,7 @@ compatibility: 通用
 | 提炼 | assets/{模板名}.md | 对应分类的模板（纯结构骨架） | 读取 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 | 读取 |
 | 看板联动 | references/console-guide.md | 看板数据契约（refine/review 落库）、决策链路图 10 节点规范、产物展示约定、前端设计铁律 | 读取 |
-| 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix）。**纯标准库无第三方依赖** | **执行** |
+| 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复）。**纯标准库无第三方依赖**（2026-08-14 起，原依赖 PyYAML） | **执行** |
 | 删除/回收/移动前（#25/#26） | scripts/check_inbound.py | inbound 引用反查（wikilink/脚注/source 字段），双向清理范围确认工具 | **执行** |
 
 ---
