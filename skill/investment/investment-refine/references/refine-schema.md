@@ -17,12 +17,12 @@
     {
       "path": "我的/行业/牛奶行业.md",
       "type": "wiki",
-      "layer": "其他",
-      "category": "行业",
+      "layer": "other",
+      "category": "industry",
       "tags": ["行业", "周期"],
       "basis": "原文「原奶价格已跌至 2018 年以来低位，去产能进入中后期…」",
       "why": "供需格局 + 周期位置 → 单列行业条目；作者未登记 → 其他层",
-      "relation": "库内无同类 → 新建；与「周期股框架」互补 → 关联提案"
+      "relation": "new"
     }
   ],
   "reason": "整体拆分决策说明",
@@ -56,14 +56,31 @@
 | 字段 | 必填 | 说明 |
 |:---|:---|:---|
 | `path` | ✅ | 产物相对路径 |
-| `type` | ✅ | `wiki`=框架条目 / `blogger`=博主画像言论追踪 / `macro`=宏观 |
-| `layer` | 建议 | 归属层（我的/博主/其他/宏观） |
-| `category` | 建议 | 分类（分析框架/交易体系/投资心态/投资心得/个股/行业/宏观） |
-| `tags` | 建议 | 标签（来自标签体系） |
+| `type` | ✅ | 英文码：`wiki`=框架条目 / `blogger`=博主画像言论追踪 / `macro`=宏观 |
+| `layer` | 建议 | **英文码**（见下方字典表）：`my`/`blogger`/`other`/`macro`/`workspace` |
+| `category` | 建议 | **英文码**（见下方字典表）：`analysis_framework`/`trading_system`/`investment_mentality`/`investment_insight`/`stock`/`industry`/`macro` |
+| `tags` | 建议 | 标签（来自标签体系，一级前缀） |
 | `basis` | ✅ | **依据**：原文支撑该条目的关键句引用——回答"从哪句话提炼的" |
 | `thinking` | ✅ | **思考链**：标准 5 步——识别/价值/归类/关系/生成，覆盖提炼全部必要判断（含关系判断），回答"agent 是怎么一步步想到生成它的" |
 | `why` | ✅ | **决策**：拆分/归类/标签判断（结论摘要）——回答"为什么提炼成这个" |
-| `relation` | 建议 | **关系**：与库内条目 新建/追加/互补/矛盾预检——判断范围按分层检索链（同作者同类分类 → 全库关键词兜底 → 新建，关键词取产物名拆分+原文实体+标签 3-5 词，检索文件名/标题/标签；见 SKILL.md 第一步第 3 步；与 C7 联动） |
+| `relation` | 建议 | **英文码**：`new`/`append`/`complement`/`conflict_check`/`other`——判断范围按分层检索链（同作者同类分类 → 全库关键词兜底 → 新建，关键词取产物名拆分+原文实体+标签 3-5 词，检索文件名/标题/标签；见 SKILL.md 第一步第 3 步；与 C7 联动） |
+
+---
+
+## 二B、字典码对照表（避坑 · 2026-08-31 实测）
+
+**`layer`/`category`/`relation`/`type`/`sourceType` 必须传数据库字典英文码，传中文会落库失败（外键约束报错）**。全量对照（源：远端 MySQL `investment_kb` 字典表）：
+
+| 字段 | 字典表 | 合法码（码 → 中文含义） |
+|:---|:---|:---|
+| `layer` | dict_layer | `my`=我的 / `blogger`=博主 / `other`=其他 / `macro`=宏观 / `workspace`=工作区 / `attachment`=附件 |
+| `category` | dict_category | `analysis_framework`=分析框架 / `trading_system`=交易体系 / `investment_mentality`=投资心态 / `investment_insight`=投资心得 / `stock`=个股 / `industry`=行业 / `macro`=宏观 |
+| `relation` | dict_target_relation | `new`=新建 / `append`=追加 / `complement`=互补 / `conflict_check`=矛盾预检 / `other`=其他 |
+| `type` | dict_target_type | `wiki`=框架条目 / `blogger`=博主画像 / `macro`=宏观条目 |
+| `sourceType` | dict_source_type | `raw`=原始资源 / `coarse`=粗制品 |
+| 审查 `checks[].status` | dict_check_status | `pass`=通过 / `warn`=警告 / `fail`=失败（`ok`=旧数据遗留，新写入不用；**无 `info`**） |
+
+> **避坑**：落库报 `foreign key constraint fails ... dict_*` 时，用 `SHOW CREATE TABLE {refine_targets|review_checks}` + 对应字典表核对码值，不要猜中文。博主画像目标 `category` 可省略（列可空）。
 
 ---
 

@@ -71,9 +71,9 @@
 | `pass` / `✅ 0` | 合规 | PASS 绿 |
 | `warn` / `⚠️ n` | 注意（需关注，可修复） | WARN 黄 |
 | `fail` / `🔴 n` / `❌` | 严重（必须处理，可 AI 修复） | FAIL 红 |
-| `info` / 其他 | 信息 | 中性 |
+| ~~`info`~~ | **非法**：dict_check_status 无此码，落库会外键报错 | — |
 
-`groups[].severity` 独立于 `checks[].status`：分组级别用 `fail/warn/info`（从标题 🔴/⚠️ 推断）；检查项级别用 `pass/warn/fail/info`。
+`groups[].severity` 独立于 `checks[].status`：分组级别用 `fail/warn/info`（从标题 🔴/⚠️ 推断）；**检查项级别只能传 `pass/warn/fail`**（字典 dict_check_status 合法码，2026-08-31 实测；`ok` 为旧数据遗留、新写入不用）。落库报外键错误时按 refine-schema.md 二B 字典表核对码值。
 
 ---
 

@@ -17,7 +17,7 @@
 - 数据源：Obsidian vault 派生 MySQL（`investment_kb` 库）——**vault 为绝对基准**，MySQL 为派生数据
 - 服务器 config.json 含 `mcpToken`（与服务端鉴权一致）
 
-## 工具清单（22 个）
+## 工具清单（24 个）
 
 | 类别 | 工具 |
 |---|---|
@@ -27,6 +27,19 @@
 | 博主 | `list_bloggers`、`get_blogger`、`add_blogger`、`remove_blogger`、`update_blogger` |
 | 标签 | `list_tags` |
 | 日志 | `get_logs`、`git_log`、`git_status`、`git_commit` |
+| 流水线落库 | `refine_record`（提炼落库）、`review_record`（审查落库） |
+
+## ⚠️ 枚举码硬约束（落库避坑 · 2026-08-31 实测）
+
+`refine_record` / `review_record` 的 `layer`/`category`/`relation`/`type`/`sourceType`/`checks[].status` **必须传 MySQL 字典英文码，传中文会外键报错**（`foreign key constraint fails ... dict_*`）。全量对照见投资框架 skill 的 `investment-refine/references/refine-schema.md`「二B 字典码对照表」，要点：
+
+- `layer`：`my`/`blogger`/`other`/`macro`/`workspace`
+- `category`：`analysis_framework`/`trading_system`/`investment_mentality`/`investment_insight`/`stock`/`industry`/`macro`
+- `relation`：`new`/`append`/`complement`/`conflict_check`/`other`
+- `type`：`wiki`/`blogger`/`macro`；`sourceType`：`raw`/`coarse`
+- 审查 `checks[].status`：仅 `pass`/`warn`/`fail`（无 `info`）
+
+**已知限制**：`refine_record` MCP 工具不接受 `source`/`sourceType` 参数（`sourceType` 由 `from` 路径自动推断，`source` 原文链接不会入库，看板原文链接留空）——服务端待优化，不影响流水线主流程。
 
 ## 调用示例（JSON-RPC）
 
@@ -60,5 +73,5 @@ mcpServers:
 
 ## 职责边界
 
-- 本 MCP = 控制台域（读 MySQL 派生数据 + vault 文件操作）
-- 知识库流水线（提炼/审查/粗加工）走投资框架 skill 的 API 契约（`/api/refine/record` 等），不在本 MCP 内
+- 本 MCP = 控制台域（读 MySQL 派生数据 + vault 文件操作 + 提炼/审查落库）
+- 知识库流水线（提炼/审查/粗加工的执行逻辑）走投资框架 skill（`investment-refine` / `investment-review`），落库调用本 MCP 的 `refine_record` / `review_record`（REST POST /api/refine/record、/api/review/record 兼容）

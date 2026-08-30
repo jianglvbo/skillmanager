@@ -118,20 +118,20 @@ compatibility: 通用
   "targets": [
     {
       "path": "我的/行业/<条目>.md",
-      "type": "wiki",            // wiki=框架条目 / blogger=博主画像言论追踪 / macro=宏观
-      "layer": "我的",           // 归属层判断（我的/博主/其他/宏观）
-      "category": "行业",        // 分类判断
+      "type": "wiki",            // 英文码：wiki=框架条目 / blogger=博主画像言论追踪 / macro=宏观
+      "layer": "my",             // 英文码：my/blogger/other/macro/workspace（禁中文！字典对照见 references/refine-schema.md 二B）
+      "category": "industry",    // 英文码：analysis_framework/trading_system/investment_mentality/investment_insight/stock/industry/macro
       "tags": ["行业", "周期"],
       "basis": "原文「<支撑该条目的关键句>」",   // 依据：从原文哪句话提炼
       "thinking": [                            // 思考链：标准 5 步（识别/价值/归类/关系/生成）
         "识别：<从原文哪部分发现该内容点>",
         "价值：<为什么值得提炼（价值/可复用性）>",
         "归类：<归属层 + 为什么归此分类 + 用何模板>",
-        "关系：<与库内条目 新建/追加/互补/矛盾预检>",
+        "关系：<与库内条目 new/append/complement/conflict_check>",
         "生成：<新建/追加的产物路径>"
       ],
       "why": "<拆分/归类/标签决策一句话>",      // 为什么提炼成这个（结论摘要）
-      "relation": "<与库内条目关系：新建/追加/互补/矛盾预检>"  // 与 C7 联动
+      "relation": "new"          // 英文码：new/append/complement/conflict_check/other（与 C7 联动）
     }
   ],
   "reason": "<整体拆分决策说明>",

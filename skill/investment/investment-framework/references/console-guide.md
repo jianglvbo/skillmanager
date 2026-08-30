@@ -25,16 +25,16 @@
   "source": "[原文](url)",
   "targets": [{
     "path": "博主/雪月霜/分析框架/xxx.md",
-    "type": "wiki",               // wiki / blogger（言论追踪）/ macro
-    "layer": "博主",              // 归属层判断（我的/博主/其他/宏观）
-    "category": "分析框架",
+    "type": "wiki",               // 英文码：wiki / blogger（言论追踪）/ macro
+    "layer": "blogger",           // 英文码：my/blogger/other/macro/workspace（禁中文，见 refine-schema.md 二B 字典表）
+    "category": "analysis_framework", // 英文码：analysis_framework/trading_system/…（同上）
     "tags": ["分析框架/估值"],     // 挂一级前缀，禁裸标签
     "basis": "原文「关键句」",      // 依据（必填，从原文哪句提炼）
     "thinking": [                 // 标准 5 步：识别/价值/归类/关系/生成
       "识别：…", "价值：…", "归类：…", "关系：…", "生成：…"
     ],
     "why": "决策一句话",
-    "relation": "新建/追加/互补/矛盾预检"
+    "relation": "new"             // 英文码：new/append/complement/conflict_check/other
   }],
   "reason": "整体拆分决策说明",
   "steps": ["读取原文", "归属层判断", "创建条目", "更新博主档案", "校验"],
