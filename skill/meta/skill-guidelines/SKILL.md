@@ -42,6 +42,7 @@ Reference 让 AI "读"（消耗 Token），Script 让 AI "做"（消耗算力）
 - 主文件 ≤ 200 行：细节下沉 references/，不堆在主文件
 - 确定性优先：编号清单 > 自然语言，决策树 > if-else 描述，脚本执行 > AI 模拟
 - 规则有来源：不确定的标记 `[待验证]`
+- **Ai 仓库公共化（2026-08-31 用户确认）**：Ai 仓库 = 所有 agent 公用的公共 skill 仓库。设计 skill 时：① 不得含任何 agent 私有路径（`~/.workbuddy/`、`~/.qoderworkcn/` 等），统一用 `$HOME` 相对或通用约定（凭据放 `$HOME/.config/<skill>/`，0600）② 必要脚本/执行工具必须放 skill 目录 `scripts/` 或 `Ai/tools/`，skill 内用相对路径引用 ③ 敏感凭据/密钥不进仓库（只存本地 0600 文件或环境变量）
 
 ## 禁止行为
 - 绝不把 Skill 写成百科文档（塞教科书常识）
