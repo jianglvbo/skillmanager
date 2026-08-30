@@ -86,7 +86,7 @@ compatibility: 通用
 
 ## Output Format
 
-> **2026-08-16 起：审查不再产出 md 报告文件，直接落库投资看板**。审查完成后按 `references/report-templates.md`（落库 schema 模板）组装结构化 record，`POST http://127.0.0.1:8698/api/review/record` 写入看板 MySQL（investment_kb.review_records，幂等：同 date 覆盖）。落库失败不阻断主流程，但汇报中明确提示「审查数据未落入看板，需补录」。
+> **2026-08-16 起：审查不再产出 md 报告文件，直接落库投资看板**。审查完成后按 `references/report-templates.md`（落库 schema 模板）组装结构化 record，`POST http://127.0.0.1:8698/api/review/record` 写入投资看板（幂等：同 date 覆盖）。落库失败不阻断主流程，但汇报中明确提示「审查数据未落入看板，需补录」。
 
 ### 内容审查（C 维度）
 
