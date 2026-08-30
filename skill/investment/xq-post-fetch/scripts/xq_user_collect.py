@@ -225,14 +225,37 @@ today_iso = datetime.date.today().strftime('%Y-%m-%d')
 lines = ['---', f'title: "雪球帖子采集：{NICK} {today_cn}"', f'source: "https://xueqiu.com/u/{XQID}"',
          f'author: "{NICK}"', f'date: {today_iso}', f'recorded: {today_iso}', 'type: "帖子集"',
          'status: "待提炼"', 'tags: []', '---', '']
+def extract_title(body, max_len=40):
+    """提取帖子标题：完整首句优先；无完整句子时安全截断（绝不切断 markdown 链接）
+    2026-08-26 修复：原实现 body[:30] 硬切会切断 [text](https://xueqiu... 链接，
+    且完整句子正则把 URL 中的半角 '?'/'!' 误当句末导致匹配失败。
+    """
+    # 1) 完整首句优先（仅全角标点断句；内容允许半角 !?，避免 URL 中的 '?'/'!' 打断匹配）
+    m = re.match(r'^([^。！？\n]+[。！？])', body)
+    if m:
+        return m.group(1)
+    # 2) 无完整句子：将链接整体占位后截断，回退到最近安全边界，再还原链接
+    links = []
+    def mask(m):
+        links.append(m.group(0))
+        return f'\x00{len(links)-1}\x00'
+    # 兼容 [alt](url) 与 [[alt]](url)（Obsidian 双括号）两种链接形态
+    masked = re.sub(r'!?\[\[?[^\]]*\]\]?\([^)]*\)', mask, body)
+    truncated = len(masked) > max_len
+    cut = masked[:max_len]
+    if truncated:
+        for i in range(len(cut) - 1, -1, -1):
+            if cut[i] in ' \n\t，。！？、；：':
+                cut = cut[:i]
+                break
+    def unmask(m):
+        return links[int(m.group(1))]
+    cut = re.sub(r'\x00(\d+)\x00', unmask, cut)
+    return cut.strip()
+
 for i, (pid, p) in enumerate(results, 1):
     body = p['body']
-    title = ''
-    m = re.match(r'^([^。！？!?\n]+[。！？!?])', body)
-    if m:
-        title = m.group(1)
-    else:
-        title = body[:30]
+    title = extract_title(body)
     ts = p['dt'].strftime('%Y年%m月%d日 %H:%M') if p.get('dt') else p['time_text']
     lines += [f'## {i}. {title}', '', body, '',
               f'> 发布：{ts} | {p["completeness"]} | [原文](https://xueqiu.com/{XQID}/{pid})', '', '---', '']
