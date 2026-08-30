@@ -31,15 +31,15 @@
 
 ## ⚠️ 枚举码硬约束（落库避坑 · 2026-08-31 实测）
 
-`refine_record` / `review_record` 的 `layer`/`category`/`relation`/`type`/`sourceType`/`checks[].status` **必须传 MySQL 字典英文码，传中文会外键报错**（`foreign key constraint fails ... dict_*`）。全量对照见投资框架 skill 的 `investment-refine/references/refine-schema.md`「二B 字典码对照表」，要点：
+`refine_record` / `review_record` 的 `layer`/`category`/`relation`/`type`/`sourceType`/`checks[].status` **优先传 MySQL 字典英文码，传中文会外键报错**（`foreign key constraint fails ... dict_*`）。全量对照见投资框架 skill 的 `investment-refine/references/refine-schema.md`「二B 字典码对照表」，要点：
 
-- `layer`：`my`/`blogger`/`other`/`macro`/`workspace`
+- `layer`：`my`/`blogger`/`other`/`macro`/`workspace`（**2026-08-31 起兼容中文**：我的/博主/其他/宏观，服务端自动映射；`category`/`relation` 同样兼容中文）
 - `category`：`analysis_framework`/`trading_system`/`investment_mentality`/`investment_insight`/`stock`/`industry`/`macro`
 - `relation`：`new`/`append`/`complement`/`conflict_check`/`other`
 - `type`：`wiki`/`blogger`/`macro`；`sourceType`：`raw`/`coarse`
 - 审查 `checks[].status`：仅 `pass`/`warn`/`fail`（无 `info`）
 
-**已知限制**：`refine_record` MCP 工具不接受 `source`/`sourceType` 参数（`sourceType` 由 `from` 路径自动推断，`source` 原文链接不会入库，看板原文链接留空）——服务端待优化，不影响流水线主流程。
+**已知限制（2026-08-31 已修复）**：`refine_record` 此前不接受 `source`/`sourceType` 参数（原文链接不入库），现已支持——`source`=原文链接 markdown、`sourceType`=raw/coarse（缺省按 `from` 路径推断）。
 
 ## 调用示例（JSON-RPC）
 
