@@ -35,18 +35,15 @@
 title: "雪球帖子采集：{nickname} {YYYY年M月D日}"
 source: "https://xueqiu.com/u/{xq_id}"
 author: "{nickname}"
-date: {YYYY-MM-DD}
-recorded: {YYYY-MM-DD}
+date: "{YYYY年M月D日}"
+recorded: "{YYYY年M月D日}"
 type: "帖子集"
 status: "待提炼"
 tags: []
 ---
 ```
 
-> **date/recorded 裸写无引号 `YYYY-MM-DD`**（全局规则 #1：日期字段唯一例外，必须裸写否则退化为 Text；帖子集虽为中间产物，仍统一遵守）
-
 ## 铁律
 
 - 每帖必须带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接（画像表原文链接唯一权威来源，framework-rules #35）
 - 未经详情页验证不得标「全文」
-- **标题不得截断 markdown 链接**（2026-08-26 实战教训：`body[:30]` 硬切曾把 `[$中国联通(00762)$](https://xueqiu` 切成残缺 URL）。标题提取规则：优先取正文首个完整句子（仅以全角 `。！？` 断句，URL 中的半角 `?`/`!` 不得作为句末）；无完整句子时按链接整体安全截断，禁止切断 `[text](url)` 结构
