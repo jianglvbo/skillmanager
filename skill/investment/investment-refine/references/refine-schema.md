@@ -1,6 +1,6 @@
 # 提炼落库模板（POST /api/refine/record · schema）
 
-> 由 investment-refine SKILL.md 第四步引用。**提炼完成后按本模板规定字段，`POST http://127.0.0.1:8698/api/refine/record` 写入投资看板**，看板完整展示产物 + 决策链路。
+> 由 investment-refine SKILL.md 第四步引用。**提炼完成后按本模板规定字段，`MCP 工具 `refine_record`（REST POST /api/refine/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）` 写入投资看板**，看板完整展示产物 + 决策链路。
 
 ---
 

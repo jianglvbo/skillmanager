@@ -10,8 +10,8 @@
 
 | 写入方 | 端点 | 数据 | 看板呈现 |
 |:---|:---|:---|:---|
-| investment-refine 第四步 | `POST /api/refine/record` | targets[]（含 thinking 5 步/basis/why/relation） | 提炼时间轴 + 决策链路图 |
-| investment-review 第四步 | `POST /api/review/record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
+| investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking 5 步/basis/why/relation） | 提炼时间轴 + 决策链路图 |
+| investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
 | 粗制品评分/加工 | `POST /api/coarse/score` `/process` | 调本地 dsh | 粗制品模块 |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。

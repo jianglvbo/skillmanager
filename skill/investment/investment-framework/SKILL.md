@@ -73,7 +73,7 @@ compatibility: 通用
 
 ### 审查 → investment-review
 
-按 `references/review-rules.md` 确定范围后执行：内容审查（C 维度）→ 结构审查（S 维度）→ 组装结构化数据 `POST /api/review/record` 落库看板（2026-08-16 起不再产出 md 报告）→ 待回收处置（#26：7 天冷静期，超期真删 + 双向清理，理由入 recycle 字段）。
+按 `references/review-rules.md` 确定范围后执行：内容审查（C 维度）→ 结构审查（S 维度）→ 组装结构化数据 `MCP review_record` 落库看板（2026-08-16 起不再产出 md 报告）→ 待回收处置（#26：7 天冷静期，超期真删 + 双向清理，理由入 recycle 字段）。
 
 ### 操作门（事前校验 · 2026-08-14 新增）
 
@@ -90,8 +90,8 @@ compatibility: 通用
 
 流水线结果写入本地看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管），看板不产生知识、只呈现结果：
 
-- **提炼** → `POST /api/refine/record`（refine 第四步已实现）→ 提炼时间轴 + 决策链路图
-- **审查** → `POST /api/review/record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
+- **提炼** → `MCP refine_record`（refine 第四步已实现）→ 提炼时间轴 + 决策链路图
+- **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
 - **决策链路图 10 节点规范**（判断只留给有真实分叉的节点：归属层/关系）+ **多产物横向并联**（不用 SVG 分叉图）+ API 失败不阻断主流程（提示「看板数据未写入」）——完整契约/渲染要点/设计铁律见 `references/console-guide.md`
 
 ---
@@ -197,4 +197,4 @@ compatibility: 通用
 - [ ] "我的"层是否未做任何修改？
 - [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`；帖子集：粗制品 `type: 帖子集` 按 #29 直接提炼）
 - [ ] **操作门是否已过**（2026-08-14 新增）？——删除/回收/移动前是否已运行 `check_inbound.py` 反查并清理引用？批量操作后是否已运行 `vault_review.py --incremental` 增量校验？
-- [ ] **看板是否已联动**（2026-08-17 新增）？——提炼后是否 `POST /api/refine/record`（targets 含 thinking 5 步/basis/why/relation）？审查后是否 `POST /api/review/record`？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md）
+- [ ] **看板是否已联动**（2026-08-17 新增）？——提炼后是否 `MCP refine_record`（targets 含 thinking 5 步/basis/why/relation）？审查后是否 `MCP review_record`？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md）
