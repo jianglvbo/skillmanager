@@ -118,7 +118,7 @@ compatibility: 通用
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
 | s_groups | array | 结构审查分组（S2 归类错误 / S5 失效 Wikilink / S6 脚注格式 / S7 标签 / 模板段落缺失 / 其他结构问题），每项 `{title, severity, tag, headers, rows, text}` 入 `groups` 数组 |
-| checks | array | 脚本指标（vault_review.py 输出表逐行）：`{item, result, compare, status}`，**status 统一落 `pass/fail/warn`**（勿落 ok/good/error/warning 等变体；看板接口已做兼容归一，但源头统一最干净）。**`item` 落库用中文**（v0.12.71 用户要求：检查项显示中文；审查脚本英文键 → 落库前按下方对照表映射中文），看板 CHECK_LABELS 亦维护全量英文键→中文映射兜底历史数据。**新增检查项时**：①脚本英文键同步进看板 CHECK_LABELS；②落库 item 用中文。 |
+| checks | array | 脚本指标（vault_review.py 输出表逐行）：`{item, result, compare, status}`，**status 统一落 `pass/fail/warn`**（勿落 ok/good/error/warning 等变体；看板接口已做兼容归一，但源头统一最干净）。**`item` 落库用中文**（v0.12.71 用户要求：检查项显示中文；审查脚本英文键 → 落库前按下方对照表映射中文），看板 CHECK_LABELS 亦维护全量英文键→中文映射兜底历史数据。**新增检查项时**：①脚本英文键同步进看板 CHECK_LABELS；②落库 item 用中文。**result/compare 只存纯数据，禁 emoji 徽章**（✅⚠️❌ 等）：result 只落数值/文本（如 `0`、`5`），状态图标由看板按 status_code 用 SVG 渲染，禁止把展示样式写进数据（2026-08-31 用户要求，违者视为数据污染）。 |
 
 **检查项中文对照表**（英文键 → 落库中文）：
 
