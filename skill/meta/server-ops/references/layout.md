@@ -24,7 +24,7 @@
 
 ## 数据库连接
 - host: 106.55.14.116:3306（**建议**改回 127.0.0.1 + 本机 SSH 隧道：`ssh -L 3306:127.0.0.1:3306 jianglb@106.55.14.116`）
-- **业务库 investment_kb**：25+ 张表（10 码值 dict_* + 业务表，含预测域 4 表），DDL 在 ~/Project/investment-console/sql/investment_kb.sql + investment_kb_consoles.sql；vault 为绝对基准，**刷新 = server 自动同步**（v2.1：vault_sync.sh 推送 → server buildIndex 自动 upsert files/tags/bloggers；本机 migrate_to_mysql.py 已退役）
+- **业务库 investment_kb**：25+ 张表（10 码值 dict_* + 业务表，含预测域 4 表），DDL 在 ~/Project/investment-console/sql/investment_kb.sql + investment_kb_consoles.sql；vault 为绝对基准，**刷新 = server 自动同步**（v2.1：vault_sync.sh 推送 → server buildIndex 自动 upsert files/tags/bloggers；本机 migrate_to_mysql.py 已删除）
 - user: jianglb（@'%' 远程 + @localhost 本机），密码见 credentials/server.md
 - root: 仅 localhost，auth_socket 免密（sudo mysql）
 - 注意：**两站本身不用 MySQL**（JSON 文件存储）；MySQL 供外部数据管理/未来用途
