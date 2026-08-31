@@ -10,7 +10,7 @@
 
 | 写入方 | 端点 | 数据 | 看板呈现 |
 |:---|:---|:---|:---|
-| investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking 5 步/basis/why/relation） | 提炼时间轴 + 决策链路图 |
+| investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking v2 思考链路/basis/why/relation） | 提炼时间轴 + 思考时间线（决策链路图） |
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
 | 粗制品评分/加工 | `POST /api/coarse/score` `/process` | 调本地 dsh | 粗制品模块 |
 
@@ -50,17 +50,25 @@
 - 涉及已登记博主：targets 同时含 `type:"blogger"` 画像条目 + `bloggerUpdated:true`
 - 旧数据 `to[]` 字符串数组自动兼容归一化
 
-## 4. 决策链路图 10 节点规范（2026-08-17 用户拍板）
+## 4. 决策链路图规范（2026-08-31 v2：用户拍板旧 10 节点太死板、信息太少，改真实思考时间线）
+
+**v2 = 思考时间线（`buildThinkingFlow(r)`，纯 DOM，替换 mermaid 固定流程图）**：
 
 ```
-源(起止符圆角) → 识别(处理矩形·公共节点) → ◆归属层判断◆(菱形)
-→ 拆分决策(处理矩形) → 分叉 3 列，每列: 价值→归类→◆关系判断◆(菱形)→生成→产物卡(圆角卡片+点击跳转)
-→ 汇合 → 校验(终止符)
+源文件卡 → [拆分决策] → 每条产物一条"思考轨道"：
+  ▸ 产物 N · 文件名 [类型·层] [关系码]
+     每一步 = kind 徽章 + 推理文本
+       决策步（kind 含"决策"/"排除"）→ 红点强调（菱形语义）
+       quote → 原文引用块（触发该步的原文句）
+       alt → 备选/否决块（✗ 被否决的方案 + 理由）
+  → 产物卡（点击在 Obsidian 打开）
+→ [校验] 收尾
 ```
 
-- **判断只留给有真实分叉数据的节点**（归属层、关系）；价值/拆分/校验是说明或收尾，画菱形会引入死分支
-- **关系判断职责边界（保持现状）**：提炼时关系判断 = 生成决策（新建/追加/互补 + 写前矛盾预警）→ thinking[3]；审查 C3/C7 = 写后质检。分工「写对 vs 查对」，不重复
-- **分叉口对齐**：水平分叉线两端对齐上游节点左右下角，引导线从节点底边中点出、长度 ≥20px；三列中心嵌套在上游节点宽度范围内
+- **数据**：thinking v2 = 自由长度对象数组 `[{kind,text,quote?,alt?}]`（真实推理步，见 investment-refine SKILL.md）；旧 5 步字符串数组/合并字符串自动降级解析（kind=识别/价值/归类/关系/生成）
+- **判断语义保留**：真实分叉数据（归属层/关系决策、备选否决）以"决策步红点 + alt 否决块"呈现；不再为无分叉数据画菱形
+- **关系判断职责边界（保持）**：提炼时关系判断 = 生成决策（thinking 中 kind 含"决策"的关系步）；审查 C3/C7 = 写后质检，不重复
+- **信息量要求**：每步保留完整推理文本（不截断）、原文引用、备选否决——这就是"具象化"的信息来源；禁止空话步骤（如"价值：值得提炼"）
 
 ## 5. 产物展示约定（2026-08-17 最新）
 
@@ -70,10 +78,8 @@
 
 ## 6. 前端实现要点（改渲染必读）
 
-- 决策链路图：`buildFlowMermaid(r)` 生成 mermaid flowchart TD，mermaid **v10.9.1 本地 vendor**（web/vendor/mermaid.min.js，不归 git），`curve:'stepAfter'`（正交折线）、dagre 布局（去 ELK）、nodeSpacing 48 / rankSpacing 45
-- 5 类 classDef 动态读 CSS 变量：proc(accent)/dec(warn)/rel(accent-2)/product(accent 粗边 2.5px)/ver(good)
-- 产物卡 3 行：文件名 / `[类型]分类·层` / 依据摘要；`g.product` 绑 click → `openInObsidian(path)`（外部事件委托，绕 mermaid click 单引号坑）
-- 交互：全屏覆盖层 + 滚动条定位（inner = max(svgW*scale, 视口)+2×150px 留白）、中心锚点缩放（按钮 ±5%、Ctrl+滚轮 ±2%）、初始 100%、上一篇/下一篇导航
+- 思考时间线（v2，2026-08-31 起）：`buildThinkingFlow(r)` 纯 DOM 渲染（`.tk-*` 样式）；旧数据 `parseThinkingV2` 降级解析；产物卡 `.tk-product` 绑 click → `openInObsidian(path)`。~~mermaid 版 `buildFlowMermaid(r)` 已弃用~~（保留函数作历史参考，不再调用）
+- 交互：全屏覆盖层 + 滚动容器；上一篇/下一篇导航
 
 ## 7. 设计铁律（改任何前端必须遵守）
 
