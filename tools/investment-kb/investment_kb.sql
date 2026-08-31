@@ -223,7 +223,7 @@ CREATE TABLE review_checks (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审查检查项子表：每条审查的逐项检查结论';
 
 -- 19. 粗制品状态表（加工历史/状态）
-CREATE TABLE coarse_items (
+CREATE TABLE coarse_records (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '粗制品主键',
   rel           VARCHAR(512)    NOT NULL COMMENT '粗制品相对路径（唯一业务键）',
   status_code   VARCHAR(32)     NOT NULL DEFAULT 'pending' COMMENT '状态码值，关联 dict(type=coarse_status).code',
@@ -242,7 +242,7 @@ CREATE TABLE coarse_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='粗制品状态表：粗制品的评分/加工状态（状态 + 加工历史）';
 
 -- 20. 回收站表
-CREATE TABLE trash_items (
+CREATE TABLE trash_records (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '回收站主键',
   rel        VARCHAR(512)    NOT NULL COMMENT '被回收文件相对路径（唯一）',
   status     VARCHAR(32)     NOT NULL DEFAULT 'pending' COMMENT '回收状态：pending=待删除(冷静期) trash=已删除',
@@ -253,7 +253,7 @@ CREATE TABLE trash_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='回收站表：删除/回收的文件登记';
 
 -- 21. 同步元数据表（vault 扫描版本控制）
-CREATE TABLE sync_meta (
+CREATE TABLE sync_state (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
   sync_key   VARCHAR(64)     NOT NULL COMMENT '同步键（如 last_scan_mtime）',
   sync_value VARCHAR(512)    NOT NULL COMMENT '同步值',

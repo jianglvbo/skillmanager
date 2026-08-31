@@ -118,7 +118,7 @@ def main():
 
     # 1. 重置业务表（子表先删，外键约束）
     for t in ["file_tag_rel", "refine_targets", "review_checks", "files", "bloggers", "tags",
-              "refine_records", "review_records", "coarse_items", "trash_items", "sync_meta"]:
+              "refine_records", "review_records", "coarse_records", "trash_records", "sync_state"]:
         cur.execute(f"DELETE FROM {t}")
     print("== 业务表已重置")
 
@@ -216,14 +216,14 @@ def main():
             n_chk += 1
     print(f"== review_records {n_rev} / review_checks {n_chk}")
 
-    # 6. coarse_items（历史 meta + vault 粗制品队列，vault 为准）
+    # 6. coarse_records（历史 meta + vault 粗制品队列，vault 为准）
     n_coarse = 0
     # 6a. 历史 meta
     for rel, m in coarse.items():
         if not isinstance(m, dict):
             continue
         cur.execute(
-            "INSERT INTO coarse_items (rel, status_code, score, score_reason, scored_at, title, processed_at, processed_to, output_preview) "
+            "INSERT INTO coarse_records (rel, status_code, score, score_reason, scored_at, title, processed_at, processed_to, output_preview) "
             "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (rel, m.get("status") or "pending", int(m["score"]) if m.get("score") is not None else None,
              m.get("scoreReason"), m.get("scoredAt"), m.get("title"), m.get("processedAt"),
@@ -241,24 +241,24 @@ def main():
             except Exception:
                 continue
             cur.execute(
-                "INSERT INTO coarse_items (rel, status_code) VALUES (%s,'pending')",
+                "INSERT INTO coarse_records (rel, status_code) VALUES (%s,'pending')",
                 (rel,))
             n_coarse += 1
-    print(f"== coarse_items {n_coarse}")
+    print(f"== coarse_records {n_coarse}")
 
-    # 7. trash_items + sync_meta
+    # 7. trash_records + sync_state
     trash = load_json("trash.json", [])
     n_trash = 0
     for t in (trash if isinstance(trash, list) else []):
-        cur.execute("INSERT IGNORE INTO trash_items (rel, status, deleted_at) VALUES (%s,%s,%s)",
+        cur.execute("INSERT IGNORE INTO trash_records (rel, status, deleted_at) VALUES (%s,%s,%s)",
                     (t.get("rel") or t.get("path") or "", "pending", t.get("at") or t.get("deletedAt")))
         n_trash += 1
-    cur.execute("INSERT INTO sync_meta (sync_key, sync_value) VALUES ('last_scan_mtime', %s) "
+    cur.execute("INSERT INTO sync_state (sync_key, sync_value) VALUES ('last_scan_mtime', %s) "
                 "ON DUPLICATE KEY UPDATE sync_value=VALUES(sync_value)", (str(int(time.time() * 1000)),))
-    print(f"== trash_items {n_trash} / sync_meta 已写")
+    print(f"== trash_records {n_trash} / sync_state 已写")
 
     # 汇总
-    cur.execute("SELECT (SELECT COUNT(*) FROM files), (SELECT COUNT(*) FROM bloggers), (SELECT COUNT(*) FROM tags), (SELECT COUNT(*) FROM refine_records), (SELECT COUNT(*) FROM review_records), (SELECT COUNT(*) FROM coarse_items)")
+    cur.execute("SELECT (SELECT COUNT(*) FROM files), (SELECT COUNT(*) FROM bloggers), (SELECT COUNT(*) FROM tags), (SELECT COUNT(*) FROM refine_records), (SELECT COUNT(*) FROM review_records), (SELECT COUNT(*) FROM coarse_records)")
     row = cur.fetchone()
     print(f"\n== 迁移完成：files={row[0]} bloggers={row[1]} tags={row[2]} refine={row[3]} review={row[4]} coarse={row[5]}")
     cur.close(); conn.close()
