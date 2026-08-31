@@ -9,7 +9,7 @@
 ## 服务与端口
 | 服务 | 端口 | systemd unit | 目录 |
 |:---|:---|:---|:---|
-| 投资控制台 | 8698 | investment-console.service | /home/jianglb/investment-console |
+| 投资知识库看板 | 8698 | investment-console.service | /home/jianglb/investment-console |
 | 减脂塑形控制台 | 8699 | fitness-console.service | /home/jianglb/fitness-console |
 | MySQL | 3306 | mysql.service | 数据 /home/jianglb/mysql |
 

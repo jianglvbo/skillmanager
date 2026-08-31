@@ -1,6 +1,6 @@
 ---
 name: server-ops
-description: 云服务器（106.55.14.116）运维执行器。管理投资控制台（8698）与减脂塑形控制台（8699）的部署、状态、重启，vault 知识库同步，MySQL 管理与备份。触发词：「服务器」「部署到服务器」「同步 vault」「服务器状态」「重启服务」「备份 MySQL」「106.55.14.116」「server-ops」。排除：本地 Obsidian 操作（走 investment-framework）、不涉及服务器的部署。
+description: 云服务器（106.55.14.116）运维执行器。管理投资知识库看板（8698）与减脂塑形控制台（8699）的部署、状态、重启，vault 知识库同步，MySQL 管理与备份。触发词：「服务器」「部署到服务器」「同步 vault」「服务器状态」「重启服务」「备份 MySQL」「投资知识库看板」「106.55.14.116」「server-ops」。排除：本地 Obsidian 操作（走 investment-framework）、不涉及服务器的部署。
 ---
 
 # 服务器运维（server-ops）
@@ -52,7 +52,7 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/data-$(date +%Y%m%d).tgz
 ```
 - 建议 cron 每周一执行（可后配）
 
-### 第四步半：vault → MySQL 同步（投资控制台数据刷新，vault 为绝对基准）
+### 第四步半：vault → MySQL 同步（投资知识库看板数据刷新，vault 为绝对基准）
 - 架构：vault（.md 本机绝对基准）→ 本机迁移脚本 → 服务器 MySQL（investment_kb）→ 看板只读 MySQL
 - **vault 变更后刷新**（本机执行，全量重建，vault 为准）：
 ```bash
@@ -119,7 +119,7 @@ ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
 | 查两站 + MySQL 状态 | `scripts/status.sh` | 执行 |
 | 本机 vault → 服务器同步 | `scripts/vault_sync.sh` | 执行（本机跑） |
 | 远程执行命令（密码兜底） | `scripts/sshrun.exp "<远程命令>"` | 执行（expect；密钥失效时自动兜底） |
-| 投资控制台部署（rsync 推送） | `scripts/rsyncrun.exp` | 执行（排除 config.json/data/node_modules；部署后仍需手动重启） |
+| 投资知识库看板部署（rsync 推送） | `scripts/rsyncrun.exp` | 执行（排除 config.json/data/node_modules；部署后仍需手动重启） |
 
 ## Source hierarchy
 

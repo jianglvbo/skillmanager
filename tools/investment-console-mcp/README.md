@@ -1,6 +1,6 @@
-# Investment Console MCP（投资知识库控制台）
+# Investment Console MCP（投资知识库看板）
 
-投资知识库控制台（investment-console）的 MCP 服务，供任何 agent（WorkBuddy / 其他 agent）接入读写投资知识库派生数据。
+投资知识库看板（investment-console）的 MCP 服务，供任何 agent（WorkBuddy / 其他 agent）接入读写投资知识库派生数据。
 
 ## 连接信息
 
