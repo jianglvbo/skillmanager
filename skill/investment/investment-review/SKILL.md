@@ -8,8 +8,8 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.14.0"
-  short-description: 投资框架审查执行器（含关联备注发现）
+  version: "2.15.0"
+  short-description: 投资框架审查执行器（含关联备注发现、言论追踪审计 C10）
 compatibility: 通用
 ---
 
@@ -38,25 +38,20 @@ compatibility: 通用
 
 ## Workflow
 
-### 内容审查（编号 C1-C9）
+### 内容审查（编号 C1-C10）
 
-**C1**：读取参数 `{ scope_dirs, blogger_console_path }`
-**C2**：扫描 scope_dirs 下所有 .md 文件
-**C3**：内部一致性检查——交易体系的规则 vs 分析框架的方法论是否矛盾
-**C4**：知行合一检查——投资心态中记录的纪律 vs 分析档案中的实际行为
+**C1**：读取参数 `{ scope_dirs, blogger_console_path }`；**C2**：扫描 scope_dirs 下所有 .md 文件
+**C3**：内部一致性检查——交易体系的规则 vs 分析框架的方法论是否矛盾；**C4**：知行合一检查——投资心态中记录的纪律 vs 分析档案中的实际行为
 **C5**：我的 vs 博主冲突检查（**可选，仅当用户显式要求时**）——默认不审查「我的」层（规则 #15 用户自管），若用户要求对比「我的」层方法论与「博主」层冲突，临时读取「我的」层执行
 **C6**：经验验证检查——投资心得中的教训是否在后续分析档案中被验证
 **C7**：关联备注——为缺少跨条目关联的条目补充脚注（脚注类型和格式见 `investment-framework/references/footnote-taxonomy.md`），在正文相关论述处嵌入标记，文末脚注定义（无 ## 脚注 标题、无 --- 分隔线）写 wikilink + 关系类型 + 一句话说明
 **C8**：关系依据复核——逐条打开文件中**已存在**的关联脚注，核对目标文件原文是否支撑其关系声明；无依据的一律记为"编撰关系"，在报告中建议删除或降级为 enhance（见 footnote-taxonomy.md「关系依据校验」）
 **C9**：输出内容审查报告
+**C10**：言论追踪审计——执行 `scripts/tracks_audit.py --vault <vault路径>`（可选 `--mysql`，凭据经环境变量 `DB_PASS` 注入、勿硬编码），核对博主画像「言论追踪」section 缺失/空表/标的占位/缺原文链接/列异常，及 MySQL tracks 数据质量、direction 码值合法性、vault↔MySQL 同步一致性；只报告不修改，问题并入内容审查报告
 
-### 结构审查（编号 S1-S8）
+### 结构审查（编号 S1-S8）——审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
 
-审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
-
-**辅助 · 自动预扫（可选）**：可先调用 `scripts/vault_review.py --vault <vault路径>` 自动扫描，生成 `vault_review_result.json`，覆盖归类 / frontmatter 完整性（含 updateDate）/ 引号 / wikilink（正文 + `source` 字段）/ 脚注格式 / 标签 六维，外加扩展检查（博主画像三表原文链接检查（规则 #35）、禁用 `## 来源` 段、source 形态校验（规则 #23：内部→wikilink、外部→[标题](URL)、禁裸 URL/批次名/手写占位）、空壳 junk）。脚本严格遵守「只报告不修改」原则，仅输出 JSON。人工据 JSON 撰写报告时，聚焦机器无法判定的部分（如段落缺失是否因确无内容、标签语义是否匹配、关联备注提案）。
-
-**辅助 · 段落布局预扫（可选）**：可追加调用 `investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观` 扫描段落布局问题（同行标题、标题间距、段落紧凑、脚注内联标记孤儿、脚注模板废话、残留 `## 来源`/空 `## 脚注`、模板成分残留——空表格占位行/来源blockquote/frontmatter注释/花括号占位），与 vault_review.py 互补——前者覆盖结构/元数据，后者覆盖排版/脚注内联/模板残留。加 `--fix` 可自动修复可修复项。
+**辅助 · 预扫（可选）**：① 结构/元数据——`scripts/vault_review.py --vault <vault路径>` 生成 `vault_review_result.json`（归类/frontmatter 含 updateDate/引号/wikilink 含 source/脚注格式/标签 六维 + 画像三表原文链接（#35）/禁用 `## 来源`/source 形态（#23）/空壳 junk 扩展检查，只报告不修改）；② 段落布局——`investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观`（同行标题/标题间距/段落紧凑/脚注内联孤儿/模板残留，`--fix` 可自动修复）。人工据 JSON 撰写报告时聚焦机器无法判定的部分（段落缺失是否确无内容、标签语义、关联备注提案）。
 
 **S1**：读取参数 `{ scope_dirs }`
 **S2**：归类正确性——含博主层条目其作者是否均在「博主控制台」登记，未登记者误挂博主层须标记迁移至其他层（见 framework-rules #12）
@@ -64,8 +59,7 @@ compatibility: 通用
 **S4**：引号有效性（全局规则 #21）
 **S5**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记
 **S6**：脚注格式——检查每条脚注定义的 wikilink 是否以单 `]]` 闭合（禁止 `]]]`/多余 `]]`），格式是否为 `[[target]] — 关系：说明`（见 footnote-taxonomy.md「格式校验」）。**额外必查**：(1) 标签前缀是否在白名单内（enhance/supplement/conflict/complement/opposite/data/date），非法标签如 `关联`/`ref` 一律标记；(2) 标签前缀与描述中中文关系词是否一致（enhance=增强、supplement=补充、conflict=冲突、complement=互补、opposite=对立、opposite=对立）；(3) 孤儿/悬空检查——每条定义必须有对应内联标记，每条内联标记必须有对应定义
-**S7**：标签匹配
-**S8**：输出结构审查报告
+**S7**：标签匹配；**S8**：输出结构审查报告
 
 ### 待回收处置（审查时执行，编号 R1-R5）
 
@@ -92,7 +86,7 @@ compatibility: 通用
 
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
-| c_groups | array | 内容审查分组（C3 内部一致性 / C4 知行合一 / C6 经验验证 / C8 编撰脚注 / C7 关联提案），每项 `{title, severity, tag, headers, rows, text}` 入 `groups` 数组 |
+| c_groups | array | 内容审查分组（C3 内部一致性 / C4 知行合一 / C6 经验验证 / C8 编撰脚注 / C7 关联提案 / C10 言论追踪审计），每项 `{title, severity, tag, headers, rows, text}` 入 `groups` 数组 |
 
 **rows 推荐对象数组（看板 v0.12.61+ 支持，直观性最佳）**：每行 `{列名: 值, 状态: pass|fail|warn}`，列名与 headers 对应；`状态` 显式给出（C3 内部一致性、C4 知行合一、C6 经验验证等需状态列的表格必须带），供看板直接渲染状态徽章，不再靠结果文本推断：
 ```json
@@ -178,6 +172,7 @@ compatibility: 通用
 | 审查时 | references/report-templates.md | 审查落库 schema 模板（字段规范 + status 取值 + 落库调用规范 + 扩展机制） | 读取 |
 | 结构审查预扫 | scripts/vault_review.py | 自动扫描脚本，输出 vault_review_result.json（只报告不修改） | **执行** |
 | 段落布局预扫 | investment-framework/scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留扫描（可 --fix 自动修复） | **执行** |
+| 言论追踪审计（C10） | scripts/tracks_audit.py | 言论追踪专项审计：vault「言论追踪」section 质量 + MySQL tracks 数据质量/方向码值/同步一致性（--mysql 需 DB_PASS 环境变量） | **执行** |
 
 ---
 
@@ -193,14 +188,10 @@ compatibility: 通用
 
 ## 自检
 
-- [ ] 内容审查 C1-C9 是否全部执行？（读取参数、扫描、一致性、知行合一、我的vs博主〔仅用户要求时〕、经验验证、关联备注、关系依据复核、输出报告）
+- [ ] 内容审查 C1-C10 是否全部执行？（读取参数、扫描、一致性、知行合一、我的vs博主〔仅用户要求时〕、经验验证、关联备注、关系依据复核、言论追踪审计 C10、输出报告）
 - [ ] 结构审查 S1-S8 是否全部执行？（读取参数、归类、frontmatter完整性含updateDate/**author**/**source**、**字段顺序canonical(#27)**、**无流浪date(#27)**、引号有效性、wikilink含source字段、脚注格式、标签、输出报告）；归类正确性是否覆盖「博主层条目作者是否均在博主控制台登记，未登记者误挂需迁移其他层」？
-- [ ] 审查范围是否正确排除「我的」层（规则 #15 用户自管）？是否仅覆盖 博主/其他/宏观？
-- [ ] 脚注格式是否校验（无多余 `]]`、格式为 `[[target]] — 关系：说明`）？
-- [ ] 脚注标签前缀是否全部在白名单内（enhance/supplement/conflict/complement/opposite/data/date）？标签与中文关系词是否一致？
-- [ ] 是否存在孤儿脚注（有定义无内联标记）或悬空标记（有内联标记无定义）？
-- [ ] 已存在脚注是否逐条复核关系依据，编撰关系是否记入报告？
-- [ ] 是否只输出了报告而未修改任何文件？
-- [ ] 审查范围是否覆盖了编排者指定的所有目录？
-- [ ] 关联备注提案中每条是否都有内容层面的依据（非编撰）？
+- [ ] 审查范围是否正确排除「我的」层（规则 #15 用户自管）？是否仅覆盖 博主/其他/宏观？是否覆盖了编排者指定的所有目录？
+- [ ] 脚注格式是否校验（无多余 `]]`、格式为 `[[target]] — 关系：说明`）？标签前缀是否全部在白名单内（enhance/supplement/conflict/complement/opposite/data/date）且与中文关系词一致？
+- [ ] 是否存在孤儿脚注（有定义无内联标记）或悬空标记（有内联标记无定义）？已存在脚注是否逐条复核关系依据，编撰关系是否记入报告？
+- [ ] 是否只输出了报告而未修改任何文件？关联备注提案中每条是否都有内容层面的依据（非编撰）？
 - [ ] 待回收处置 R1-R5 是否执行？（扫描 delete 字段、按 7 天冷静期判定、超期者真删 + 双向清理、历史记录追加、报告给出理由）？
