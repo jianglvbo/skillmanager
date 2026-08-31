@@ -22,7 +22,8 @@ description: 云服务器（106.55.14.116）运维执行器。管理投资控制
 ## Workflow
 
 ### 第一步：确认连接
-- 本机直接 `ssh jianglb@106.55.14.116`（密码见凭据文件；**待办**：配 SSH 密钥后免密）
+- 本机直接 `ssh 106.55.14.116`（**2026-08-31 已配 SSH 密钥免密**：`~/.ssh/config` 已登记 Host 106.55.14.116 / User jianglb / IdentityFile id_rsa，`~/.ssh/id_rsa.pub` 已装入服务器 authorized_keys）
+- 需要密码兜底或远程跑命令：`expect scripts/sshrun.exp "<远程命令>"`（自动从 credentials.md ## SSH 段**按行**提取密码，密钥失效时兜底；勿用正则跨段抓密码——会抓到 MySQL 段）
 - 服务器本机 MySQL 用 `sudo mysql`（root auth_socket 免密）或 `mysql -u jianglb -p`
 
 ### 第二步：查状态（只读，直接执行）
@@ -62,7 +63,8 @@ cd ~/Project/investment-console && DB_PASS='<见 credentials>' python3 scripts/m
 
 ### 第五步：部署更新（代码变更后推送）
 ```bash
-# 本机：rsync 项目 → 服务器 —— ⚠️ investment 必须排除 config.json / data / node_modules
+# 方式一（推荐）：expect scripts/rsyncrun.exp —— 包装了下方 rsync 命令（排除配置+密码兜底）
+# 方式二（直接）：本机 rsync 项目 → 服务器 —— ⚠️ investment 必须排除 config.json / data / node_modules
 #   （服务器 config 是生产配置：vaultRoot=/home/jianglb/vault + mysql 段 host=127.0.0.1；
 #     data/ 是服务器运营备份；node_modules 由服务器 npm install mysql2 维护）
 #   2026-08-30 教训：漏排 config.json 导致服务器 vaultRoot 被本地 iCloud 路径覆盖、服务崩溃循环
@@ -116,6 +118,8 @@ ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
 | 需要凭据（密码等） | `$HOME/.config/server-ops/credentials.md` | 读取（注意不输出到对话） |
 | 查两站 + MySQL 状态 | `scripts/status.sh` | 执行 |
 | 本机 vault → 服务器同步 | `scripts/vault_sync.sh` | 执行（本机跑） |
+| 远程执行命令（密码兜底） | `scripts/sshrun.exp "<远程命令>"` | 执行（expect；密钥失效时自动兜底） |
+| 投资控制台部署（rsync 推送） | `scripts/rsyncrun.exp` | 执行（排除 config.json/data/node_modules；部署后仍需手动重启） |
 
 ## Source hierarchy
 

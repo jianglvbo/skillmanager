@@ -1,0 +1,28 @@
+#!/usr/bin/expect -f
+# server-ops 远程命令执行器（密码兜底版）
+# 用法：expect scripts/sshrun.exp "<远程命令>"
+# 说明：
+#   - 已配 SSH 密钥免密（2026-08-31）时，直接走密钥，不触发密码提示；
+#   - 未配密钥/密钥失效时，自动从 $HOME/.config/server-ops/credentials.md 的
+#     ## SSH 段按行提取密码兜底（避免 expect 正则跨段贪婪抓错行的坑）。
+# 退出码 = ssh 退出码。
+set timeout 900
+set rcmd [lindex $argv 0]
+set fh [open $env(HOME)/.config/server-ops/credentials.md r]
+set data [read $fh]
+close $fh
+set pass ""
+set inSsh 0
+foreach line [split $data "\n"] {
+  if {[string match "## SSH*" $line]} { set inSsh 1; continue }
+  if {$inSsh && [string match "## *" $line]} { break }
+  if {$inSsh && [regexp {^-\s*密码:\s*(\S+)} $line -> p]} { set pass $p; break }
+}
+if {$pass eq ""} { puts "PASS_EXTRACT_FAIL（credentials.md ## SSH 段无密码行）"; exit 9 }
+spawn ssh -o StrictHostKeyChecking=accept-new -o PubkeyAuthentication=no jianglb@106.55.14.116 $rcmd
+expect {
+  -re {[Pp]assword:} { send -- "$pass\r"; exp_continue }
+  eof
+}
+catch wait result
+exit [lindex $result 3]
