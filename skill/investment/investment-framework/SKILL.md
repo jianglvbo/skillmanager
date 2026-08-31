@@ -104,6 +104,7 @@ compatibility: 通用
 
 - **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking 5 步/basis/why/relation）→ 提炼时间轴 + 决策链路图
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
+- **预测控制台**（2026-08-31 方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）→ `MCP console_list_subjects / console_get_subject / console_add_prediction / console_update_status / console_add_track`（见 prediction-console skill v2.0）→ 看板预测控制台模块（个股/行业/市场三页签）
 - **决策链路图 10 节点规范**（用户拍板）：源→识别→◆归属层判断◆→拆分决策→三列分叉（价值/归类/◆关系判断◆/生成/产物卡）→汇合→校验；**判断只留给有真实分叉的节点**（归属层/关系）；关系判断=生成决策（thinking[3]），审查 C3/C7=写后质检，不重复
 - **产物展示**：多产物**横向并联**（产物徽章并排、无箭头，不用 SVG 分叉图——用户试用后否决）
 - 失败处理：API 失败不阻断主流程，汇报提示「看板数据未写入」

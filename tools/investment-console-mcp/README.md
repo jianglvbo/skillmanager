@@ -17,7 +17,7 @@
 - 数据源：Obsidian vault 派生 MySQL（`investment_kb` 库）——**vault 为绝对基准**，MySQL 为派生数据
 - 服务器 config.json 含 `mcpToken`（与服务端鉴权一致）
 
-## 工具清单（24 个）
+## 工具清单（30 个）
 
 | 类别 | 工具 |
 |---|---|
@@ -28,6 +28,9 @@
 | 标签 | `list_tags` |
 | 日志 | `get_logs`、`git_log`、`git_status`、`git_commit` |
 | 流水线落库 | `refine_record`（提炼落库）、`review_record`（审查落库） |
+| 预测控制台（2026-08-31 新增） | `console_list_subjects`、`console_get_subject`、`console_add_prediction`、`console_update_status`、`console_add_track` |
+
+预测控制台域（方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）：`console_add_prediction` 幂等去重（主题+日期+预测人+内容唯一键）；`console_update_status` 改已验证/已撤销时 `verify.result`+`verify.basis` 必填（服务端强制验证留痕）。库表：`prediction_subjects/predictions/prediction_verifications/prediction_tracks` + 4 字典（DDL 见 investment-console 项目 `sql/investment_kb_consoles.sql`，存量迁移 `scripts/import_consoles.py`）。
 
 ## ⚠️ 枚举码硬约束（落库避坑 · 2026-08-31 实测）
 
