@@ -21,8 +21,8 @@
   "method": "审查方法简述（结构 S1-S8 + 内容 C3-C8 判定口径）",
   "mainProblems": "总体结论：结构强项 + 主要问题清单",
   "checks": [
-    { "item": "wikilink_issues", "result": "🔴 13", "compare": "8/9 为 0（新增）", "status": "fail" },
-    { "item": "no_fm", "result": "✅ 0", "compare": "—", "status": "pass" }
+    { "item": "wikilink_issues", "result": "13", "compare": "8/9 为 0（新增）", "status": "fail" },
+    { "item": "no_fm", "result": "0", "compare": "—", "status": "pass" }
   ],
   "groups": [
     {
@@ -39,7 +39,7 @@
     "rows": [["其他/交易体系/马丁与反马丁策略", "2026-08-09", "5", "待回收（剩 2 天）", "冷静期内保留；1 处入链"]]
   },
   "actions": [
-    { "num": "1", "text": "裁决 9 处框架内部矛盾", "status": "🔴 待用户裁决" }
+    { "num": "1", "text": "裁决 9 处框架内部矛盾", "status": "待用户裁决" }
   ],
   "summary": "总结与建议全文（含强项、建议动作说明）"
 }
@@ -51,13 +51,13 @@
 
 | 字段 | 必填 | 类型 | 说明 |
 |:---|:---|:---|:---|
-| `date` | ✅ | string | 审查日期 `YYYY-MM-DD`；**幂等覆盖**——同日期重复审查覆盖旧记录 |
-| `title` | ✅ | string | 报告标题 `审查报告 {YYYY-MM-DD}` |
+| `date` | 必填 | string | 审查日期 `YYYY-MM-DD`；**幂等覆盖**——同日期重复审查覆盖旧记录 |
+| `title` | 必填 | string | 报告标题 `审查报告 {YYYY-MM-DD}` |
 | `meta` | 建议 | object | 审查范围/扫描文件数/工具/对比基线/原则（key-value） |
 | `method` | 建议 | string | 审查方法简述 |
 | `mainProblems` | 建议 | string | 总体结论（结构强项 + 主要问题） |
-| `checks` | ✅ | array | **脚本指标检查项**（vault_review.py 输出表逐行）：每项 `{item, result, compare, status}` |
-| `groups` | ✅ | array | **通用审查分组**：结构问题 S 小节 + 内容审查 C 小节 + **未来任意新审查项**。每项 `{title, severity, tag, headers, rows, text}` |
+| `checks` | 必填 | array | **脚本指标检查项**（vault_review.py 输出表逐行）：每项 `{item, result, compare, status}` |
+| `groups` | 必填 | array | **通用审查分组**：结构问题 S 小节 + 内容审查 C 小节 + **未来任意新审查项**。每项 `{title, severity, tag, headers, rows, text}` |
 | `recycle` | 建议 | object | 待回收处置：`{done, cooling, doneHist, rows[]}`（rows = 条目/标记日期/冷静天数/处置/理由） |
 | `actions` | 建议 | array | 建议动作表：`{num, text, status}` |
 | `summary` | 建议 | string | 总结与建议 |
@@ -68,12 +68,12 @@
 
 | 值 | 含义 | 看板徽章 |
 |:---|:---|:---|
-| `pass` / `✅ 0` | 合规 | PASS 绿 |
-| `warn` / `⚠️ n` | 注意（需关注，可修复） | WARN 黄 |
-| `fail` / `🔴 n` / `❌` | 严重（必须处理，可 AI 修复） | FAIL 红 |
+| `pass` | 合规（result 存纯数值如 `0`，勿带徽章） | PASS 绿 |
+| `warn` | 注意（需关注，可修复） | WARN 黄 |
+| `fail` | 严重（必须处理，可 AI 修复） | FAIL 红 |
 | ~~`info`~~ | **非法**：dict_check_status 无此码，落库会外键报错 | — |
 
-`groups[].severity` 独立于 `checks[].status`：分组级别用 `fail/warn/info`（从标题 🔴/⚠️ 推断）；**检查项级别只能传 `pass/warn/fail`**（字典 dict_check_status 合法码，2026-08-31 实测；`ok` 为旧数据遗留、新写入不用）。落库报外键错误时按 refine-schema.md 二B 字典表核对码值。
+`groups[].severity` 独立于 `checks[].status`：分组级别用 `fail/warn/info`（从分组标题/严重度推断）；**检查项级别只能传 `pass/warn/fail`**（字典 dict_check_status 合法码，2026-08-31 实测；`ok` 为旧数据遗留、新写入不用）。落库报外键错误时按 refine-schema.md 二B 字典表核对码值。
 
 ---
 
