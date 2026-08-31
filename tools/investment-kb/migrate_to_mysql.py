@@ -117,7 +117,7 @@ def main():
     cur = conn.cursor()
 
     # 1. 重置业务表（子表先删，外键约束）
-    for t in ["files_tags", "refine_targets", "review_checks", "files", "bloggers", "tags",
+    for t in ["file_tag_rel", "refine_targets", "review_checks", "files", "bloggers", "tags",
               "refine_records", "review_records", "coarse_items", "trash_items", "sync_meta"]:
         cur.execute(f"DELETE FROM {t}")
     print("== 业务表已重置")
@@ -134,7 +134,7 @@ def main():
         blogger_id[b["name"]] = cur.lastrowid
     print(f"== bloggers 插入 {len(blogger_id)}")
 
-    # 3. tags + files + files_tags
+    # 3. tags + files + file_tag_rel
     tag_id = {}
     cur.execute("SELECT id, name FROM tags")  # 空表，跳过
     for f in files:
@@ -154,7 +154,7 @@ def main():
             if tname not in tag_id:
                 cur.execute("INSERT INTO tags (name) VALUES (%s)", (tname,))
                 tag_id[tname] = cur.lastrowid
-            cur.execute("INSERT IGNORE INTO files_tags (file_id, tag_id) VALUES (%s,%s)", (fid, tag_id[tname]))
+            cur.execute("INSERT IGNORE INTO file_tag_rel (file_id, tag_id) VALUES (%s,%s)", (fid, tag_id[tname]))
     print(f"== files 插入 {len(files)} / tags {len(tag_id)}")
 
     # 4. refine_records + refine_targets

@@ -238,8 +238,8 @@ CREATE TABLE files (
   CONSTRAINT fk_files_status FOREIGN KEY (status_code) REFERENCES dict_file_status (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='wiki 文件索引表：vault 扫描派生，看板数据主源（正文不入库，读取时回源 vault）';
 
--- 14. 文件-标签关联表（多对多）
-CREATE TABLE files_tags (
+-- 14. 文件-标签关联表（多对多，关系表统一 _rel 后缀）
+CREATE TABLE file_tag_rel (
   file_id    BIGINT UNSIGNED NOT NULL COMMENT '文件外键，关联 files.id',
   tag_id     BIGINT UNSIGNED NOT NULL COMMENT '标签外键，关联 tags.id',
   PRIMARY KEY (file_id, tag_id),
