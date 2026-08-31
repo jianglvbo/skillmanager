@@ -137,6 +137,8 @@ CREATE TABLE files (
   KEY idx_blogger (blogger_id),
   KEY idx_star (star),
   KEY idx_mtime (mtime),
+  KEY idx_type (type_code),
+  KEY idx_status (status_code),
   CONSTRAINT fk_files_blogger FOREIGN KEY (blogger_id) REFERENCES bloggers (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='wiki 文件索引表：vault 扫描派生，看板数据主源（正文不入库，读取时回源 vault）';
 
@@ -190,6 +192,7 @@ CREATE TABLE refine_targets (
   KEY idx_target_type (target_type_code),
   KEY idx_layer (layer_code),
   KEY idx_relation (relation_code),
+  KEY idx_category (category_code),
   CONSTRAINT fk_rt_record FOREIGN KEY (record_id) REFERENCES refine_records (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼目标子表：一次提炼的每个产出目标及其关系';
 
@@ -261,3 +264,70 @@ CREATE TABLE sync_state (
   PRIMARY KEY (id),
   UNIQUE KEY uk_key (sync_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同步元数据表：vault 增量扫描的版本/游标控制';
+
+-- 22. 预测主题表（预测段落：个股/行业/市场）
+CREATE TABLE prediction_subjects (
+  id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主题主键',
+  console_type_code VARCHAR(32)     NOT NULL COMMENT '控制台类型码值，关联 dict(type=console_type).code',
+  name              VARCHAR(128)    NOT NULL COMMENT '主题名（贵州茅台/白酒/A股）',
+  code              VARCHAR(32)     DEFAULT NULL COMMENT '个股代码（600519/00700/MU；行业市场为 NULL）',
+  sort_order        INT             NOT NULL DEFAULT 0 COMMENT '段落顺序',
+  created_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_console_name (console_type_code, name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测主题：预测段落（个股/行业/市场）';
+
+-- 23. 预测记录表（每个主题下的预测条目）
+CREATE TABLE prediction_records (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '预测主键',
+  subject_id     BIGINT UNSIGNED NOT NULL COMMENT '主题外键，关联 prediction_subjects.id',
+  predict_date   DATE            NOT NULL COMMENT '预测日期（原始判断日；月级精度存当月 1 日）',
+  date_precision ENUM('day','month') NOT NULL DEFAULT 'day' COMMENT '日期精度：day=精确到日 / month=仅到月（展示还原 yyyy-MM）',
+  predictor      VARCHAR(128)    NOT NULL COMMENT '预测人（博主名或自己）',
+  ref_price      VARCHAR(64)     DEFAULT NULL COMMENT '当前价/参考价（保留原文表述）',
+  content        TEXT            NOT NULL COMMENT '预测内容（保留原文关键表述）',
+  target_price   VARCHAR(64)     DEFAULT NULL COMMENT '目标价（无则 NULL）',
+  target_date    VARCHAR(64)     DEFAULT NULL COMMENT '目标日期（允许区间，如 2023~2027+）',
+  source_url     VARCHAR(512)    DEFAULT NULL COMMENT '原文链接',
+  status_code    VARCHAR(32)     NOT NULL COMMENT '状态码值，关联 dict(type=prediction_status).code',
+  created_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_dedup (subject_id, predict_date, predictor, content(64)),
+  KEY idx_subject (subject_id),
+  KEY idx_status (status_code),
+  CONSTRAINT fk_p_subject FOREIGN KEY (subject_id) REFERENCES prediction_subjects (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测记录：每个主题下的预测条目';
+
+-- 24. 言论跟踪表（段落级增强/反驳/中性言论）
+CREATE TABLE prediction_tracks (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '言论主键',
+  subject_id     BIGINT UNSIGNED NOT NULL COMMENT '主题外键，关联 prediction_subjects.id',
+  track_date     DATE            DEFAULT NULL COMMENT '言论日期',
+  source         VARCHAR(128)    DEFAULT NULL COMMENT '来源（博主名或自己）',
+  content        TEXT            COMMENT '观点/事件',
+  direction_code VARCHAR(32)     NOT NULL COMMENT '方向码值，关联 dict(type=track_direction).code',
+  source_url     VARCHAR(512)    DEFAULT NULL COMMENT '原文链接',
+  created_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (id),
+  KEY idx_subject (subject_id),
+  KEY idx_direction (direction_code),
+  CONSTRAINT fk_pt_subject FOREIGN KEY (subject_id) REFERENCES prediction_subjects (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论跟踪：段落级增强/反驳/中性言论';
+
+-- 25. 预测验证记录表（一条预测至多一条验证结论）
+CREATE TABLE prediction_verifications (
+  id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '验证主键',
+  prediction_id BIGINT UNSIGNED NOT NULL COMMENT '预测外键，关联 prediction_records.id',
+  verify_date   DATE            DEFAULT NULL COMMENT '验证日期',
+  verifier      VARCHAR(128)    DEFAULT NULL COMMENT '验证人（自己/数据来源）',
+  basis         TEXT            COMMENT '验证依据（量化证据：实际数据/价格走势/同期对比）',
+  result_code   VARCHAR(32)     NOT NULL COMMENT '结果码值，关联 dict(type=verify_result).code',
+  note          VARCHAR(1024)   DEFAULT NULL COMMENT '备注（方向与幅度偏差说明）',
+  created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_prediction (prediction_id),
+  KEY idx_result (result_code),
+  CONSTRAINT fk_pv_prediction FOREIGN KEY (prediction_id) REFERENCES prediction_records (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测验证记录：一条预测至多一条验证结论';
