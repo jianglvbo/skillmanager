@@ -9,7 +9,7 @@
 ## 服务与端口
 | 服务 | 端口 | systemd unit | 目录 |
 |:---|:---|:---|:---|
-| 投资知识库看板 | 8698 | investment-console.service | /home/jianglb/investment-console |
+| 投资控制台 | 8698 | investment-console.service | /home/jianglb/investment-console |
 | 减脂塑形控制台 | 8699 | fitness-console.service | /home/jianglb/fitness-console |
 | MySQL | 3306 | mysql.service | 数据 /home/jianglb/mysql |
 
@@ -24,7 +24,7 @@
 
 ## 数据库连接
 - host: 106.55.14.116:3306（**建议**改回 127.0.0.1 + 本机 SSH 隧道：`ssh -L 3306:127.0.0.1:3306 jianglb@106.55.14.116`）
-- **业务库 investment_kb**：21 张表（10 码值 dict_* + 11 业务），DDL 在 ~/Project/investment-console/sql/investment_kb.sql；vault 为绝对基准，刷新=本机跑 scripts/migrate_to_mysql.py
+- **业务库 investment_kb**：25+ 张表（10 码值 dict_* + 业务表，含预测域 4 表），DDL 在 ~/Project/investment-console/sql/investment_kb.sql + investment_kb_consoles.sql；vault 为绝对基准，**刷新 = server 自动同步**（v2.1：vault_sync.sh 推送 → server buildIndex 自动 upsert files/tags/bloggers；本机 migrate_to_mysql.py 已退役）
 - user: jianglb（@'%' 远程 + @localhost 本机），密码见 credentials/server.md
 - root: 仅 localhost，auth_socket 免密（sudo mysql）
 - 注意：**两站本身不用 MySQL**（JSON 文件存储）；MySQL 供外部数据管理/未来用途

@@ -30,7 +30,7 @@
 | 流水线落库 | `refine_record`（提炼落库）、`review_record`（审查落库） |
 | 预测控制台（2026-08-31 新增） | `console_list_subjects`、`console_get_subject`、`console_add_prediction`、`console_update_status`、`console_add_track` |
 
-预测控制台域（方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）：`console_add_prediction` 幂等去重（主题+日期+预测人+内容唯一键）；`console_update_status` 改已验证/已撤销时 `verify.result`+`verify.basis` 必填（服务端强制验证留痕）。库表：`prediction_subjects/predictions/prediction_verifications/prediction_tracks` + 4 字典（DDL 见 investment-console 项目 `sql/investment_kb_consoles.sql`，存量迁移 `scripts/import_consoles.py`）。
+预测控制台域（方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）：`console_add_prediction` 幂等去重（主题+日期+预测人+内容唯一键）；`console_update_status` 改已验证/已撤销时 `verify.result`+`verify.basis` 必填（服务端强制验证留痕）。库表：`prediction_subjects/prediction_records/prediction_verifications/prediction_tracks`（字典为 `dict` 单表 type=console_type/prediction_status/verify_result/track_direction）。vault 文件派生表由 server 自动同步（files/tags/bloggers，mtime+文件数双检测），本机 migrate_to_mysql.py 已退役。存量迁移 `scripts/import_consoles.py`（一次性）。
 
 ## ⚠️ 枚举码硬约束（落库避坑 · 2026-08-31 实测）
 

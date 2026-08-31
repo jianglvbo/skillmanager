@@ -69,16 +69,16 @@
 
 ## 二B、字典码对照表（避坑 · 2026-08-31 实测）
 
-**`layer`/`category`/`relation`/`type`/`sourceType` 必须传数据库字典英文码，传中文会落库失败（外键约束报错）**。全量对照（源：远端 MySQL `investment_kb` 字典表）：
+**`layer`/`category`/`relation`/`type`/`sourceType` 必须传数据库字典英文码，传中文会落库失败（外键约束报错）**。全量对照（源：远端 MySQL `investment_kb` 的 `dict` 单表，`type` 列区分字典域；2026-08-31 schema 整合后由多张 dict_* 合并为单表）：
 
 | 字段 | 字典表 | 合法码（码 → 中文含义） |
 |:---|:---|:---|
-| `layer` | dict_layer | `my`=我的 / `blogger`=博主 / `other`=其他 / `macro`=宏观 / `workspace`=工作区 / `attachment`=附件 |
-| `category` | dict_category | `analysis_framework`=分析框架 / `trading_system`=交易体系 / `investment_mentality`=投资心态 / `investment_insight`=投资心得 / `stock`=个股 / `industry`=行业 / `macro`=宏观 |
-| `relation` | dict_target_relation | `new`=新建 / `append`=追加 / `complement`=互补 / `conflict_check`=矛盾预检 / `other`=其他 |
-| `type` | dict_target_type | `wiki`=框架条目 / `blogger`=博主画像 / `macro`=宏观条目 |
-| `sourceType` | dict_source_type | `raw`=原始资源 / `coarse`=粗制品 |
-| 审查 `checks[].status` | dict_check_status | `pass`=通过 / `warn`=警告 / `fail`=失败（`ok`=旧数据遗留，新写入不用；**无 `info`**） |
+| `layer` | dict(type=layer) | `my`=我的 / `blogger`=博主 / `other`=其他 / `macro`=宏观 / `workspace`=工作区 / `attachment`=附件 |
+| `category` | dict(type=category) | `analysis_framework`=分析框架 / `trading_system`=交易体系 / `investment_mentality`=投资心态 / `investment_insight`=投资心得 / `stock`=个股 / `industry`=行业 / `macro`=宏观 |
+| `relation` | dict(type=target_relation) | `new`=新建 / `append`=追加 / `complement`=互补 / `conflict_check`=矛盾预检 / `other`=其他 |
+| `type` | dict(type=target_type) | `wiki`=框架条目 / `blogger`=博主画像 / `macro`=宏观条目 |
+| `sourceType` | dict(type=source_type) | `raw`=原始资源 / `coarse`=粗制品 |
+| 审查 `checks[].status` | dict(type=check_status) | `pass`=通过 / `warn`=警告 / `fail`=失败（`ok`=旧数据遗留，新写入不用；**无 `info`**） |
 
 > **避坑**：落库报 `foreign key constraint fails ... dict_*` 时，用 `SHOW CREATE TABLE {refine_targets|review_checks}` + 对应字典表核对码值，不要猜中文。博主画像目标 `category` 可省略（列可空）。
 
