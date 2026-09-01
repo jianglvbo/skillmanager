@@ -8,3 +8,4 @@
 
 ### Changed
 - investment-framework v2.16.0：console-guide.md §3 数据契约补充「路径书写语义」条目，明确前端存在性校验（vault 索引 ∪ 本条产物）仅兜底质检、权威判定在写入侧
+- investment-framework v2.16.1：console-guide.md §4 链路图更新——移除 `[校验]` 收尾节点，「落为产物」即终点（2026-09-01 用户决定；看板渲染层已同步删除，verify 数据仍落库仅不渲染）
