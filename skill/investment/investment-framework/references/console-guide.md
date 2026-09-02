@@ -4,7 +4,7 @@
 
 ## 1. 看板是什么
 
-纯前端 + 零依赖 Node 轻服务，端口 8698。**两份部署共用同一 MySQL（`investment_kb`）**：**线上** `/home/jianglb/investment-console`（systemd `investment-console.service`，唯一写入权威）；**本地** `~/Project/investment-console`（iCloud vault，`config.disableDbSync=true`，只读库、仅供 agent 开发）。派生数据在 MySQL（方案 A：预测控制台等已迁库，vault 不再存控制台 Markdown）；知识正文仍在 vault（Markdown）。MCP 端点 `http://106.55.14.116:8698/mcp`（Bearer token 见 `Ai/tools/investment-console-mcp/README.md`）。**看板不产生知识，只呈现流水线结果。**
+纯前端 + 零依赖 Node 轻服务，**本地运行**（`~/Project/investment-console`，端口 8698，launchd 托管 com.investment-console）。读本地 iCloud vault（`config.vaultRoot` 指向 Obsidian 库），派生索引与运营记录写**远程共享 MySQL**（`investment_kb`，host 见 config.json；方案 A：预测控制台等已迁库，vault 不再存控制台 Markdown）。MCP 端点 `http://127.0.0.1:8698/mcp`（Bearer token 见 `Ai/tools/investment-console-mcp/README.md`）。**看板不产生知识，只呈现流水线结果。**
 
 ## 2. 数据契约（流水线写入）
 

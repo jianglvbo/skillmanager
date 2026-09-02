@@ -1,9 +1,11 @@
 ---
 name: server-ops
-description: 云服务器（106.55.14.116）运维执行器。管理投资控制台（8698）与减脂塑形控制台（8699）的部署、状态、重启，vault 知识库同步，MySQL 管理与备份。触发词：「服务器」「部署到服务器」「同步 vault」「服务器状态」「重启服务」「备份 MySQL」「106.55.14.116」「server-ops」。排除：本地 Obsidian 操作（走 investment-framework）、不涉及服务器的部署。
+description: 云服务器（106.55.14.116）运维执行器。管理减脂塑形控制台（8699）的部署/状态/重启，以及 MySQL（investment_kb + fitness）管理与备份。⚠️ 投资知识库看板 investment-console 已于 2026-09-02 迁回本地运行（读本地 vault、连远程 MySQL），服务器不再部署它、不再同步 vault。触发词：「服务器」「部署到服务器」「服务器状态」「重启服务」「备份 MySQL」「106.55.14.116」「server-ops」。排除：本地 Obsidian 操作（走 investment-framework）、本地投资看板运维。
 ---
 
 # 服务器运维（server-ops）
+
+> **2026-09-02 架构变更**：投资知识库看板 investment-console 不再部署在本服务器，改本地运行（`~/Project/investment-console`，launchd `com.investment-console`，端口 8698，读本地 iCloud vault、连远程 MySQL `106.55.14.116:3306`）。服务器现仅承载 **MySQL（investment_kb / fitness）+ fitness-console(8699)**。原「vault 同步」「investment-console 部署/重启」流程作废（下方相关段已标注）。
 
 ## Default stance
 
@@ -28,18 +30,13 @@ description: 云服务器（106.55.14.116）运维执行器。管理投资控制
 
 ### 第二步：查状态（只读，直接执行）
 ```bash
-ssh jianglb@106.55.14.116 "sudo systemctl status investment-console fitness-console --no-pager | grep -E 'Active|●'"
+ssh jianglb@106.55.14.116 "sudo systemctl status fitness-console mysql --no-pager | grep -E 'Active|●'"
 # 或执行脚本
 scripts/status.sh（skill 内相对路径）
 ```
 
-### 第三步：vault 同步（从本机推送）
-- 本机执行（不要在服务器上做）：
-```bash
-scripts/vault_sync.sh（skill 内相对路径）
-```
-- 同步内容：vault 全部 md（排除 附件/.obsidian/.plugin_data/.space/.DS_Store/__visit_history）
-- 同步后服务器 index 自动重建（server 检测 mtime）；如需强制：重启 investment-console
+### 第三步：（已作废）vault 同步
+- 投资看板已本地运行、直读本地 vault，**不再需要把 vault 同步到服务器**。`scripts/vault_sync.sh` 保留仅作历史参考。
 
 ### 第四步：备份（定期做）
 - MySQL 逻辑备份：
@@ -48,35 +45,16 @@ ssh jianglb@106.55.14.116 "sudo mysqldump investment_kb | gzip > /home/jianglb/b
 ```
 - 两站数据目录（JSON）：
 ```bash
-ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/data-$(date +%Y%m%d).tgz -C /home/jianglb investment-console/data fitness-console/data"
+ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/data-$(date +%Y%m%d).tgz -C /home/jianglb fitness-console/data"
 ```
 - 建议 cron 每周一执行（可后配）
 
-### 第四步半：vault → MySQL 同步（v2.1 起 server 自动同步，本机不再手动迁移）
-- 架构：vault（.md 本机绝对基准）→ `vault_sync.sh` 推送 server `/home/jianglb/vault` → server `buildIndex()` 检测变更（启动/文件写删/15s mtime 检测/rebuild）→ **自动 upsert MySQL files/tags/bloggers**（v2.1 内置于 server.js `syncFilesToDb`）
-- **本机不再需要 `migrate_to_mysql.py`**（2026-08-31 退役，改名 .retired-20260831 留档）——旧脚本会 DELETE 重建 refine/review 记录（清掉 MCP 直写数据），且 bloggers 从过期快照回滚，均为已知坑
-- 同步范围：**只动 files/tags/bloggers 三张文件派生表**；运营表（refine/review/coarse/trash/sync_meta/预测域）一律不碰，MCP 直写数据不受影响
-- vault 变更后刷新：跑 `scripts/vault_sync.sh`（推文件 + 重启），server 启动即重建+同步；或推送后等待 15s 自动检测（不重启）
-- 强制重建：`POST http://127.0.0.1:8698/api/index/rebuild`（buildIndex + 刷新缓存）
-- 库表 DDL：`sql/investment_kb.sql` + `sql/investment_kb_consoles.sql`（预测域：4 业务表 + 4 字典，全 COMMENT + 外键）；码值枚举一律引用 dict_* 表
+### 第四步半：（已作废）服务器端 vault → MySQL 同步
+- 现由**本地** investment-console（`syncFilesToDb`，`disableDbSync=false`）扫本地 vault 写远程 MySQL 派生表（files/tags/bloggers）；服务器不再有 investment-console 进程做这件事。
+- 强制重建索引：本地 `POST http://127.0.0.1:8698/api/index/rebuild`。库表 DDL 仍见 `sql/investment_kb.sql` + `sql/investment_kb_consoles.sql`（预测域 4 业务表 + 4 字典）。
 
-### 第五步：部署更新（代码变更后推送）
-```bash
-# 方式一（推荐）：expect scripts/rsyncrun.exp —— 包装了下方 rsync 命令（排除配置+密码兜底）
-# 方式二（直接）：本机 rsync 项目 → 服务器 —— ⚠️ investment 必须排除 config.json / data / node_modules
-#   （服务器 config 是生产配置：vaultRoot=/home/jianglb/vault + mysql 段 host=127.0.0.1；
-#     data/ 是服务器运营备份；node_modules 由服务器 npm install mysql2 维护）
-#   2026-08-30 教训：漏排 config.json 导致服务器 vaultRoot 被本地 iCloud 路径覆盖、服务崩溃循环
-rsync -az --exclude ".DS_Store" --exclude "config.json" --exclude "data" --exclude "node_modules" -e "ssh -p 22" ~/Project/investment-console/ jianglb@106.55.14.116:/home/jianglb/investment-console/
-# fitness 部署见下方「fitness-console 部署执行」（开发规范走 fitness-dev-workflow skill）
-# 重启（服务器若缺 mysql2：cd /home/jianglb/investment-console && npm install mysql2）
-ssh jianglb@106.55.14.116 "sudo systemctl restart investment-console fitness-console"
-```
-- **决策点**：若改的是 server.js 或 config.json → 必须重启；只改 web/ 静态文件 → 不需重启
-- **决策点**：服务器 config 若被误覆盖 → 立即修复 vaultRoot 并重启：
-```bash
-ssh jianglb@106.55.14.116 "python3 -c \"import json;p='/home/jianglb/investment-console/config.json';c=json.load(open(p));c['vaultRoot']='/home/jianglb/vault';json.dump(c,open(p,'w'),ensure_ascii=False,indent=2)\" && sudo systemctl restart investment-console"
-```
+### 第五步：（已作废）investment-console 部署
+- 投资看板不再部署到服务器，本地运行即可（launchd `com.investment-console`）。fitness-console 部署见下一节。
 
 ### fitness-console 部署执行（开发规范见 fitness-dev-workflow skill）
 - **职责边界**：本 skill 只负责服务器侧运维与**部署执行**；开发规范（环境边界/双库隔离/本地工作流/git/配置双轨/部署触发规则）→ 调用 **fitness-dev-workflow** skill，两 skill 由 agent 按任务自判断调用
@@ -103,7 +81,7 @@ ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
 
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
-| 服务 | string | investment-console / fitness-console / mysql |
+| 服务 | string | fitness-console / mysql（investment-console 已迁本地） |
 | 状态 | string | active / failed / inactive |
 | HTTP 码 | int | 8698/8699 本地 curl 验证 |
 | 数据校验 | string | overview API 的 wikiTotal/bloggerCount 与预期对比 |
@@ -116,9 +94,9 @@ ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
 | 服务器布局/端口/目录/数据库连接详表 | `references/layout.md` | 读取 |
 | 需要凭据（密码等） | `$HOME/.config/server-ops/credentials.md` | 读取（注意不输出到对话） |
 | 查两站 + MySQL 状态 | `scripts/status.sh` | 执行 |
-| 本机 vault → 服务器同步 | `scripts/vault_sync.sh` | 执行（本机跑） |
+| ~~本机 vault → 服务器同步~~（已作废，看板本地运行） | `scripts/vault_sync.sh` | 历史参考 |
 | 远程执行命令（密码兜底） | `scripts/sshrun.exp "<远程命令>"` | 执行（expect；密钥失效时自动兜底） |
-| 投资控制台部署（rsync 推送） | `scripts/rsyncrun.exp` | 执行（排除 config.json/data/node_modules；部署后仍需手动重启） |
+| ~~投资控制台部署~~（已作废，看板本地运行） | `scripts/rsyncrun.exp` | 历史参考 |
 
 ## Source hierarchy
 
@@ -133,7 +111,7 @@ ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
 - [ ] 连接是否用 jianglb 且无明文密码出现在命令/输出？
 - [ ] 数据库操作是否区分 dev/生产库？生产库 DDL/DML 是否先经 fitness_dev 验证并说明影响？
 - [ ] fitness 部署是否等用户明确说「部署」才执行（开发规范走 fitness-dev-workflow）？
-- [ ] vault 同步是否在本机跑 scripts/vault_sync.sh（而非服务器 git clone）？
+- [ ] 是否知悉 investment-console 已本地运行、服务器不再部署它/不再同步 vault（勿再对服务器跑 investment 部署或 vault_sync）？
 - [ ] 变更操作（重启/改配置/rsync --delete）前是否说明了影响？
 - [ ] 数据库查询是否走隧道/本机 sudo mysql，端口未直连公网？
 - [ ] 踩坑规则（GitHub clone 失败、AppArmor、bind-address）是否遵守？

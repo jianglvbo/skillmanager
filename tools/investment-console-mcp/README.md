@@ -7,15 +7,15 @@
 | 项 | 值 |
 |---|---|
 | 类型 | MCP **HTTP**（Streamable HTTP，JSON-RPC 2.0） |
-| 端点 | `http://106.55.14.116:8698/mcp` |
+| 端点 | `http://127.0.0.1:8698/mcp` |
 | 鉴权 | Header `Authorization: Bearer <token>`（token 由服务器 owner 提供） |
 | 请求 | `POST /mcp`，`Content-Type: application/json`，body = JSON-RPC 消息 |
 
 ## 前提
 
-- 服务器 `investment-console` 服务运行中（端口 8698，systemd: `investment-console.service`）
+- **看板本地运行**：`investment-console` 服务在本机（端口 8698，launchd: `com.investment-console`），读本地 iCloud vault；**MySQL 仍在远程服务器** `106.55.14.116:3306`（`investment_kb`）
 - 数据源：Obsidian vault 派生 MySQL（`investment_kb` 库）——**vault 为绝对基准**，MySQL 为派生数据
-- 服务器 config.json 含 `mcpToken`（与服务端鉴权一致）
+- 本地 config.json 含 `mcpToken`（与服务端鉴权一致）
 
 ## 工具清单（30 个）
 
@@ -50,17 +50,17 @@
 # initialize
 curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
-  http://106.55.14.116:8698/mcp
+  http://127.0.0.1:8698/mcp
 
 # tools/list
 curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  http://106.55.14.116:8698/mcp
+  http://127.0.0.1:8698/mcp
 
 # tools/call（例：overview）
 curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"overview","arguments":{}}}' \
-  http://106.55.14.116:8698/mcp
+  http://127.0.0.1:8698/mcp
 ```
 
 ## 接入配置（各 agent 的 MCP 客户端）
@@ -69,7 +69,7 @@ curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/js
 mcpServers:
   investment-console:
     type: http
-    url: http://106.55.14.116:8698/mcp
+    url: http://127.0.0.1:8698/mcp
     headers:
       Authorization: Bearer <token>
 ```
