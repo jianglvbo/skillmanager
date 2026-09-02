@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.11.0"
+  version: "2.11.1"
   short-description: 投资框架提炼执行器（直接执行）
 compatibility: 通用
 ---
@@ -50,6 +50,8 @@ compatibility: 通用
 ### 前置条件（由编排者保障）
 
 **常规路径**：输入来自 `工作区/原始资源/` 且 `status=待提炼`。编排者需在调用前确认：
+
+> **硬判定（#22）**：是否可提炼以**文件物理位置在 `工作区/原始资源/`** 为准，**不以 status 值为准**——采集件在 `工作区/粗制品/` 时其 `status` 也可能写「待提炼」，但未经粗加工一律不得提炼（#29 帖子集 / #30 直投除外）。
 
 - 原始资源中已存在该文档且 `status=待提炼` → 直接进入本 skill。
 - 原始资源中**不存在**该文档 → 说明仍在 `工作区/粗制品/`，编排者应先调用 `investment-coarse-processor` 粗加工（置 `status=待提炼`），再进入本 skill。

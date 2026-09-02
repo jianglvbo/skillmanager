@@ -5,7 +5,7 @@ description: >
   支持标题、作者、公众号名称、发布日期和正文的完整提取，可直接写入 Obsidian 粗制品目录。
   触发词：「公众号文章」「微信文章」「提取公众号」「抓取公众号」「mp.weixin.qq.com」。
   排除条件：非微信来源（雪球/抖音/得到等）走对应 skill；文章解析后需提炼时交 investment-refine。
-version: 1.1.0
+version: 1.1.1
 agent_created: true
 ---
 
@@ -46,17 +46,19 @@ agent_created: true
 
 ```yaml
 ---
-title: "文章标题"
-source: "微信公众号"
-author: "作者名"
-account: "公众号名称"
-date: "YYYY年M月D日"
-url: "https://mp.weixin.qq.com/s/xxx"
-recorded: "YYYY年M月D日"
-type: "长文"
-status: "待提炼"
+title: 文章标题
+source: "[文章标题](https://mp.weixin.qq.com/s/xxx)"
+author: 作者名
+account: 公众号名称
+date: YYYY-MM-DD
+url: https://mp.weixin.qq.com/s/xxx
+recorded: YYYY-MM-DD
+type: 长文
+status: 待提炼
+tags: []
 ---
 ```
+> 字段规范（对齐 framework #1/#23 + 粗加工 7 字段）：`source` 填**真实原文链接**的 markdown `[标题](url)`，**禁止渠道名占位**（如"微信公众号"）；`date`/`recorded` 裸写 `yyyy-MM-dd` 无引号、不用中文年月日；`tags` 留空 `[]` 由提炼阶段按标签体系补。
 
 ### 第三步：回复用户
 

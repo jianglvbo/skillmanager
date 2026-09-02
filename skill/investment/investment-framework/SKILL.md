@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.16.2"
+  version: "2.16.3"
   short-description: 投资知识框架全局编排者
 compatibility: 通用
 ---
@@ -95,19 +95,21 @@ compatibility: 通用
 | 提炼后（refine 第二步收尾） | 段落布局/模板段落完整 0 问题 | scripts/verify-format.py |
 | **删除/回收/移动前**（#25/#26） | inbound 引用反查，清理完才允许删 | scripts/check_inbound.py |
 | 任意批量操作后 / 提交前 | 增量扫描 git 变更文件（秒级） | investment-review/scripts/vault_review.py --incremental |
+| 批量提炼/审查后（收尾） | 线上看板派生索引 + 审查链接存在性依赖 vault 同步 | server-ops `vault_sync.sh`（本机→线上 rsync） |
 
 每周审查仍保留：内容层（C3 一致性 / C4 知行合一 / C6 经验验证 / C7 关联备注）+ 待回收处置，是操作门覆盖不到的兜底网。
 
 ### 看板联动（investment-console · 2026-08-17 新增）
 
-流水线结果写入本地看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管），看板不产生知识、只呈现结果：
+流水线结果写入投资看板（线上 `http://106.55.14.116:8698` 为唯一权威、systemd 托管；本地 `127.0.0.1:8698` 仅供 agent 开发、`disableDbSync` 只读；连接与 token 见 `Ai/tools/investment-console-mcp/README.md`），看板不产生知识、只呈现结果：
 
-- **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking 5 步/basis/why/relation）→ 提炼时间轴 + 决策链路图
+- **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking v2 自由对象数组/basis/relation）→ 提炼时间轴 + 决策链路图
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
 - **预测控制台**（2026-08-31 方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）→ `MCP console_list_subjects / console_get_subject / console_add_prediction / console_update_status / console_add_track`（见 prediction-console skill v2.0）→ 看板预测控制台模块（个股/行业/市场三页签）
-- **决策链路图 10 节点规范**（用户拍板）：源→识别→◆归属层判断◆→拆分决策→三列分叉（价值/归类/◆关系判断◆/生成/产物卡）→汇合→校验；**判断只留给有真实分叉的节点**（归属层/关系）；关系判断=生成决策（thinking[3]），审查 C3/C7=写后质检，不重复
+- **决策链路图 v2（思考时间线，2026-08-31 起替代旧 10 节点流程图）**：源→拆分决策→每条产物一条思考轨道（kind 徽章 + 推理文本，决策步红点、quote 原文引用、alt 否决块）→产物卡即终点；判断只留给有真实分叉处（归属层/关系），关系判断落在 thinking 的「决策」步，审查 C3/C7=写后质检不重复。详见 console-guide §4
 - **产物展示**：多产物**横向并联**（产物徽章并排、无箭头，不用 SVG 分叉图——用户试用后否决）
 - 失败处理：API 失败不阻断主流程，汇报提示「看板数据未写入」
+- **派生索引同步（线上看板必读）**：流水线写的是本地 iCloud vault；记录类（refine/review/prediction/coarse 评分）走共享 MySQL 即时可见，但**新建/改名的 vault 文件要经 `server-ops` 的 `vault_sync.sh`（本机→线上 rsync）推送后，线上看板的文件列表/标签/博主计数与审查链接存在性校验才更新**——批量收尾应触发或提示该同步
 - 完整契约/渲染要点/设计铁律 → `references/console-guide.md`
 
 ---
@@ -185,7 +187,7 @@ compatibility: 通用
 | 提炼/审查 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 | 读取 |
 | 提炼 | assets/{模板名}.md | 对应分类的模板（纯结构骨架） | 读取 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 | 读取 |
-| 看板联动 | references/console-guide.md | 看板数据契约（refine/review 落库）、决策链路图 10 节点规范、产物展示约定、前端设计铁律 | 读取 |
+| 看板联动 | references/console-guide.md | 看板数据契约（refine/review 落库）、决策链路图 v2 思考时间线、产物展示约定、前端设计铁律 | 读取 |
 | 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复）。**纯标准库无第三方依赖**（2026-08-14 起，原依赖 PyYAML） | **执行** |
 | 删除/回收/移动前（#25/#26） | scripts/check_inbound.py | inbound 引用反查（wikilink/脚注/source 字段），双向清理范围确认工具 | **执行** |
 
@@ -215,4 +217,4 @@ compatibility: 通用
 - [ ] "我的"层是否未做任何修改？
 - [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`；帖子集：粗制品 `type: 帖子集` 按 #29 直接提炼）
 - [ ] **操作门是否已过**（2026-08-14 新增）？——删除/回收/移动前是否已运行 `check_inbound.py` 反查并清理引用？批量操作后是否已运行 `vault_review.py --incremental` 增量校验？
-- [ ] **看板是否已联动**（2026-08-17 新增）？——提炼后是否 `MCP refine_record`（targets 含 thinking 5 步/basis/why/relation）？审查后是否 `MCP review_record`？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md）
+- [ ] **看板是否已联动**？——提炼后是否 `MCP refine_record`（targets 含 thinking v2/basis/relation）？审查后是否 `MCP review_record`？API 失败时是否汇报「看板数据未写入」？**批量新建/改名 vault 文件后是否已 `server-ops vault_sync.sh` 同步到线上（否则线上看板派生索引/审查链接存在性过期）**？（契约见 references/console-guide.md）
