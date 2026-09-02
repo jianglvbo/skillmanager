@@ -1,7 +1,7 @@
 ---
 name: prediction-console
 description: 维护投资看板预测控制台（MySQL 存储，方案 A：vault 不再存控制台 Markdown）。三控制台（个股/行业/市场）的预测录入、状态验证、言论跟踪全部走 MCP console_* 工具落库投资看板。触发词：「预测控制台」「录入预测」「更新预测」「预测跟踪」「预测验证」。排除条件：纯聊天、非投资预测类内容。
-version: 2.0.0
+version: 2.1.0
 ---
 
 # 预测控制台维护（MySQL 版）
@@ -50,6 +50,8 @@ version: 2.0.0
 | `consoleType` | stock/industry/market（必填） |
 | `subjectName` | 主题名：个股=名称（如 贵州茅台）、行业=最下级（白酒）、市场=A股 |
 | `subjectCode` | 个股代码（600519/MU/01104），行业市场可省；**个股必填** |
+| `subjectMarket` | 个股市场：`sh`沪/`sz`深/`hk`港/`kr`韩/`us`美（**个股必填**，看板据此渲染市场徽；A+H 双上市默认 A 股即 `sh`/`sz`，除非文章明确讨论港股） |
+| `subjectHkConnect` | 是否港股通（布尔，**仅 `subjectMarket=hk` 时适用**，看板加绿「通」徽；非港股省略不填） |
 | `predictDate` | 原始判断日期，精确到日 `yyyy-MM-dd`；仅知月份用 `yyyy-MM`（datePrecision=month） |
 | `predictor` | 博主名或"自己" |
 | `content` | 核心判断，保留原文关键表述 |
@@ -109,6 +111,7 @@ version: 2.0.0
 
 - [ ] consoleType/主题/日期/预测人/内容是否齐全？
 - [ ] 个股是否带 subjectCode？行业是否最下级？
+- [ ] 个股是否填了 subjectMarket（sh/sz/hk/kr/us）？港股是否判定 subjectHkConnect（非港股不填）？
 - [ ] 是否已查重（console_get_subject）？DB 幂等是否返回 duplicate？
 - [ ] 预测日期是否为原始判断日期？月级是否走 yyyy-MM？
 - [ ] 状态变更是否带 verify（result+basis）？

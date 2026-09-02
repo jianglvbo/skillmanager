@@ -8,7 +8,7 @@ description: >
 license: MIT
 agent_created: true
 metadata:
-  version: "2.10.0"
+  version: "2.11.0"
   short-description: 投资框架提炼执行器（直接执行）
 compatibility: 通用
 ---
@@ -108,54 +108,13 @@ compatibility: 通用
 提炼完成后，**自动调用投资看板 API 写入链路记录**，确保 `提炼` 看板模块完整呈现本次提炼（产物 + 决策链路）：
 
 - **端点**：`MCP 工具 `refine_record`（REST POST /api/refine/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）`，`Content-Type: application/json`
-- **请求体（完整 schema）**：
-
-```json
-{
-  "from": "工作区/原始资源/<源文件>.md",
-  "sourceType": "raw",          // raw=原始资源 / coarse=粗制品直提（帖子集 #29/直投 #30）
-  "source": "[原文](https://xueqiu.com/.../XXXXXX)",
-  "targets": [
-    {
-      "path": "我的/行业/<条目>.md",
-      "type": "wiki",            // 英文码：wiki=框架条目 / blogger=博主画像言论追踪 / macro=宏观
-      "layer": "my",             // 英文码：my/blogger/other/macro/workspace（禁中文！字典对照见 references/refine-schema.md 二B）
-      "category": "industry",    // 英文码：analysis_framework/trading_system/investment_mentality/investment_insight/stock/industry/macro
-      "tags": ["行业", "周期"],
-      "basis": "原文「<支撑该条目的关键句>」",   // 依据：从原文哪句话提炼
-      "thinking": [                            // 思考链路 v2：自由长度对象数组（2026-08-31 起）
-        { "kind": "观察", "text": "原文开篇提出「先厘清资产特性再选操作思路」，是方法论框架而非个股判断", "quote": "散户习惯把观点简化为看多或看空" },
-        { "kind": "假设", "text": "黄金属大类资产配置逻辑，可能归宏观层而非行业", "quote": "黄金只具备配置价值" },
-        { "kind": "查证", "text": "库内已有同作者同主题条目 宏观/黄金资产长周期特性与配置逻辑.md → 同作者同类命中", "quote": "文主任 2026-07 黄金篇" },
-        { "kind": "对比", "text": "新文补充四大特性、择时不可行、5%-10% 比例 → 与旧文互补", "alt": "备选：新建《黄金配置思路》独立条目——与旧文同主题重复，否决" },
-        { "kind": "决策", "text": "互补合并到既有宏观条目；博主画像同步言论追踪" },
-        { "kind": "结论", "text": "产出 1 个宏观条目（互补）+ 1 条言论追踪" }
-      ],
-      "why": "<拆分/归类/标签决策一句话>",      // 为什么提炼成这个（结论摘要）
-      "relation": "new"          // 英文码：new/append/complement/conflict_check/other（与 C7 联动）
-    }
-  ],
-  "reason": "<整体拆分决策说明>",
-  "steps": ["读取原文", "归属层判断", "创建条目", "更新博主档案", "校验"],
-  "bloggerUpdated": true,
-  "bloggerName": "雪月霜",
-  "verify": { "ok": true, "detail": "verify-format.py 0 问题" },
-  "verificationHints": ["该判断可后续建分析档案做结果跟踪"]
-}
-```
-
-- **多对多拆分**：一篇原文拆为多条条目时，`targets` 数组写全部产出，**每条必填 `basis`（依据原文句）+ `thinking`（思考链路 v2）+ `why`（决策）**——看板产物卡展示「真实思考轨迹 + 依据 + 决策 + 关系」，回答"为什么提炼成这个"
-- **思考链路（thinking）v2 规范（2026-08-31 用户拍板：旧 5 步模板太死板、信息太少，改真实思考链路）**：
-  - 结构：**自由长度对象数组** `[{kind, text, quote?, alt?}]`，按实际推理过程记录，步数不定（5~9 步常见），**禁止固定 5 步模板套话**
-  - `kind`（推理步类型，建议集，可用其他）：`观察`（原文哪部分触发）/ `疑问`·`反问` / `假设`（初步判断）/ `查证`（检索库内/核对数据）/ `对比`（多个选项）/ `权衡` / `排除`（否决某方案）/ `决策`（拍板）/ `结论`（产出）
-  - `quote`：触发该步的**原文关键句**（忠实引用，不编造）；`alt`：**备选方案/被否决的想法**（附否决理由）——分歧与纠错是"真实思考"的核心，比顺滑的结论更能复现推理
-  - **三个决策点必含**（框架质量门，kind 含"决策"）：归属层判断（我的/博主/其他/宏观）、拆分决策（拆几条、各归何类）、关系判断（与库内 new/append/complement/conflict_check——对应审查 C3/C7 联动）
-  - **每一步来自第一步分析的真实判断**（归属层铁律、标签体系、模板选择、同作者预检、可验证判断识别），禁止事后编撰、禁止用空话凑步数（如"价值：值得提炼"这种没信息量的步骤）
-  - **路径书写硬约束（2026-09-01 用户确认）**：`reason`/`thinking`(text/quote/alt)/`basis`/`why`/`verify.detail` 中的 `xxx/yyy.md` 完整路径只允许指向「本次检索确认存在的 vault 文件」或「本条产物/源」；假想、被否决、未创建的条目一律写《名称》（不带 `.md`、不带路径）——看板把 `.md` 路径渲染成可点击跳转链接，《名称》渲染为纯文本（详见 refine-schema.md 四）
-- **博主言论**：涉及已登记博主时，`targets` 同时含 `type:"blogger"` 的画像条目（言论追踪追加），`bloggerUpdated: true`；看板粉色「言论追踪」标记
-- **机制**：提炼完成后 `MCP 工具 `refine_record`（REST POST /api/refine/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）` 落库投资看板（存储实现由看板侧负责，skill 不感知），看板按 `at` 倒序展示（默认最近一个月）；旧 `to[]` 字符串数组自动兼容归一化
-- **失败处理**：API 调用失败（如看板未启动）不阻断提炼主流程；汇报中提示「看板数据未写入」
-- **决策一致性**：`basis/why/relation` 必须来自第一步分析的真实判断（归属层铁律、标签体系、同作者预检），**禁止事后编撰**——与审查 C7 关联提案、C3 矛盾预检联动
+- **请求体 / 字段规范 / 字典码 / thinking v2 细则 / 决策一致性**：全部见 `references/refine-schema.md`（本步唯一权威 schema，含完整 JSON 示例）。执行要点：
+  - 每条 `targets` 必填 `basis`（依据原文句）+ `thinking`（思考链路 v2）；`layer/category/relation/type` 传字典英文码（传中文会外键报错，对照表见 refine-schema.md 二B）
+  - **thinking v2**：自由长度对象数组 `[{kind,text,quote?,alt?}]`，按真实推理记录（观察/疑问/假设/查证/对比/权衡/排除/决策/结论…），`quote`=触发该步原文句、`alt`=备选/否决理由；**归属层/拆分/关系三个决策点必含**（kind 含"决策"）；禁止固定 5 步套话与空话步骤
+  - 涉及已登记博主：`targets` 含 `type:"blogger"` 画像条目 + `bloggerUpdated:true`（看板粉色言论追踪标记）
+  - **自由文本路径硬约束**：`reason/thinking/basis/verify.detail` 里的 `.md` 路径只写真实存在文件或本条产物/源，假想/否决条目写《名称》不带 `.md`（详见 refine-schema.md 四）
+  - `basis/relation` 必须来自第一步真实判断，禁止事后编撰（与审查 C7/C3 联动）
+  - 落库失败（看板未启动等）不阻断主流程，汇报提示「看板数据未写入」
 
 ---
 
@@ -211,4 +170,4 @@ compatibility: 通用
 - [ ] 产出后是否已运行 `verify-format.py` 回检且 0 问题（含模板核心段落标题完整性）？（2026-08-14 新增，防 missing_core_sections 再犯）
 - [ ] 是否识别并提示了可验证判断的后续跟踪方向（建分析档案）？（2026-08-14 新增，治 C6 未验证）
 - [ ] 是否在"我的"层创建了文件？（应该没有）
-- [ ] 落库看板的自由文本（reason/thinking/basis/why/verify.detail）中 `.md` 路径是否全部为真实存在文件或本条产物/源？（假想/否决条目必须写《名称》不带 `.md`，见 refine-schema.md 四）
+- [ ] 落库看板的自由文本（reason/thinking/basis/verify.detail）中 `.md` 路径是否全部为真实存在文件或本条产物/源？（假想/否决条目必须写《名称》不带 `.md`，见 refine-schema.md 四）

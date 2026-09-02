@@ -1,18 +1,19 @@
 # 投资看板（investment-console）联动指南
 
-> 本文件描述流水线（提炼/审查/粗制品）与投资看板的数据契约与渲染约定。看板完整交接文档在用户桌面 `投资知识库看板交接文档.md`（含架构/API/踩坑/设计铁律全量），本文件只保留**执行流水线时必须知道**的部分。
+> 本文件描述流水线（提炼/审查/言论追踪）与投资看板的数据契约与渲染约定，只保留**执行流水线时必须知道**的部分。
 
 ## 1. 看板是什么
 
-纯前端 + 零依赖 Node 轻服务（`~/WorkBuddy/2026-08-09-16-58-44/investment-console/`，端口 8698，launchd 托管 com.investment-console）。内容在 vault（Markdown），结构在 `data/*.json`。**看板不产生知识，只呈现流水线结果。**
+纯前端 + 零依赖 Node 轻服务，端口 8698。**两份部署共用同一 MySQL（`investment_kb`）**：**线上** `/home/jianglb/investment-console`（systemd `investment-console.service`，唯一写入权威）；**本地** `~/Project/investment-console`（iCloud vault，`config.disableDbSync=true`，只读库、仅供 agent 开发）。派生数据在 MySQL（方案 A：预测控制台等已迁库，vault 不再存控制台 Markdown）；知识正文仍在 vault（Markdown）。MCP 端点 `http://106.55.14.116:8698/mcp`（Bearer token 见 `Ai/tools/investment-console-mcp/README.md`）。**看板不产生知识，只呈现流水线结果。**
 
 ## 2. 数据契约（流水线写入）
 
 | 写入方 | 端点 | 数据 | 看板呈现 |
 |:---|:---|:---|:---|
-| investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking v2 思考链路/basis/why/relation） | 提炼时间轴 + 思考时间线（决策链路图） |
+| investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking v2 思考链路/basis/relation） | 提炼时间轴 + 思考时间线（决策链路图） |
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
 | 粗制品评分/加工 | `POST /api/coarse/score` `/process` | 调本地 dsh | 粗制品模块 |
+| prediction-console（言论追踪） | `MCP console_add_prediction` / `console_update_status` / `console_add_track` | 预测/验证留痕/言论跟踪（个股/行业/市场三控制台，含 subjectMarket/subjectHkConnect） | 言论追踪模块（市场徽+港股通徽、验证留痕） |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。
 
@@ -33,7 +34,6 @@
     "thinking": [                 // 标准 5 步：识别/价值/归类/关系/生成
       "识别：…", "价值：…", "归类：…", "关系：…", "生成：…"
     ],
-    "why": "决策一句话",
     "relation": "new"             // 英文码：new/append/complement/conflict_check/other
   }],
   "reason": "整体拆分决策说明",
@@ -45,11 +45,11 @@
 }
 ```
 
-- 一对多：一篇拆多条，targets 全写，每条必填 basis + thinking + why
+- 一对多：一篇拆多条，targets 全写，每条必填 basis + thinking（决策语义由 thinking 的"决策"步承载）
 - thinking 每步来自第一步分析的真实判断（归属层铁律/标签体系/模板选择/同作者预检），**禁止事后编撰**
 - 涉及已登记博主：targets 同时含 `type:"blogger"` 画像条目 + `bloggerUpdated:true`
 - 旧数据 `to[]` 字符串数组自动兼容归一化
-- **路径书写语义（2026-09-01 用户确认，写入侧硬约束）**：自由文本（reason/thinking/basis/why/verify.detail）中 `.md` 完整路径 = 写入方承诺该文件真实存在（本次检索命中或本条产物/源），前端渲染为可点击《文件名》跳 Obsidian；假想/被否决/未创建条目一律写《名称》（不带 `.md`）渲染为纯文本。前端存在性校验（vault 索引 ∪ 本条产物）仅兜底质检，权威判定在写入侧（规则源：investment-refine/references/refine-schema.md 四）
+- **路径书写语义（2026-09-01 用户确认，写入侧硬约束）**：自由文本（reason/thinking/basis/verify.detail）中 `.md` 完整路径 = 写入方承诺该文件真实存在（本次检索命中或本条产物/源），前端渲染为可点击《文件名》跳 Obsidian；假想/被否决/未创建条目一律写《名称》（不带 `.md`）渲染为纯文本。前端存在性校验（vault 索引 ∪ 本条产物）仅兜底质检，权威判定在写入侧（规则源：investment-refine/references/refine-schema.md 四）
 
 ## 4. 决策链路图规范（2026-08-31 v2：用户拍板旧 10 节点太死板、信息太少，改真实思考时间线）
 
