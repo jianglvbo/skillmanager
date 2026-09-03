@@ -2,6 +2,7 @@
 -- investment_kb: 投资知识库看板派生数据层
 -- 架构原则: 本地 vault 为绝对基准（第一/首要/绝对），本库仅为
 --           阅读 + 加工总结的派生数据；一切冲突以 vault 为准。
+-- 2026-09-03 与线上库对齐：bloggers 补 avatar；prediction_subjects 补 market/hk_connect；新增 blogger_statements/todos/quotes 三表；dict 补 platform=wechat。
 -- 字符集: utf8mb4 / utf8mb4_unicode_ci
 -- 约定: 枚举字段一律存码值，逻辑关联统一 dict 码值表（type+code）；主键自增；
 --       枚举字段不设外键（dict 为逻辑字典，由应用层/迁移脚本维护）；每表每字段均带 COMMENT。
@@ -59,6 +60,7 @@ INSERT INTO dict (type, code, name, sort_order, remark) VALUES
 ('platform','xueqiu','雪球',1,'雪球平台'),
 ('platform','douyin','抖音',2,'抖音平台'),
 ('platform','xiaohongshu','小红书',3,'小红书平台'),
+('platform','wechat','公众号',4,'微信公众号平台'),
 ('prediction_status','pending','待验证',1,'尚未到验证时点'),
 ('prediction_status','verifying','验证中',2,'已有部分验证证据'),
 ('prediction_status','verified_correct','已验证(正确)',3,'方向正确（数值偏差进验证备注）'),
@@ -97,6 +99,7 @@ CREATE TABLE bloggers (
   file_count   INT UNSIGNED    NOT NULL DEFAULT 0 COMMENT '博主产出文件数（vault 扫描统计）',
   created_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
   updated_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
+  avatar       VARCHAR(500)    DEFAULT NULL COMMENT '头像 URL（雪球/小红书 CDN，2026-09 新增；vault 同步 upsert 不会覆盖此列、重建安全）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_name (name),
   KEY idx_platform (platform_code),
@@ -279,6 +282,8 @@ CREATE TABLE prediction_subjects (
   created_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (id),
+  market            VARCHAR(8)      DEFAULT NULL COMMENT '市场码值 sh/sz/hk/kr/us（2026-09-01 迁移新增）',
+  hk_connect        TINYINT(1)      DEFAULT NULL COMMENT '是否港股通标的：1 是 / 0 否 / NULL 非港股或未知',
   UNIQUE KEY uq_console_name (console_type_code, name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测主题：预测段落（个股/行业/市场）';
 
@@ -335,3 +340,45 @@ CREATE TABLE prediction_verifications (
   KEY idx_result (result_code),
   CONSTRAINT fk_pv_prediction FOREIGN KEY (prediction_id) REFERENCES prediction_records (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测验证记录：一条预测至多一条验证结论';
+
+-- ============ 三、看板首页与言论追踪（2026-09 新增） ============
+
+-- 26. 博主言论表（博主画像「言论追踪」结构化落库：MySQL 为权威，写库后回写画像段）
+CREATE TABLE blogger_statements (
+  id          INT           NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  blogger     VARCHAR(100)  NOT NULL COMMENT '博主名，对应 vault 博主目录名',
+  kind        VARCHAR(16)   NOT NULL COMMENT '言论类型：concrete=具象化，view=观点，signal=信号，interaction=互动',
+  stmt_date   DATE          DEFAULT NULL COMMENT '言论发布日期，原文未标注则为 NULL',
+  target      VARCHAR(200)  NOT NULL DEFAULT '' COMMENT '言论涉及标的（个股/行业），无关标的为空串',
+  view_text   TEXT          DEFAULT NULL COMMENT '观点原文表述',
+  signal_text TEXT          DEFAULT NULL COMMENT '信号描述（买卖/仓位等可执行信号）',
+  source      VARCHAR(200)  NOT NULL DEFAULT '' COMMENT '来源名称（雪球/公众号/小红书等）',
+  source_url  VARCHAR(500)  NOT NULL DEFAULT '' COMMENT '原文链接，无则空串',
+  created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (id),
+  KEY idx_blogger_kind (blogger, kind, stmt_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='博主言论表：博主画像「言论追踪」表格的结构化落库（MySQL 权威，写库后回写画像段）';
+
+-- 27. 首页待办表
+CREATE TABLE todos (
+  id         INT           NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  content    VARCHAR(500)  NOT NULL COMMENT '待办内容',
+  due_time   DATETIME      DEFAULT NULL COMMENT '截止时间，NULL 表示无到期日',
+  done       TINYINT       NOT NULL DEFAULT 0 COMMENT '完成标记：0=未完成，1=已完成',
+  done_at    DATETIME      DEFAULT NULL COMMENT '完成时间，未完成为 NULL',
+  sort_order INT           NOT NULL DEFAULT 0 COMMENT '手工排序序号，越小越靠前',
+  created_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='首页待办表：看板首页 todo 清单（录入/勾选/排序）';
+
+-- 28. 首页语录表
+CREATE TABLE quotes (
+  id         INT           NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  seq        INT           NOT NULL COMMENT '语录序号，决定展示顺序',
+  text       VARCHAR(300)  NOT NULL COMMENT '语录正文',
+  created_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_seq (seq)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='首页语录表：轮播展示的激励语录，初始化时一次性灌入';
