@@ -77,13 +77,18 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── meta/                      ← 元工具（skill 管理类）
 │   │   ├── ai-repo-manager/       ←   Ai/ 仓库管理
 │   │   ├── git-ops/               ←   通用 git 提交管理
+│   │   ├── server-ops/            ←   云服务器运维（MySQL / fitness-console）
 │   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
 │   ├── content/                   ← 内容提取
+│   │   ├── autocli/               ←   autocli 操作 55+ 网站（复用 Chrome 登录态）
 │   │   ├── browser-act/           ←   BrowserAct 浏览器自动化
+│   │   ├── crawl4ai-skill/        ←   Crawl4AI 爬虫（免费无 API key）
 │   │   ├── douyin-video-summary/  ←   抖音视频摘要
+│   │   ├── ebook-download/        ←   免费电子书检索下载
 │   │   ├── wechat-article/        ←   公众号文章提取
 │   │   └── full-text-organizer/   ←   语音转录稿→书面文章
 │   ├── office/                    ← 办公工具
+│   │   ├── getnote/               ←   得到 Get笔记（OpenAPI + OAuth）
 │   │   ├── mac-cleaner/           ←   macOS 磁盘清理
 │   │   └── qmd/                   ←   本地文档索引
 │   ├── investment/                ← 投资知识框架
@@ -91,12 +96,16 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── investment-coarse-processor/ ← 粗加工
 │   │   ├── investment-refine/     ←   提炼执行器
 │   │   ├── investment-review/     ←   审查执行器
-│   │   └── xq-post-fetch/         ←   雪球帖子采集
+│   │   ├── xq-post-fetch/         ←   雪球帖子采集
+│   │   ├── prediction-console/    ←   预测控制台（录入/验证/言论跟踪，MySQL 落库）
+│   │   └── tradingagents-deploy/  ←   TradingAgents 多智能体投研部署
 │   └── frontend/                  ← 前端开发（console-style 风格）
 │       └── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
 └── tools/
     ├── autocli/
-    └── browser-act-cli/
+    ├── browser-act-cli/
+    ├── investment-console-mcp/  ← 看板 MCP 服务接入说明
+    └── investment-kb/           ← investment_kb schema 权威记录
 ```
 
 ---
@@ -200,6 +209,7 @@ git push origin main
 |:---|:---|
 | `ai-repo-manager` | Ai/ 仓库 GitHub 版本管理（README 更新约定、cp -r 安装） |
 | `git-ops` | 通用 git 提交管理（检测变更/提交/自定义信息/历史/推送） |
+| `server-ops` | 云服务器运维：MySQL 管理与备份、fitness-console 部署与重启 |
 | `skill-guidelines` | Agent Skill 设计准则（五层认知架构 + 六段模板） |
 
 ### content/ — 内容提取
@@ -207,6 +217,9 @@ git push origin main
 | Skill | 说明 |
 |:---|:---|
 | `browser-act` | BrowserAct 浏览器自动化（隐身反检测 + 结构化提取） |
+| `autocli` | 用 autocli CLI 操作 55+ 社交/内容网站，复用 Chrome 登录态，优先于 playwright |
+| `crawl4ai-skill` | Crawl4AI 爬虫：DuckDuckGo 检索、站点爬取、动态页，免费无需 API key |
+| `ebook-download` | 从互联网检索并下载免费电子书（PDF/EPUB） |
 | `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
 | `wechat-article` | 微信公众号文章提取与转 Markdown |
 | `full-text-organizer` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
@@ -216,6 +229,7 @@ git push origin main
 | Skill | 说明 |
 |:---|:---|
 | `mac-cleaner` | macOS 磁盘分析与清理 |
+| `getnote` | 得到 Get笔记：保存、搜索、知识库与标签管理（OpenAPI + OAuth） |
 | `qmd` | 本地文档索引与搜索（BM25 + 向量） |
 
 ### frontend/ — 前端开发（console-style 风格）
@@ -233,6 +247,8 @@ git push origin main
 | `investment-refine` | 提炼执行器：直接执行，原始资源/帖子集 → 框架条目（一对多，可读性优先） |
 | `investment-review` | 审查执行器：内容审查 + 结构审查 + 关联备注发现 |
 | `xq-post-fetch` | 雪球帖子采集：browser-act 抓全文 + 截断补全 + 结构化 markdown 输出 |
+| `prediction-console` | 预测控制台：个股/行业/市场三类录入、状态验证、言论跟踪，MCP 落库 MySQL |
+| `tradingagents-deploy` | TradingAgents 多智能体投研框架的国内部署与运维 |
 
 ---
 
@@ -242,4 +258,4 @@ MIT
 
 ---
 
-*最后更新：2026-08-18*
+*最后更新：2026-09-03*
