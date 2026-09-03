@@ -80,15 +80,11 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── server-ops/            ←   云服务器运维（MySQL / fitness-console）
 │   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
 │   ├── content/                   ← 内容提取
-│   │   ├── autocli/               ←   autocli 操作 55+ 网站（复用 Chrome 登录态）
 │   │   ├── browser-act/           ←   BrowserAct 浏览器自动化
-│   │   ├── crawl4ai-skill/        ←   Crawl4AI 爬虫（免费无 API key）
 │   │   ├── douyin-video-summary/  ←   抖音视频摘要
-│   │   ├── ebook-download/        ←   免费电子书检索下载
 │   │   ├── wechat-article/        ←   公众号文章提取
 │   │   └── full-text-organizer/   ←   语音转录稿→书面文章
 │   ├── office/                    ← 办公工具
-│   │   ├── getnote/               ←   得到 Get笔记（OpenAPI + OAuth）
 │   │   ├── mac-cleaner/           ←   macOS 磁盘清理
 │   │   └── qmd/                   ←   本地文档索引
 │   ├── investment/                ← 投资知识框架
@@ -217,9 +213,6 @@ git push origin main
 | Skill | 说明 |
 |:---|:---|
 | `browser-act` | BrowserAct 浏览器自动化（隐身反检测 + 结构化提取） |
-| `autocli` | 用 autocli CLI 操作 55+ 社交/内容网站，复用 Chrome 登录态，优先于 playwright |
-| `crawl4ai-skill` | Crawl4AI 爬虫：DuckDuckGo 检索、站点爬取、动态页，免费无需 API key |
-| `ebook-download` | 从互联网检索并下载免费电子书（PDF/EPUB） |
 | `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
 | `wechat-article` | 微信公众号文章提取与转 Markdown |
 | `full-text-organizer` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
@@ -229,7 +222,6 @@ git push origin main
 | Skill | 说明 |
 |:---|:---|
 | `mac-cleaner` | macOS 磁盘分析与清理 |
-| `getnote` | 得到 Get笔记：保存、搜索、知识库与标签管理（OpenAPI + OAuth） |
 | `qmd` | 本地文档索引与搜索（BM25 + 向量） |
 
 ### frontend/ — 前端开发（console-style 风格）
