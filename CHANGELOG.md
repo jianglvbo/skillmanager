@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2026-09-03
+
+### Changed（博主言论体系重构 Phase A · 依据用户规则《博主言论设计》+ 方案 v2）
+- investment-framework：`framework-rules` #30 由四类 kind（具象化/观点/信号/互动）改为**内容五分**（研究/观点/心得总结/闲聊，买卖走 #31），统一列扩为「观点时间｜发帖时间｜内容｜标的/行业｜方向｜…」并新增**双时间硬约束**（观点时间 ≤ 发帖时间、推算跨度≥2年标待复核、粒度不得假精确）与「落库唯一路径 = MCP `blogger_statement`，禁止手改画像表格」；#31 补方向必填、代称还原、**默认不自动生成预测**；`assets/博主.md` 两张表换新列并预埋 `<!-- statements/trades:begin/end -->` 锚点
+- investment-coarse-processor：「正文原封不动保留（含图片引用）」硬约束**加作用域**——雪球博主言论采集链路必须纯文本（去图片/图片链接/表情含 `[表情名]` 占位）+ 剥离页脚噪声；非言论链路（转录、长文研究、其他来源）该约束继续全额生效
+- xq-post-fetch：第七步新增采集期契约——纯文本化清单、`author` 必须在页脚剥离后解析且不得含 `发布于|来自|关注`（历史脏值会让博主头像与归属失效）、每条记 `发帖时间` + `形态`；**明确不在采集期猜内容分类或写观点时间**（归提炼）
+- investment-refine：新增第 1.5 步**博主言论分流决策矩阵**——P1/P2/P3 优先级、`content_type` × 是否涉标的 → 去向表（trade→`blogger_trade`；涉标的→`blogger_statement`+画像+看板；不涉标的→能成 wiki 否则舍弃；闲聊→门槛内才留）、代称还原、双时间判定、"能成 wiki" 一刀切判据、"落画像必落看板"铁律
+- 看板侧配套（同日常提交于 `~/Project/investment-console`）：`blogger_statements` 加 12 列（五分/双时间/方向/subject_id/blogger_id/src_rel/幂等键）、新建 `blogger_trades`、`prediction_records.origin_*`；REST+MCP `blogger_trade`；画像同步改锚点化 + 写后行数断言（修末段重复插段与静默丢写）；前端五分分节/双时间/方向徽标/买卖节/仅待复核/单轨言论追踪。smoke 26 项断言通过，历史 943 条零丢失
+- 待办 Phase B：943 条 kind→五分映射回填、843 条 `prediction_tracks` 误灌迁回、dict 枚举真源化、库内 collation 统一（`0900_ai_ci` vs `unicode_ci` 混用会让按名称 JOIN 报 Illegal mix）
+
 ## 2026-09-02
 
 ### Changed
