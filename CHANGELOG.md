@@ -8,7 +8,9 @@
 - xq-post-fetch：第七步新增采集期契约——纯文本化清单、`author` 必须在页脚剥离后解析且不得含 `发布于|来自|关注`（历史脏值会让博主头像与归属失效）、每条记 `发帖时间` + `形态`；**明确不在采集期猜内容分类或写观点时间**（归提炼）
 - investment-refine：新增第 1.5 步**博主言论分流决策矩阵**——P1/P2/P3 优先级、`content_type` × 是否涉标的 → 去向表（trade→`blogger_trade`；涉标的→`blogger_statement`+画像+看板；不涉标的→能成 wiki 否则舍弃；闲聊→门槛内才留）、代称还原、双时间判定、"能成 wiki" 一刀切判据、"落画像必落看板"铁律
 - 看板侧配套（同日常提交于 `~/Project/investment-console`）：`blogger_statements` 加 12 列（五分/双时间/方向/subject_id/blogger_id/src_rel/幂等键）、新建 `blogger_trades`、`prediction_records.origin_*`；REST+MCP `blogger_trade`；画像同步改锚点化 + 写后行数断言（修末段重复插段与静默丢写）；前端五分分节/双时间/方向徽标/买卖节/仅待复核/单轨言论追踪。smoke 26 项断言通过，历史 943 条零丢失
-- 待办 Phase B：943 条 kind→五分映射回填、843 条 `prediction_tracks` 误灌迁回、dict 枚举真源化、库内 collation 统一（`0900_ai_ci` vs `unicode_ci` 混用会让按名称 JOIN 报 Illegal mix）
+- framework-rules #38 补「旧主题维过渡语义」：`prediction_tracks` 定为迁移中的遗留表，新增言论一律走 `blogger_statement`；B3 只标记不删行（`migrated_to_statement_id`），未归因行保留旧表标待复核并以「待清理 N」角标显示，**残余为零才自动下架**（禁止为图干净删/藏仍承载待复核数据的主题）
+- Phase B 进度：B0 collation 全库统一 ✅、B1 943 条五分/双时间回填 ✅、B3 旧主题维迁回 ✅（843 中 192 可归因迁回、651 无 wikilink 待人工；交易体系 已停用，投资认知 470/心态 5/理念 3/市赚率 3 保留可见）
+- 待办 Phase B 余项：B2 抽取 66 条 trade→`blogger_trades`（等用户定，60 条无操作动词不猜写）、B4 dict 枚举真源化、651 条 legacy 人工归因
 
 ## 2026-09-02
 
