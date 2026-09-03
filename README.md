@@ -80,13 +80,8 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── server-ops/            ←   云服务器运维（MySQL / fitness-console）
 │   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
 │   ├── content/                   ← 内容提取
-│   │   ├── browser-act/           ←   BrowserAct 浏览器自动化
-│   │   ├── douyin-video-summary/  ←   抖音视频摘要
 │   │   ├── wechat-article/        ←   公众号文章提取
 │   │   └── full-text-organizer/   ←   语音转录稿→书面文章
-│   ├── office/                    ← 办公工具
-│   │   ├── mac-cleaner/           ←   macOS 磁盘清理
-│   │   └── qmd/                   ←   本地文档索引
 │   ├── investment/                ← 投资知识框架
 │   │   ├── investment-framework/  ←   全局编排者
 │   │   ├── investment-coarse-processor/ ← 粗加工
@@ -212,17 +207,8 @@ git push origin main
 
 | Skill | 说明 |
 |:---|:---|
-| `browser-act` | BrowserAct 浏览器自动化（隐身反检测 + 结构化提取） |
-| `douyin-video-summary` | 抖音视频摘要（whisper 转录 + AI 总结） |
 | `wechat-article` | 微信公众号文章提取与转 Markdown |
 | `full-text-organizer` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
-
-### office/ — 办公工具
-
-| Skill | 说明 |
-|:---|:---|
-| `mac-cleaner` | macOS 磁盘分析与清理 |
-| `qmd` | 本地文档索引与搜索（BM25 + 向量） |
 
 ### frontend/ — 前端开发（console-style 风格）
 
