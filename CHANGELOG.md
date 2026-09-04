@@ -12,6 +12,8 @@
 - framework-rules 追加：#30 增「码值权威源 = 看板 MySQL `dict`（`stmt_content_type`/`stance`/`trade_op`，`remark` 存判据、`sort_order` 定分节顺序），改分类只改字典不改代码」；#31 明确预测两侧关联机制——`console_add_prediction` 传 `statementId`，漏传则服务端按「同主题＋同链接＋正文相似度≥0.5」自动回填 `origin_kind='statement'`＋`origin_id` 并把言论归 `predict`，看板合并一张卡、禁止手工补录第二份
 - prediction-console：Default stance 增「预测两条链路、一处展示」与「码值权威源」两条核心原则；`console_add_prediction` 参数表补 `statementId`；`console_add_track` 用途边界把 predict 言论归档一并指向 `blogger_statement`；自检加「关联是否命中（`linkedStatementId`）」
 
+- framework-rules #30 补硬约束：「观点时间依据」只随 `derived`/`explicit` 存在，`as_posted` 一律留空（服务端强制清空）；迁移/采集溯源禁止写进该字段（看板侧已清空 215 条「由 prediction_tracks 迁回」噪声，快照见 workspace/outputs/view_date_basis清空前快照.json）
+
 ## 2026-09-03
 
 ### Changed（博主言论体系重构 Phase A · 依据用户规则《博主言论设计》+ 方案 v2）
