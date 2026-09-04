@@ -9,6 +9,9 @@
 - xq-post-fetch：`content_type`（五分法）→（六分法）
 - 看板（`~/Project/investment-console`）：`CONTENT_TYPES`/`CONTENT_CN`/`STMT_ORDER` 加 predict；MCP `blogger_statement` enum + 描述补 predict 定义；前端博主详情与言论追踪详情新增「全部」tab（时间倒序混排），结构化预测并入「预测记录」tab、取消底部常显；修 `consoleGetSubject` 直切 `toISOString` 使预测日期少一天的时区 bug；`blogger_statements.content_type` 列注释改六分；存量 id 783 改判 predict（看多 + 目标位进信号列）
 
+- framework-rules 追加：#30 增「码值权威源 = 看板 MySQL `dict`（`stmt_content_type`/`stance`/`trade_op`，`remark` 存判据、`sort_order` 定分节顺序），改分类只改字典不改代码」；#31 明确预测两侧关联机制——`console_add_prediction` 传 `statementId`，漏传则服务端按「同主题＋同链接＋正文相似度≥0.5」自动回填 `origin_kind='statement'`＋`origin_id` 并把言论归 `predict`，看板合并一张卡、禁止手工补录第二份
+- prediction-console：Default stance 增「预测两条链路、一处展示」与「码值权威源」两条核心原则；`console_add_prediction` 参数表补 `statementId`；`console_add_track` 用途边界把 predict 言论归档一并指向 `blogger_statement`；自检加「关联是否命中（`linkedStatementId`）」
+
 ## 2026-09-03
 
 ### Changed（博主言论体系重构 Phase A · 依据用户规则《博主言论设计》+ 方案 v2）
