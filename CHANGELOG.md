@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2026-09-04
+
+### Changed（博主言论五分法 → 六分法，新增 `predict` 预测记录）
+- 动因（用户指出方案漏项）：帖子里的预测此前只能落 `view`，看板「观点」分类混入预测表述；且同一判断经预测控制台另录一份，两处显示、彼此无关联
+- investment-framework：`framework-rules` #30 言论追踪子表 4 → **5**（研究 / **预测记录** / 观点 / 心得总结 / 闲聊），补 predict 三要素判定（**① 明确方向 ② 未来指向（时间窗或事件条件）③ 可判对错**）、历史复盘不得算预测；#35 同步「5 子表」，并把画像里同名的表写作「预测记录（准确率追踪）」消歧
+- investment-refine：第 1.5 步分流矩阵新增 `predict` 行（必涉标的，`stance` 必填、`signal` 写目标位/时间窗），优先级 P2 纳入 predict
+- xq-post-fetch：`content_type`（五分法）→（六分法）
+- 看板（`~/Project/investment-console`）：`CONTENT_TYPES`/`CONTENT_CN`/`STMT_ORDER` 加 predict；MCP `blogger_statement` enum + 描述补 predict 定义；前端博主详情与言论追踪详情新增「全部」tab（时间倒序混排），结构化预测并入「预测记录」tab、取消底部常显；修 `consoleGetSubject` 直切 `toISOString` 使预测日期少一天的时区 bug；`blogger_statements.content_type` 列注释改六分；存量 id 783 改判 predict（看多 + 目标位进信号列）
+
 ## 2026-09-03
 
 ### Changed（博主言论体系重构 Phase A · 依据用户规则《博主言论设计》+ 方案 v2）
