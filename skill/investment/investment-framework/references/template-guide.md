@@ -110,3 +110,19 @@
 - **个股买卖记录**：博主明确买卖动作；操作枚举/价格取值/备注规则见 framework-rules #31；时间倒序
 - **预测记录（准确率追踪）**：预测内容 | 时间 | 状态（已验证/验证中/待验证/证伪）| 原文链接，见 framework-rules #35
 - 三表原文链接**禁止留空 `-`**；无来源帖链接则该行不建（framework-rules #35）
+
+## 模板路径表（自 SKILL.md 下沉）
+
+| 模板 | 路径 | 用途 |
+|:---|:---|:---|
+| 分析框架-方法论 | investment-framework/assets/分析框架-方法论.md | 分析方法论条目（纯结构骨架） |
+| 分析框架-分析档案 | investment-framework/assets/分析框架-分析档案.md | 具体标的分析记录（纯结构骨架） |
+| 交易体系 | investment-framework/assets/交易体系.md | 交易规则条目（纯结构骨架） |
+| 投资心态 | investment-framework/assets/投资心态.md | 心态问题/教训条目（纯结构骨架） |
+| 投资心得 | investment-framework/assets/投资心得.md | 经验教训条目（纯结构骨架） |
+| 宏观 | investment-framework/assets/宏观.md | 宏观事件分析条目（纯结构骨架） |
+| 行业 | investment-framework/assets/行业.md | 行业分析条目（纯结构骨架） |
+| 个股 | investment-framework/assets/个股.md | 个股信息枢纽条目（纯结构骨架） |
+| 博主 | investment-framework/assets/博主.md | 博主档案条目（纯结构骨架） |
+
+> 模板 = 纯结构骨架（字段 + section 标题 + 表格表头），**不含解释**。各 section 的写作指引统一在 `references/template-guide.md`；字段/标签/来源/脚注规则见 framework-rules / tag-taxonomy / footnote-taxonomy。产出文件可保留模板空结构（空 section / 空表格表头），但不得出现模板解释残留（花括号占位、blockquote 指引、frontmatter 注释、全空占位行，verify-format.py 检测）。

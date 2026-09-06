@@ -97,12 +97,7 @@ browser-act get-skills core --skill-version 2.0.2
 
 截断检测与补全规则见 `references/page-structure.md`「截断检测」（`[展开]()` 标记判定）+ `references/execution-guide.md`「第五步」：
 
-**补全流程（详情页 HTML，非 API）**：
-```bash
-browser-act --session {name} navigate "https://xueqiu.com/{xq_id}/{post_id}"
-browser-act --session {name} wait stable
-browser-act --session {name} get markdown
-```
+**补全流程（详情页 HTML，非 API）**：navigate `https://xueqiu.com/{xq_id}/{post_id}` → `wait stable` → `get markdown`（命令模板与参数见 execution-guide「第五步」）。
 - 提取「来源：雪球App」与「风险提示」之间正文（完整全文）
 - 详情页同时提供精确发布时间（`发布于 YYYY-MM-DD HH:MM`），覆盖用户页的模糊时间
 - 补全后标记：「全文」（经详情页验证）vs「摘要」（详情页也无法获取全文）
@@ -159,26 +154,7 @@ pkill -f "headless=new" 2>/dev/null; sleep 1; pgrep -f "headless" | wc -l   # �
 
 ## Output Format
 
-输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。完整格式规范（frontmatter/三件套/字段表/铁律）见 `references/output-format.md`，核心模板：
-
-```markdown
----
-title: "雪球帖子采集：{nickname} {YYYY年M月D日}"
-source: "https://xueqiu.com/u/{xq_id}"
-author: "{nickname}"
-date: "{YYYY年M月D日}"
-recorded: "{YYYY年M月D日}"
-type: "帖子集"
-status: "待提炼"
-tags: []
----
-
-## 1. {帖子标题}
-
-{正文全文}
-
-> 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
-```
+输出为 markdown 文件（帖子集按 #29 例外流程直接进提炼，不经粗加工）。**完整格式规范——frontmatter 字段表、三件套结构（`## N. 标题`+正文+摘要行）、核心模板、铁律——一律见 `references/output-format.md`**，字段名与取值严格按该文件、不得自创。
 
 ---
 

@@ -102,15 +102,7 @@ compatibility: 通用
 
 ### 看板联动（investment-console · 2026-08-17 新增）
 
-流水线结果写入本地运行的投资看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管 com.investment-console；读本地 iCloud vault、连远程 MySQL；连接与 token 见 `Ai/tools/investment-console-mcp/README.md`），看板不产生知识、只呈现结果：
-
-- **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking v2 自由对象数组/basis/relation）→ 提炼时间轴 + 决策链路图
-- **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
-- **预测控制台**（2026-08-31 方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）→ `MCP console_list_subjects / console_get_subject / console_add_prediction / console_update_status / console_add_track`（见 prediction-console skill v2.0）→ 看板预测控制台模块（个股/行业/市场三页签）
-- **决策链路图 v2（思考时间线，2026-08-31 起替代旧 10 节点流程图）**：源→拆分决策→每条产物一条思考轨道（kind 徽章 + 推理文本，决策步红点、quote 原文引用、alt 否决块）→产物卡即终点；判断只留给有真实分叉处（归属层/关系），关系判断落在 thinking 的「决策」步，审查 C3/C7=写后质检不重复。详见 console-guide §4
-- **产物展示**：多产物**横向并联**（产物徽章并排、无箭头，不用 SVG 分叉图——用户试用后否决）
-- 失败处理：API 失败不阻断主流程，汇报提示「看板数据未写入」
-- 完整契约/渲染要点/设计铁律 → `references/console-guide.md`
+完整清单见 `references/console-guide.md` §9（refine_record / review_record / console_* 三类 MCP 落库、决策链路图 v2 思考时间线、产物展示横向并联、失败处理）。提炼/审查执行器各自负责落库调用，编排者只在汇报中核对「看板数据未写入」提示。
 
 ---
 
@@ -147,19 +139,7 @@ compatibility: 通用
 
 ## 模板路径表
 
-| 模板 | 路径 | 用途 |
-|:---|:---|:---|
-| 分析框架-方法论 | investment-framework/assets/分析框架-方法论.md | 分析方法论条目（纯结构骨架） |
-| 分析框架-分析档案 | investment-framework/assets/分析框架-分析档案.md | 具体标的分析记录（纯结构骨架） |
-| 交易体系 | investment-framework/assets/交易体系.md | 交易规则条目（纯结构骨架） |
-| 投资心态 | investment-framework/assets/投资心态.md | 心态问题/教训条目（纯结构骨架） |
-| 投资心得 | investment-framework/assets/投资心得.md | 经验教训条目（纯结构骨架） |
-| 宏观 | investment-framework/assets/宏观.md | 宏观事件分析条目（纯结构骨架） |
-| 行业 | investment-framework/assets/行业.md | 行业分析条目（纯结构骨架） |
-| 个股 | investment-framework/assets/个股.md | 个股信息枢纽条目（纯结构骨架） |
-| 博主 | investment-framework/assets/博主.md | 博主档案条目（纯结构骨架） |
-
-> 模板 = 纯结构骨架（字段 + section 标题 + 表格表头），**不含解释**。各 section 的写作指引统一在 `references/template-guide.md`；字段/标签/来源/脚注规则见 framework-rules / tag-taxonomy / footnote-taxonomy。产出文件可保留模板空结构（空 section / 空表格表头），但不得出现模板解释残留（花括号占位、blockquote 指引、frontmatter 注释、全空占位行，verify-format.py 检测）。
+9 个模板（分析框架-方法论 / 分析框架-分析档案 / 交易体系 / 投资心态 / 投资心得 / 宏观 / 行业 / 个股 / 博主）的 assets 路径与用途见 `references/template-guide.md`「模板路径表」。模板=纯结构骨架（字段+section 标题+表头）不含解释；各 section 写作指引同在 template-guide.md，产出文件可保留空结构但不得有模板解释残留（verify-format.py 检测）。
 
 ---
 
@@ -206,15 +186,11 @@ compatibility: 通用
 
 ## 自检
 
-- [ ] 用户意图是否在路由表中？
+- [ ] 用户意图是否命中路由表、走对执行 skill？（含例外路径：#29 帖子集、#30 截图直投）
 - [ ] 所有路径是否来自路径表（非硬编码）？
-- [ ] 粗加工是否只整理格式、不生成预览表？
-- [ ] 提炼是否直接执行并汇报结果（无等待确认环节）？
-- [ ] 提炼产出的标签是否来自标签体系？
-- [ ] 博主归属是否仅限博主控制台已登记博主？是否存在 Agent 自动补登（违规）或未登记作者误挂博主层？
-- [ ] 待回收处置是否严格按 #26（用户加 `delete` 字段标记、状态由审查计算、7 天冷静期、超期真删+双向清理+理由报告），Agent 不替用户标记、不 shortcut？**粗制品例外**：`工作区/粗制品/` 跳过冷静期即时可回收（2026-08-16 确认），内容型条目绝不缩短？
-- [ ] "其他"层是否只包含投资相关的投资人内容？
-- [ ] "我的"层是否未做任何修改？
-- [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`；帖子集：粗制品 `type: 帖子集` 按 #29 直接提炼）
-- [ ] **操作门是否已过**（2026-08-14 新增）？——删除/回收/移动前是否已运行 `check_inbound.py` 反查并清理引用？批量操作后是否已运行 `vault_review.py --incremental` 增量校验？
-- [ ] **看板是否已联动**？——提炼后是否 `MCP refine_record`（targets 含 thinking v2/basis/relation）？审查后是否 `MCP review_record`？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md）
+- [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`，否则先粗加工、**禁止跳过**）
+- [ ] **操作门是否已过**？——删除/回收/移动前已运行 `check_inbound.py` 反查并清理引用；批量操作后已运行 `vault_review.py --incremental` 增量校验
+- [ ] 待回收处置是否严格按 #26（用户加 `delete` 字段标记、7 天冷静期、超期真删+双向清理+理由报告），Agent 不替用户标记、不 shortcut？**粗制品例外**：跳过冷静期即时可回收（2026-08-16 确认）
+- [ ] 看板是否已联动（refine_record / review_record）？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md §9）
+
+> 提炼/粗加工/审查的**执行层**自检（标签体系、归属层、模板完整、字段规范等）在各执行 skill 的自检节，编排者不重复。
