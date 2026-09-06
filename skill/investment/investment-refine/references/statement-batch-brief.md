@@ -1,0 +1,64 @@
+# 博主言论分流 · 执行简报（批处理专用，勿再读全量文档）
+
+> 用途：雪球帖子集（粗制品，#29 直提）批量拆言论落库的**唯一必读**。本简报已浓缩 refine-schema §六 决策矩阵、tag-taxonomy、工具契约、收尾规则。
+> 出处：refine-schema.md §六（全文仅为兜底复核，正常执行不需要读）。
+
+## 0. MCP 连接（curl POST，非内建工具）
+
+- URL `http://127.0.0.1:8698/mcp`，Header `Authorization: Bearer <token>`（token 读 `~/.config/server-ops/credentials.md` 的 MCP_TOKEN）
+- 网络偶发超时 → 重试 3-4 次退避；**禁调研工具文档**（参数见 §4）
+
+## 1. 六分法（落库 contentType 一律英文码值；汇报用中文名）
+
+| 码值 | 显示名 | 一句话判据 | 必填 |
+|:---|:---|:---|:---|
+| trade | 买卖记录 | 明确买卖动作（入/加/减/卖/清）→ 走 blogger_trade，不走 statement | op/price 有则填 |
+| research | 研究 | 含数据/估值/行业结构的可复用分析 | — |
+| predict | 预测记录 | ①方向 ②未来指向(时间窗/事件) ③可判对错(目标位) 三者缺一不可 | stance |
+| view | 观点 | 当下判断（底部/可买价位等） | stance |
+| insight | 心得总结 | 心得/方法论/复盘 | — |
+| chat | 闲聊 | 仅能刻画擅长/心态才留，否则丢 | — |
+
+**predict 易错**：估值判断（"合理价 HKD26.6"无时间窗）→ view，不建 predict；历史复盘不算。
+
+## 2. 双时间
+
+- `view_date` 默认 = `post_date`（as_posted）
+- 相对表述（"三年前"等）→ derived + `view_date_basis` 存原句，粒度不假装精确
+- **帖内无日期 → 两字段留空，不编造**；URL 缺失的帖见 §5
+
+## 3. 主题（subjectId）
+
+- 涉个股/行业/市场言论**必须** subjectId，否则不进言论追踪控制台
+- 缺主题先 `console_ensure_subject`：行业按申万标准名（禁自创）；个股带 code+market(+hkConnect 港股通)
+- 标的使用代称时还原（寒王→寒武纪），原词存 targetAlias
+
+## 4. 落库调用骨架（参数名严格一致）
+
+```json
+console_ensure_subject { "consoleType":"stock|industry|market", "name":"", "code":"", "market":"A股|港股|美股", "hkConnect":true }
+blogger_statement { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "postDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", "srcRel":"工作区/粗制品/批次文件名.md" }
+blogger_trade   { "action":"add", "blogger":"", "op":"buy|add|reduce|sell|clear", "targetName":"", "targetAlias":"", "price":"", "stance":"", "tradeDate":"", "postDate":"", "subjectId":N, "sourceUrl":"", "srcRel":"" }
+console_add_prediction  // predict 言论落库后调用，回填 origin（参数见工具，勿臆造）
+```
+
+**写前查重**：同博主同段文字已存在 → update 合并，不新增第二份。
+
+## 5. 铁律
+
+- **原文链接**：无 sourceUrl 不建行——高价值言论列入「缺URL挂起」汇报（附原文前 80 字），禁编造 URL
+- **内容精炼**：落库 view 用一句话摘要含关键数字，**不存整篇原文**
+- **能成 wiki**：内容提供可脱离语境复用的判断逻辑/框架 → 才建（博主层模板 + verify-format）；不硬造
+- **⚠待确认**：分类不明/价值高去向不明 → 不写不丢，汇报「原文+原因+候选」
+- **#29 收尾**：批次处理完 `mv 工作区/粗制品/{批次}.md ~/.Trash/{批次}.20260906.md`（不可写则 rm 注明）
+- 画像 md 由服务端自动镜像，**禁手改画像**
+
+## 6. 汇报格式（极简，一次性）
+
+按批次一行：`博主 | 帖数→言论数(类型分布) | statement/trade id | predict关联 | wiki | ⚠/缺URL条数`
+末尾汇总：⚠清单原文、缺URL清单原文（各≤80字）、批次去向。失败明确列原因。
+
+## 7. 防烧预算
+
+- 只读本简报；文档/工具参数**勿再翻**（本简报即权威浓缩）
+- 卡住超 2 个文件未决 → 处理能处理的，未决项进 ⚠/挂起清单照常收尾，**不得空转重试**

@@ -76,6 +76,8 @@ compatibility: 通用
 
 ### 第 1.5 步：博主言论分流决策矩阵（2026-09-03）
 
+> **批量执行（帖子集分流）优先加载浓缩简报 `references/statement-batch-brief.md`**（含六分判据/工具参数/收尾/防烧预算），无需重读 refine-schema §六 全量；仅存疑时回看全量。
+
 雪球博主帖子按语义拆成 N 条言论（一帖多条），每条**先判类型、再定去向**。优先级：P1 `trade/research` 必查必录 → P2 `predict/view/insight` → P3 `chat`（高门槛）。**完整决策矩阵、`predict` 判定三要素（含白酒易错例）、标的代称还原、观点时间双时间判定、能成 wiki 的一刀切判据、落库铁律与查重 → 见 `references/refine-schema.md`「六、博主言论分流决策矩阵」**（判据权威源同 framework-rules #30）。
 
 ### 第二步：创建框架条目
