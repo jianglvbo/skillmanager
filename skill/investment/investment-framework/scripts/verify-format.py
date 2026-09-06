@@ -384,8 +384,8 @@ def verify_file(fpath, rel):
         'curly_placeholder': check_curly_placeholder(fm_text + body),
         'source_field': [] if is_blogger_profile else (check_source_field(fm) if fm else []),
     }
-    issues = {k: v for k, v in issues.items() if v}
-    return issues if len(issues) > 0 else None
+    issues = {k: v for k, v in issues.items() if k != 'file' and v}
+    return issues if issues else None
 
 def fix_file(fpath):
     with open(fpath, 'r', encoding='utf-8') as f:
