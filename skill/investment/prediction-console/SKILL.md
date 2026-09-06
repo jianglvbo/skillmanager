@@ -70,7 +70,7 @@ version: 2.1.0
 
 ### 第六步：言论跟踪
 同来源后续增强/反驳言论 → MCP `console_add_track`：`{subjectId, trackDate, source, content, direction=enhance/refute/neutral, sourceUrl}`
-- **用途边界（2026-09-03，迁移已收官 2026-09-07）**：本工具只记"对某条已有预测的后续跟踪"（该判断被加强还是被推翻）。**博主言论/观点/预测/研究/心得的归档不走这里**，一律走 `blogger_statement`（涉个股/行业/市场时传 `subjectId`；预测类言论用 `contentType=predict`）。历史上 843 条博主言论曾被误灌进本表，B3 迁移已收官（803/803 归位，残余无主行经用户确认删除）。
+- **用途边界（2026-09-03）**：本工具只记"对某条已有预测的后续跟踪"（该判断被加强还是被推翻）。**博主言论/观点/预测/研究/心得的归档不走这里**，一律走 `blogger_statement`（涉个股/行业/市场时传 `subjectId`；预测类言论用 `contentType=predict`）。
 - **`source` 必须写发言者本人**（博主名或"自己"），**禁止写「雪球采集-2026年8月11日」这类批次名**。
 
 ### 第七步：同步博主画像
