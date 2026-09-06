@@ -89,7 +89,6 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── investment-review/     ←   审查执行器
 │   │   ├── xq-post-fetch/         ←   雪球帖子采集
 │   │   ├── prediction-console/    ←   预测控制台（录入/验证/言论跟踪，MySQL 落库）
-│   │   └── tradingagents-deploy/  ←   TradingAgents 多智能体投研部署
 │   └── frontend/                  ← 前端开发（console-style 风格）
 │       └── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
 └── tools/
@@ -226,7 +225,6 @@ git push origin main
 | `investment-review` | 审查执行器：内容审查 + 结构审查 + 关联备注发现 |
 | `xq-post-fetch` | 雪球帖子采集：browser-act 抓全文 + 截断补全 + 结构化 markdown 输出 |
 | `prediction-console` | 预测控制台：个股/行业/市场三类录入、状态验证、言论跟踪，MCP 落库 MySQL |
-| `tradingagents-deploy` | TradingAgents 多智能体投研框架的国内部署与运维 |
 
 ---
 
