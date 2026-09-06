@@ -9,6 +9,7 @@
 | title | string | 帖子标题（有 title 字段用 title；无 title 取正文首个完整句子，不硬切字数） |
 | text | string | 正文全文（截断帖补全后标记） |
 | created_at | string | 发布时间（YYYY年M月D日 HH:MM） |
+| form_type | string | **帖子形态：回复 / 短文 / 长文**（客观判定：有"回复 @"/引用块 → 回复；正文 <200 字且无引用块 → 短文；≥200 字或含小标题/分段 → 长文；2026-09-06 起落进摘要行，供提炼零解析读取） |
 | retweet_count | int | 转发数 |
 | reply_count | int | 回复数 |
 | like_count | int | 点赞数 |
@@ -18,14 +19,14 @@
 
 ## 三件套结构
 
-每帖为 `## N. 标题 + 正文 + 摘要行`，帖间以 `---` 分隔；摘要行标记「全文」或「摘要」：
+每帖为 `## N. 标题 + 正文 + 摘要行`，帖间以 `---` 分隔；摘要行标记「全文」或「摘要」，**并携带形态（2026-09-06 起）**：
 
 ```markdown
 ## 1. {帖子标题}
 
 {正文全文}
 
-> 发布：{YYYY年M月D日 HH:MM} | 转发 {n} | 回复 {n} | 点赞 {n} | 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
+> 发布：{YYYY年M月D日 HH:MM} | 形态：{回复|短文|长文} | 转发 {n} | 回复 {n} | 点赞 {n} | 全文 | [原文](https://xueqiu.com/{xq_id}/{post_id})
 ```
 
 ## frontmatter

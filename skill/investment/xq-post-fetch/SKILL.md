@@ -200,6 +200,7 @@ pkill -f "headless=new" 2>/dev/null; sleep 1; pgrep -f "headless" | wc -l   # �
 - [ ] type="3"（专栏文章）的帖子已通过详情页获取正文（API text 为空）？
 - [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？
 - [ ] 标题使用完整首句（非硬切 20 字）？
+- [ ] 每帖摘要行是否含「形态：回复/短文/长文」（2026-09-06 起，供提炼零解析读取）？
 - [ ] 输出文件 frontmatter 完整（title/source/author/date/recorded/type/status）？
 - [ ] 博主画像 info_cutoff 已更新（如画像文件存在）？
 - [ ] **headless Chrome 进程已清理**（`pgrep -f "headless"` 无输出；采集结束禁止遗留，防阻塞 GUI Chrome）？
