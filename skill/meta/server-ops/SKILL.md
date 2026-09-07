@@ -59,7 +59,7 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/data-$(date +%Y%m%d).tgz
 ### fitness-console 部署执行（开发规范见 fitness-dev-workflow skill）
 - **职责边界**：本 skill 只负责服务器侧运维与**部署执行**；开发规范（环境边界/双库隔离/本地工作流/git/配置双轨/部署触发规则）→ 调用 **fitness-dev-workflow** skill，两 skill 由 agent 按任务自判断调用
 - **双库双用户（生产侧）**：服务器 config.json 指向 `fitness` 库 / `jianglb` 用户（host=127.0.0.1 本机）；开发库 fitness_dev/jianglb_dev 只供本地开发，服务器生产进程不碰开发库
-- **rsync 部署命令（等用户明确说「部署」后才执行）**：
+- **rsync 部署命令（2026-09-07 用户指示：代码改完默认直接部署，无需等「部署」指令；变更前仍须说明影响，部署后要做线上验收）**：
 ```bash
 rsync -az --exclude ".DS_Store" --exclude "config.json" --exclude "keys.json" --exclude "data" --exclude "node_modules" --exclude "web/exercise-media" -e "ssh -p 22" ~/Project/fitness-console/ jianglb@106.55.14.116:/home/jianglb/fitness-console/
 ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
@@ -110,7 +110,7 @@ ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
 
 - [ ] 连接是否用 jianglb 且无明文密码出现在命令/输出？
 - [ ] 数据库操作是否区分 dev/生产库？生产库 DDL/DML 是否先经 fitness_dev 验证并说明影响？
-- [ ] fitness 部署是否等用户明确说「部署」才执行（开发规范走 fitness-dev-workflow）？
+- [ ] 代码改动后是否已默认部署并做线上验收（2026-09-07 起无需等「部署」指令；变更前仍说明影响，重启只在 server.js/config 变更时做）？
 - [ ] 是否知悉 investment-console 已本地运行、服务器不再部署它/不再同步 vault（勿再对服务器跑 investment 部署或 vault_sync）？
 - [ ] 变更操作（重启/改配置/rsync --delete）前是否说明了影响？
 - [ ] 数据库查询是否走隧道/本机 sudo mysql，端口未直连公网？
