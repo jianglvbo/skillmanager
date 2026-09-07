@@ -150,25 +150,33 @@ def parse_frontmatter(text):
     return (fm,raw,True,None)
 
 # 模板推断（镜像 investment-framework 路径表 + 六大分类）
+# 2026-09-07 修复：改为「目录段」匹配——仅匹配分类目录段，不再对整个 rel 子串匹配，
+# 消除文件名含分类词（如《周期行业去产能非线性出清框架》含「行业」）导致的模板误判（审查发现）
 def template_for(rel,fm):
-    if rel.startswith("博主/"):
-        for kw,tp in [("分析框架/方法论","方法论"),("分析框架/分析档案","分析档案"),
-                     ("交易体系","交易体系"),("投资心态","投资心态"),("投资心得","投资心得"),
-                     ("行业","行业"),("个股","个股"),("宏观","宏观")]:
-            if kw in rel: return tp
-        # 直接放在 博主/*/分析框架/ 下（无 方法论/分析档案 子目录）的条目：
-        # 上面带子目录的关键词都不匹配，须在此兜底归类，避免误判为博主画像
-        if "分析框架" in rel: return "分析档案" if "标的" in fm else "方法论"
-        return "博主画像"
-    if rel.startswith("宏观/"):
-        # 顶层宏观通用框架（无 event/时效状态/时间范围）用标准 6 字段；
-        # 仅「归属层/宏观/」下的具体事件分析才带三事件字段（事件型）
-        return "宏观" if ("event" in fm or "时效状态" in fm or "时间范围" in fm) else "宏观通用"
-    if rel.startswith("我的/") or rel.startswith("其他/"):
-        if "分析框架" in rel: return "分析档案" if "标的" in fm else "方法论"
-        for kw,tp in [("交易体系","交易体系"),("投资心态","投资心态"),("投资心得","投资心得"),
-                     ("行业","行业"),("个股","个股")]:
-            if kw in rel: return tp
+    parts=rel.split("/")
+    # 目录段 = 去掉 归属层/{名称?} 与文件名后的中间目录（不含 .md 文件名参与匹配）
+    if parts[0]=="博主":
+        sub=parts[2:-1] if len(parts)>2 else []   # 博主/{name}/分类/.../ 中的分类段（含 分析框架/方法论 等）
+    elif parts[0] in ("我的","其他","宏观"):
+        sub=parts[1:-1] if len(parts)>1 else []   # 归属层/分类/... 中的分类段
+        # 顶层宏观文件直接是 宏观/{名称}.md（无子目录）→ 按 frontmatter 判事件型/通用型
+        if parts[0]=="宏观" and not sub:
+            return "宏观" if ("event" in fm or "时效状态" in fm or "时间范围" in fm) else "宏观通用"
+    else:
+        return "未知"
+    # 1) 分析框架 子目录：方法论 / 分析档案（精确段，可跨多级目录）
+    if "方法论" in sub and "分析框架" in sub: return "方法论"
+    if "分析档案" in sub and "分析框架" in sub: return "分析档案"
+    # 2) 其他分类目录段（按序匹配首个命中）
+    for seg in sub:
+        tp={"交易体系":"交易体系","投资心态":"投资心态","投资心得":"投资心得",
+            "行业":"行业","个股":"个股","宏观":"宏观"}.get(seg)
+        if tp: return tp
+    # 3) 分析框架 直接兜底（博主/*/分析框架/{方法论/分析档案/...}.md 或 归属层/分析框架/...）：
+    #    无 方法论/分析档案 子目录时按 frontmatter 判别，避免误判为博主画像
+    if "分析框架" in sub:
+        return "分析档案" if "标的" in fm else "方法论"
+    if parts[0]=="博主": return "博主画像"
     return "未知"
 
 # 必填字段（镜像模板 frontmatter 硬约束；改模板时同步）
@@ -271,6 +279,7 @@ F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
    "source_as_invalid":[],"stray_date":[],"field_order":[],"junk_files":[],
    "stock_code_missing":[],"blogger_not_registered":[],
+   "other_author_registered":[],
    "blogger_table_no_link_col":[],"blogger_empty_link_row":[],
    "info_cutoff_mismatch":[],
    "recycle_expired":[],"recycle_pending":[],"recycle_invalid":[],
@@ -479,6 +488,15 @@ for rel in sorted(files):
         bname=parts[1]
         if bname not in BLOGGERS and bname not in BLOGGER_EXEMPT:
             F["blogger_not_registered"].append((rel,bname))
+    # 反向校验（2026-09-07 审查新增 · 规则 #12 反例）：其他层条目 author 若为已登记博主，
+    # 提示内容应挂博主层（登记后未回迁的典型场景）；「其他/宏观/」为通用宏观不受此限
+    # 注意：此为提示级（供人工裁决），不自动 fail——「解读/第三方整理」类内容 author 语义需人工甄别
+    if rel.startswith("其他/") and "宏观" not in rel and BLOGGERS:
+        aus=fm.get("author","")
+        for a in re.split(r"[、,/与和]",str(aus)):
+            a=a.strip().strip('"').strip("'")
+            if a and a in BLOGGERS:
+                F["other_author_registered"].append((rel,a,"author 为已登记博主，疑似误挂其他层（规则 #12），建议迁移 博主/{a}/ 或人工甄别解读属性"))
 
 # junk：缺全部字段的空壳
 for rel,tpl,miss in F["missing_fields"][:]:

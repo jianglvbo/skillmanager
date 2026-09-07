@@ -40,20 +40,39 @@ def vault_scan(vault_root: str) -> dict:
     for f in files:
         blogger = Path(f).parent.name
         txt = Path(f).read_text(encoding="utf-8")
-        # 1) section 缺失（锚定标题行，截取到下一个二级标题或文件尾——与迁移脚本同口径）
-        m_sec = re.search(r'^## 言论追踪[ \t]*\n(.*?)(?=\n## |\Z)', txt, re.M | re.S)
-        if not m_sec:
+        # 1) section 缺失/重复标题兼容（2026-09-07：镜像 bug 导致 43 画像 `## 言论追踪`
+        #    标题重复——锚点 begin 后又写了一次标题。取「含数据行最多的区段」，
+        #    对无重复（修复后）与有重复（现状）均正确）
+        segs = [m.group(1) for m in re.finditer(r'^## 言论追踪[ \t]*\n(.*?)(?=\n## |\Z)', txt, re.M | re.S)]
+        if not segs:
             findings.append({"file": str(f), "blogger": blogger, "type": "section_missing",
                              "detail": "博主画像缺少「## 言论追踪」section"})
             stats["section_missing"] += 1
             continue
-        sec = m_sec.group(1)
+        def _row_count(seg):
+            n = 0
+            for line in seg.splitlines():
+                line = line.strip()
+                if not line.startswith("|"): continue
+                cells = [c.strip() for c in line.strip("|").split("|")]
+                if cells and re.match(r'^20\d{2}-\d{2}-\d{2}$', cells[0]): n += 1
+            return n
+        sec = max(segs, key=_row_count)
         rows = []
+        header_idx = None
         for line in sec.splitlines():
             line = line.strip()
             if not line.startswith("|"): continue
             cells = [c.strip() for c in line.strip("|").split("|")]
-            if not cells or not re.match(r'^20\d{2}-\d{2}-\d{2}$', cells[0]): continue
+            if not cells: continue
+            # 表头定位：含「标的」的列即标的列（新 9 列在 idx3，旧 6 列在 idx1）
+            if header_idx is None and any("标的" in c for c in cells):
+                for i, c in enumerate(cells):
+                    if "标的" in c:
+                        header_idx = i
+                        break
+                continue
+            if not re.match(r'^20\d{2}-\d{2}-\d{2}$', cells[0]): continue
             rows.append(cells)
         track_total += len(rows)
         # 2) 空表（无任何数据行）
@@ -64,7 +83,8 @@ def vault_scan(vault_root: str) -> dict:
             continue
         # 3/4/5) 行级检查
         for cells in rows:
-            target = cells[1] if len(cells) > 1 else ""
+            ti = header_idx if header_idx is not None else (3 if len(cells) >= 9 else 1)
+            target = cells[ti] if len(cells) > ti else ""
             ncols = len(cells)
             has_link = any("http" in c or "](http" in c for c in cells)
             # 3) 标的占位
@@ -95,16 +115,31 @@ def mysql_scan() -> dict:
                            connect_timeout=8)
     cur = conn.cursor()
     out = {}
-    cur.execute("SELECT COUNT(*) FROM prediction_tracks")
-    out["tracks_total"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM prediction_tracks WHERE content IS NULL OR TRIM(content)=''")
-    out["content_empty"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM prediction_tracks WHERE source_url IS NULL OR source_url=''")
+    # 2026-09-07 重写：言论权威已迁 blogger_statements 单轨（prediction_tracks 为迁移遗留表，
+    # 原 dict_track_direction 字典表已废弃并入 dict 单表——旧查询直接报表不存在）
+    cur.execute("SELECT COUNT(*) FROM blogger_statements")
+    out["statements_total"] = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM blogger_statements WHERE view_text IS NULL OR TRIM(view_text)=''")
+    out["view_text_empty"] = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM blogger_statements WHERE source_url IS NULL OR TRIM(source_url)=''")
     out["source_url_empty"] = cur.fetchone()[0]
-    cur.execute("""SELECT direction_code, COUNT(*) FROM prediction_tracks
-                   LEFT JOIN dict_track_direction d ON d.code=direction_code
-                   WHERE d.code IS NULL GROUP BY direction_code""")
-    out["bad_direction"] = [list(r) for r in cur.fetchall()]
+    cur.execute("SELECT COUNT(*) FROM blogger_statements WHERE review_required=1")
+    out["review_required"] = cur.fetchone()[0]
+    cur.execute("""SELECT s.content_type, COUNT(*) FROM blogger_statements s
+                   LEFT JOIN dict d ON d.type='stmt_content_type' AND d.code=s.content_type
+                   WHERE d.code IS NULL GROUP BY s.content_type""")
+    out["bad_content_type"] = [list(r) for r in cur.fetchall()]
+    cur.execute("""SELECT s.stance, COUNT(*) FROM blogger_statements s
+                   LEFT JOIN dict d ON d.type='stance' AND d.code=s.stance
+                   WHERE s.stance IS NOT NULL AND d.code IS NULL GROUP BY s.stance""")
+    out["bad_stance"] = [list(r) for r in cur.fetchall()]
+    # 复核建议积压（审查首步数据源）
+    cur.execute("SELECT status, COUNT(*) FROM statement_reviews GROUP BY status")
+    out["statement_reviews"] = {r[0]: r[1] for r in cur.fetchall()}
+    # 遗留表迁移进度（只读提示，勿当权威）
+    cur.execute("SELECT COUNT(*), SUM(migrated_to_statement_id IS NOT NULL) FROM prediction_tracks")
+    r = cur.fetchone()
+    out["legacy_tracks"] = {"total": int(r[0]), "migrated": int(r[1] or 0)}
     conn.close()
     return out
 
@@ -124,12 +159,12 @@ def main():
     report = vault_scan(vault)
     if do_mysql:
         report["mysql"] = mysql_scan()
-        m, v = report["mysql"]["tracks_total"], report["track_rows_total"]
+        m, v = report["mysql"]["statements_total"], report["track_rows_total"]
         report["sync"] = {
             "vault_track_rows": v,
-            "mysql_tracks": m,
+            "mysql_statements": m,
             "delta_mysql_minus_vault": m - v,
-            "note": "delta 正值=库比 vault 多（增量采集/他源导入）；负值=vault 言论未入库（占位/无效行跳过）"
+            "note": "delta 正值=库比 vault 多（增量采集/他源导入）；负值=vault 言论未入库（占位/无效行跳过）。注意：vault 统计口径为「言论追踪」section 数据行，与 blogger_statements 全量（含已删除标记行等）存在正常口径差"
         }
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
