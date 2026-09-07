@@ -47,15 +47,15 @@ compatibility: 通用
 | 参数 | 类型 | 必填 | 默认 | 说明 |
 |:---|:---|:---|:---|:---|
 | xq_id | int | 否 | — | 雪球用户 ID（与 blogger_name 二选一；均不传则默认采集全部博主） |
-| blogger_name | string | 否 | — | 博主名称，从博主控制台「雪球ID」列解析（与 xq_id 二选一；均不传则默认全部） |
+| blogger_name | string | 否 | — | 博主名称，从看板博主控制台（MySQL bloggers 表 `xueqiu_id` 字段）解析（与 xq_id 二选一；均不传则默认全部） |
 | max_posts | int | 否 | 50 | 最大采集条数 |
 | output_dir | path | 否 | {VAULT}/工作区/粗制品 | 输出目录（vault 相对路径 `工作区/粗制品`，见 investment-framework 路径表 ROUGH_DIR） |
 
-**时间窗口**：不再使用固定 hours 参数。采集范围 = 博主控制台「信息截止」列（ISO 时间格式 `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间可支持同日多次采集去重（只取 info_cutoff 之后的帖子）。新增博主「信息截止」默认为半年前 17:50:00（首次采集拉半年言论）。
+**时间窗口**：不再使用固定 hours 参数。采集范围 = 看板博主控制台「信息截止」（MySQL bloggers 表 `info_cutoff`；API /api/bloggers/live 可读）（ISO 时间格式 `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间可支持同日多次采集去重（只取 info_cutoff 之后的帖子）。新增博主「信息截止」默认为半年前 17:50:00（首次采集拉半年言论）。
 
-> 两个参数都不传 → 默认采集博主控制台中所有「雪球ID」非空的博主（逐博主执行第零步→第七步）。同时传入 → 以 xq_id 为准。
+> 两个参数都不传 → 默认采集看板博主控制台中所有「雪球ID」非空的博主（逐博主执行第零步→第七步）。同时传入 → 以 xq_id 为准。
 
-### 前置步骤：同步雪球关注列表 → 更新博主控制台
+### 前置步骤：同步雪球关注列表 → 更新看板博主控制台
 
 每次采集会话开始时**必须**先执行（无论单博主还是批量）。完整规则见 `references/execution-guide.md`「前置步骤」——获取用户 ID、分页拉取关注列表、与控制台对比（新增→确认后追加行 / 取关→确认后删行 / 无变动）、更新控制台 `updateDate`。此步取代规则 #12 的自动补登限制（用户明确授权从雪球关注列表同步；但 Agent 仍不得凭空捏造博主）。
 
@@ -66,7 +66,7 @@ compatibility: 通用
 ### 第零步：解析雪球 ID
 
 - 传入 `xq_id` → 直接使用
-- 传入 `blogger_name` → 从博主控制台（`{VAULT_ROOT}/工作区/博主控制台.md`）匹配「博主/别名」列取「雪球ID」列；匹配不到或 ID 为空 → 报错停止
+- 传入 `blogger_name` → 从看板博主控制台（`GET /api/bloggers/live`，匹配 name/alias 取 `xueqiuId`）；匹配不到或 ID 为空 → 报错停止
 - 均未传 → 「全部博主」模式：取控制台所有「雪球ID」非空的博主，逐博主执行
 
 ### 第一步：检查 browser-act CLI 并加载运行指令
@@ -140,7 +140,7 @@ pkill -f "headless=new" 2>/dev/null; sleep 1; pgrep -f "headless" | wc -l   # �
 
 采集完成后，将「信息截止」更新为**本次采集实际完成时间**（ISO 格式 `YYYY-MM-DDTHH:mm:ss`，如 `2026-08-04T17:50:00`；无精确时间时默认当天 `17:50:00`），双写两处：
 1. **博主画像** `博主/{nickname}/{nickname}.md`：frontmatter `info_cutoff` + `updateDate`
-2. **博主控制台** `工作区/博主控制台.md`：该博主行「信息截止」列 + 控制台 frontmatter `updateDate`
+2. **博主控制台** 看板 MySQL `bloggers` 表：该博主 `info_cutoff`（经 `xq_update_cutoff.py` 回写，脚本同时更新画像 frontmatter）
 
 画像文件不存在 → 仅更新控制台，不自动创建画像。
 
@@ -177,7 +177,7 @@ pkill -f "headless=new" 2>/dev/null; sleep 1; pgrep -f "headless" | wc -l   # �
 | 优先级 | 来源 |
 |:---|:---|
 | 1 | 用户显式参数（xq_id、blogger_name、max_posts） |
-| 2 | 博主控制台（`工作区/博主控制台.md`「雪球ID」列，blogger_name → xq_id 解析） |
+| 2 | 博主控制台（看板 MySQL bloggers 表 `xueqiu_id` 字段，blogger_name → xq_id 解析；`GET /api/bloggers/live`） |
 | 3 | browser-act CLI（chrome 模式页面数据） |
 | 4 | 雪球页面结构（`references/page-structure.md` 中的解析规则） |
 | 5 | browser-act 通用文档 |
@@ -186,7 +186,7 @@ pkill -f "headless=new" 2>/dev/null; sleep 1; pgrep -f "headless" | wc -l   # �
 
 ## 自检
 
-- [ ] xq_id 已解析（直接传入、从博主控制台按 blogger_name 查到、或默认全部博主模式逐博主解析）且为数字？
+- [ ] xq_id 已解析（直接传入、从看板博主控制台按 blogger_name 查到、或默认全部博主模式逐博主解析）且为数字？
 - [ ] 浏览器通道已确认可用（browser-act 或 builtin_browser MCP）？chrome 模式启动失败时是否已处理本地 Chrome 占用（关闭后重试）？
 - [ ] 雪球已登录（页面标题含用户昵称）？
 - [ ] `references/page-structure.md` + `references/execution-guide.md` 已加载（含第〇章风控规避）？
@@ -200,7 +200,6 @@ pkill -f "headless=new" 2>/dev/null; sleep 1; pgrep -f "headless" | wc -l   # �
 - [ ] type="3"（专栏文章）的帖子已通过详情页获取正文（API text 为空）？
 - [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？
 - [ ] 标题使用完整首句（非硬切 20 字）？
-- [ ] 每帖摘要行是否含「形态：回复/短文/长文」（2026-09-06 起，供提炼零解析读取）？
 - [ ] 输出文件 frontmatter 完整（title/source/author/date/recorded/type/status）？
 - [ ] 博主画像 info_cutoff 已更新（如画像文件存在）？
 - [ ] **headless Chrome 进程已清理**（`pgrep -f "headless"` 无输出；采集结束禁止遗留，防阻塞 GUI Chrome）？

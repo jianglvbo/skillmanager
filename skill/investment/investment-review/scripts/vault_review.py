@@ -60,22 +60,19 @@ os.makedirs(OUT, exist_ok=True)
 # 「我的」层由用户自管（规则 #15），Agent 不审查、不维护——扫描范围仅 博主/其他/宏观
 SCOPE = ["博主", "其他", "宏观"]
 
-# 博主控制台登记名（镜像 framework-rules #12；改控制台时同步）
-# 用于博主层登记校验：博主文件夹名必须在控制台登记，否则属误挂（应迁移其他层）
+# 博主控制台登记名 = 看板 MySQL bloggers 表（2026-09-07 起 vault 工作区/博主控制台.md 退役；
+# 镜像 framework-rules #12）。经看板 API 读取；API 不可用时登记校验降级跳过（stderr 提示）
 def load_blogger_console():
-    p = os.path.join(VAULT, "工作区", "博主控制台.md")
     names = set()
-    if not os.path.isfile(p):
-        return names
-    for line in open(p, encoding="utf-8"):
-        line = line.strip()
-        if not line.startswith("|"):
-            continue
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 2:
-            nm = cells[1]
-            if nm and nm not in ("博主名", "") and not set(nm) <= set("- "):
-                names.add(nm)
+    try:
+        import json as _json, urllib.request
+        with urllib.request.urlopen("http://127.0.0.1:8698/api/bloggers/live", timeout=10) as r:
+            data = _json.load(r)
+        for b in data["data"]["bloggers"]:
+            if b.get("registered"):
+                names.add(b["name"])
+    except Exception as e:
+        print(f"[vault_review] 看板博主控制台不可读（{e}），博主层登记校验跳过", file=sys.stderr)
     return names
 BLOGGERS = load_blogger_console()
 
@@ -488,22 +485,19 @@ for rel,tpl,miss in F["missing_fields"][:]:
     if set(miss)=={"title","event","时效状态","时间范围","createDate","updateDate","tags","source"}:
         F["junk_files"].append(rel)
 
-# 信息截止一致性校验：博主控制台「信息截止」列 vs 画像 info_cutoff
+# 信息截止一致性校验：看板 bloggers.info_cutoff vs 画像 info_cutoff（权威在 bloggers 表）
 def load_console_cutoffs():
-    p = os.path.join(VAULT, "工作区", "博主控制台.md")
     cutoffs = {}
-    if not os.path.isfile(p):
-        return cutoffs
-    for line in open(p, encoding="utf-8"):
-        line = line.strip()
-        if not line.startswith("|"):
-            continue
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 7 and cells[0] not in ("编号", "") and not set(cells[0]) <= set("- :"):
-            name = cells[1]
-            cutoff = cells[6]  # 第7列 = 信息截止
-            if name and cutoff and re.match(r"\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?", cutoff):
-                cutoffs[name] = cutoff
+    try:
+        import json as _json, urllib.request
+        with urllib.request.urlopen("http://127.0.0.1:8698/api/bloggers/live", timeout=10) as r:
+            data = _json.load(r)
+        for b in data["data"]["bloggers"]:
+            cutoff = b.get("infoCutoff") or ""
+            if b.get("name") and cutoff and re.match(r"\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?", cutoff):
+                cutoffs[b["name"]] = cutoff
+    except Exception as e:
+        print(f"[vault_review] 看板不可读（{e}），信息截止一致性校验跳过", file=sys.stderr)
     return cutoffs
 
 CONSOLE_CUTOFFS = load_console_cutoffs()

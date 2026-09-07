@@ -58,7 +58,7 @@ compatibility: 通用
 **辅助 · 预扫（可选）**：① 结构/元数据——`scripts/vault_review.py --vault <vault路径>` 生成 `vault_review_result.json`（归类/frontmatter 含 updateDate/引号/wikilink 含 source/脚注格式/标签 六维 + 画像三表原文链接（#35）/禁用 `## 来源`/source 形态（#23）/空壳 junk 扩展检查，只报告不修改）；② 段落布局——`investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观`（同行标题/标题间距/段落紧凑/脚注内联孤儿/模板残留，`--fix` 可自动修复）。人工据 JSON 撰写报告时聚焦机器无法判定的部分（段落缺失是否确无内容、标签语义、关联备注提案）。
 
 **S1**：读取参数 `{ scope_dirs }`
-**S2**：归类正确性——含博主层条目其作者是否均在「博主控制台」登记，未登记者误挂博主层须标记迁移至其他层（见 framework-rules #12）
+**S2**：归类正确性——含博主层条目其作者是否均在博主控制台（看板 MySQL bloggers 表）登记，未登记者误挂博主层须标记迁移至其他层（见 framework-rules #12）
 **S3**：frontmatter 完整性——必填字段 title/createDate/updateDate/**author**/tags/**source** 齐全（author/source 缺失即标记）；字段顺序须按所属分类模板 canonical 排列（标准 8 字段 `title→createDate→updateDate→author→star→delete→tags→source`，分析档案/宏观事件型见 framework-rules #27）；**禁止出现 `date` 字段**（层间边界硬约束，见 framework-rules #27）；日期字段裸写无引号
 **S4**：引号有效性（全局规则 #21）
 **S5**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记

@@ -97,7 +97,7 @@ version: 2.1.0
 | MCP 工具调用 | Ai/tools/investment-console-mcp/README.md | 读取 |
 | 行业分类标准 | investment-framework/references/tag-taxonomy.md | 读取 |
 | 个股/指数价格 | 腾讯 kline API（web.ifzq.gtimg.cn，不复权） | 执行 |
-| 博主控制台/画像 | 工作区/博主控制台.md、博主/{名}/{名}.md | 读取+写入（仍为 vault） |
+| 博主画像 | 博主/{名}/{名}.md | 读取+写入（仍为 vault；博主控制台登记已 MySQL 化：bloggers 表） |
 
 ---
 

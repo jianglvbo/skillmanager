@@ -1,25 +1,34 @@
 #!/usr/bin/env python3
-"""雪球关注列表同步 → 博主控制台对比（前置步骤脚本化，2026-08-19 新增）
+"""雪球关注列表同步 → 看板博主控制台对比（前置步骤脚本化，2026-08-19 新增；2026-09-07 改读看板 API）
 
-替代手工三步（拉列表→解析→对比），一键输出：
-  1. 新增博主（关注中但控制台未登记）
-  2. 取关博主（控制台登记但已不关注）
-  3. ID 不一致（控制台 ID 与关注列表不符）
-  4. 博主层残留（控制台无登记但 博主/<名>/ 存在文件夹）
-  5. 待采集清单（控制台雪球ID非空博主）
+博主控制台权威 = 看板 MySQL bloggers 表（vault 博主控制台.md 已退役删除）。一键输出：
+  1. 新增博主（关注中但看板未登记）
+  2. 取关博主（看板登记但已不关注）
+  3. ID 不一致（看板 ID 与关注列表不符）
+  4. 博主层残留（看板无登记但 博主/<名>/ 存在文件夹）
+  5. 待采集清单（雪球ID非空博主）
 
 用法: python3 xq_sync_console.py [--dry-run|--apply]
-  --dry-run（默认）只输出对比报告，不修改控制台；Agent 向用户确认后
-  --apply 实际落地变更：新增 → 追加行；取关（雪球博主）→ 删除行；更新控制台 updateDate
+  --dry-run（默认）只输出对比报告；Agent 向用户确认后
+  --apply 实际落地变更：新增 → POST /api/bloggers 登记；取关 → 仅报告（须用户到看板确认后手工删除，涉及目录回收不自动执行）
   --half-year 新博主的「信息截止」基准（默认：半年前今天 17:50:00）
 
-依赖：browser-act CLI + 已登录雪球 session（复用 xq_user_collect.py 的 ensure_session 逻辑）
+依赖：browser-act CLI + 已登录雪球 session + 看板服务（127.0.0.1:8698）
 """
-import re, sys, os, json, subprocess, datetime, argparse
+import re, sys, os, json, subprocess, datetime, argparse, urllib.request
 
 VAULT = '/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库'
-CONSOLE = os.path.join(VAULT, '工作区', '博主控制台.md')
 BLOGGER_DIR = os.path.join(VAULT, '博主')
+API = 'http://127.0.0.1:8698'
+
+def api(path, payload=None):
+    if payload is None:
+        with urllib.request.urlopen(API + path, timeout=15) as r:
+            return json.load(r)
+    req = urllib.request.Request(API + path, data=json.dumps(payload).encode(),
+        headers={'Content-Type': 'application/json'}, method='POST')
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.load(r)
 
 def find_ba():
     cands = [os.path.expanduser('~/.local/bin/browser-act'), 'browser-act']
@@ -66,15 +75,16 @@ def fetch_following():
     return following
 
 def parse_console():
-    """解析控制台表格，返回 {name: {id, is_xq, special, cutoff}} 与最大编号"""
-    t = open(CONSOLE).read()
-    rows = re.findall(r'^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|', t, re.M)
+    """读看板博主控制台（MySQL bloggers 表），返回 {name: {id, is_xq, special, cutoff}} 与最大编号"""
+    data = api('/api/bloggers/live')
     console = {}
     max_no = 0
-    for r in rows:
-        no = int(r[0]); max_no = max(max_no, no)
-        console[r[1].strip()] = {'id': r[3].strip(), 'is_xq': r[4].strip() == '是',
-                                 'special': r[5].strip() == '是', 'cutoff': r[6].strip()}
+    for b in data['data']['bloggers']:
+        try: max_no = max(max_no, int(b.get('name') and 0 or 0) or 0)
+        except Exception: pass
+        console[b['name']] = {'id': b.get('xueqiuId') or '', 'is_xq': (b.get('platform') or '') == '雪球',
+                              'special': bool(b.get('special')), 'cutoff': b.get('infoCutoff') or '',
+                              'registered': bool(b.get('registered'))}
     return console, max_no
 
 def main():
@@ -121,29 +131,19 @@ def main():
     # ---- apply 落地 ----
     if args.apply:
         half = args.half_year or (datetime.date.today() - datetime.timedelta(days=182)).strftime('%Y-%m-%dT17:50:00')
-        lines = open(CONSOLE).read().split('\n')
-        out = []
-        removed = []
-        for line in lines:
-            m = re.match(r'^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|', line)
-            if m and m.group(2).strip() in unfollow:
-                removed.append(m.group(2).strip())
-                continue  # 取关：删除该行（保留画像与 wiki 文件）
-            out.append(line)
-        # 追加新增
-        if new:
-            if out and out[-1].strip() == '':
-                out.pop()
-            for name, xid in sorted(new.items(), key=lambda x: x[1]):
-                max_no += 1
-                out.append(f'| {max_no:<3} | {name:<12} |      | {xid} |   是    |   否    | {half} |')
-        text = '\n'.join(out) + '\n'
-        # 更新控制台 updateDate
-        text = re.sub(r'^updateDate:.*$', f'updateDate: {datetime.date.today().isoformat()}', text, count=1, flags=re.M)
-        open(CONSOLE, 'w').write(text)
-        print(f"\n✅ 已落地：新增 {len(new)} 行，删除取关 {len(removed)} 行，updateDate 已更新")
+        added = 0
+        for name, xid in sorted(new.items(), key=lambda x: x[1]):
+            try:
+                r = api('/api/bloggers', {'name': name, 'xueqiuId': str(xid), 'platform': '雪球', 'infoCutoff': half})
+                print(f"  + 登记 {name} ({xid}): {'ok' if r.get('ok') else r.get('error')}")
+                if r.get('ok'): added += 1
+            except Exception as e:
+                print(f"  + 登记 {name} 失败: {e}")
+        if unfollow:
+            print(f"\n⚠️ 取关 {len(unfollow)} 人需到看板博主控制台手工删除（涉及目录回收，脚本不自动执行）: {', '.join(sorted(unfollow))}")
+        print(f"\n✅ 已落地：新增登记 {added} 人")
     else:
-        print("\nℹ️ 使用 --apply 落地变更（新增追加行 / 取关删行 / 更新 updateDate）")
+        print("\nℹ️ 使用 --apply 落地变更（新增走看板 API 登记；取关须看板手工处理）")
 
     # 待采集清单
     print(f"\n【待采集】控制台雪球ID非空博主: {len(xq_console)} 位（含新增需确认）")

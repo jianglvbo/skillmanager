@@ -133,7 +133,7 @@ compatibility: 通用
 | MACRO_OTHER | {OTHER_DIR}/宏观 | 未登记投资人对具体宏观事件的分析 |
 | ROUGH_DIR | {VAULT_ROOT}/工作区/粗制品 | 粗制品暂存 |
 | RAW_DIR | {VAULT_ROOT}/工作区/原始资源 | 粗加工后原始资源 |
-| BLOGGER_CONSOLE | {VAULT_ROOT}/工作区/博主控制台.md | 博主注册控制台 |
+| 博主控制台 | 看板 MySQL `bloggers` 表（读 GET /api/bloggers/live、写 POST /api/bloggers 与 /api/bloggers/update；vault 工作区/博主控制台.md 已于 2026-09-07 退役删除） | 博主注册权威（编号/别名/雪球ID/平台/特别关注/信息截止） |
 
 ---
 

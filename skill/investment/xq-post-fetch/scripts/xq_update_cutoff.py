@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""双写更新 info_cutoff：博主画像 frontmatter + 博主控制台表格行（2026-08-15 实战验证）
+"""更新 info_cutoff：博主画像 frontmatter + 看板 bloggers 表（2026-09-07 起 vault 博主控制台.md 退役）
 
 用法: python3 xq_update_cutoff.py <nickname> <ISO时间>
   nickname  博主名
   ISO时间   格式 YYYY-MM-DDTHH:mm:ss（通常为采集完成时间）
 
 行为：① 画像 博主/<名>/<名>.md 的 info_cutoff + updateDate
-      ② 控制台 工作区/博主控制台.md 对应行「信息截止」列 + 控制台 frontmatter updateDate
+      ② 看板 MySQL bloggers.info_cutoff（POST /api/bloggers/update）
 """
-"""双写更新 info_cutoff：博主画像 frontmatter + 博主控制台表格行
-用法: python3 xq_update_cutoff.py <nickname> <ISO时间>
-"""
-import re, sys, os
+import re, sys, os, json, urllib.request
 
 VAULT = '/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库'
 nickname, new_cutoff = sys.argv[1], sys.argv[2]
@@ -36,32 +33,15 @@ if os.path.exists(profile):
 else:
     changed.append(f'画像不存在（跳过）：博主/{nickname}/{nickname}.md')
 
-# 2. 博主控制台
-console = os.path.join(VAULT, '工作区', '博主控制台.md')
-with open(console) as f:
-    lines = f.readlines()
-
-new_lines = []
-for line in lines:
-    if line.startswith('|') and nickname in line and '信息截止' not in line:
-        # 表格行：| 编号 | 博主 | 别名 | 雪球ID | 是否雪球博主 | 是否特别关注 | 信息截止 |
-        parts = line.rstrip('\n').split('|')
-        # parts = ['', ' 编号 ', ' 博主 ', ' 别名 ', ' 雪球ID ', ' 是 ', ' 否 ', ' 信息截止 ', '']
-        if len(parts) >= 8:
-            parts[7] = f' {new_cutoff} '
-            line = '|'.join(parts) + '\n'
-            changed.append(f'控制台行 {nickname}')
-    new_lines.append(line)
-
-with open(console, 'w') as f:
-    f.writelines(new_lines)
-
-# 3. 控制台 updateDate
-with open(console) as f:
-    content = f.read()
-content = re.sub(r'^updateDate:.*$', f'updateDate: {new_cutoff[:10]}', content, count=1, flags=re.M)
-with open(console, 'w') as f:
-    f.write(content)
-changed.append(f'控制台 updateDate -> {new_cutoff[:10]}')
+# 2. 看板博主控制台（MySQL bloggers 表权威；vault 博主控制台.md 已退役）
+try:
+    req = urllib.request.Request('http://127.0.0.1:8698/api/bloggers/update',
+        data=json.dumps({'name': nickname, 'infoCutoff': new_cutoff}).encode(),
+        headers={'Content-Type': 'application/json'}, method='POST')
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        r = json.load(resp)
+    changed.append('看板 bloggers.info_cutoff ✓' if r.get('ok') else f'看板更新失败: {r.get("error")}')
+except Exception as e:
+    changed.append(f'看板更新异常（画像已更新，稍后可重试）: {e}')
 
 print('\n'.join(changed))
