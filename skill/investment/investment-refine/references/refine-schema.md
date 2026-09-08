@@ -135,7 +135,7 @@
 
 **能成 wiki 的一刀切判据**：内容是否提供**可脱离发帖语境复用的判断逻辑／框架／数据关系**？是 → wiki；否 → 只留言论（不硬造条目）。
 
-**铁律（2026-09-08 画像单轨化）**：言论/买卖/画像一律只落 MySQL（`blogger_statement`/`blogger_trade`/`update_blogger`）。画像 md 已退役——不再镜像回写，vault 内残留画像文件仅为待删除的比对副本。**手改画像 md 表格、为画像文件写内容均为违规**。
+**铁律（2026-09-08 画像单轨化 + 言论分表）**：言论/买卖/画像一律只落 MySQL（`blogger_statement`/`blogger_trade`/`update_blogger`；言论按类型物理分表 stmt_research/stmt_predict/stmt_view/stmt_insight/stmt_chat/stmt_trade_src，工具自动路由，见 framework-rules #39）。画像 md 已退役——不再镜像回写，vault 内残留画像文件仅为待删除的比对副本。**手改画像 md 表格、为画像文件写内容均为违规**。
 **两条补充（2026-09-03）**：① 涉个股/行业/市场的言论调用 `blogger_statement` 时**必须传 `subjectId`**，否则该言论不会出现在「言论追踪」控制台——行业维度主题**按需创建**（词汇权威源 = tag-taxonomy 第五节申万分级；选最精确标准名，主题不存在则按标准名即时创建，**禁止自创非标准行业名**，见 framework-rules #38 行业主题按需创建）；② **写入前先查重**——同一段文字已存在于该博主的 `blogger_statements` 行时，合并/更新那一行，**禁止新增第二份**（"言论登记在谁名下就是谁的言论"既是归因依据，也是去重依据）。
 
 ### 分类不明处置（禁止静默丢弃 · 2026-09-06 用户规则）
