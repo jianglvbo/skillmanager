@@ -39,6 +39,15 @@ def find_ba():
 BA = find_ba()
 SESSION = f'xq_{os.getpid()}'  # 独立 session，避免与他人会话争用
 
+import atexit
+def _close_session():
+    """脚本结束自动关闭本 session（2026-09-09 修复 session 泄漏：批量采集曾遗留 14 个）"""
+    try:
+        subprocess.run([BA, 'session', 'close', SESSION], capture_output=True, text=True, timeout=20)
+    except Exception:
+        pass
+atexit.register(_close_session)
+
 # ---- 参数 ----
 args = [a for a in sys.argv[1:] if not a.startswith('--')]
 XQID, NICK, CUTOFF_S, OUTFILE = args[0], args[1], args[2], args[3]

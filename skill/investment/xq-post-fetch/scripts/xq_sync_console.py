@@ -43,6 +43,15 @@ def find_ba():
 BA = find_ba()
 SESSION = f'xq_sync_{os.getpid()}'
 
+import atexit
+def _close_session():
+    """脚本结束自动关闭本 session（2026-09-09 修复 session 泄漏）"""
+    try:
+        subprocess.run([BA, 'session', 'close', SESSION], capture_output=True, text=True, timeout=20)
+    except Exception:
+        pass
+atexit.register(_close_session)
+
 def run(cmd):
     r = subprocess.run([BA, '--session', SESSION] + cmd, capture_output=True, text=True, timeout=45)
     return r.stdout
