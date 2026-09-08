@@ -55,7 +55,7 @@
 | 字段 | 必填 | 说明 |
 |:---|:---|:---|
 | `path` | ✅ | 产物相对路径 |
-| `type` | ✅ | 英文码：`wiki`=框架条目 / `blogger`=博主画像言论追踪 / `macro`=宏观 |
+| `type` | ✅ | 英文码：`wiki`=框架条目 / `blogger`=博主言论（DB 落库，画像 md 已退役） / `macro`=宏观 |
 | `layer` | 建议 | **英文码**（见下方字典表）：`my`/`blogger`/`other`/`macro`/`workspace` |
 | `category` | 建议 | **英文码**（见下方字典表）：`analysis_framework`/`trading_system`/`investment_mentality`/`investment_insight`/`stock`/`industry`/`macro` |
 | `tags` | 建议 | 标签（来自标签体系，一级前缀） |
@@ -74,11 +74,11 @@
 | `layer` | dict(type=layer) | `my`=我的 / `blogger`=博主 / `other`=其他 / `macro`=宏观 / `workspace`=工作区 / `attachment`=附件 |
 | `category` | dict(type=category) | `analysis_framework`=分析框架 / `trading_system`=交易体系 / `investment_mentality`=投资心态 / `investment_insight`=投资心得 / `stock`=个股 / `industry`=行业 / `macro`=宏观 |
 | `relation` | dict(type=target_relation) | `new`=新建 / `append`=追加 / `complement`=互补 / `conflict_check`=矛盾预检 / `other`=其他 |
-| `type` | dict(type=target_type) | `wiki`=框架条目 / `blogger`=博主画像 / `macro`=宏观条目 |
+| `type` | dict(type=target_type) | `wiki`=框架条目 / `blogger`=博主言论（DB） / `macro`=宏观条目 |
 | `sourceType` | dict(type=source_type) | `raw`=原始资源 / `coarse`=粗制品 |
 | 审查 `checks[].status` | dict(type=check_status) | `pass`=通过 / `warn`=警告 / `fail`=失败（`ok`=旧数据遗留，新写入不用；**无 `info`**） |
 
-> **避坑**：落库报 `foreign key constraint fails ... dict_*` 时，用 `SHOW CREATE TABLE {refine_targets|review_checks}` + 对应字典表核对码值，不要猜中文。博主画像目标 `category` 可省略（列可空）。
+> **避坑**：落库报 `foreign key constraint fails ... dict_*` 时，用 `SHOW CREATE TABLE {refine_targets|review_checks}` + 对应字典表核对码值，不要猜中文。博主言论目标 `category` 可省略（列可空）。
 
 ---
 
@@ -87,7 +87,7 @@
 | type | 含义 | 看板展示 |
 |:---|:---|:---|
 | `wiki` | 框架条目 | 分类色块 + 归属层徽章 + 产物决策卡 |
-| `blogger` | 博主画像言论追踪 | **粉色「言论追踪」标记** |
+| `blogger` | 博主言论（落 DB） | **粉色「言论追踪」标记** |
 | `macro` | 宏观 | 琥珀色「宏观」标记 |
 
 `sourceType=coarse` 时看板显示「粗制品直提」徽章；`verify.ok` 显示「校验通过」；`bloggerUpdated` 显示「言论追踪」。
@@ -117,13 +117,13 @@
 
 | content_type | 涉及个股/行业/市场 | 去向 | 另落 wiki？ |
 |---|---|---|---|
-| `trade` | 必是 | `blogger_trade` → 画像「个股买卖记录」+ 看板。**方向 `stance` 必填**（看空/看多/中性），有价必标 `price`（开盘竞价位），`note` 只记操作理由 | 否 |
-| `research` | 是 | `blogger_statement` → 画像「言论追踪」+ 看板 | 仅当沉淀出可复用框架（画像记事实，wiki 记方法，**不重复记录**） |
+| `trade` | 必是 | `blogger_trade` → `blogger_trades` 表（看板买卖记录；画像 md 已退役不回写）。**方向 `stance` 必填**（看空/看多/中性），有价必标 `price`（开盘竞价位），`note` 只记操作理由 | 否 |
+| `research` | 是 | `blogger_statement` → `blogger_statements` 表 | 仅当沉淀出可复用框架（言论库记事实，wiki 记方法，**不重复记录**） |
 | `research` | 否 | — | 能成框架 → wiki（我的/其他/宏观）；不能 → **舍弃** |
-| `predict` | 必是 | `blogger_statement` → 画像「预测记录」+ 看板。**`stance` 必填**，`signal` 写目标位/时间窗（如 `HKD26.6 / 12个月内`），`view_date` 取博主下判断的时点 | 否 |
-| `view` | 是 | `blogger_statement`（含 `stance`）→ 画像 + 看板 | 否 |
+| `predict` | 必是 | `blogger_statement` → `blogger_statements`(predict) + 预测控制台。**`stance` 必填**，`signal` 写目标位/时间窗（如 `HKD26.6 / 12个月内`），`view_date` 取博主下判断的时点 | 否 |
+| `view` | 是 | `blogger_statement`（含 `stance`）→ 言论库（看板言论追踪） | 否 |
 | `view` | 否 | — | 有价值 → wiki；无价值 → 舍弃 |
-| `insight` | 是 | `blogger_statement` → 画像 + 看板 | 仅当沉淀方法论 |
+| `insight` | 是 | `blogger_statement` → 言论库（看板言论追踪） | 仅当沉淀方法论 |
 | `insight` | 否 | — | 有价值 → wiki；否则舍弃 |
 | `chat` | — | 仅当能刻画「擅长与局限 / 投资心态」→ `blogger_statement`；否则**舍弃** | 否 |
 
@@ -135,8 +135,8 @@
 
 **能成 wiki 的一刀切判据**：内容是否提供**可脱离发帖语境复用的判断逻辑／框架／数据关系**？是 → wiki；否 → 只留言论（不硬造条目）。
 
-**铁律**：凡落地到画像文件的，必须同一事务内落库看板（MySQL 权威，服务端自动镜像画像段）。**只做一半即为违规**——不得手改画像 md 表格，也不得只写库不回画像。
-**两条补充（2026-09-03）**：① 涉个股/行业/市场的言论调用 `blogger_statement` 时**必须传 `subjectId`**，否则该言论不会出现在「言论追踪」控制台——行业维度主题**按需创建**（词汇权威源 = tag-taxonomy 第五节申万分级；选最精确标准名，主题不存在则按标准名即时创建，**禁止自创非标准行业名**，见 framework-rules #38 行业主题按需创建）；② **写入前先查重**——同一段文字已存在于该博主画像言论表时，合并/更新那一行，**禁止新增第二份**（"画像在谁名下就是谁的言论"既是归因依据，也是去重依据）。
+**铁律（2026-09-08 画像单轨化）**：言论/买卖/画像一律只落 MySQL（`blogger_statement`/`blogger_trade`/`update_blogger`）。画像 md 已退役——不再镜像回写，vault 内残留画像文件仅为待删除的比对副本。**手改画像 md 表格、为画像文件写内容均为违规**。
+**两条补充（2026-09-03）**：① 涉个股/行业/市场的言论调用 `blogger_statement` 时**必须传 `subjectId`**，否则该言论不会出现在「言论追踪」控制台——行业维度主题**按需创建**（词汇权威源 = tag-taxonomy 第五节申万分级；选最精确标准名，主题不存在则按标准名即时创建，**禁止自创非标准行业名**，见 framework-rules #38 行业主题按需创建）；② **写入前先查重**——同一段文字已存在于该博主的 `blogger_statements` 行时，合并/更新那一行，**禁止新增第二份**（"言论登记在谁名下就是谁的言论"既是归因依据，也是去重依据）。
 
 ### 分类不明处置（禁止静默丢弃 · 2026-09-06 用户规则）
 

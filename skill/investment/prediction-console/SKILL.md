@@ -15,8 +15,8 @@ version: 2.1.0
 - **一主题一段**：每只股票/行业/市场独立 `prediction_subjects` 记录（含代码字段），禁止合并（如"神火/云铝"合成一段）
 - **去重由 DB 兜底**：`console_add_prediction` 按（主题+预测日期+预测人+内容）唯一键幂等，重复自动跳过并返回 `duplicate: true`
 - **验证留痕由服务端强制**：状态改为 `verified_correct/verified_wrong/revoked` 时 `verify`（result+basis）必填，缺了直接报错——状态枚举里禁止夹带证据
-- **双向同步**：录入预测控制台的同时，更新对应博主画像的言论追踪（博主画像仍存 vault）
-- **预测两条链路、一处展示**：博主帖子里的预测先作为言论归档（`blogger_statement` `contentType=predict`，画像/看板按人追责）；纳入验证体系的另走 `console_add_prediction`（带目标价/参考价/验证留痕）。同一判断两侧都有时**必须靠 `origin_id` 关联**（传 `statementId` 或靠服务端相似度自动回填），看板合并成一张卡；未关联即视为重复数据
+- **言论单轨**：预测落 `prediction_records` 的同时，来源博主言论记 `blogger_statements`（origin 关联）；画像 md 已退役（2026-09-08），不再写任何 vault 画像文件
+- **预测两条链路、一处展示**：博主帖子里的预测先作为言论归档（`blogger_statement` `contentType=predict`，言论库按人追责）；纳入验证体系的另走 `console_add_prediction`（带目标价/参考价/验证留痕）。同一判断两侧都有时**必须靠 `origin_id` 关联**（传 `statementId` 或靠服务端相似度自动回填），看板合并成一张卡；未关联即视为重复数据
 - **码值权威源**：`content_type`(stmt_content_type)/`stance`/`status`(prediction_status) 等枚举以 MySQL `dict` 表为准，`remark` 里写判据；新增分类改字典不改代码
 - **倒序展示**：看板按预测日期倒序（月级精度排当月 1 日、展示还原为 yyyy-MM）
 
@@ -73,8 +73,8 @@ version: 2.1.0
 - **用途边界（2026-09-03）**：本工具只记"对某条已有预测的后续跟踪"（该判断被加强还是被推翻）。**博主言论/观点/预测/研究/心得的归档不走这里**，一律走 `blogger_statement`（涉个股/行业/市场时传 `subjectId`；预测类言论用 `contentType=predict`）。
 - **`source` 必须写发言者本人**（博主名或"自己"），**禁止写「雪球采集-2026年8月11日」这类批次名**。
 
-### 第七步：同步博主画像
-涉及已登记博主时，读取 `博主/{博主名}/{博主名}.md`，在言论追踪表追加记录（指向预测控制台对应主题），更新 updateDate。博主画像仍为 vault 文件。
+### 第七步：（已退役）同步博主画像
+2026-09-08 画像单轨化：本步取消。来源言论已由 `blogger_statement` 落库（与预测经 `origin_id` 关联），画像字段存 `bloggers` 表；**禁止再读写 vault 画像文件**。
 
 ---
 
@@ -97,7 +97,7 @@ version: 2.1.0
 | MCP 工具调用 | Ai/tools/investment-console-mcp/README.md | 读取 |
 | 行业分类标准 | investment-framework/references/tag-taxonomy.md | 读取 |
 | 个股/指数价格 | 腾讯 kline API（web.ifzq.gtimg.cn，不复权） | 执行 |
-| 博主画像 | 博主/{名}/{名}.md | 读取+写入（仍为 vault；博主控制台登记已 MySQL 化：bloggers 表） |
+| 博主画像 | MySQL `bloggers` 表（单轨） | 经 add/update_blogger 读写；画像 md 已退役（仅存待删比对副本） |
 
 ---
 
@@ -121,5 +121,5 @@ version: 2.1.0
 - [ ] 预测日期是否为原始判断日期？月级是否走 yyyy-MM？
 - [ ] 状态变更是否带 verify（result+basis）？
 - [ ] 源自已有言论的预测是否带了 `statementId`（或确认自动关联命中，返回 `linkedStatementId`）？
-- [ ] 是否同步更新了博主画像？
+- [ ] 来源言论是否已落 `blogger_statements` 并与预测 `origin_id` 关联？（画像 md 已退役，禁写）
 - [ ] 是否未写 vault 预测控制台文件？

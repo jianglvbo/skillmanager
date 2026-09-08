@@ -51,11 +51,11 @@ compatibility: 通用
 **C7**：关联备注——为缺少跨条目关联的条目补充脚注（脚注类型和格式见 `investment-framework/references/footnote-taxonomy.md`），在正文相关论述处嵌入标记，文末脚注定义（无 ## 脚注 标题、无 --- 分隔线）写 wikilink + 关系类型 + 一句话说明
 **C8**：关系依据复核——逐条打开文件中**已存在**的关联脚注，核对目标文件原文是否支撑其关系声明；无依据的一律记为"编撰关系"，在报告中建议删除或降级为 enhance（见 footnote-taxonomy.md「关系依据校验」）
 **C9**：输出内容审查报告
-**C10**：言论追踪审计——执行 `scripts/tracks_audit.py --vault <vault路径>`（可选 `--mysql`，凭据经环境变量 `DB_PASS` 注入、勿硬编码），核对博主画像「言论追踪」section 缺失/空表/标的占位/缺原文链接/列异常，及 MySQL tracks 数据质量、direction 码值合法性、vault↔MySQL 同步一致性；只报告不修改，问题并入内容审查报告
+**C10**：言论追踪审计——执行 `scripts/tracks_audit.py --vault <vault路径>`（可选 `--mysql`，凭据经环境变量 `DB_PASS` 注入、勿硬编码），核对 MySQL `blogger_statements`/`blogger_trades` 数据质量（缺原文链接/direction 码值合法性/标的占位残留）；画像 md 已退役（2026-09-08），比对期可经 `POST /api/blogger/resync` 做 md↔DB 行数对照（只读核对，不作为写入依据）；只报告不修改，问题并入内容审查报告
 
 ### 结构审查（编号 S1-S8）——审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
 
-**辅助 · 预扫（可选）**：① 结构/元数据——`scripts/vault_review.py --vault <vault路径>` 生成 `vault_review_result.json`（归类/frontmatter 含 updateDate/引号/wikilink 含 source/脚注格式/标签 六维 + 画像三表原文链接（#35）/禁用 `## 来源`/source 形态（#23）/空壳 junk 扩展检查，只报告不修改）；② 段落布局——`investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观`（同行标题/标题间距/段落紧凑/脚注内联孤儿/模板残留，`--fix` 可自动修复）。人工据 JSON 撰写报告时聚焦机器无法判定的部分（段落缺失是否确无内容、标签语义、关联备注提案）。
+**辅助 · 预扫（可选）**：① 结构/元数据——`scripts/vault_review.py --vault <vault路径>` 生成 `vault_review_result.json`（归类/frontmatter 含 updateDate/引号/wikilink 含 source/脚注格式/标签 六维 + 言论/买卖/预测三表原文链接（#35；画像 md 已退役，vault_review 的画像文件检查仅作比对期参考）/禁用 `## 来源`/source 形态（#23）/空壳 junk 扩展检查，只报告不修改）；② 段落布局——`investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观`（同行标题/标题间距/段落紧凑/脚注内联孤儿/模板残留，`--fix` 可自动修复）。人工据 JSON 撰写报告时聚焦机器无法判定的部分（段落缺失是否确无内容、标签语义、关联备注提案）。
 
 **S1**：读取参数 `{ scope_dirs }`
 **S2**：归类正确性——含博主层条目其作者是否均在博主控制台（看板 MySQL bloggers 表）登记，未登记者误挂博主层须标记迁移至其他层（见 framework-rules #12）
@@ -139,9 +139,9 @@ compatibility: 通用
 | `stock_code_missing` | 股票代码缺失 | `stray_date` | 游离日期字段 |
 | `recycle_pending` | 待回收条目 | `unclassified` | 未归类文件 |
 | `recycle_expired` | 回收过期条目 | `junk_files` | 空壳文件 |
-| `macro_template_mismatch` | 宏观模板不匹配 | `blogger_has_source` | 画像误含 source |
-| `blogger_has_platform_id` | 画像误含 platform_id | `blogger_empty_link_row` | 画像三表空原文链接行 |
-| `blogger_table_no_link_col` | 画像三表缺原文链接列 | `verify-format 段落布局` | 段落布局 |
+| `macro_template_mismatch` | 宏观模板不匹配 | `blogger_has_source` | 画像比对副本误含 source |
+| `blogger_has_platform_id` | 画像副本误含 platform_id | `blogger_empty_link_row` | 画像副本空原文链接行 |
+| `blogger_table_no_link_col` | 画像副本缺原文链接列 | `verify-format 段落布局` | 段落布局 |
 
 ### 总结与主要问题（结构化，便于看板直观展示）
 

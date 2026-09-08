@@ -96,7 +96,7 @@ compatibility: 通用
 - **`delete` 常驻空值**（#26/#27）：内容型条目 frontmatter 一律含 `delete: `（空值，位于 star 后），**提炼阶段不填值**——回收标记完全由用户手动填日期，Agent 绝不代填
 - **日期裸写**（#1）：`createDate`/`updateDate` 裸写 `yyyy-MM-dd`，无引号
 - **原文链接格式**（#30/#35）：表格内链接一律用 `[原文](URL)` 格式，**禁止贴裸 URL**
-- **产出物去 emoji**（2026-08-09 用户确认边界）：wiki 产物（框架条目、博主画像）**禁止任何 emoji 表情**——标题（如 `## 言论追踪` 不带 ⭐、`## 个股买卖记录` 不带 📈）、正文、frontmatter 均不得含 emoji 表情字符；`→` 流程箭头、表格 `---` 分隔线等非表情符号不受限。**该边界只影响提炼环节**：采集（xq-post-fetch）与粗加工（coarse-processor）必须保持原文（含原文 emoji），不得清洗
+- **产出物去 emoji**（2026-08-09 用户确认边界）：wiki 产物与落库文本（框架条目、`view_text`/`signal_text`/`strengths`/`limitations` 等 DB 字段）**禁止任何 emoji 表情**——标题、正文、frontmatter 均不得含 emoji 表情字符；`→` 流程箭头、表格 `---` 分隔线等非表情符号不受限。**该边界只影响提炼环节**：采集（xq-post-fetch）与粗加工（coarse-processor）必须保持原文（含原文 emoji），不得清洗
 
 2. 选择对应模板（从编排者传入的 templates）
 3. 创建文件，填写 frontmatter + 正文内容。正文按 template-guide.md 的写作指引填充（模板为纯结构骨架，各 section 写作要求统一在 references/template-guide.md），保留原文的比喻、案例、推理链条，用自然语言段落而非干巴巴的要点罗列
@@ -118,7 +118,7 @@ compatibility: 通用
 - **请求体 / 字段规范 / 字典码 / thinking v2 细则 / 决策一致性**：全部见 `references/refine-schema.md`（本步唯一权威 schema，含完整 JSON 示例）。执行要点：
   - 每条 `targets` 必填 `basis`（依据原文句）+ `thinking`（思考链路 v2）；`layer/category/relation/type` 传字典英文码（传中文会外键报错，对照表见 refine-schema.md 二B）
   - **thinking v2**：自由长度对象数组 `[{kind,text,quote?,alt?}]`，按真实推理记录（观察/疑问/假设/查证/对比/权衡/排除/决策/结论…），`quote`=触发该步原文句、`alt`=备选/否决理由；**归属层/拆分/关系三个决策点必含**（kind 含"决策"）；禁止固定 5 步套话与空话步骤
-  - 涉及已登记博主：`targets` 含 `type:"blogger"` 画像条目 + `bloggerUpdated:true`（看板粉色言论追踪标记）
+  - 涉及已登记博主：`targets` 含 `type:"blogger"` 言论条目（落 DB 单轨） + `bloggerUpdated:true`（看板粉色言论追踪标记）
   - **自由文本路径硬约束**：`reason/thinking/basis/verify.detail` 里的 `.md` 路径只写真实存在文件或本条产物/源，假想/否决条目写《名称》不带 `.md`（详见 refine-schema.md 四）
   - `basis/relation` 必须来自第一步真实判断，禁止事后编撰（与审查 C7/C3 联动）
   - 落库失败（看板未启动等）不阻断主流程，汇报提示「看板数据未写入」

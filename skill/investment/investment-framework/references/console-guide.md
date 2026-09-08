@@ -47,7 +47,7 @@
 
 - 一对多：一篇拆多条，targets 全写，每条必填 basis + thinking（决策语义由 thinking 的"决策"步承载）
 - thinking 每步来自第一步分析的真实判断（归属层铁律/标签体系/模板选择/同作者预检），**禁止事后编撰**
-- 涉及已登记博主：targets 同时含 `type:"blogger"` 画像条目 + `bloggerUpdated:true`
+- 涉及已登记博主：targets 同时含 `type:"blogger"` 言论条目（落 DB 单轨） + `bloggerUpdated:true`
 - 旧数据 `to[]` 字符串数组自动兼容归一化
 - **路径书写语义（2026-09-01 用户确认，写入侧硬约束）**：自由文本（reason/thinking/basis/verify.detail）中 `.md` 完整路径 = 写入方承诺该文件真实存在（本次检索命中或本条产物/源），前端渲染为可点击《文件名》跳 Obsidian；假想/被否决/未创建条目一律写《名称》（不带 `.md`）渲染为纯文本。前端存在性校验（vault 索引 ∪ 本条产物）仅兜底质检，权威判定在写入侧（规则源：investment-refine/references/refine-schema.md 四）
 
