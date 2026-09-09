@@ -8,6 +8,12 @@ SEARCH_STATUS_URL = "https://xueqiu.com/query/v1/symbol/search/status.json"
 USER_TIMELINE_URL = os.environ.get(
     "XUEQIU_TIMELINE_URL", "https://xueqiu.com/v4/statuses/user_timeline.json"
 )
+# 自动降级目标：v4 路径 405/非 JSON 时 crawler 自动切到此端点重试（无需人工干预）
+USER_TIMELINE_URL_FALLBACK = os.environ.get(
+    "XUEQIU_TIMELINE_URL_FALLBACK", "https://xueqiu.com/statuses/user_timeline.json"
+)
+# 旧版路径每页上限 20（v4 支持 50），降级后自动下调
+FALLBACK_POSTS_COUNT = 20
 
 # Crawling parameters
 MIN_REPLY_COUNT = 20

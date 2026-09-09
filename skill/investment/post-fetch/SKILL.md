@@ -84,12 +84,14 @@ curl -s http://127.0.0.1:9222/json/version  # CDP 可达（端口被占用时按
 
 ```bash
 $PY {xueqiu-spyder}/main.py user {xq_id} \
-  --from "{info_cutoff}" --to "{now_iso}" \
+  --from "{info_cutoff}" --to "{now_iso}" --max-pages {N} \
   --outfile "雪球采集-{nickname}-{YYYY年M月D日}.md" --output "{输出目录}"
 ```
 - `now_iso` 先取：`date "+%Y-%m-%dT%H:%M:%S"`
+- **`{N}` 按窗口长度取**（硬约束，不得沿用默认 10）：≤24h→**3**、≤7 天→**5**、>7 天→10
+- **批量节流**：每处理 10 位博主暂停 60 秒再继续
 - 逐帖：截断补全（详情页）→ 形态判定 → 置顶排除 → 时间窗过滤 → 帖子集输出（spyder 内部完成）
-- spyder 报 WAF/滑块 → 按错误提示处理（人工过验证 / 稍后重试），不硬撞
+- **端点封禁自动降级**：v4 timeline 被 WAF 405 时 spyder 自动切旧版端点，无需干预；降级后仍失败才按 WAF 报错处理（稍后重试 / 人工过验证），不硬撞
 
 ### 第三步：格式验收（强制，不可跳过）
 
@@ -159,6 +161,8 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 - [ ] 工具层环境就绪（venv 依赖 + Chrome CDP 可达 + 雪球已登录）？
 - [ ] xueqiu-spyder SKILL.md 已加载（含其参数与自检）？
 - [ ] 采集委托 spyder 执行（`main.py user --from {cutoff} --to {now}`），未绕过工具层直接操作浏览器？
+- [ ] **`--max-pages` 按窗口长度取值**（≤24h→3、≤7 天→5、>7 天→10），未沿用默认 10？
+- [ ] **批量采集每 10 位暂停 60 秒**（节流）？
 - [ ] 时间窗口 = info_cutoff → 当前，置顶帖已排除？
 - [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter/三件套/发布行/纯文本）？
 - [ ] 每帖均带 `[原文]` 链接？

@@ -48,7 +48,29 @@ class XueqiuCrawler:
         self._pw = None
         self._browser = None
         self._page = None
+        # timeline 端点状态：v4 被 WAF 405 时自动降级到旧版路径（2026-09-09 固化）
+        self._timeline_url = config.USER_TIMELINE_URL
+        self._timeline_count = config.USER_POSTS_COUNT
+        self._degraded = False
         self._connect_chrome()
+
+    def _degrade_timeline(self):
+        """v4 timeline 端点被 WAF 拦截时，自动切到旧版路径并下调每页条数
+
+        2026-09-09 实测：v4/statuses/user_timeline.json 会被阿里云 WAF 对该 IP
+        临时封禁（405，页面自身带签名请求亦 405），而旧版 /statuses/user_timeline.json
+        仍可用且数据结构一致。降级只做一次，避免无限重试。
+        """
+        if self._degraded:
+            return False
+        self._timeline_url = config.USER_TIMELINE_URL_FALLBACK
+        self._timeline_count = config.FALLBACK_POSTS_COUNT
+        self._degraded = True
+        logger.warning(
+            "timeline 端点失败，自动降级到旧版路径重试: %s (count=%d)",
+            self._timeline_url, self._timeline_count,
+        )
+        return True
 
     def _connect_chrome(self):
         """启动带调试端口的 Chrome 并连接"""
@@ -195,9 +217,12 @@ class XueqiuCrawler:
                         } catch(e) { return {ok: false, error: e.message}; }
                     }""",
                     {"uid": user_id, "page": page_num,
-                     "url": config.USER_TIMELINE_URL, "count": config.USER_POSTS_COUNT},
+                     "url": self._timeline_url, "count": self._timeline_count},
                 )
                 if not result.get("ok"):
+                    # 首次失败 → 尝试自动降级端点后重试本页（只降级一次）
+                    if self._degrade_timeline():
+                        continue
                     logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
                     break
                 statuses = result.get("statuses", [])
@@ -444,9 +469,12 @@ class XueqiuCrawler:
                         } catch(e) { return {ok: false, error: e.message}; }
                     }""",
                     {"uid": user_id, "page": page_num,
-                     "url": config.USER_TIMELINE_URL, "count": config.USER_POSTS_COUNT},
+                     "url": self._timeline_url, "count": self._timeline_count},
                 )
                 if not result.get("ok"):
+                    # 首次失败 → 尝试自动降级端点后重试本页（只降级一次）
+                    if self._degrade_timeline():
+                        continue
                     logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
                     break
                 statuses = result.get("statuses", [])

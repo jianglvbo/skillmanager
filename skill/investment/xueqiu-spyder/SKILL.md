@@ -26,7 +26,7 @@ compatibility: macOS / Linux
 - **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 双写 / 归档提炼均不在此层）。
 - **CDP 复用登录态**：连接本机已登录 Chrome 的调试端口（默认 9222，`XUEQIU_DEBUG_PORT` 覆盖），不重复登录、不依赖 browser-act。
 - **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
-- **风控自控**：WAF/滑块检测（`滑动|安全验证|captcha|访问验证`）命中即抛错停止，不硬撞。
+- **风控自控**：WAF/滑块检测（`滑动|安全验证|captcha|访问验证`）命中即抛错停止，不硬撞；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
 - **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
 - **输出对齐帖子集规范**：frontmatter 七字段 + 每帖三件套（标题/正文/发布行），供 post-fetch 直接交接提炼。
 
@@ -50,10 +50,15 @@ compatibility: macOS / Linux
 | --from | str | 否 | 起始时间 `YYYY-MM-DD` 或 `YYYY-MM-DDTHH:MM:SS`（对齐 info_cutoff 增量窗口） |
 | --to | str | 否 | 截止时间（默认当前） |
 | --days | int | 否 | 相对窗口（与 --from 互斥，--from 优先；兼容旧用法） |
-| --max-pages | int | 否 | 最大翻页数（默认 10） |
+| --max-pages | int | 否 | 最大翻页数（默认 10；**编排层须按窗口长度下调**：≤24h→3、≤7天→5，见 post-fetch execution-guide） |
 | --outfile | str | 否 | 输出文件名（默认 `雪球采集-{昵称}-{日期}.md`） |
 | --output | path | 否 | 输出目录（默认 ./output） |
 | --column | flag | 否 | 仅抓取专栏文章 |
+
+**timeline 端点自动降级（2026-09-09 固化）**：`v4/statuses/user_timeline.json` 被阿里云 WAF 对该 IP 临时封禁（405，页面自身带签名请求亦 405）时，crawler **自动切到旧版 `/statuses/user_timeline.json`** 重试本页（数据一致，仅每页上限由 50 降为 20），只降级一次，无需人工干预。可用环境变量覆盖：
+- `XUEQIU_TIMELINE_URL`：主端点（默认 v4）
+- `XUEQIU_TIMELINE_URL_FALLBACK`：降级端点（默认旧版）
+- `XUEQIU_POSTS_COUNT`：每页条数（默认 20，两端点兼容值）
 
 ### 第一步：确认运行环境
 
@@ -153,4 +158,5 @@ tags: []
 - [ ] 置顶帖已排除、未纳入窗口统计？
 - [ ] 截断帖已补全或标记「摘要」（无未经详情页验证即标「全文」）？
 - [ ] 时间窗生效（--from/--to，毫秒过滤）？
+- [ ] timeline 端点被封时自动降级生效（日志含「自动降级到旧版路径」）？
 - [ ] 无 WAF/滑块报错残留、输出未被验证页污染？
