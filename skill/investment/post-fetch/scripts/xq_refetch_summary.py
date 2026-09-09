@@ -22,7 +22,7 @@ BA = os.path.expanduser('~/.local/bin/browser-act')
 VAULT = '/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库'
 DEFAULT_DIR = os.path.join(VAULT, '工作区', '粗制品')
 # 备份目录在 vault 外（2026-09-09：.bak 不得污染 vault）
-BACKUP_DIR = os.path.expanduser('~/.cache/xq-post-fetch/backups')
+BACKUP_DIR = os.path.expanduser('~/.cache/post-fetch/backups')
 
 PUB_LINE_RE = re.compile(
     r'^> 发布：\d{4}年\d{1,2}月\d{1,2}日 \d{1,2}:\d{2} \| 形态：(回复|短文|长文) \| (全文|摘要) \| \[原文\]\(https://xueqiu\.com/\d+/\d+\)$',

@@ -4,7 +4,7 @@ description: >
   投资知识框架全局编排者。管理三大归属层（我的/博主/其他）+ 六大分类（分析框架/交易体系/投资心态/投资心得/个股/行业）+ 宏观。
   定义流水线（粗制品→粗加工→原始资源→提炼→审查）、模板表、路径表、全局规则、审查机制。
   触发词：「投资框架」「框架全貌」「pipeline」「粗加工」「提炼」「归档」「审查」「review」。
-  区别于 xq-post-fetch（只抓取帖子）：本 skill 是路径和模板的唯一持有者，负责串联全部加工模块。
+  区别于 post-fetch（只抓取帖子）：本 skill 是路径和模板的唯一持有者，负责串联全部加工模块。
 license: MIT
 agent_created: true
 metadata:
@@ -65,7 +65,7 @@ compatibility: 通用
 - **若原始资源中不存在**（即没有 `status=待提炼` 的记录）：说明文档仍在 `工作区/粗制品/`，编排者须先调用 `investment-coarse-processor` 完成粗加工（粗加工会将其移入原始资源并置 `status=待提炼`），再进入 `investment-refine`。**不要跳过粗加工、直接在粗制品上提炼。**
 - 用户说「粗加工+提炼」「全流程」「归档」时，自然走「粗加工 → 提炼」串联，无需额外判断。
 - **例外（#29 帖子集）**：`type: 帖子集` 直接从粗制品提炼，跳过粗加工和原始资源，提炼后源文件移废纸篓。提炼路由同 #30：言论 / 买卖 / 预测 → `blogger_statement`/`blogger_trade` 落库（画像单轨，不写画像 md）；有框架价值 → 同时产出 wiki 条目；二者可兼得。
-- **例外（#30 截图/链接直投）**：用户直接发送雪球截图（可能多张）+ 出处链接 + 关联股票。等同于 xq-post-fetch 采集的博主言论，跳过粗加工和原始资源。路径：粗制品(临时) → 直接提炼 → 删源文件。提炼路由由 agent 判断内容类型：言论追踪 / 买卖记录 / 预测记录 → 对应博主画像文件；有框架价值 → 同时产出 wiki 条目。
+- **例外（#30 截图/链接直投）**：用户直接发送雪球截图（可能多张）+ 出处链接 + 关联股票。等同于 post-fetch 采集的博主言论，跳过粗加工和原始资源。路径：粗制品(临时) → 直接提炼 → 删源文件。提炼路由由 agent 判断内容类型：言论追踪 / 买卖记录 / 预测记录 → 对应博主画像文件；有框架价值 → 同时产出 wiki 条目。
 
 ### 粗加工 → investment-coarse-processor
 
@@ -93,7 +93,7 @@ compatibility: 通用
 
 | 操作 | 出口校验门 | 工具 |
 |:---|:---|:---|
-| 采集/同步后（xq-post-fetch 前置步骤） | 控制台-画像 info_cutoff 一致 + 博主层残留检测 | execution-guide 第 6-7 步 |
+| 采集/同步后（post-fetch 前置步骤） | 控制台-画像 info_cutoff 一致 + 博主层残留检测 | execution-guide 第 6-7 步 |
 | 提炼后（refine 第二步收尾） | 段落布局/模板段落完整 0 问题 | scripts/verify-format.py |
 | **删除/回收/移动前**（#25/#26） | inbound 引用反查，清理完才允许删 | scripts/check_inbound.py |
 | 任意批量操作后 / 提交前 | 增量扫描 git 变更文件（秒级） | investment-review/scripts/vault_review.py --incremental |
@@ -112,11 +112,11 @@ compatibility: 通用
 
 | 信息 | 获取方式 | 用途 |
 |:---|:---|:---|
-| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、博主控制台「信息截止」更新（xq-post-fetch 第八步） |
-| 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（xq-post-fetch 第四步） |
+| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、看板 bloggers「信息截止」更新（post-fetch 第五步） |
+| 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（post-fetch 第二步） |
 | 待提炼文档状态 | 查询原始资源 frontmatter `status` | 判定走粗加工 or 直接提炼（粗加工前置规则） |
 
-> 各执行 skill 在需要时自行获取（如 refine 写 `updateDate` 前、review 算冷静天数前、xq-post-fetch 时间窗口前），编排者不代为传递时间戳。
+> 各执行 skill 在需要时自行获取（如 refine 写 `updateDate` 前、review 算冷静天数前、post-fetch 时间窗口前），编排者不代为传递时间戳。
 
 ---
 

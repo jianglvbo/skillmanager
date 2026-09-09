@@ -1,6 +1,6 @@
 # 帖子集输出格式规范
 
-> 由 xq-post-fetch SKILL.md Output Format 引用。帖子集按 #29 例外流程直接进提炼（investment-refine 加载），不经粗加工。
+> 由 post-fetch SKILL.md Output Format 引用。帖子集按 #29 例外流程直接进提炼（investment-refine 加载），不经粗加工。
 
 ## 字段表
 

@@ -1,0 +1,156 @@
+---
+name: xueqiu-spyder
+description: |
+  雪球抓取工具层。通过 Chrome CDP（调试端口）复用本机已登录 Chrome 会话，调用
+  雪球 timeline API + 详情页补全，抓取指定博主的帖子全文，输出对齐投资框架规范的
+  帖子集 markdown（frontmatter + 三件套 + 发布行，含形态/全文标记/原文链接）。
+  触发词：「xueqiu-spyder」「spyder 抓取」「雪球抓取」「抓取雪球」「采集雪球」
+  排除条件：博主控制台同步 / info_cutoff 双写 / 帖子集归档与提炼等框架动作由
+  post-fetch 编排调用本工具，不独立执行；含「提炼」「画像」「归档」关键词时交
+  post-fetch / investment-refine。
+license: MIT
+agent_created: true
+metadata:
+  version: "2.0.0"
+  short-description: 雪球抓取工具层（CDP 复用登录态，输出帖子集标准格式）
+  layer: tool
+  orchestrated_by: post-fetch
+compatibility: macOS / Linux
+---
+
+# 雪球抓取工具层 v2.0
+
+## Default Stance
+
+### 核心原则
+- **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 双写 / 归档提炼均不在此层）。
+- **CDP 复用登录态**：连接本机已登录 Chrome 的调试端口（默认 9222，`XUEQIU_DEBUG_PORT` 覆盖），不重复登录、不依赖 browser-act。
+- **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
+- **风控自控**：WAF/滑块检测（`滑动|安全验证|captcha|访问验证`）命中即抛错停止，不硬撞。
+- **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
+- **输出对齐帖子集规范**：frontmatter 七字段 + 每帖三件套（标题/正文/发布行），供 post-fetch 直接交接提炼。
+
+### 禁止行为
+- 绝不内置或硬编码博主列表
+- 绝不绕过登录态裸调 API（WAF 拦截）；绝不连续翻页硬撞滑块
+- 绝不在采集阶段分析/提炼帖子内容（content_type/view_date 由 investment-refine 判定）
+- 绝不未经详情页验证即标「全文」——API text 可能截断，以详情页为准
+- 绝不删除原文 emoji 与引用结构（`//@` 引用保留原文嵌套；表情图转 `[表情名]` 占位文本保留）
+- 绝不把置顶帖归入采集窗口
+
+---
+
+## Workflow
+
+### 输入参数（user 子命令，post-fetch 编排主路径）
+
+| 参数 | 类型 | 必填 | 说明 |
+|:---|:---|:---|:---|
+| user_id | str/int | 是 | 雪球用户 ID 或用户名（用户名自动搜索解析） |
+| --from | str | 否 | 起始时间 `YYYY-MM-DD` 或 `YYYY-MM-DDTHH:MM:SS`（对齐 info_cutoff 增量窗口） |
+| --to | str | 否 | 截止时间（默认当前） |
+| --days | int | 否 | 相对窗口（与 --from 互斥，--from 优先；兼容旧用法） |
+| --max-pages | int | 否 | 最大翻页数（默认 10） |
+| --outfile | str | 否 | 输出文件名（默认 `雪球采集-{昵称}-{日期}.md`） |
+| --output | path | 否 | 输出目录（默认 ./output） |
+| --column | flag | 否 | 仅抓取专栏文章 |
+
+### 第一步：确认运行环境
+
+```bash
+# venv 解释器（依赖已装：requests + playwright）
+PY=~/.workbuddy/binaries/python/envs/xueqiu-spyder/bin/python
+$PY --version && $PY -c "import requests, playwright"
+```
+
+### 第二步：确认 Chrome CDP 可达且已登录
+
+- Chrome 需带调试端口启动：`--remote-debugging-port=9222`（端口可被占用时用 `XUEQIU_DEBUG_PORT` 覆盖）；启动失败处理见 crawler.py docstring
+- 验证：`curl -s http://127.0.0.1:{PORT}/json/version` 返回 JSON；打开用户页标题含昵称 = 已登录
+- 未登录 → 停止，提示用户先在 Chrome 登录雪球
+
+### 第三步：执行采集
+
+```bash
+$PY main.py user {xq_id} --from "{cutoff_iso}" --outfile "雪球采集-{昵称}-{日期}.md" --output "{输出目录}"
+```
+
+- 流程：翻页拉列表 → 置顶排除 + 时间窗过滤 → 截断帖详情页补全（含精确时间覆盖）→ 帖子集输出
+- 登录 Chrome 内页面自身发出的带签名请求可成功翻页；裸 API 翻页被 WAF 拦截时工具抛 `CrawlerError`，按报错提示处理
+
+### 第四步：校验输出
+
+- 打开输出文件，核对：frontmatter 七字段齐全、每帖带 `[原文]` 链接、发布行含 `形态/全文|摘要` 标记、无 WAF 报错残留
+- 不合格 → 修复或重跑；合格 → 汇报文件路径 + 采集条数 + 时间范围
+
+### stock / search 子命令（独立能力，不经 post-fetch）
+
+```bash
+$PY main.py stock SZ002738 --min-reply 20 --max-pages 10   # 个股大V观点报告
+$PY main.py search 治雨                                       # 搜用户 ID
+```
+
+---
+
+## Output Format
+
+帖子集 markdown（对齐 post-fetch `references/output-format.md`）：
+
+```markdown
+---
+title: "雪球帖子采集：{nickname} {YYYY年M月D日}"
+source: "https://xueqiu.com/u/{xq_id}"
+author: "{nickname}"
+date: "{YYYY年M月D日}"
+recorded: "{YYYY年M月D日}"
+type: "帖子集"
+status: "待提炼"        # 含摘要帖时 "待提炼-含摘要"
+tags: []
+---
+
+## 1. {帖子标题}
+
+{正文全文}
+
+> 发布：{YYYY年M月D日 HH:MM} | 形态：{回复|短文|长文|专栏} | 转发 {n} | 回复 {n} | 点赞 {n} | {全文|摘要} | [原文](https://xueqiu.com/{xq_id}/{post_id})
+```
+
+形态客观判定：含 "回复 @"/引用块 → 回复；原创 <300 字 → 短文；≥300 字或含分段 → 长文；专栏文章 → 专栏。
+
+---
+
+## Relative Files
+
+| 场景 | 文件 | 内容 | 方式 |
+|:---|:---|:---|:---|
+| 运行环境/依赖 | `requirements.txt` | requests + playwright | 安装 |
+| CDP 抓取内核 | `crawler.py` | Chrome CDP 连接、翻页、截断补全、WAF 检测、时间覆盖 | 执行 |
+| 形态/emoji/观点分析 | `analyzer.py` | 形态判定、`//@` 保留、表情转占位、Opinion 结构 | 执行 |
+| 帖子集生成 | `report.py` | frontmatter + 三件套 + 发布行输出 | 执行 |
+| CLI 入口/时间窗 | `main.py` | 子命令分发、--from/--to 解析 | 执行 |
+| API/参数常量 | `config.py` | 端点、延迟、翻页默认值 | 读取 |
+| 框架输出规范 | post-fetch `references/output-format.md` | frontmatter/三件套/字段表/铁律（编排层持有） | 读取 |
+
+---
+
+## Source Hierarchy
+
+| 优先级 | 来源 |
+|:---|:---|
+| 1 | 用户显式参数 / post-fetch 编排传入参数（user_id、--from/--to、--outfile） |
+| 2 | 环境变量 `XUEQIU_DEBUG_PORT` / `XUEQIU_CHROME_PATH`（本机覆盖默认） |
+| 3 | `config.py` 默认值 |
+| 4 | 雪球页面/API 实际结构 |
+
+---
+
+## 自检
+
+- [ ] venv 依赖可用（requests + playwright import 通过）？
+- [ ] Chrome CDP 可达（`/json/version` 返回 JSON）且已登录雪球？
+- [ ] 输出为帖子集格式（frontmatter 七字段 + 三件套 + 发布行）？
+- [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？
+- [ ] 置顶帖已排除、未纳入窗口统计？
+- [ ] 截断帖已补全或标记「摘要」（无未经详情页验证即标「全文」）？
+- [ ] 时间窗生效（--from/--to，毫秒过滤）？
+- [ ] 无 WAF/滑块报错残留、输出未被验证页污染？
