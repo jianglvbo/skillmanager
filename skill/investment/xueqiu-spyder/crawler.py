@@ -185,7 +185,7 @@ class XueqiuCrawler:
                     """async (args) => {
                         try {
                             const resp = await fetch(
-                                `/v4/statuses/user_timeline.json?user_id=${args.uid}&page=${args.page}&count=20`
+                                `${args.url}?user_id=${args.uid}&page=${args.page}&count=${args.count}`
                             );
                             const ct = resp.headers.get('content-type') || '';
                             if (!ct.includes('json')) return {ok: false, error: 'not json'};
@@ -194,7 +194,8 @@ class XueqiuCrawler:
                             return {ok: true, statuses: data.statuses || [], count: data.count};
                         } catch(e) { return {ok: false, error: e.message}; }
                     }""",
-                    {"uid": user_id, "page": page_num},
+                    {"uid": user_id, "page": page_num,
+                     "url": config.USER_TIMELINE_URL, "count": config.USER_POSTS_COUNT},
                 )
                 if not result.get("ok"):
                     logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
@@ -433,7 +434,7 @@ class XueqiuCrawler:
                     """async (args) => {
                         try {
                             const resp = await fetch(
-                                `/v4/statuses/user_timeline.json?user_id=${args.uid}&page=${args.page}&count=20`
+                                `${args.url}?user_id=${args.uid}&page=${args.page}&count=${args.count}`
                             );
                             const ct = resp.headers.get('content-type') || '';
                             if (!ct.includes('json')) return {ok: false, error: 'not json'};
@@ -442,7 +443,8 @@ class XueqiuCrawler:
                             return {ok: true, statuses: data.statuses || [], count: data.count};
                         } catch(e) { return {ok: false, error: e.message}; }
                     }""",
-                    {"uid": user_id, "page": page_num},
+                    {"uid": user_id, "page": page_num,
+                     "url": config.USER_TIMELINE_URL, "count": config.USER_POSTS_COUNT},
                 )
                 if not result.get("ok"):
                     logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
