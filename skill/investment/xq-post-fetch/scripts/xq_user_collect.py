@@ -231,9 +231,12 @@ if len(results) == 0:
 
 today_cn = datetime.date.today().strftime('%Y年%m月%d日')
 today_iso = datetime.date.today().strftime('%Y-%m-%d')
+# status 标记（2026-09-09）：含摘要帖 → 待提炼-含摘要（摘要言论不可提炼）
+n_summary = sum(1 for _, p in results if p.get('completeness') == '摘要')
+status_val = '待提炼-含摘要' if n_summary else '待提炼'
 lines = ['---', f'title: "雪球帖子采集：{NICK} {today_cn}"', f'source: "https://xueqiu.com/u/{XQID}"',
          f'author: "{NICK}"', f'date: {today_iso}', f'recorded: {today_iso}', 'type: "帖子集"',
-         'status: "待提炼"', 'tags: []', '---', '']
+         f'status: "{status_val}"', 'tags: []', '---', '']
 def extract_title(body, max_len=40):
     """提取帖子标题：完整首句优先；无完整句子时安全截断（绝不切断 markdown 链接）
     2026-08-26 修复：原实现 body[:30] 硬切会切断 [text](https://xueqiu... 链接，

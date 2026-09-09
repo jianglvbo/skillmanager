@@ -21,10 +21,23 @@ import re, sys, os, glob, time, shutil, subprocess, argparse
 BA = os.path.expanduser('~/.local/bin/browser-act')
 VAULT = '/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库'
 DEFAULT_DIR = os.path.join(VAULT, '工作区', '粗制品')
+# 备份目录在 vault 外（2026-09-09：.bak 不得污染 vault）
+BACKUP_DIR = os.path.expanduser('~/.cache/xq-post-fetch/backups')
 
 PUB_LINE_RE = re.compile(
     r'^> 发布：\d{4}年\d{1,2}月\d{1,2}日 \d{1,2}:\d{2} \| 形态：(回复|短文|长文) \| (全文|摘要) \| \[原文\]\(https://xueqiu\.com/\d+/\d+\)$',
     re.M)
+
+
+def sync_status(text):
+    """按摘要帖数量同步 frontmatter status（2026-09-09：摘要言论不可提炼）
+
+    含摘要帖 → status: "待提炼-含摘要"（提炼时须跳过「摘要」帖）
+    全部全文 → status: "待提炼"
+    """
+    n_summary = len(re.findall(r'\| 摘要 \| \[原文\]', text))
+    target = '待提炼-含摘要' if n_summary else '待提炼'
+    return re.sub(r'^status: .*$', f'status: "{target}"', text, count=1, flags=re.M)
 
 
 def run(cmd, session, timeout=60):
@@ -131,10 +144,14 @@ def process_file(path, session, wait_slider, dry_run=False):
     if not ok:
         print(f'  ❌ {os.path.basename(path)}: 自检失败，拒绝写入（{reason}）', file=sys.stderr, flush=True)
         return summary, 0, fail, False
+    new_text = sync_status(new_text)
     if dry_run:
         print(f'  ℹ️ {os.path.basename(path)}: dry-run 自检通过，未写入', file=sys.stderr, flush=True)
         return summary, done, fail, True
-    shutil.copy2(path, path + '.bak')
+    # 备份放 vault 外（2026-09-09 用户要求：.bak 不得污染 vault）
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    shutil.copy2(path, os.path.join(
+        BACKUP_DIR, f'{os.path.basename(path)}.{time.strftime("%Y%m%d-%H%M%S")}.bak'))
     open(path, 'w').write(new_text)
     return summary, done, fail, True
 
