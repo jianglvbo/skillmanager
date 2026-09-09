@@ -31,7 +31,7 @@
 9. 个股按市场（港股/A股/美股）分文件夹
 10. 博主层按博主名字建子文件夹，档案文件放在该文件夹根目录，按需创建不预建空文件夹
 11. 博主的分析框架下有方法论/和分析档案/两个子文件夹；我的和其他的分析框架下不设子文件夹
-12. 博主归类仅限博主控制台已登记的博主（登记权威 = 看板 MySQL `bloggers` 表；vault 工作区/博主控制台.md 已于 2026-09-07 退役删除，勿再读写）。**粗加工/提炼时 Agent 严禁自动将新作者「补登」进博主控制台**——若原始资源 `author` 不在控制台，其框架条目一律归「其他」层（未登记投资人层），`author` 字段照实填写但不占用博主层路径、不建博主档案。**唯一例外**：xq-post-fetch 前置步骤可从用户雪球关注列表同步新增博主到控制台（用户明确授权，见 xq-post-fetch SKILL.md「前置步骤」），同步时须向用户报告变动并确认。除此之外，任何情况下 Agent 不得自行新增博主。
+12. 博主归类仅限博主控制台已登记的博主（登记权威 = 看板 MySQL `bloggers` 表；vault 工作区/博主控制台.md 已于 2026-09-07 退役删除，勿再读写）。**粗加工/提炼时 Agent 严禁自动将新作者「补登」进博主控制台**——若原始资源 `author` 不在控制台，其框架条目一律归「其他」层（未登记投资人层），`author` 字段照实填写但不占用博主层路径、不建博主档案。**唯一例外**：xq-post-fetch 前置步骤可从用户雪球关注列表同步新增博主到控制台（用户明确授权，见 xq-post-fetch SKILL.md「前置步骤」），同步时须向用户报告变动并确认。除此之外，任何情况下 Agent 不得自行新增博主。**删除为软删除（2026-09-08 起）**：`remove_blogger` 只置 `bloggers.deleted_at`，博主目录与全部产物（wiki/言论/买卖/制品）原样保留、看板标「已删除」并沉底；恢复走 `restore_blogger`；同名重新登记会自动复活原行（保留言论关联）。Agent 不得物理删除 bloggers 行。
 13. "其他"层只接收投资相关、来自具体投资人的内容；与投资无关的信息直接丢弃
 14. 跨层查找靠 frontmatter 标签，不靠文件结构
 15. "我的"层由用户自己管理，Agent 不维护
@@ -194,5 +194,7 @@
     - **唯一实现含芯片样式**：`.tk-file` 一律由 `tkLink()` 产出，**不加"点击在 Obsidian 打开"这类多余 title**（可点性由 `cursor:pointer` + hover 下划线表达），仅"文件不存在"保留提示 title；提炼决策链路曾有第二套 `.tk-file` 硬写模板，已收编回 `tkLink()`。
     - **预测主题归类守卫**：新建主题（`console_add_prediction` 的 `subjectName`）必须与控制台维度一致——`market` 仅收市场维度名（A股/港股/美股/加密货币/大盘/`××股市`），`industry` 不得收市场维度名，认知/方法论类内容（含 心态/理念/认知/体系/市赚率/方法论/哲学）不得作为任何控制台的预测主题，应落「我的/其他」层 wiki；博主名不得成为主题（见 2026-09-03 `isBloggerName` 守卫）。守卫**只拦新建、不拦存量**（已有主题仍可正常维护），避免历史数据无法更新。依据 `tag-taxonomy.md` 第六节（市场 4 个封顶）与第五节（行业=申万31 + 自定义4）。
     - **行业主题按需创建（2026-09-06 用户规则：看板只显示有数据的行业）**：行业主题**不预建、不留空壳**——词汇权威源 = `tag-taxonomy.md` 第五节（申万2021版 31 一级 + 4 自定义一级 + 各二级）。涉行业的言论/预测，**选最精确的标准名**（一级，或「一级/二级」二级名）；该主题在看板不存在时，**即时按标准名创建**（`subjectOf`/console 工具已支持按需建，创建即启用、与言论共生），**禁止自创非标准行业名**。无数据的空主题定期清理（2026-09-06 曾全量预建 160 个空主题，当日纠偏删除，快照 `outputs/industry_empty_deleted.json`；存量并转快照 `outputs/industry_fix_snapshot.json`）。
-    - **言论单轨（2026-09-07 起）**：博主言论唯一权威存储 = `blogger_statements`（挂 `subject_id`）；`prediction_tracks` 不再承载言论，仅保留"对某条预测的后续增强/反驳"本职用途（`console_add_track`），此类行在看板「预测跟踪」分组展示。**新增言论禁止写 `prediction_tracks`**。
+    - **言论单轨（2026-09-07 起；2026-09-08 分表，见 #39）**：博主言论唯一权威存储 = 按类型分表的 `stmt_*` 六表（`blogger_statements` 为只读 UNION 视图，挂 `subject_id`）；`prediction_tracks` 不再承载言论，仅保留"对某条预测的后续增强/反驳"本职用途（`console_add_track`），此类行在看板「预测跟踪」分组展示。**新增言论禁止写 `prediction_tracks`**。
 
+
+39. 言论分表存储（2026-09-08 用户决策：各类型字段可独立演进）：言论按 contentType 拆六张物理表——`stmt_research` / `stmt_predict` / `stmt_view` / `stmt_insight` / `stmt_chat` / `stmt_trade_src`；`blogger_statements` 是只读 UNION 视图，承接全部查询与统计。**Agent 侧契约不变**：读写一律走 MCP `blogger_statement`（服务端按 contentType 自动路由），禁止直连 SQL 写物理表。id 由全局序列 `stmt_id_seq` 发号、跨表唯一——复核建议（statement_reviews）、预测来源关联（prediction_records.origin_id）、买卖来源（blogger_trades.statement_id）等松散引用不受分表影响。**改类型 = 跨表搬行且 id 不变**（审查第零步的 contentType 修正照常走 `blogger_statement(action=update)`，关联自动跟随）。将来某类型需要专属字段时只 ALTER 对应 `stmt_*` 表，不波及其他类型。原单表保留为 `blogger_statements_legacy`（比对副本，勿读写）。
