@@ -113,19 +113,23 @@
 
 雪球博主帖子按语义拆成 N 条言论（一帖多条），每条**先判类型、再定去向**。采集只给发帖时间与形态，内容分类与观点时间在本步判定。
 
-**优先级**（规则原文排序）：P1 `trade 买卖记录` / `research 研究` 必查必录 → P2 `predict 预测记录` / `view 观点` / `insight 心得总结` → P3 `chat 闲聊`（高门槛）。
+**优先级（2026-09-10 更新）**：**P1 必查必录** = `trade 买卖记录` / `research 研究` / **`predict 预测记录`**（2026-09-10 用户拍板由 P2 提升）→ P2 = `view 观点` / `insight 心得总结` → P3 `chat 闲聊`（高门槛）。
+
+> **`predict` 提为 P1 的理由**：预测是**可验证判断**，漏录即永久丢失验证样本（无法回补准确率）；且看板预测控制台的验证闭环依赖言论库侧可查。
 
 | content_type | 涉及个股/行业/市场 | 去向 | 另落 wiki？ |
 |---|---|---|---|
-| `trade` | 必是 | `blogger_trade` → `blogger_trades` 表（看板买卖记录；画像 md 已退役不回写）。**方向 `stance` 必填**（看空/看多/中性），有价必标 `price`（开盘竞价位），`note` 只记操作理由 | 否 |
-| `research` | 是 | `blogger_statement` → `blogger_statements` 表 | 仅当沉淀出可复用框架（言论库记事实，wiki 记方法，**不重复记录**） |
+| `trade` | 必是 | `blogger_trade` → `blogger_trades` 表（看板买卖记录；画像 md 已退役不回写）。**方向 `stance` 必填**（看空/看多/中性），有价必标 `price`（开盘竞价位），`note` 只记操作理由。**结构化字段**：`op`/`price`/`marketCap`/`tradeDate` | 否 |
+| `research` | 是 | `blogger_statement` → `blogger_statements` 表。**结构化字段**：`dataRefs`（数据来源）/`wikiRef`（已具象化条目） | 仅当沉淀出可复用框架（言论库记事实，wiki 记方法，**不重复记录**） |
 | `research` | 否 | — | 能成框架 → wiki（我的/其他/宏观）；不能 → **舍弃** |
-| `predict` | 必是 | `blogger_statement` → `blogger_statements`(predict) + 预测控制台。**`stance` 必填**，`signal` 写目标位/时间窗（如 `HKD26.6 / 12个月内`），`view_date` 取博主下判断的时点 | 否 |
+| `predict` | 必是 | `blogger_statement` → `blogger_statements`(predict) + 预测控制台。**`stance` 必填**，`view_date` 取博主下判断的时点。**结构化字段（2026-09-10 新增）**：`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`verifyStatus`/`verifyDate`/`verifyResult` —— 预测验证闭环在言论表内可直接查询，免 JOIN `prediction_records`/`prediction_verifications` | 否 |
 | `view` | 是 | `blogger_statement`（含 `stance`）→ 言论库（看板言论追踪） | 否 |
 | `view` | 否 | — | 有价值 → wiki；无价值 → 舍弃 |
-| `insight` | 是 | `blogger_statement` → 言论库（看板言论追踪） | 仅当沉淀方法论 |
+| `insight` | 是 | `blogger_statement` → 言论库（看板言论追踪）。**结构化字段**：`transferable`（可迁移性）/`wikiRef` | 仅当沉淀方法论 |
 | `insight` | 否 | — | 有价值 → wiki；否则舍弃 |
 | `chat` | — | 仅当能刻画「擅长与局限 / 投资心态」→ `blogger_statement`；否则**舍弃** | 否 |
+
+**全类型共同字段（2026-09-10 新增）**：`form`（帖子形态：回复/短文/长文/专栏）——取自采集侧摘要行，**零解析读取**，用于分流先验与质检（专栏/长文判 `research` 概率高；回复必先做 `//@` 切分）。
 
 **`predict` 判定三要素（2026-09-04 用户定义）**：① 明确方向（看多/看空/中性）② 未来指向（时间窗："几年后/几个月后/年内"，或事件条件："美国加息/降息""地缘冲突缓和"等）③ 可判对错（含目标位/幅度/点位最佳）。缺任一要素即回落 `view`（当下判断）或 `insight`（复盘心得）；历史复盘叙述**不得**算预测。**易错例**：`白酒处于底部（公募持仓全面退出为信号）` → `view` + `stance=bullish`（当下判断，无未来时间窗/无可验证目标位），**不得归 `predict`**（同 framework-rules #30「易错判据（观点 vs 预测记录）」）。
 

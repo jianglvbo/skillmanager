@@ -343,24 +343,217 @@ CREATE TABLE prediction_verifications (
 
 -- ============ 三、看板首页与言论追踪（2026-09 新增） ============
 
--- 26. 博主言论表（博主画像「言论追踪」结构化落库：MySQL 为权威，写库后回写画像段）
-CREATE TABLE blogger_statements (
-  id          INT           NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  blogger     VARCHAR(100)  NOT NULL COMMENT '博主名，对应 vault 博主目录名',
-  kind        VARCHAR(16)   NOT NULL COMMENT '言论类型：concrete=具象化，view=观点，signal=信号，interaction=互动',
-  stmt_date   DATE          DEFAULT NULL COMMENT '言论发布日期，原文未标注则为 NULL',
-  target      VARCHAR(200)  NOT NULL DEFAULT '' COMMENT '言论涉及标的（个股/行业），无关标的为空串',
-  view_text   TEXT          DEFAULT NULL COMMENT '观点原文表述',
-  signal_text TEXT          DEFAULT NULL COMMENT '信号描述（买卖/仓位等可执行信号）',
-  source      VARCHAR(200)  NOT NULL DEFAULT '' COMMENT '来源名称（雪球/公众号/小红书等）',
-  source_url  VARCHAR(500)  NOT NULL DEFAULT '' COMMENT '原文链接，无则空串',
-  created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (id),
-  KEY idx_blogger_kind (blogger, kind, stmt_date)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='博主言论表：博主画像「言论追踪」表格的结构化落库（MySQL 权威，写库后回写画像段）';
+-- 26. 博主言论分表（2026-09-08 按类型拆分 / 2026-09-10 分型改造新增专属列）
+-- 分类权威 = content_type 六分法；blogger_statements 为只读 UNION ALL 视图（38 列，非本类型列补 NULL）
+-- 分型专属列：trade→op/price/market_cap/trade_date；predict→ref_price/target_price/target_date/date_precision/verify_status/verify_date/verify_result
+--             research→data_refs/wiki_ref；insight→transferable/wiki_ref；全类型共有 form（帖子形态：回复/短文/长文/专栏）
+-- 旧 kind 字段（concrete/view/signal/interaction 四类落位）已于 2026-09-10 退役，仅保留历史值
 
--- 27. 首页待办表
+CREATE TABLE `stmt_view` (
+  `id` bigint unsigned NOT NULL,
+  `blogger` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `stmt_date` date DEFAULT NULL,
+  `post_date` date DEFAULT NULL,
+  `view_date` date DEFAULT NULL,
+  `view_date_source` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_precision` varchar(8) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_basis` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `stance` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `view_text` text COLLATE utf8mb4_unicode_ci,
+  `signal_text` text COLLATE utf8mb4_unicode_ci,
+  `source` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `blogger_id` bigint unsigned DEFAULT NULL,
+  `subject_id` bigint unsigned DEFAULT NULL,
+  `src_rel` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `review_required` tinyint(1) NOT NULL DEFAULT '0',
+  `dedup_key` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `form` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏（采集侧判定，refine 零解析读取）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_dedup` (`dedup_key`),
+  KEY `idx_blogger_date` (`blogger`,`view_date`),
+  KEY `idx_subject` (`subject_id`),
+  KEY `idx_review` (`review_required`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `stmt_research` (
+  `id` bigint unsigned NOT NULL,
+  `blogger` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `stmt_date` date DEFAULT NULL,
+  `post_date` date DEFAULT NULL,
+  `view_date` date DEFAULT NULL,
+  `view_date_source` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_precision` varchar(8) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_basis` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `stance` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `view_text` text COLLATE utf8mb4_unicode_ci,
+  `signal_text` text COLLATE utf8mb4_unicode_ci,
+  `source` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `blogger_id` bigint unsigned DEFAULT NULL,
+  `subject_id` bigint unsigned DEFAULT NULL,
+  `src_rel` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `review_required` tinyint(1) NOT NULL DEFAULT '0',
+  `dedup_key` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `form` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏（采集侧判定，refine 零解析读取）',
+  `data_refs` text COLLATE utf8mb4_unicode_ci COMMENT '研究数据来源（公告/财报/调研等）',
+  `wiki_ref` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '已具象化的框架条目名（可空）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_dedup` (`dedup_key`),
+  KEY `idx_blogger_date` (`blogger`,`view_date`),
+  KEY `idx_subject` (`subject_id`),
+  KEY `idx_review` (`review_required`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `stmt_predict` (
+  `id` bigint unsigned NOT NULL,
+  `blogger` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `stmt_date` date DEFAULT NULL,
+  `post_date` date DEFAULT NULL,
+  `view_date` date DEFAULT NULL,
+  `view_date_source` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_precision` varchar(8) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_basis` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `stance` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `view_text` text COLLATE utf8mb4_unicode_ci,
+  `signal_text` text COLLATE utf8mb4_unicode_ci,
+  `source` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `blogger_id` bigint unsigned DEFAULT NULL,
+  `subject_id` bigint unsigned DEFAULT NULL,
+  `src_rel` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `review_required` tinyint(1) NOT NULL DEFAULT '0',
+  `dedup_key` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `form` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏（采集侧判定，refine 零解析读取）',
+  `ref_price` decimal(16,4) DEFAULT NULL COMMENT '判断时参考价',
+  `target_price` decimal(16,4) DEFAULT NULL COMMENT '目标价',
+  `target_date` date DEFAULT NULL COMMENT '目标时间',
+  `date_precision` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '时间精度：day/month/year',
+  `verify_status` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '验证状态：pending/verified/revoked',
+  `verify_date` date DEFAULT NULL COMMENT '验证日期',
+  `verify_result` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '验证结果：hit/miss/partial',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_dedup` (`dedup_key`),
+  KEY `idx_blogger_date` (`blogger`,`view_date`),
+  KEY `idx_subject` (`subject_id`),
+  KEY `idx_review` (`review_required`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `stmt_trade_src` (
+  `id` bigint unsigned NOT NULL,
+  `blogger` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `stmt_date` date DEFAULT NULL,
+  `post_date` date DEFAULT NULL,
+  `view_date` date DEFAULT NULL,
+  `view_date_source` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_precision` varchar(8) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_basis` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `stance` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `view_text` text COLLATE utf8mb4_unicode_ci,
+  `signal_text` text COLLATE utf8mb4_unicode_ci,
+  `source` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `blogger_id` bigint unsigned DEFAULT NULL,
+  `subject_id` bigint unsigned DEFAULT NULL,
+  `src_rel` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `review_required` tinyint(1) NOT NULL DEFAULT '0',
+  `dedup_key` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `form` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏（采集侧判定，refine 零解析读取）',
+  `op` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '操作：buy/sell/add/reduce',
+  `price` decimal(16,4) DEFAULT NULL COMMENT '成交价（博主自述价）',
+  `market_cap` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '提及市值（原文表述）',
+  `trade_date` date DEFAULT NULL COMMENT '操作日期',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_dedup` (`dedup_key`),
+  KEY `idx_blogger_date` (`blogger`,`view_date`),
+  KEY `idx_subject` (`subject_id`),
+  KEY `idx_review` (`review_required`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `stmt_insight` (
+  `id` bigint unsigned NOT NULL,
+  `blogger` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `stmt_date` date DEFAULT NULL,
+  `post_date` date DEFAULT NULL,
+  `view_date` date DEFAULT NULL,
+  `view_date_source` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_precision` varchar(8) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_basis` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `stance` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `view_text` text COLLATE utf8mb4_unicode_ci,
+  `signal_text` text COLLATE utf8mb4_unicode_ci,
+  `source` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `blogger_id` bigint unsigned DEFAULT NULL,
+  `subject_id` bigint unsigned DEFAULT NULL,
+  `src_rel` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `review_required` tinyint(1) NOT NULL DEFAULT '0',
+  `dedup_key` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `form` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏（采集侧判定，refine 零解析读取）',
+  `transferable` tinyint(1) DEFAULT NULL COMMENT '是否具可迁移性（1=可复用方法论）',
+  `wiki_ref` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '已具象化的框架条目名（可空）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_dedup` (`dedup_key`),
+  KEY `idx_blogger_date` (`blogger`,`view_date`),
+  KEY `idx_subject` (`subject_id`),
+  KEY `idx_review` (`review_required`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `stmt_chat` (
+  `id` bigint unsigned NOT NULL,
+  `blogger` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `stmt_date` date DEFAULT NULL,
+  `post_date` date DEFAULT NULL,
+  `view_date` date DEFAULT NULL,
+  `view_date_source` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_precision` varchar(8) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `view_date_basis` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `stance` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `view_text` text COLLATE utf8mb4_unicode_ci,
+  `signal_text` text COLLATE utf8mb4_unicode_ci,
+  `source` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `blogger_id` bigint unsigned DEFAULT NULL,
+  `subject_id` bigint unsigned DEFAULT NULL,
+  `src_rel` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `review_required` tinyint(1) NOT NULL DEFAULT '0',
+  `dedup_key` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `form` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏（采集侧判定，refine 零解析读取）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_dedup` (`dedup_key`),
+  KEY `idx_blogger_date` (`blogger`,`view_date`),
+  KEY `idx_subject` (`subject_id`),
+  KEY `idx_review` (`review_required`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 27. 博主言论统一视图（只读 UNION ALL，承接全部查询；写操作按类型路由到上表）
+CREATE ALGORITHM=UNDEFINED DEFINER=`jianglb`@`%` SQL SECURITY DEFINER VIEW `blogger_statements` AS select `stmt_research`.`id` AS `id`,`stmt_research`.`blogger` AS `blogger`,`stmt_research`.`kind` AS `kind`,`stmt_research`.`stmt_date` AS `stmt_date`,`stmt_research`.`post_date` AS `post_date`,`stmt_research`.`view_date` AS `view_date`,`stmt_research`.`view_date_source` AS `view_date_source`,`stmt_research`.`view_date_precision` AS `view_date_precision`,`stmt_research`.`view_date_basis` AS `view_date_basis`,`stmt_research`.`stance` AS `stance`,`stmt_research`.`target` AS `target`,`stmt_research`.`view_text` AS `view_text`,`stmt_research`.`signal_text` AS `signal_text`,`stmt_research`.`source` AS `source`,`stmt_research`.`source_url` AS `source_url`,`stmt_research`.`blogger_id` AS `blogger_id`,`stmt_research`.`subject_id` AS `subject_id`,`stmt_research`.`src_rel` AS `src_rel`,`stmt_research`.`review_required` AS `review_required`,`stmt_research`.`dedup_key` AS `dedup_key`,`stmt_research`.`created_at` AS `created_at`,`stmt_research`.`updated_at` AS `updated_at`,`stmt_research`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_status`,NULL AS `verify_date`,NULL AS `verify_result`,`stmt_research`.`data_refs` AS `data_refs`,`stmt_research`.`wiki_ref` AS `wiki_ref`,NULL AS `transferable`,'research' AS `content_type` from `stmt_research` union all select `stmt_predict`.`id` AS `id`,`stmt_predict`.`blogger` AS `blogger`,`stmt_predict`.`kind` AS `kind`,`stmt_predict`.`stmt_date` AS `stmt_date`,`stmt_predict`.`post_date` AS `post_date`,`stmt_predict`.`view_date` AS `view_date`,`stmt_predict`.`view_date_source` AS `view_date_source`,`stmt_predict`.`view_date_precision` AS `view_date_precision`,`stmt_predict`.`view_date_basis` AS `view_date_basis`,`stmt_predict`.`stance` AS `stance`,`stmt_predict`.`target` AS `target`,`stmt_predict`.`view_text` AS `view_text`,`stmt_predict`.`signal_text` AS `signal_text`,`stmt_predict`.`source` AS `source`,`stmt_predict`.`source_url` AS `source_url`,`stmt_predict`.`blogger_id` AS `blogger_id`,`stmt_predict`.`subject_id` AS `subject_id`,`stmt_predict`.`src_rel` AS `src_rel`,`stmt_predict`.`review_required` AS `review_required`,`stmt_predict`.`dedup_key` AS `dedup_key`,`stmt_predict`.`created_at` AS `created_at`,`stmt_predict`.`updated_at` AS `updated_at`,`stmt_predict`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,`stmt_predict`.`ref_price` AS `ref_price`,`stmt_predict`.`target_price` AS `target_price`,`stmt_predict`.`target_date` AS `target_date`,`stmt_predict`.`date_precision` AS `date_precision`,`stmt_predict`.`verify_status` AS `verify_status`,`stmt_predict`.`verify_date` AS `verify_date`,`stmt_predict`.`verify_result` AS `verify_result`,NULL AS `data_refs`,NULL AS `wiki_ref`,NULL AS `transferable`,'predict' AS `content_type` from `stmt_predict` union all select `stmt_view`.`id` AS `id`,`stmt_view`.`blogger` AS `blogger`,`stmt_view`.`kind` AS `kind`,`stmt_view`.`stmt_date` AS `stmt_date`,`stmt_view`.`post_date` AS `post_date`,`stmt_view`.`view_date` AS `view_date`,`stmt_view`.`view_date_source` AS `view_date_source`,`stmt_view`.`view_date_precision` AS `view_date_precision`,`stmt_view`.`view_date_basis` AS `view_date_basis`,`stmt_view`.`stance` AS `stance`,`stmt_view`.`target` AS `target`,`stmt_view`.`view_text` AS `view_text`,`stmt_view`.`signal_text` AS `signal_text`,`stmt_view`.`source` AS `source`,`stmt_view`.`source_url` AS `source_url`,`stmt_view`.`blogger_id` AS `blogger_id`,`stmt_view`.`subject_id` AS `subject_id`,`stmt_view`.`src_rel` AS `src_rel`,`stmt_view`.`review_required` AS `review_required`,`stmt_view`.`dedup_key` AS `dedup_key`,`stmt_view`.`created_at` AS `created_at`,`stmt_view`.`updated_at` AS `updated_at`,`stmt_view`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_status`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,NULL AS `wiki_ref`,NULL AS `transferable`,'view' AS `content_type` from `stmt_view` union all select `stmt_insight`.`id` AS `id`,`stmt_insight`.`blogger` AS `blogger`,`stmt_insight`.`kind` AS `kind`,`stmt_insight`.`stmt_date` AS `stmt_date`,`stmt_insight`.`post_date` AS `post_date`,`stmt_insight`.`view_date` AS `view_date`,`stmt_insight`.`view_date_source` AS `view_date_source`,`stmt_insight`.`view_date_precision` AS `view_date_precision`,`stmt_insight`.`view_date_basis` AS `view_date_basis`,`stmt_insight`.`stance` AS `stance`,`stmt_insight`.`target` AS `target`,`stmt_insight`.`view_text` AS `view_text`,`stmt_insight`.`signal_text` AS `signal_text`,`stmt_insight`.`source` AS `source`,`stmt_insight`.`source_url` AS `source_url`,`stmt_insight`.`blogger_id` AS `blogger_id`,`stmt_insight`.`subject_id` AS `subject_id`,`stmt_insight`.`src_rel` AS `src_rel`,`stmt_insight`.`review_required` AS `review_required`,`stmt_insight`.`dedup_key` AS `dedup_key`,`stmt_insight`.`created_at` AS `created_at`,`stmt_insight`.`updated_at` AS `updated_at`,`stmt_insight`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_status`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`stmt_insight`.`wiki_ref` AS `wiki_ref`,`stmt_insight`.`transferable` AS `transferable`,'insight' AS `content_type` from `stmt_insight` union all select `stmt_chat`.`id` AS `id`,`stmt_chat`.`blogger` AS `blogger`,`stmt_chat`.`kind` AS `kind`,`stmt_chat`.`stmt_date` AS `stmt_date`,`stmt_chat`.`post_date` AS `post_date`,`stmt_chat`.`view_date` AS `view_date`,`stmt_chat`.`view_date_source` AS `view_date_source`,`stmt_chat`.`view_date_precision` AS `view_date_precision`,`stmt_chat`.`view_date_basis` AS `view_date_basis`,`stmt_chat`.`stance` AS `stance`,`stmt_chat`.`target` AS `target`,`stmt_chat`.`view_text` AS `view_text`,`stmt_chat`.`signal_text` AS `signal_text`,`stmt_chat`.`source` AS `source`,`stmt_chat`.`source_url` AS `source_url`,`stmt_chat`.`blogger_id` AS `blogger_id`,`stmt_chat`.`subject_id` AS `subject_id`,`stmt_chat`.`src_rel` AS `src_rel`,`stmt_chat`.`review_required` AS `review_required`,`stmt_chat`.`dedup_key` AS `dedup_key`,`stmt_chat`.`created_at` AS `created_at`,`stmt_chat`.`updated_at` AS `updated_at`,`stmt_chat`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_status`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,NULL AS `wiki_ref`,NULL AS `transferable`,'chat' AS `content_type` from `stmt_chat` union all select `stmt_trade_src`.`id` AS `id`,`stmt_trade_src`.`blogger` AS `blogger`,`stmt_trade_src`.`kind` AS `kind`,`stmt_trade_src`.`stmt_date` AS `stmt_date`,`stmt_trade_src`.`post_date` AS `post_date`,`stmt_trade_src`.`view_date` AS `view_date`,`stmt_trade_src`.`view_date_source` AS `view_date_source`,`stmt_trade_src`.`view_date_precision` AS `view_date_precision`,`stmt_trade_src`.`view_date_basis` AS `view_date_basis`,`stmt_trade_src`.`stance` AS `stance`,`stmt_trade_src`.`target` AS `target`,`stmt_trade_src`.`view_text` AS `view_text`,`stmt_trade_src`.`signal_text` AS `signal_text`,`stmt_trade_src`.`source` AS `source`,`stmt_trade_src`.`source_url` AS `source_url`,`stmt_trade_src`.`blogger_id` AS `blogger_id`,`stmt_trade_src`.`subject_id` AS `subject_id`,`stmt_trade_src`.`src_rel` AS `src_rel`,`stmt_trade_src`.`review_required` AS `review_required`,`stmt_trade_src`.`dedup_key` AS `dedup_key`,`stmt_trade_src`.`created_at` AS `created_at`,`stmt_trade_src`.`updated_at` AS `updated_at`,`stmt_trade_src`.`form` AS `form`,`stmt_trade_src`.`op` AS `op`,`stmt_trade_src`.`price` AS `price`,`stmt_trade_src`.`market_cap` AS `market_cap`,`stmt_trade_src`.`trade_date` AS `trade_date`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_status`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,NULL AS `wiki_ref`,NULL AS `transferable`,'trade' AS `content_type` from `stmt_trade_src`;
+
+-- 28. 首页待办表
 CREATE TABLE todos (
   id         INT           NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   content    VARCHAR(500)  NOT NULL COMMENT '待办内容',
@@ -373,7 +566,7 @@ CREATE TABLE todos (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='首页待办表：看板首页 todo 清单（录入/勾选/排序）';
 
--- 28. 首页语录表
+-- 29. 首页语录表
 CREATE TABLE quotes (
   id         INT           NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   seq        INT           NOT NULL COMMENT '语录序号，决定展示顺序',
