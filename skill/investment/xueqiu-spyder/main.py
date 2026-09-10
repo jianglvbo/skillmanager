@@ -7,6 +7,11 @@ import time
 
 import config
 from crawler import XueqiuCrawler, CrawlerError
+
+# 哨兵：采集成功但时间窗内无新帖（与「采集失败」区分——2026-09-09 固化）
+# 退出码约定：0=有产出 / 2=窗口内无新帖（采集完成）/ 1=失败（WAF/登录/异常）
+# 编排层据此决定是否更新 info_cutoff（失败时禁止更新，保证不漏采）
+NO_NEW_POSTS = "__NO_NEW_POSTS__"
 from analyzer import filter_big_v, extract_opinions, summarize_opinions, posts_to_opinions
 from report import generate_report, generate_user_report
 
@@ -133,8 +138,8 @@ def run_user(user_id, max_pages=10, output_dir=None, days=None, column_only=Fals
             window_desc = f"{from_time or ('最近%d天' % days if days else '起')} ~ {to_time or 'now'}"
             logger.info(f"时间窗过滤[{window_desc}]: {before} -> {len(all_posts)} 条（置顶帖已排除）")
             if not all_posts:
-                logger.warning("过滤后无帖子")
-                return None
+                logger.warning("过滤后无帖子（窗口内无新帖，采集完成）")
+                return NO_NEW_POSTS
 
         # 仅保留专栏文章
         if column_only:
@@ -142,8 +147,8 @@ def run_user(user_id, max_pages=10, output_dir=None, days=None, column_only=Fals
             all_posts = [p for p in all_posts if p.get("is_column")]
             logger.info(f"专栏过滤: {before} -> {len(all_posts)} 条")
             if not all_posts:
-                logger.warning("过滤后无专栏文章")
-                return None
+                logger.warning("过滤后无专栏文章（窗口内无新帖，采集完成）")
+                return NO_NEW_POSTS
 
         # 补全被截断的帖子全文（含详情页精确时间覆盖）
         logger.info("正在获取帖子全文...")
@@ -233,7 +238,10 @@ def main():
             parser.print_help()
             sys.exit(1)
 
-        if result:
+        if result == NO_NEW_POSTS:
+            print("\n窗口内无新帖（采集完成，无新增内容）")
+            sys.exit(2)
+        elif result:
             print(f"\n报告已保存到: {result}")
         else:
             print("\n未生成报告")
