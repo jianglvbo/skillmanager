@@ -81,7 +81,27 @@ INSERT INTO dict (type, code, name, sort_order, remark) VALUES
 ('track_direction','neutral','中性',3,'中性补充'),
 ('verify_result','correct','正确',1,'方向正确即正确'),
 ('verify_result','wrong','错误',2,'方向相反/关键数值未兑现'),
-('verify_result','revoked','已撤销',3,'撤销验证');
+('verify_result','revoked','已撤销',3,'撤销验证'),
+-- 2026-09-11 补：言论分型与信号字典（此前遗漏未入文件）
+('stmt_content_type','research','研究',1,'研究/分析类言论'),
+('stmt_content_type','predict','预测记录',2,'可验证的未来判断'),
+('stmt_content_type','view','观点',3,'当下判断/认知'),
+('stmt_content_type','insight','心得总结',4,'方法论/纪律/复盘'),
+('stmt_content_type','chat','闲聊',5,'社交/情绪/画像素材'),
+('stmt_content_type','trade','买卖记录',6,'当期买卖动作/仓位状态'),
+('trade_op','buy','买入',1,'建仓买入'),
+('trade_op','add','加仓',2,'加仓'),
+('trade_op','reduce','减仓',3,'减仓'),
+('trade_op','sell','卖出',4,'卖出'),
+('trade_op','clear','清仓',5,'清空该标的仓位'),
+('stance','bullish','看多',1,'不限时间的方向'),
+('stance','bearish','看空',2,'不限时间的方向'),
+('stance','short_bullish','短期看多',3,'明确短期（数日~数周）'),
+('stance','short_bearish','短期看空',4,'明确短期'),
+('stance','long_bullish','长期看多',5,'明确长期（数季~数年）'),
+('stance','long_bearish','长期看空',6,'明确长期'),
+('stance','neutral','中性',7,'明确不偏多空的立场（兼容历史值）')
+;
 
 -- ============ 二、业务表 ============
 
