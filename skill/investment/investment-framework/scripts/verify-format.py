@@ -410,6 +410,44 @@ def fix_file(fpath):
         return True
     return False
 
+def _preflight_check(text):
+    """预检单条内容（写入前）：返回问题列表 [{type, detail}]。
+    复用全库模式的 check 函数，覆盖提炼最高频的 6 类格式错误。"""
+    probs = []
+    m = re.match(r'^---\n(.*?)\n---\n(.*)$', text, re.S)
+    if not m:
+        return [{'type': 'frontmatter', 'detail': '缺少 frontmatter（--- 包裹的元数据块）'}]
+    fm_text, body = m.group(1), m.group(2)
+    fm = parse_fm_light(fm_text)
+
+    if check_source_field(fm):
+        probs.append({'type': 'source_field', 'detail': 'source 应为 YAML 列表格式（- 开头），非标量'})
+    if not fm.get('source'):
+        probs.append({'type': 'source_missing', 'detail': 'source 缺失或为空——必须填原文链接（规则 #23/#29）'})
+    if re.search(r'(?m)^date:', fm_text):
+        probs.append({'type': 'date_field', 'detail': 'frontmatter 不得含 date 字段（规则 #27 层间边界）'})
+    for k in ('createDate', 'updateDate'):
+        mm = re.search(rf'(?m)^{k}:\s*(.+)$', fm_text)
+        if mm and ('"' in mm.group(1) or "'" in mm.group(1)):
+            probs.append({'type': 'date_quoted', 'detail': f'{k} 须裸写 yyyy-MM-dd（不加引号）'})
+    if re.search(r'(?m)^#\s*$', body):
+        probs.append({'type': 'empty_heading', 'detail': '存在空标题行（独占一行的 #，不会渲染）'})
+    for fn in check_inline_headings(body):
+        probs.append({'type': 'inline_heading', 'detail': f"标题嵌在段落内（行 {fn.get('line')}）：{fn.get('text','')[:40]}"})
+    for it in check_footnote_inline(body):
+        probs.append({'type': 'footnote', 'detail': f"脚注问题 {it}"})
+    if check_residual_sections(body):
+        probs.append({'type': 'residual', 'detail': '存在 ## 来源 段或空脚注占位（应删除）'})
+    if re.search(r'(?m)^>\s*(来源|原文链接|发布时间)[：:]', body):
+        probs.append({'type': 'source_blockquote', 'detail': '正文末尾不得加来源 blockquote（来源入 frontmatter）'})
+    for mm in re.finditer(r'\{[^}]{1,40}\}', body):
+        probs.append({'type': 'curly', 'detail': f'模板占位残留：{mm.group(0)[:30]}'})
+        break
+    if re.search(r'(?m)^##\s*关联\s*$', body):
+        probs.append({'type': 'relation_section', 'detail': '提炼阶段不得含 ## 关联 章节（审查阶段才写脚注）'})
+    return probs
+
+
 def main():
     if len(sys.argv) < 2:
         print("用法: python3 verify-format.py <vault_path> [--fix] [--scope 其他,博主,宏观]")
@@ -423,6 +461,24 @@ def main():
             scope = set(sys.argv[idx+1].split(','))
     skip_names = {'博主.md', '其他.md', '宏观.md', '我的.md', '工作区.md', '原始资源.md', '粗制品.md'}
     wiki_dirs = ('我的', '博主', '其他', '宏观')
+    # ── 预检模式（2026-09-11 事前避免）：--preflight <file> 校验单个待写入文件 ──
+    # 用途：提炼写入**前**跑一次，不合格当场改，不等全库事后回检
+    # 与全库模式共用全部 check 函数；退出码 1 = 有问题（可被脚本/流程判定为门禁）
+    if '--preflight' in sys.argv:
+        idx = sys.argv.index('--preflight')
+        target = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else None
+        if not target or not os.path.exists(target):
+            print("❌ --preflight 需指定存在的文件路径")
+            sys.exit(2)
+        text = open(target, encoding='utf-8').read()
+        probs = _preflight_check(text)
+        if probs:
+            print(f"❌ 预检未通过（{len(probs)} 项）——修正后再写入：")
+            for it in probs:
+                print(f"   · [{it['type']}] {it['detail']}")
+            sys.exit(1)
+        print("✅ 预检通过（格式合规，可写入）")
+        sys.exit(0)
     total_files = 0
     total_issues = 0
     files_with_issues = 0
