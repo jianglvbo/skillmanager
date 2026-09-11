@@ -27,6 +27,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 SKILL_DIR = os.environ.get(
     "LOCAL_OFFICE_EDIT_DIR",
@@ -121,6 +122,63 @@ def style_tables(fid, cfg):
     return shaded, eligible
 
 
+def create_blank():
+    """新建空白文档，返回 (file_id, file_path)。
+
+    create_doc 的回包形态不稳定：有时是自然语言文本（含 file_id=/file_path=），
+    有时只回一个裸 id。两种都要认。
+    """
+    out = call("create_doc")
+    fid = re.search(r"file_id=([^\s,]+)", out)
+    path = re.search(r"file_path=([^\s,]+)", out)
+    if fid:
+        return fid.group(1), (path.group(1) if path else None)
+    if re.fullmatch(r"[\w.\-]+", out):  # 裸 id 形态
+        return out, None
+    raise RuntimeError(f"create_doc 未返回可识别的 file_id: {out}")
+
+
+def insert_markdown(fid, path_hint, md_path, attempts=3):
+    """插入全文；空闲服务上首次插入偶发 `document is not open`，此处重开并重试。"""
+    for i in range(attempts):
+        try:
+            return call("doc_insert_markdown", file_id=fid, idx=0, markdown=f"file://{md_path}")
+        except RuntimeError as e:
+            if "not open" not in str(e) or i == attempts - 1:
+                raise
+            time.sleep(1.5)
+            if path_hint:
+                try:
+                    call("open_file", file_path=path_hint, open_with_existing=True)
+                except Exception:
+                    pass
+
+
+def insert_images(fid, cfg):
+    """按 `images` 配置插图：以「图：…」题注段落的起始坐标为锚点，把图片插到题注之前。
+
+    配置项：{"match": "图：XXX", "path": "/abs/a.png", "w": 600, "h": 317}
+    w/h 为像素（96 DPI）；A4 + 72pt 页边距下正文宽度约 600px。
+    """
+    specs = cfg.get("images") or []
+    done = 0
+    for sp in specs:
+        found = call("doc_find", file_id=fid, text=sp["match"])
+        # doc_find 返回 {"locations":[{begin,end,...}], total:N}
+        hits = found.get("locations") or found.get("matches") or found.get("results") or []
+        if not hits:
+            continue
+        idx = hits[0]["begin"]
+        kw = {"file_id": fid, "idx": idx, "image_path": sp["path"]}
+        if sp.get("w"):
+            kw["w"] = sp["w"]
+        if sp.get("h"):
+            kw["h"] = sp["h"]
+        call("doc_insert_image", **kw)
+        done += 1
+    return done
+
+
 def build(job, cfg):
     md_path, out_path = job["markdown"], job["output"]
     try:  # 清掉同路径旧实例，避免读到带重复内容的缓存
@@ -128,8 +186,8 @@ def build(job, cfg):
     except Exception:
         pass
 
-    fid = call("create_doc")
-    call("doc_insert_markdown", file_id=fid, idx=0, markdown=f"file://{md_path}")
+    fid, tmp_path = create_blank()
+    insert_markdown(fid, tmp_path, md_path)
 
     style_kw = {}
     for key in ("default_text_style", "default_paragraph_style", "page_style"):
@@ -140,9 +198,10 @@ def build(job, cfg):
 
     titled = style_title(fid, cfg.get("title"))
     shaded, eligible = style_tables(fid, cfg)
+    images = insert_images(fid, cfg)
     call("save_file", file_id=fid, file_path=out_path)
     return {"output": out_path, "tables": eligible, "shaded": shaded,
-            "title": titled, "file_id": fid}
+            "title": titled, "images": images, "file_id": fid}
 
 
 def main():
@@ -151,9 +210,11 @@ def main():
     cfg = json.load(open(sys.argv[1], encoding="utf-8"))
     for job in cfg["jobs"]:
         res = build(job, cfg)
-        ok = res["shaded"] == res["tables"] and (res["title"] or not cfg.get("title"))
+        ok = (res["shaded"] == res["tables"] and (res["title"] or not cfg.get("title"))
+              and res["images"] == len(cfg.get("images") or []))
         print(f"{'OK  ' if ok else 'WARN'} {res['output']}  "
-              f"tables={res['tables']} shaded={res['shaded']} title={res['title']}")
+              f"tables={res['tables']} shaded={res['shaded']} "
+              f"title={res['title']} images={res['images']}")
 
 
 if __name__ == "__main__":

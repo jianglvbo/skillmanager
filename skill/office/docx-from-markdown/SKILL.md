@@ -19,11 +19,12 @@ agent_created: true
 禁止行为：
 
 1. **禁止对同一 `file_id` 重复执行 `doc_insert_markdown`** —— 会整篇重复插入（标题数、表格数直接翻倍）
-2. **禁止把 `create_doc` 的文本回包直接当 `file_id`** —— 回包是自然语言文本而非 JSON，必须正则提取 `file_id=`
+2. **禁止想当然解析 `create_doc` 回包** —— 回包形态不稳定：有时是自然语言文本（需正则取 `file_id=`），有时只回一个裸 id。两种都要认，不能只按一种写死
 3. **禁止复用旧 `file_id` 重建文档** —— 需要重生成时一律新建，不复用可能已含内容的实例
 4. **禁止省略实例清理** —— 校验用的后台实例需 `close_file`，否则同路径残留孤儿实例，用户后续看不到实时改动
 5. **禁止用 `k=v` 传布尔/空值参数** —— `True` 不是合法 JSON，会被当字符串触发 `type must be boolean`，布尔与 `None` 必须走 `--json`
 6. **禁止用长字符串匹配要改格式的段落** —— 预览截断到约 4 字，匹配串须是短短语，并以「首个非空文本节点」兜底
+7. **禁止把 `document is not open` 当致命错误直接放弃** —— 服务空闲后首次插入偶发此错，需重开并重试（脚本已内置 3 次重试）
 
 ## Workflow
 
@@ -33,17 +34,19 @@ agent_created: true
 
 第二步：写 Markdown 草稿到工作目录（临时草稿放工作区，不进 skill 仓库）
 
-第三步：新建空白文档 —— `create_doc`，从文本回包正则提取 `file_id`
+第三步：新建空白文档 —— `create_doc`，按上式两种回包形态取 `file_id`
 
-第四步：一次插入全文 —— `doc_insert_markdown file_id=<id> idx=0 markdown=file://<草稿绝对路径>`
+第四步：一次插入全文 —— `doc_insert_markdown file_id=<id> idx=0 markdown=file://<草稿绝对路径>`；遇 `document is not open` 则重开重试
 
-第五步：统一表头样式 —— `doc_list_tables` 取全部 `table_id` → 逐表 `doc_set_table_cells`，`cells` 覆盖第 1 行全部列，`common_cell_properties` 设底色与居中
+第五步：统一表头样式 —— `doc_list_tables` 取全部 `table_id` → 逐表 `doc_set_table_cells`，`cells` 覆盖第 1 行全部列，`common_cell_properties` 设底色与居中；标签表（问题陈述/成功标准类）改为整表着色 + 首列居中
 
-第六步：另存目标路径 —— `save_file file_id=<id> file_path=<目标绝对路径>`
+第六步：插图（仅参考件含图时）—— 草稿里保留「图：<标题>」题注行，用 `images` 配置（`doc_find` 定位题注 → `doc_insert_image` 插到题注之前）。`doc_find` 返回键是 `locations`，不是 `matches`
 
-第七步：回读校验 —— `open_file` 目标路径，等待流式打开完成后 `doc_resolve_document_structure mode=outline link=0`，比对结构与草稿
+第七步：另存目标路径 —— `save_file file_id=<id> file_path=<目标绝对路径>`
 
-第八步：清理实例 —— `close_file` 后台校验实例，保留用户正在查看的实例
+第八步：回读校验 —— `open_file` 目标路径，等待流式打开完成后 `doc_resolve_document_structure mode=outline limit=0`，比对结构、表格维度、图片数与草稿及参考件
+
+第九步：清理实例 —— `close_file` 后台校验实例，保留用户正在查看的实例
 
 ### 决策点
 
@@ -64,7 +67,7 @@ agent_created: true
 
 | 场景 | 加载文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
-| 需要批量生成多份文档 | `scripts/build_docx.py` | 按 JSON 作业清单批量建文档、设页面/字体、格式化封面标题、分类着色、另存 | **执行**（不读代码，看输出） |
+| 需要批量生成多份文档 | `scripts/build_docx.py` | 按 JSON 作业清单批量建文档、设页面/字体、格式化封面标题、分类着色、插图、另存（配置项见脚本 docstring） | **执行**（不读代码，看输出） |
 | 需要读参考件全文 | `scripts/extract_docx_text.py` | 解析 OOXML 输出完整段落与表格（绕开预览截断） | **执行** |
 | 需要单个 `doc_*` 工具的参数定义 | 由 `tencent-local-office-edit` skill 提供 | `python3 edsdk.py schema <工具名>` | 读取 |
 
@@ -81,6 +84,8 @@ agent_created: true
 - [ ] 草稿标题层级与目标结构一致（1 个 H1 + 各章 H2 + 小节 H3）？
 - [ ] 每张表都完成着色（着色调用数 = 表格数 − 显式跳过的封面表数）？标签表（问题陈述/成功标准类）是否整表着色？
 - [ ] 封面标题已居中并套用目标字体字号（脚本输出 `title=True`）？
+- [ ] 参考件含图时，图片已插入且题注在图片之后（脚本输出 `images=` 与配置条数一致）？
 - [ ] 落盘文件的 `total_headings` / `total_tables` 与草稿及参考件一致？
 - [ ] 全程未对同一 `file_id` 重复插入？
 - [ ] 后台实例已清理，无孤儿实例残留？
+- [ ] 脚本输出无 `WARN`？出现 `WARN` 必须查明原因后再交付，不得直接汇报成功
