@@ -710,3 +710,16 @@ CREATE TABLE stmt_id_seq (
 --   依据：分表 1749 行为 legacy 1236 行的超集；legacy 独有 4 行（263/321/542/917）均为清理时
 --   有意删除的空正文行；删除前整表备份 backups/blogger_statements_legacy_final_20260911.json
 --   迁移脚本 scripts/split_statements_by_type.js 已加「勿再运行」护栏
+
+-- ============ 五、言论↔维度实体关联（2026-09-11 用户定：帖子只落类型表，博主/个股/行业/市场全靠关联） ============
+CREATE TABLE statement_entity_rel (
+  `stmt_id` bigint unsigned NOT NULL COMMENT '→ stmt_* 言论全局 id',
+  `entity_type_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '维度码值 dict(entity_type)：blogger博主/stock个股/industry行业/market市场',
+  `entity_id` bigint unsigned NOT NULL COMMENT '实体 id：blogger→bloggers.id；stock/industry/market→prediction_subjects.id',
+  `entity_name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '实体名快照（免 join 展示，实体改名不影响历史）',
+  `role_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'subject' COMMENT '角色码值：subject=本条主体/subject 归属；mention=文中提及（未直接归属）',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`stmt_id`,`entity_type_code`,`entity_id`),
+  KEY `idx_entity` (`entity_type_code`,`entity_id`),
+  KEY `idx_name` (`entity_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论↔维度实体关联（2026-09-11：帖子只落类型表，博主/个股/行业/市场全靠关联）';
