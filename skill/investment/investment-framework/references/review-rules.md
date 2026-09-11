@@ -4,7 +4,7 @@
 
 ## 复核建议处理（审查首步）
 
-**每次审查开始前，先处理用户在「言论追踪」左滑写入的复核建议**（存于 MySQL `statement_reviews`）：
+**每次审查开始前，先处理用户在「言论追踪」左滑写入的复核建议**（存于 MySQL `stmt_review_sub`，子表 `_sub` 后缀）：
 
 1. 调 MCP `console_statement_review(action=list, status=open)` 取出全部未处理建议（返回含建议正文 + 该言论当前 `contentType/stance/target/viewText` 上下文）。
 2. 逐条按建议修正：用 `blogger_statement(action=update, id, contentType/stance/…)` 把归类改到用户要求；成功后 `console_statement_review(action=apply, statementId)` 置为已处理。

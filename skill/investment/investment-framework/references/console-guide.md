@@ -115,7 +115,18 @@ node ~/Project/investment-console/scripts/audit-schema-comments.js           # �
 node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
 ```
 
-审计口径：只读视图 `blogger_statements` 无列注释概念，自动排除。**当前状态：表注释 28/28、列注释 406/406**（六张 `stmt_*` 分表此前整表无注释，2026-09-11 补 135 列 + 8 张表注释；权威文件同步实库，并补齐此前遗漏的 `blogger_trades`/`statement_reviews`/`stmt_id_seq` 三表定义；`blogger_statements_legacy` 已于同日校验后删除，见 framework-rules #39）。
+审计口径：只读视图 `blogger_statements` 无列注释概念，自动排除。**当前状态：表注释 31/31、列注释 419/419**（六张 `stmt_*` 分表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
+
+**权威 schema 是生成物（2026-09-12 起）**：改库后必须重新导出 + 回放校验，否则文件与实库漂移（本轮就抓出过视图缺列、表名不一致）：
+
+```bash
+node ~/Project/investment-console/scripts/export-schema.js        # 实库 → ~/Ai/tools/investment-kb/investment_kb.sql（含 dict 内容快照）
+node ~/Project/investment-console/scripts/verify-schema-replay.js # 空库回放 + 逐列类型/注释比对；一致退出码 0，漂移 1
+```
+
+> **连接 collation 坑（2026-09-12）**：服务端与脚本连 MySQL 必须用 `charset: 'utf8mb4_unicode_ci'`。沿用 `'utf8mb4'` 会落到 `utf8mb4_general_ci`，与视图里字面量派生的列（`utf8mb4_bin`）比较时直接报 `Illegal mix of collations`（`COALESCE(content_type,'view')<>'trade'` 这类写法首当其冲）。
+
+> **结构约定速查**：帖子只落六张 `stmt_*` 之一（一帖一表）｜四维度走 `statement_entity_rel`｜子表 `_sub`、关联表 `_rel`、弃用表 `_del`｜可枚举值进 `dict`｜vault 文件索引/标签**不落库**（服务端内存扫描 `buildIndex()`）｜`wiki_ref` 存 vault 相对路径、前端生成 `obsidian://` 本地打开链接。详见 framework-rules #44。
 
 > 另一坑：旧实例若成为孤儿进程（PPID=1）会与新实例抢状态；`launchctl kickstart -k` 之前先 `pgrep -fl "node server.js"` 确认没有残留。
 

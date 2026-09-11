@@ -132,10 +132,10 @@
     - **原文链接格式**：表格内链接一律用 `[原文](URL)`，不贴裸 URL（避免撑宽表格）。**禁止留空 `-`**——无来源帖链接则该行不建（见 #35）。
     - **落库唯一路径**：言论一律经 MCP `blogger_statement` 写入 MySQL（权威），由服务端镜像本段（段内 `<!-- statements:begin/end -->` 锚点之间）；**禁止手改本表格**——手改会在下一次写库时被整体覆盖，不一致项由系统标待复核。
     - **码值权威源**：`content_type` / `stance` / `op` 的合法码值以看板 MySQL `dict` 表为唯一权威（type=`stmt_content_type` / `stance` / `trade_op`，`remark` 存判据、`sort_order` 定分节顺序）；服务端按 dict 校验、前端标签与 tab 顺序同源取用（`GET /api/meta/taxonomy`）。**新增或改名分类只改字典**，禁止在代码里硬加一份并行定义。
-    - **用户复核驱动修正（statement_reviews）**：用户可在「言论追踪」右栏言论卡片**左滑**（MacBook 双指横向滑）点「复核」写入一句自然语言建议（如"这条应是观点·看多"），存于 MySQL 表 `statement_reviews`（按 `statement_id` 唯一，`status` = open/applied）。**审查流程必须先处理这些复核**：调 MCP `console_statement_review(action=list, status=open)` 取全部未处理建议 → 逐条读「建议 + 该言论当前 content_type/stance/target/正文」→ 按建议用 `blogger_statement(action=update)` 修正归类 → 修正成功后 `console_statement_review(action=apply)` 置已处理；若判断建议不成立则 `action=delete` 并说明理由。凡复核暴露出**可泛化的归类规律**，须回写本 #30（及提炼规范）固化为长期判据。看板侧：原「待复核」badge 已移除，改为**只有存在复核记录时才显示「复核」badge**（tooltip 展示建议原文）。
+    - **用户复核驱动修正（`stmt_review_sub`，子表 `_sub` 后缀）**：用户可在「言论追踪」右栏言论卡片**左滑**（MacBook 双指横向滑）点「复核」写入一句自然语言建议（如"这条应是观点·看多"），存于 MySQL 表 `stmt_review_sub`（按 `statement_id` 唯一，`status` = open/applied）。**审查流程必须先处理这些复核**：调 MCP `console_statement_review(action=list, status=open)` 取全部未处理建议 → 逐条读「建议 + 该言论当前 content_type/stance/target/正文」→ 按建议用 `blogger_statement(action=update)` 修正归类 → 修正成功后 `console_statement_review(action=apply)` 置已处理；若判断建议不成立则 `action=delete` 并说明理由。凡复核暴露出**可泛化的归类规律**，须回写本 #30（及提炼规范）固化为长期判据。看板侧：原「待复核」badge 已移除，改为**只有存在复核记录时才显示「复核」badge**（tooltip 展示建议原文）。
     - 模板见 `assets/博主.md`。
 
-31. 博主档案「个股买卖记录」规范：博主**明确买卖动作**（买入/加仓/减仓/卖出/清仓）单独存放于 `## 个股买卖记录` section（MySQL `blogger_trades` 权威，经 MCP `blogger_trade` 写入并由 `<!-- trades:begin/end -->` 锚点镜像），与言论追踪互补。
+31. 博主档案「个股买卖记录」规范：博主**明确买卖动作**（买入/加仓/减仓/卖出/清仓）单独存放于 `## 个股买卖记录` section（**权威＝买卖帖言论行本身**：`stmt_trade_src`，经 MCP `blogger_trade` 写入并由 `<!-- trades:begin/end -->` 锚点镜像），与言论追踪互补。**买卖帖只落这一张表**——原独立表 `blogger_trades` 已于 2026-09-12 并入并退役为 `blogger_trades_del`（一帖一表，见 #44）。
     - **表格列**：时间 | 操作 | 标的 | 当时价格 | 当时市值 | 方向 | 备注 | 原文链接（原文链接列必填真实雪球帖 URL，禁止留空 `-`，见 #35）
     - **方向必填**：每笔须识别看空/看多/中性（2026-09-03 用户规则 §提炼1）；标的须还原代称（寒王→寒武纪、赵姨→兆易创新），原文代称留痕。
     - **默认不自动生成预测**：只有同时含明确未来指向（目标价／时间窗／幅度）时，才另调 `console_add_prediction` 补上目标价/参考价/验证状态，并**传 `statementId`=上一步那条言论行 id**——预测即言论行，这是在**同一行**上补预测字段（不是新建第二条）；漏传而带 `sourceUrl` 时服务端按同链接复用已有 `stmt_predict` 行，否则新建一条 `predict` 言论。看板「预测记录」与「言论追踪」展示的是同一行，**禁止手工补录第二份**，也避免无法验证的预测污染准确率。
@@ -159,8 +159,8 @@
         - 未登记 → 归「其他」层，**不补登、不询问**（见 #12）。
     - **原文链接必填**：截图输入时若用户未提供原文链接，**主动提醒用户补链接**，不默默用 `-` 占位。
     - **分析内容 → 路由落地**：
-        - 涉及买卖动作（买/加/减/卖/清仓）→ **必须**经 `blogger_trade` 落 `blogger_trades` 表（见 #31），同时实时抓取价格/市值填入；买卖记录的价格取值和备注规则见 #31 硬规则；
-        - 个股/行业观点（非动作）→ 言论追踪对应子表（具象化/观点/信号/互动）；
+        - 涉及买卖动作（买/加/减/卖/清仓）→ **必须**经 `blogger_trade` 落买卖帖言论行 `stmt_trade_src`（见 #31），同时实时抓取价格/市值填入；买卖记录的价格取值和备注规则见 #31 硬规则；
+        - 个股/行业观点（非动作）→ 言论库对应类型表（`stmt_view` 观点 / `stmt_research` 研究 / `stmt_predict` 预测…），分类权威＝`content_type`；
         - 有框架价值的行业/方法论洞察 → 调 investment-refine 提炼为独立框架条目；
         - 方法论/心态/体系类 → 按常规提炼流程归入对应分类。
     - **选择性落地**：无借鉴价值的纯调侃/碎碎念不入库，告知用户已跳过。
@@ -178,7 +178,7 @@
     - **有标记无定义**：正文中出现 `[^data-1]` 但文末脚注区无对应定义 → 悬空标记，需补定义或删标记；
     - 脚注描述必须有信息量，禁止"A与B的跨维度关联"等模板废话。
 
-35. 言论/买卖/预测三表「原文链接」统一规范（治本防悬空/丢失；2026-09-08 画像单轨化后适用 DB）：`blogger_statements`、`blogger_trades`、`prediction_records` **一律必填 `source_url`**（服务端强校验），任意行原文链接禁止为空。画像 md 三表已退役（`assets/博主.md` 仅存历史参考）。
+35. 言论/买卖/预测三表「原文链接」统一规范（治本防悬空/丢失；2026-09-08 画像单轨化后适用 DB）：`blogger_statements`（六表 UNION 视图）与其背后的六张 `stmt_*` 分表 **一律必填 `source_url`**（服务端强校验），任意行原文链接禁止为空；买卖/预测的原文链接就在各自的言论行上（`stmt_trade_src` / `stmt_predict`），无需另表。画像 md 三表已退役（`assets/博主.md` 仅存历史参考）。
     - **粗制品三种来源都必须有原文链接**（2026-09-03 用户明确）：① 微信截图进件；② `post-fetch` 雪球博主言论采集；③ 其他正常粗制品。截图类须在录入前补到该言论的原始帖子链接，链接缺失即来源不可回溯。
     - **已由落库端强制**（不再只靠文档）：`blogger_statement` / `blogger_trade` 缺 `sourceUrl` 一律拒绝写入；更新时未传该字段则保留原值（防止编辑一次就把链接抹掉）。存量无链接行已置 `review_required=1`，可在看板「仅待复核」筛出补链接。
     - **原文链接必填真实雪球原文帖子 URL**：格式 `[原文](https://xueqiu.com/.../XXXXXX)`，取自采集批次该帖的 `[原文]` 链接；综合多篇帖则列多个链接。
@@ -199,12 +199,12 @@
     - **言论单轨（2026-09-07 起；2026-09-08 分表，见 #39）**：博主言论唯一权威存储 = 按类型分表的 `stmt_*` 六表（`blogger_statements` 为只读 UNION 视图，挂 `subject_id`）；`prediction_tracks` 不再承载言论，仅保留"对某条预测的后续增强/反驳"本职用途（`console_add_track`），此类行在看板「预测跟踪」分组展示。**新增言论禁止写 `prediction_tracks`**。
 
 
-39. 言论分表存储（2026-09-08 用户决策：各类型字段可独立演进）：言论按 contentType 拆六张物理表——`stmt_research` / `stmt_predict` / `stmt_view` / `stmt_insight` / `stmt_chat` / `stmt_trade_src`；`blogger_statements` 是只读 UNION 视图，承接全部查询与统计。**Agent 侧契约不变**：读写一律走 MCP `blogger_statement`（服务端按 contentType 自动路由），禁止直连 SQL 写物理表。id 由全局序列 `stmt_id_seq` 发号、跨表唯一——复核建议（statement_reviews）、预测原生字段（`stmt_predict.ref_price`/`status_code` 等，预测即言论行）、买卖来源（blogger_trades.statement_id）等松散引用不受分表影响。**改类型 = 跨表搬行且 id 不变**（审查第零步的 contentType 修正照常走 `blogger_statement(action=update)`，关联自动跟随）。将来某类型需要专属字段时只 ALTER 对应 `stmt_*` 表，不波及其他类型。原单表曾保留为 `blogger_statements_legacy` 作比对副本，**2026-09-11 校验后已删除**：分表 1749 行为 legacy 1236 行的超集（+517 为拆分后新增），legacy 独有 4 行（263/321/542/917）均为清理时有意删除的空正文行（纯转述 2 行 + 被覆盖重复 1 行 + 原文仅「—」占位 1 行）；删除前整表备份 `~/Project/investment-console/backups/blogger_statements_legacy_final_20260911.json`。迁移脚本 `split_statements_by_type.js` 已加「勿再运行」护栏。
+39. 言论分表存储（2026-09-08 用户决策：各类型字段可独立演进）：言论按 contentType 拆六张物理表——`stmt_research` / `stmt_predict` / `stmt_view` / `stmt_insight` / `stmt_chat` / `stmt_trade_src`；`blogger_statements` 是只读 UNION 视图，承接全部查询与统计。**Agent 侧契约不变**：读写一律走 MCP `blogger_statement`（服务端按 contentType 自动路由），禁止直连 SQL 写物理表。id 由全局序列 `stmt_id_seq` 发号、跨表唯一——复核建议（`stmt_review_sub`）、验证留痕（`stmt_verify_sub`）、预测原生字段（`stmt_predict.ref_price`/`status_code` 等，预测即言论行）、买卖原生字段（`stmt_trade_src.op`/`price`/`trade_note`）等松散引用不受分表影响。**改类型 = 跨表搬行且 id 不变**（审查第零步的 contentType 修正照常走 `blogger_statement(action=update)`，关联自动跟随）。将来某类型需要专属字段时只 ALTER 对应 `stmt_*` 表，不波及其他类型。原单表曾保留为 `blogger_statements_legacy` 作比对副本，**2026-09-11 校验后已删除**：分表 1749 行为 legacy 1236 行的超集（+517 为拆分后新增），legacy 独有 4 行（263/321/542/917）均为清理时有意删除的空正文行（纯转述 2 行 + 被覆盖重复 1 行 + 原文仅「—」占位 1 行）；删除前整表备份 `~/Project/investment-console/backups/blogger_statements_legacy_final_20260911.json`。迁移脚本 `split_statements_by_type.js` 已加「勿再运行」护栏。
 
 40. 看板卡片展示一致性（2026-09-11 用户发现「铝」案例后确认）：**同一条言论在任何入口——言论追踪 / 博主详情 / 预测控制台时间线 / 买卖记录卡——必须展示同样的要素**：博主正文、**回应**（`reply_to` 字段）、信号行（`方向 · 内容`）、形态标记（`form`）、原文链接；**不得因所属类型不同而丢掉其中任何一项**。
     - **字段化（2026-09-11 用户确认）**：卡片每个要素都必须有独立且带类型的字段——`contentType`（类型）/`form`（形态）/`target`（标的）/`view`（正文，**只放博主自己的话**）/`reply_to`（回应的对方原话/话题，六表统一列 + 视图已暴露 + MCP `replyTo`）/`stance`+`signal_text`（信号）/`source_url`（原文）/`wiki_ref`（已具象化）。**禁止把回应内嵌进正文**（旧写法 `（回应"…"）博主观点` 已废弃，前端只在兜底路径上仍解析历史数据）；`//@` 之后 = 被回应者 → `reply_to`。
     - **根因案例**：命中「买卖记录」优先级的帖子（如 metalslime 铝 2026-09-09「（回应"我昨天献祭了铝，现在想哭"）那是纯菜：我才开始买，你就跑。」）当时只走 `tradeCard`，渲染结构化字段（操作/价格/日期）+ 被截断的 `note`，于是**正文排版、回应块、信号行、形态标记全部消失**，与同批 view 卡完全两个样子（用户比对「贵州茅台(600519) 看空·高端圈层茅台消费递减」一卡发现）。
-    - **修复契约**：`web/app.js` 的 `tradeCard` 按 `statementId` 合并关联言论——正文走 `replyBodyHtml()`、信号行照 `stmtCard` 输出、形态走 `form` 徽标；`blogger_trades.note` 与正文同源时（剥掉「（回应…）」前缀后相同）**不再重复打印**，含额外信息时保留。
+    - **修复契约**：`web/app.js` 的 `tradeCard` 按 `statementId` 合并关联言论——正文走 `replyBodyHtml()`、信号行照 `stmtCard` 输出、形态走 `form` 徽标；买卖行的 `stmt_trade_src.trade_note` 与正文同源时（剥掉「（回应…）」前缀后相同）**不再重复打印**，含额外信息时保留。
     - **防复发**：新增任何卡片渲染路径，必须复用既有唯一实现——`replyBodyHtml()`（回应块）、`stripDirPrefix()`（信号去方向词前缀）、`setStmtLookup()`（言论 join）、`tkFiles()`（vault 链接，见 #38）；**禁止另写第二套**。
     - **数据侧无责**：本案例数据本身正确（`content_type=trade` + `stance=bullish` + `signal_text` + `form=回复` 都在），**纯展示层塌陷**——因此修在渲染层、不逐行改数据。
 
@@ -233,12 +233,14 @@
     - **优先还原而非就地清洗**：能从落库源（子任务 JSON / load 脚本 / backups）取回原值的，一律还原；就地正则清洗只作为兜底。
     - **可回滚**：动手前留快照（`SELECT ... INTO OUTFILE` 或 JSON dump 到 `backups/`），写明删除/修改原因。
 
-44. 数据库重构规则与「帖子只落类型表」（2026-09-11 用户拍板，投资看板 investment_kb）：
-    - **弃用对象不删除**：不再使用的表/列一律**加后缀 `_del` 保留**（表 `RENAME TABLE x TO x_del`；列 `ALTER TABLE ... RENAME COLUMN c TO c_del`），并在注释里写明弃用原因与替代者。**禁止 DROP**——数据是资产，留着可回溯。当前弃用清单：`prediction_records_del`（58 行，已被 `stmt_predict` 取代）、`predictions_del`（101 行，独立预测表整体退役，数据已并入 `stmt_predict`）、`prediction_tracks_del`（803 行迁移残留）。已恢复启用：`stmt_predict` 的 7 个预测专属列（`ref_price`/`target_price`/`target_date`/`date_precision`/`verify_date`/`verify_result` + 新增 `status_code`）——曾被改名为 `*_del` 给独立预测表让位，收敛后已改回。**唯一例外**：`prediction_stmt_rel` 未留 `_del` 壳——它当日由 `stmt_relation` 在本表上 RENAME 而来（50 行语义错误的自指行已清空，表结构＝原结构），回退方式为改回列名。
-    - **帖子只落一张类型表**：按内容类型优先级命中即止（买卖→预测→研究→心得→观点→闲聊），落进 `stmt_trade_src/stmt_predict/stmt_research/stmt_insight/stmt_view/stmt_chat` 之一，表里**只存这条言论自己的要素**（正文/形态/时间/信号/回应/原文/具象化…）。
-    - **其余全是关联关系**：博主 / 个股 / 行业 / 市场 四维度统一走 **`statement_entity_rel`**（`entity_type_code` + `entity_id` + `entity_name` 快照 + `role_code`；多维度多值，PK 三元组）。表里的 `blogger`/`blogger_id` 仅作展示冗余缓存，`subject_id` 已退役（关联表为准）。
-    - **预测即言论行（唯一预测表 = `stmt_predict`）**：一条预测就是一条 `predict` 类型言论，与博主言论**同表同 id**；结构化预测信息（`ref_price`/`target_price`/`target_date`/`date_precision`/`status_code`/`verify_date`/`verify_result`）就在该表本体，**不再有独立预测表**（`predictions` 已改名 `predictions_del` 留档）。因此「预测↔言论」不再需要关联表——那本来就是同一行（`prediction_stmt_rel` 随之退役）。**状态机**：`status_code` = pending 待验证 / verifying 验证中 / verified_correct 已验证正确 / verified_wrong 已验证错误 / revoked 已撤销；验证留痕在 `prediction_verifications.stmt_id`（同预测重复验证为覆盖式 upsert，保留最近一次；**该表不设外键**——弃用表改名后残留外键曾把写入卡死）。
-    - **`stmt_relation` 只做「言论↔言论」跟踪**：某条言论对某条预测的**增强/反驳/补充**是行间关联 `stmt_relation(stmt_id, related_stmt_id, relation_code)`（enhance/refute/support），不是独立文本表。
-    - **言论写入自动维护**：`blogger_statement` 落库时服务端自动 ① 写维度关联（博主+主题）② 更新 `post_history` 要素快照（`content_type`/`stance`/`signal_text`/`entities_json`/`stmt_id`/`refined_at`）。预测类言论无需额外动作——行本身就是预测。
-    - **原文库**：`post_history` 存采集原文 + 提炼要素快照（唯一用途＝避免重采 + 日后溯源）。
-    - **读取契约不变**：言论读取经 `STMT_SEL` **单表** `blogger_statements` 直取（预测专属列随视图一并读出，无 JOIN），API/前端字段名零变更——**存储重构、契约不动**是这类重构的硬要求。控制台工具语义相应变化：`console_add_prediction` 返回的是 `stmt_predict` 行的言论 id（可复用来源言论行），`console_update_status` 写 `stmt_predict.status_code`，`console_add_track` 写 `stmt_relation`。
+44. 数据库结构与命名规则（2026-09-11 拍板 + 2026-09-12 收口，投资看板 investment_kb）：
+    - **弃用对象不删除**：不再使用的表/列一律**加后缀 `_del` 保留**（表 `RENAME TABLE x TO x_del`；列 `ALTER TABLE ... RENAME COLUMN c TO c_del`），并在表注释里写明弃用原因与替代者。**禁止 DROP**——数据是资产，留着可回溯。当前清单：`blogger_trades_del`（29 行，已并入 `stmt_trade_src`）、`files_del`（723 行 vault 索引，改内存扫描）、`file_tag_rel_del`、`tags_del`（63 行，已并入 `dict(type=tag)`）、`trash_records_del`（0 行）、`sync_state_del`、`prediction_records_del`（58 行）、`predictions_del`（101 行，预测已收敛为言论行）、`prediction_tracks_del`（803 行）。
+    - **帖子唯一落点**：一条帖子只落 `stmt_trade_src`/`stmt_predict`/`stmt_research`/`stmt_view`/`stmt_insight`/`stmt_chat` **六张表之一**（按内容类型优先级命中即止：买卖→预测→研究→心得→观点→闲聊），**不得落在第二张表**（唯一例外：`post_history` 存采集原文）。表里只存这条言论自己的要素；改类型＝跨表搬行、id 不变。**因此不存在「结构化交易表」「独立预测表」这类与言论并行的表**——`stmt_trade_src` 自带 `op`/`price`/`market_cap`/`trade_date`/`target_alias`/`trade_note`，`stmt_predict` 自带 `ref_price`/`target_price`/`target_date`/`date_precision`/`status_code`/`verify_date`/`verify_result`。
+    - **四维度全靠关联表**：博主 / 个股 / 行业 / 市场 → `statement_entity_rel`（`entity_type_code`+`entity_id`+`entity_name` 快照+`role_code`，PK 三元组）。表里的 `blogger`/`blogger_id`/`subject_id` 仅作展示冗余，**关联表才是权威**。
+    - **命名后缀（2026-09-12 用户定）**：**子表 `_sub`**（`stmt_verify_sub` 验证留痕 / `stmt_review_sub` 复核建议 / `review_check_sub` 审查逐项 / `refine_target_sub` 提炼产出；父表分别是 `stmt_predict`/`stmt_*`、`review_records`、`refine_records`）；**关联表 `_rel`**（`statement_entity_rel` 言论↔实体、`stmt_rel` 言论↔言论的增强/反驳/补充）；**弃用表 `_del`**。
+    - **可枚举的值表进 `dict`**：标签（原 `tags` 表 63 条 → `dict(type='tag')`）、方向/状态/类型等一律 `dict(type,code,name,sort_order,enabled,remark)`，PK 为 `(type,code)`。**不并的例外**：`prediction_subjects`（个股带 `code`+`market`+`hk_connect`，不是纯 code+name）与 `bloggers`（博主是开放集合，带画像字段）保留独立表。
+    - **业务逻辑关联不设外键**：`statement_entity_rel`/`stmt_rel`/`stmt_verify_sub`/`stmt_review_sub` 全由应用层维护。**教训**：弃用表改名后残留外键会把写入卡死（`stmt_verify_sub` 曾因外键指向 `prediction_records_del` 而无法写验证留痕）。仅 `refine_target_sub`/`review_check_sub` 等纯记录子表保留建表期外键。
+    - **索引类派生数据不落库**：vault 文件索引 / 标签树改由服务端**内存扫描**（`buildIndex()`）承担（原 `files`/`file_tag_rel`/`tags` 三表退役）；`bloggers` 表仍保留（画像字段以 DB 为权威，扫描只维护 `dir`/`file_count`）。
+    - **具象化＝文件路径**：`wiki_ref` 存 **vault 相对路径**（如 `博主/Benjm_修/技术革命的领头羊悖论（1）.md`，含 `.md`），**不存条目名**——路径才能被前端直接加工成**可本地打开的超链接**（`obsidian://open?vault=投资知识库&file=…`，看板点「已具象化」即打开）。留空时服务端按原帖 URL 反查自动回填（缓存 5 分钟）。迁移脚本 `scripts/backfill-wiki-ref.js` 会把历史条目名归一为路径（三级纠正：原帖 URL → 全库同名笔记 → 误填博主名则清空）。
+    - **读取契约不变**：言论读取经 `STMT_SEL` **单表** `blogger_statements` 直取（无 JOIN）；API/前端字段名零变更——**存储重构、契约不动**是这类重构的硬要求。控制台工具语义：`console_add_prediction` 返回的是 `stmt_predict` 行的言论 id（传 `statementId` 即复用该行），`console_update_status` 写 `stmt_predict.status_code`，`console_add_track` 写 `stmt_rel`，`blogger_trade` 写 `stmt_trade_src`。
+    - **权威 schema 是生成物**：`~/Ai/tools/investment-kb/investment_kb.sql` 由 `node ~/Project/investment-console/scripts/export-schema.js` 从实库导出（含 dict 内容快照），改库后必须重跑；一致性用 `node scripts/verify-schema-replay.js` 校验（空库回放 + 逐列类型/注释比对，退出码即门禁）。
