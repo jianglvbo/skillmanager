@@ -123,3 +123,9 @@ version: 2.1.0
 - [ ] 源自已有言论的预测是否带了 `statementId`（或确认自动关联命中，返回 `linkedStatementId`）？
 - [ ] 来源言论是否已落 `blogger_statements` 并与预测 `origin_id` 关联？（画像 md 已退役，禁写）
 - [ ] 是否未写 vault 预测控制台文件？
+
+> **2026-09-11 重构（唯一预测表）**：预测数据从 `prediction_records` 迁入 **`predictions`**（旧表改名 `prediction_records_del` 保留）；预测↔言论的关联由 **`prediction_stmt_rel`**（M:N，`relation_code`=primary/support/enhance/refute）表达，旧 `prediction_tracks` 退役为 `prediction_tracks_del`。
+> - `console_add_prediction`：新增 `stance`（方向，可空）与**强烈建议传 `statementId`**（来源言论 → 自动建关联）。
+> - `console_add_track`：**改为「把一条已有言论挂到某条预测上」**——参数 `predictionId` + `statementId` + `direction(enhance/refute/neutral)`；不再单存一段文字（先 `blogger_statement` 落言论再关联）。
+> - `console_update_status`：写 `predictions.status_code`，并同步最近 `verify_date`/`verify_result`；每次验证仍留痕 `prediction_verifications`。
+> - 言论侧写入 `contentType=predict` 时，**服务端会自动 upsert `predictions` 并建关联**（有主题可归时），无需手动调 `console_add_prediction`。

@@ -232,3 +232,12 @@
     - **落库后特征串复检**：修复完必须查 `view_text LIKE '## %'`、`reply_to LIKE '%发布：%'`、`LIKE '%回复@%'`、`LIKE '%已提炼见%'` 等污染指纹，全部为 0 才算修完。
     - **优先还原而非就地清洗**：能从落库源（子任务 JSON / load 脚本 / backups）取回原值的，一律还原；就地正则清洗只作为兜底。
     - **可回滚**：动手前留快照（`SELECT ... INTO OUTFILE` 或 JSON dump 到 `backups/`），写明删除/修改原因。
+
+43. 数据库重构规则与「帖子只落类型表」（2026-09-11 用户拍板，投资看板 investment_kb）：
+    - **弃用对象不删除**：不再使用的表/列一律**加后缀 `_del` 保留**（表 `RENAME TABLE x TO x_del`；列 `ALTER TABLE ... RENAME COLUMN c TO c_del`），并在注释里写明弃用原因与替代者。**禁止 DROP**——数据是资产，留着可回溯。当前弃用清单：`prediction_records_del`（58 行，已被 `predictions` 取代）、`prediction_tracks_del`（803 行迁移残留）、`stmt_predict.*_del`（7 个预测专属列，已移交 `predictions`）。
+    - **帖子只落一张类型表**：按内容类型优先级命中即止（买卖→预测→研究→心得→观点→闲聊），落进 `stmt_trade_src/stmt_predict/stmt_research/stmt_insight/stmt_view/stmt_chat` 之一，表里**只存这条言论自己的要素**（正文/形态/时间/信号/回应/原文/具象化…）。
+    - **其余全是关联关系**：博主 / 个股 / 行业 / 市场 四维度统一走 **`statement_entity_rel`**（`entity_type_code` + `entity_id` + `entity_name` 快照 + `role_code`；多维度多值，PK 三元组）。表里的 `blogger`/`blogger_id` 仅作展示冗余缓存，`subject_id` 已退役（关联表为准）。
+    - **预测只有一张表**：`predictions`（主题→预测 1:N），结构化预测信息（参考价/目标价/目标时间/状态/验证结果）**只在这里**；预测 ↔ 言论是 **M:N**，走 `prediction_stmt_rel`（`relation_code`：primary/support/enhance/refute），**跟踪/增强/反驳也是关联行**而非独立表。`prediction_verifications` 是 1:N 验证留痕子表，保留。
+    - **言论写入自动维护**：`blogger_statement` 落库时服务端自动 ① 写维度关联（博主+主题）② 更新 `post_history` 要素快照（`content_type`/`stance`/`signal_text`/`entities_json`/`stmt_id`/`refined_at`）③ 预测类言论自动 upsert `predictions` 并建关联。
+    - **原文库**：`post_history` 存采集原文 + 提炼要素快照（唯一用途＝避免重采 + 日后溯源）。
+    - **读取契约不变**：言论读取经 `STMT_SEL`（JOIN `prediction_stmt_rel` + `predictions`）把预测字段并回原字段名，API/前端字段名零变更——**存储重构、契约不动**是这类重构的硬要求。

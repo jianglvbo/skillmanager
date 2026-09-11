@@ -14,7 +14,7 @@
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
 | 粗制品评分/加工 | `POST /api/coarse/score` `/process` | 调本地 dsh | 粗制品模块 |
 | post-fetch 第三步之二 | `scripts/import-post-history.js`（批量）/ `MCP post_history`（单条 upsert） | 采集原文落 `post_history` 表（提炼前原文留档，**唯一用途=避免重采**） | 不呈现（后端留档；`post_history action=get/check` 供提炼与补采读取） |
-| prediction-console（言论追踪） | `MCP console_add_prediction` / `console_update_status` / `console_add_track` | 预测/验证留痕/言论跟踪（个股/行业/市场三控制台，含 subjectMarket/subjectHkConnect） | 言论追踪模块（市场徽+港股通徽、验证留痕） |
+| prediction-console（言论追踪·2026-09-11 重构：唯一预测表 `predictions` + `prediction_stmt_rel` 关联） | `MCP console_add_prediction` / `console_update_status` / `console_add_track` | 预测/验证留痕/言论跟踪（个股/行业/市场三控制台，含 subjectMarket/subjectHkConnect） | 言论追踪模块（市场徽+港股通徽、验证留痕） |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。
 
