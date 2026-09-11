@@ -108,6 +108,15 @@
 | 健康检查 | `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8698/` → 200；`launchctl list \| grep investment-console` → 第二列为退出码（非 0 即异常） |
 
 > **踩过的坑（2026-09-11）**：plist 原先写死 `~/.workbuddy/binaries/node/versions/22.22.2-2/bin/node`，WorkBuddy 升级把该版本删掉后**服务静默起不来**——`launchctl list` 显示退出码 `78`、端口无监听，但日志里没有任何报错（因为根本没启动到 node）。**排查口诀**：退出码非 0 且日志无新增 → 先验 `ProgramArguments` 里的可执行文件是否存在。现已改为启动器脚本自愈。
+**数据库注释约定（2026-09-11 补齐）**：`investment_kb` **每表每字段均带 COMMENT**（约定写在权威文件 `~/Ai/tools/investment-kb/investment_kb.sql` 文件头）。新增表/字段后跑审计：
+
+```bash
+node ~/Project/investment-console/scripts/audit-schema-comments.js           # 列清单
+node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
+```
+
+审计口径：只读视图 `blogger_statements` 无列注释概念，自动排除。**当前状态：表注释 29/29、列注释 400/400**（六张 `stmt_*` 分表此前整表无注释，2026-09-11 补 135 列 + 8 张表注释；权威文件同步实库，并补齐此前遗漏的 `blogger_trades`/`statement_reviews`/`stmt_id_seq`/`blogger_statements_legacy` 四表定义）。
+
 > 另一坑：旧实例若成为孤儿进程（PPID=1）会与新实例抢状态；`launchctl kickstart -k` 之前先 `pgrep -fl "node server.js"` 确认没有残留。
 
 ## 9. 编排者看板联动清单（自 SKILL.md 下沉）
