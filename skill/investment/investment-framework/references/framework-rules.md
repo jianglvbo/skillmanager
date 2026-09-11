@@ -200,3 +200,9 @@
 
 
 39. 言论分表存储（2026-09-08 用户决策：各类型字段可独立演进）：言论按 contentType 拆六张物理表——`stmt_research` / `stmt_predict` / `stmt_view` / `stmt_insight` / `stmt_chat` / `stmt_trade_src`；`blogger_statements` 是只读 UNION 视图，承接全部查询与统计。**Agent 侧契约不变**：读写一律走 MCP `blogger_statement`（服务端按 contentType 自动路由），禁止直连 SQL 写物理表。id 由全局序列 `stmt_id_seq` 发号、跨表唯一——复核建议（statement_reviews）、预测来源关联（prediction_records.origin_id）、买卖来源（blogger_trades.statement_id）等松散引用不受分表影响。**改类型 = 跨表搬行且 id 不变**（审查第零步的 contentType 修正照常走 `blogger_statement(action=update)`，关联自动跟随）。将来某类型需要专属字段时只 ALTER 对应 `stmt_*` 表，不波及其他类型。原单表保留为 `blogger_statements_legacy`（比对副本，勿读写）。
+
+40. 看板卡片展示一致性（2026-09-11 用户发现「铝」案例后确认）：**同一条言论在任何入口——言论追踪 / 博主详情 / 预测控制台时间线 / 买卖记录卡——必须展示同样的四要素**：博主正文（含「回应」引用块）、信号行（`方向 · 内容`）、形态标记（`form`）、原文链接；**不得因所属类型不同而丢掉其中任何一项**。
+    - **根因案例**：命中「买卖记录」优先级的帖子（如 metalslime 铝 2026-09-09「（回应"我昨天献祭了铝，现在想哭"）那是纯菜：我才开始买，你就跑。」）当时只走 `tradeCard`，渲染结构化字段（操作/价格/日期）+ 被截断的 `note`，于是**正文排版、回应块、信号行、形态标记全部消失**，与同批 view 卡完全两个样子（用户比对「贵州茅台(600519) 看空·高端圈层茅台消费递减」一卡发现）。
+    - **修复契约**：`web/app.js` 的 `tradeCard` 按 `statementId` 合并关联言论——正文走 `replyBodyHtml()`、信号行照 `stmtCard` 输出、形态走 `form` 徽标；`blogger_trades.note` 与正文同源时（剥掉「（回应…）」前缀后相同）**不再重复打印**，含额外信息时保留。
+    - **防复发**：新增任何卡片渲染路径，必须复用既有唯一实现——`replyBodyHtml()`（回应块）、`stripDirPrefix()`（信号去方向词前缀）、`setStmtLookup()`（言论 join）、`tkFiles()`（vault 链接，见 #38）；**禁止另写第二套**。
+    - **数据侧无责**：本案例数据本身正确（`content_type=trade` + `stance=bullish` + `signal_text` + `form=回复` 都在），**纯展示层塌陷**——因此修在渲染层、不逐行改数据。
