@@ -147,6 +147,8 @@
 |---|---|---|---|
 | `trade` | 必是 | `blogger_trade` → `blogger_trades` 表（看板买卖记录；画像 md 已退役不回写）。**方向 `stance` 必填**（看空/看多/中性），有价必标 `price`（开盘竞价位），`note` 只记操作理由。**结构化字段**：`op`/`price`/`marketCap`/`tradeDate` | 否 |
 | `research` | 是 | `blogger_statement` → `blogger_statements` 表。**结构化字段**：`dataRefs`（数据来源）/`wikiRef`（已具象化条目） | 仅当沉淀出可复用框架（言论库记事实，wiki 记方法，**不重复记录**） |
+
+> **`wikiRef` 六表统一（2026-09-11）**：任何 `contentType` 都可填 `wikiRef`——该条已具象化到哪条框架条目，卡片显示「已具象化：[[条目名]]」。此前仅 research/insight 两张分表有此列，回采历史指针行时发现 view/chat/trade/predict 的链接会丢，故四表补列并重建 UNION 视图。
 | `research` | 否 | — | 能成框架 → wiki（我的/其他/宏观）；不能 → **舍弃** |
 | `predict` | 必是 | `blogger_statement` → `blogger_statements`(predict) + 预测控制台。**`stance` 必填**，`view_date` 取博主下判断的时点。**结构化字段（2026-09-10 新增）**：`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`verifyStatus`/`verifyDate`/`verifyResult` —— 预测验证闭环在言论表内可直接查询，免 JOIN `prediction_records`/`prediction_verifications` | 否 |
 | `view` | 是 | `blogger_statement` → 言论库（看板言论追踪）。**不填 `stance`**（2026-09-11 用户确认：方向只在买卖/预测需要） | 否 |
