@@ -155,7 +155,7 @@
 | `view` | 否 | — | 有价值 → wiki；无价值 → 舍弃 |
 | `insight` | 是 | `blogger_statement` → 言论库（看板言论追踪）。**结构化字段**：`transferable`（可迁移性）/`wikiRef` | 仅当沉淀方法论 |
 
-> **`predict` 的结构化信息去向（2026-09-11 重构）**：预测类言论落 `stmt_predict` 后，**参考价/目标价/目标时间/状态/验证结果自动写入唯一预测表 `predictions`**（经 `prediction_stmt_rel` 关联，M:N），言论表不再存这些列（已退役为 `*_del`）。调用方仍照常传 `refPrice/targetPrice/targetDate/datePrecision/verify*`，服务端负责分流；`subjectId` 仍是主题入参（同时写入维度关联表）。
+> **`predict` 的结构化信息去向（2026-09-11 收敛：预测即言论行）**：预测类言论落库后，**参考价/目标价/目标时间/状态/验证结果就写在这一行 `stmt_predict` 本体**（`ref_price`/`target_price`/`target_date`/`date_precision`/`status_code`/`verify_date`/`verify_result`）——独立预测表 `predictions` 已退役为 `predictions_del`，`prediction_stmt_rel` 亦随之退役（预测与言论本来就是同一行，无需关联表）。调用方照常传 `refPrice/targetPrice/targetDate/datePrecision/verify*`；`subjectId` 仍是主题入参（同时写入维度关联表）。
 | `insight` | 否 | — | 有价值 → wiki；否则舍弃 |
 | `chat` | — | 仅当能刻画「擅长与局限 / 投资心态」→ `blogger_statement`；否则**舍弃** | 否 |
 

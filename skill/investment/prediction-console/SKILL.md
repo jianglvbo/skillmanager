@@ -15,8 +15,8 @@ version: 2.1.0
 - **一主题一段**：每只股票/行业/市场独立 `prediction_subjects` 记录（含代码字段），禁止合并（如"神火/云铝"合成一段）
 - **去重由 DB 兜底**：`console_add_prediction` 按（主题+预测日期+预测人+内容）唯一键幂等，重复自动跳过并返回 `duplicate: true`
 - **验证留痕由服务端强制**：状态改为 `verified_correct/verified_wrong/revoked` 时 `verify`（result+basis）必填，缺了直接报错——状态枚举里禁止夹带证据
-- **言论单轨**：预测落 `prediction_records` 的同时，来源博主言论记 `blogger_statements`（origin 关联）；画像 md 已退役（2026-09-08），不再写任何 vault 画像文件
-- **预测两条链路、一处展示**：博主帖子里的预测先作为言论归档（`blogger_statement` `contentType=predict`，言论库按人追责）；纳入验证体系的另走 `console_add_prediction`（带目标价/参考价/验证留痕）。同一判断两侧都有时**必须靠 `origin_id` 关联**（传 `statementId` 或靠服务端相似度自动回填），看板合并成一张卡；未关联即视为重复数据
+- **言论单轨（2026-09-11 收敛：预测即言论行）**：预测**就是** `stmt_predict` 表里的一行 `predict` 言论——与博主言论同表同 id，结构化预测字段（参考价/目标价/目标时间/状态/验证结果）就在该行本体，**没有第二张预测表**；画像 md 已退役（2026-09-08），不再写任何 vault 画像文件
+- **预测一条链路、一处展示**：博主帖子里的预测先由 `blogger_statement`（`contentType=predict`）落库；要纳入验证体系时调 `console_add_prediction` 并**传 `statementId` 复用同一行**补上目标价/参考价/状态（不传则新建一条预测言论）。同一判断**只有一行**，不存在两侧重复，也不需要任何关联表
 - **码值权威源**：`content_type`(stmt_content_type)/`stance`/`status`(prediction_status) 等枚举以 MySQL `dict` 表为准，`remark` 里写判据；新增分类改字典不改代码
 - **倒序展示**：看板按预测日期倒序（月级精度排当月 1 日、展示还原为 yyyy-MM）
 
@@ -60,7 +60,7 @@ version: 2.1.0
 | `refPrice` | 当前价/参考价：个股=预测日收盘价（不复权，腾讯 kline API），行业/市场=商品价/指数点位；月级日期留空 |
 | `targetPrice` / `targetDate` | 有明确数字/区间才填（如 2023~2027+），否则省略 |
 | `sourceUrl` | 原文链接 |
-| `statementId` | 该预测源自哪条博主言论（`blogger_statements.id`）；**同一条判断已由言论链路落库时必传**，漏传则服务端按「同主题+同链接+相似度≥0.5」自动回填关联 |
+| `statementId` | 该预测源自哪条博主言论（`blogger_statements.id`）；**同一条判断已由言论链路落库时必传**——预测即言论行，传了就在该行上补预测字段与维度关联（漏传而带 `sourceUrl` 时，服务端按同链接复用已有 `stmt_predict` 行；仍无则新建） |
 | `status` | pending/verifying/verified_correct/verified_wrong/revoked（缺省 pending） |
 
 ### 第五步：状态变更（强制验证留痕）
@@ -69,12 +69,12 @@ version: 2.1.0
 - 判定口径：方向正确即记 correct，数值偏差进 note（如"预测-35%实际-50%→correct，备注跌幅大于预期"）；方向相反/关键数值未兑现记 wrong
 
 ### 第六步：言论跟踪
-同来源后续增强/反驳言论 → MCP `console_add_track`：`{subjectId, trackDate, source, content, direction=enhance/refute/neutral, sourceUrl}`
+同来源后续增强/反驳言论 → MCP `console_add_track`：`{predictionId, statementId, direction=enhance/refute/neutral}`（2026-09-11 起：跟踪＝`stmt_relation` 行间关联。**先把那条言论用 `blogger_statement` 落库拿到 id**，再关联——不再单存一段文字，也不再按 `subjectId` 追加）
 - **用途边界（2026-09-03）**：本工具只记"对某条已有预测的后续跟踪"（该判断被加强还是被推翻）。**博主言论/观点/预测/研究/心得的归档不走这里**，一律走 `blogger_statement`（涉个股/行业/市场时传 `subjectId`；预测类言论用 `contentType=predict`）。
 - **`source` 必须写发言者本人**（博主名或"自己"），**禁止写「雪球采集-2026年8月11日」这类批次名**。
 
 ### 第七步：（已退役）同步博主画像
-2026-09-08 画像单轨化：本步取消。来源言论已由 `blogger_statement` 落库（与预测经 `origin_id` 关联），画像字段存 `bloggers` 表；**禁止再读写 vault 画像文件**。
+2026-09-08 画像单轨化：本步取消。来源言论已由 `blogger_statement` 落库（**预测即言论行，本就是同一行，无 origin_id 关联**），画像字段存 `bloggers` 表；**禁止再读写 vault 画像文件**。
 
 ---
 
@@ -121,11 +121,13 @@ version: 2.1.0
 - [ ] 预测日期是否为原始判断日期？月级是否走 yyyy-MM？
 - [ ] 状态变更是否带 verify（result+basis）？
 - [ ] 源自已有言论的预测是否带了 `statementId`（或确认自动关联命中，返回 `linkedStatementId`）？
-- [ ] 来源言论是否已落 `blogger_statements` 并与预测 `origin_id` 关联？（画像 md 已退役，禁写）
+- [ ] 来源言论是否已落 `blogger_statements`？（预测即言论行——`console_add_prediction` 是否传了 `statementId` 复用那一行，而非又新造一行；画像 md 已退役，禁写）
 - [ ] 是否未写 vault 预测控制台文件？
 
-> **2026-09-11 重构（唯一预测表）**：预测数据从 `prediction_records` 迁入 **`predictions`**（旧表改名 `prediction_records_del` 保留）；预测↔言论的关联由 **`prediction_stmt_rel`**（M:N，`relation_code`=primary/support/enhance/refute）表达，旧 `prediction_tracks` 退役为 `prediction_tracks_del`。
-> - `console_add_prediction`：新增 `stance`（方向，可空）与**强烈建议传 `statementId`**（来源言论 → 自动建关联）。
-> - `console_add_track`：**改为「把一条已有言论挂到某条预测上」**——参数 `predictionId` + `statementId` + `direction(enhance/refute/neutral)`；不再单存一段文字（先 `blogger_statement` 落言论再关联）。
-> - `console_update_status`：写 `predictions.status_code`，并同步最近 `verify_date`/`verify_result`；每次验证仍留痕 `prediction_verifications`。
-> - 言论侧写入 `contentType=predict` 时，**服务端会自动 upsert `predictions` 并建关联**（有主题可归时），无需手动调 `console_add_prediction`。
+> **2026-09-11 二次收敛（预测即言论行；用户问「predictions 和 stmt_predict 不是重复吗？」后拍板）**：独立预测表 `predictions` 整体退役（改名 `predictions_del` 留档，101 条已全量并入 `stmt_predict`：URL 命中 37 / 新建言论 14 / 跨表改类型 26 / 内容匹配 24，按 URL 100% 可回溯），`prediction_records`→`prediction_records_del`，旧 `prediction_tracks`→`prediction_tracks_del`。
+> - **唯一预测表 = `stmt_predict`**：一条预测＝一条 `predict` 言论，同表同 id；结构化字段在该行本体，读取经视图单表直取（无 JOIN），前端字段名零变更。
+> - **`prediction_stmt_rel` 随之退役**（预测↔言论本来就是同一行，无需关联）；`stmt_relation(stmt_id, related_stmt_id, relation_code)` 只承担「言论↔言论」的增强/反驳/补充跟踪。
+> - `console_add_prediction`：`statementId` **传了就复用该行**（补预测字段+维度关联），不传则新建预测言论并返回其 id。
+> - `console_add_track`：`predictionId` + `statementId` + `direction(enhance/refute/neutral)` → 写 `stmt_relation`。
+> - `console_update_status`：写 `stmt_predict.status_code`（pending/verifying/verified_correct/verified_wrong/revoked），同步最近 `verify_date`/`verify_result`；另留痕 `prediction_verifications.stmt_id`（同预测重复验证为覆盖式 upsert，保留最近一次；该表**不设外键**）。
+> - 言论侧写入 `contentType=predict` 即自动成为预测，无需再调 `console_add_prediction`；要加目标价/验证状态时再补调一次（传 `statementId`）。
