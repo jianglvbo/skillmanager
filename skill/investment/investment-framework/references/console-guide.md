@@ -13,6 +13,7 @@
 | investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking v2 思考链路/basis/relation） | 提炼时间轴 + 思考时间线（决策链路图） |
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
 | 粗制品评分/加工 | `POST /api/coarse/score` `/process` | 调本地 dsh | 粗制品模块 |
+| post-fetch 第三步之二 | `scripts/import-post-history.js`（批量）/ `MCP post_history`（单条 upsert） | 采集原文落 `post_history` 表（提炼前原文留档，**唯一用途=避免重采**） | 不呈现（后端留档；`post_history action=get/check` 供提炼与补采读取） |
 | prediction-console（言论追踪） | `MCP console_add_prediction` / `console_update_status` / `console_add_track` | 预测/验证留痕/言论跟踪（个股/行业/市场三控制台，含 subjectMarket/subjectHkConnect） | 言论追踪模块（市场徽+港股通徽、验证留痕） |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。
@@ -96,6 +97,19 @@
 - 看板数据在 `data/`，**别手动改 JSON**，一律走 API（否则操作日志/索引不同步）
 - 验证：playwright + 系统 Chrome（`executable_path` 指定）；`node --check web/app.js`；jsdom 只能看逻辑不能信布局
 
+## 8.5 本地看板运维（2026-09-11 补充）
+
+| 项 | 值 |
+|:---|:---|
+| 服务 | launchd `com.investment-console`（`~/Library/LaunchAgents/com.investment-console.plist`，KeepAlive=1，端口 8698） |
+| 启动器 | **`~/Project/investment-console/scripts/run-server.sh`**（plist 的 ProgramArguments 指向它）——按「WorkBuddy `versions/current` → 任一已装版本 → PATH 里的 node」解析 node 后 exec server.js |
+| 重启 | `launchctl kickstart -k gui/$(id -u)/com.investment-console`；改 plist 后用 `launchctl bootout` + `launchctl bootstrap gui/$(id -u) <plist>` |
+| 日志 | `~/Library/Logs/investment-console.log`（stdout+stderr 合并） |
+| 健康检查 | `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8698/` → 200；`launchctl list \| grep investment-console` → 第二列为退出码（非 0 即异常） |
+
+> **踩过的坑（2026-09-11）**：plist 原先写死 `~/.workbuddy/binaries/node/versions/22.22.2-2/bin/node`，WorkBuddy 升级把该版本删掉后**服务静默起不来**——`launchctl list` 显示退出码 `78`、端口无监听，但日志里没有任何报错（因为根本没启动到 node）。**排查口诀**：退出码非 0 且日志无新增 → 先验 `ProgramArguments` 里的可执行文件是否存在。现已改为启动器脚本自愈。
+> 另一坑：旧实例若成为孤儿进程（PPID=1）会与新实例抢状态；`launchctl kickstart -k` 之前先 `pgrep -fl "node server.js"` 确认没有残留。
+
 ## 9. 编排者看板联动清单（自 SKILL.md 下沉）
 
 流水线结果写入本地运行的投资看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管 com.investment-console；读本地 iCloud vault、连远程 MySQL；连接与 token 见 `Ai/tools/investment-console-mcp/README.md`），看板不产生知识、只呈现结果：
@@ -103,6 +117,7 @@
 - **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking v2 自由对象数组/basis/relation）→ 提炼时间轴 + 决策链路图
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
 - **预测控制台**（2026-08-31 方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）→ `MCP console_list_subjects / console_get_subject / console_add_prediction / console_update_status / console_add_track`（见 prediction-console skill v2.0）→ 看板预测控制台模块（个股/行业/市场三页签）
+- **原文留档**（2026-09-11 新增）→ `post_history` 表：采集验收后由 post-fetch 调 `scripts/import-post-history.js` 落库（摘要帖/无链接帖不入库）；提炼侧第 0.5 步与补采场景用 `MCP post_history`（`check` 查窗口内已留档、`get` 取原文）——**目的是避免重采**，不参与提炼判定。规则见 framework-rules #41
 - **决策链路图 v2（思考时间线，2026-08-31 起替代旧 10 节点流程图）**：源→拆分决策→每条产物一条思考轨道（kind 徽章 + 推理文本，决策步红点、quote 原文引用、alt 否决块）→产物卡即终点；判断只留给有真实分叉处（归属层/关系），关系判断落在 thinking 的「决策」步，审查 C3/C7=写后质检不重复。详见 console-guide §4
 - **产物展示**：多产物**横向并联**（产物徽章并排、无箭头，不用 SVG 分叉图——用户试用后否决）
 - 失败处理：API 失败不阻断主流程，汇报提示「看板数据未写入」

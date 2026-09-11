@@ -133,6 +133,8 @@ compatibility: 通用
 | MACRO_OTHER | {OTHER_DIR}/宏观 | 未登记投资人对具体宏观事件的分析 |
 | ROUGH_DIR | {VAULT_ROOT}/工作区/粗制品 | 粗制品暂存 |
 | RAW_DIR | {VAULT_ROOT}/工作区/原始资源 | 粗加工后原始资源 |
+| 原文库 post_history | 看板 MySQL `post_history` 表（**采集原文留档；唯一用途=避免重采**）。写：`~/Project/investment-console/scripts/import-post-history.js <帖子集.md>`（批量）或 `MCP post_history action=upsert`；读：`MCP post_history action=get/check` | 需要回顾/重新提炼时先查这里，有原文就不必再抓（规则 #41） |
+| 本地看板启动器 | `~/Project/investment-console/scripts/run-server.sh`（launchd `com.investment-console` 的 ProgramArguments 指向它；自愈 node 路径） | 看板 8698 启动/排障（详见 references/console-guide.md §8.5） |
 | 博主控制台 | 看板 MySQL `bloggers` 表（读 GET /api/bloggers/live、写 POST /api/bloggers 与 /api/bloggers/update；vault 工作区/博主控制台.md 已于 2026-09-07 退役删除） | 博主注册权威（编号/别名/雪球ID/平台/特别关注/信息截止） |
 
 ---

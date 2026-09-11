@@ -55,6 +55,19 @@ compatibility: macOS / Linux
 | --output | path | 否 | 输出目录（默认 ./output） |
 | --column | flag | 否 | 仅抓取专栏文章 |
 
+**单帖接口 `statuses/show.json` 限流（2026-09-11 实测，硬约束）**：按 URL 取单帖正文/形态时走此接口——
+
+| 项 | 实测 |
+|:---|:---|
+| 危险区 | **≈1.1 req/s 连续约 200 次 → 405**（返回 `text/html` 验证页，非 JSON） |
+| 安全速率 | **`sleep ≥1.2s` + 每 50 次停 45s（≈0.7 req/s）**；1.0s + 每 100 次停 30s 连续 160 次无封禁 |
+| 退避 | 命中 405 → **暂停 300s** 重试同 id；**连续 3 次限流即中止本轮**、保留进度稍后续跑 |
+| 进度语义 | **只有真正取到内容的才记进度**；限流失败必须留待重跑（曾把 488 条失败静默记为已处理，缺口被掩盖） |
+
+> 与 timeline 端点同属阿里云 WAF 保护，完整实测依据与批量节流表见 post-fetch `references/execution-guide.md`。
+
+**产物交接**：本工具产出的「帖子集」markdown 会被 post-fetch **第三步之二**用 `scripts/import-post-history.js` 落进 `post_history` 原文库（摘要帖与无链接帖不入库）——原文一旦留档，后续回顾/重新提炼不必再抓本工具。
+
 **timeline 端点自动降级（2026-09-09 固化）**：`v4/statuses/user_timeline.json` 被阿里云 WAF 对该 IP 临时封禁（405，页面自身带签名请求亦 405）时，crawler **自动切到旧版 `/statuses/user_timeline.json`** 重试本页（数据一致，仅每页上限由 50 降为 20），只降级一次，无需人工干预。可用环境变量覆盖：
 - `XUEQIU_TIMELINE_URL`：主端点（默认 v4）
 - `XUEQIU_TIMELINE_URL_FALLBACK`：降级端点（默认旧版）
