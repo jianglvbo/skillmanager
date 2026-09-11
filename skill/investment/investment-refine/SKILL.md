@@ -65,7 +65,7 @@ compatibility: 通用
 
 ### 第 1.4 步：落库前置检查（2026-09-11 事前避免设计）
 
-> **写入前必过**（不要等到自检环节）：每条言论在调用 `blogger_statement` 前，先答完八问（含九项必有字段）。答错会被**服务端拒写**（`_validateSignal` / `form` / 空壳 / sourceUrl 硬门禁），返工成本高。
+> **写入前必过**（不要等到自检环节）：每条言论在调用 `blogger_post` 前，先答完八问（含九项必有字段）。答错会被**服务端拒写**（`_validateSignal` / `form` / 空壳 / sourceUrl 硬门禁），返工成本高。
 
 | # | 落库前置问 | 不合格处理 |
 |:--|:---|:---|
@@ -102,7 +102,7 @@ compatibility: 通用
 | ② | vault 帖子集 / 原始资源文件 | 常规读取 |
 | ③ | 上两者都没有 → 才回采 | 按 `source_url` 单帖回采，**遵守 post-fetch `execution-guide.md` 的单帖限流**（≈0.7 req/s、405 退避 300s），回采后顺手 `post_history` `action=upsert` 落库 |
 
-> `post_history` 的唯一用途是**避免重采**：它不参与提炼逻辑，只是原文留档（`rawText` + 形态 + 发帖时间 + 互动数）。提炼产物仍落 `blogger_statements`（六表 + 视图）。
+> `post_history` 的唯一用途是**避免重采**：它不参与提炼逻辑，只是原文留档（`rawText` + 形态 + 发帖时间 + 互动数）。提炼产物仍落 `posts`（六表 + 视图）。
 
 ### 第一步：分析原文
 

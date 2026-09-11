@@ -38,7 +38,7 @@
 
 ```json
 console_ensure_subject { "consoleType":"stock|industry|market", "name":"", "code":"", "market":"A股|港股|美股", "hkConnect":true }
-blogger_statement { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "postDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", "srcRel":"工作区/粗制品/批次文件名.md" }
+blogger_post { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "postDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", "srcRel":"工作区/粗制品/批次文件名.md" }
 blogger_trade   { "action":"add", "blogger":"", "op":"buy|add|reduce|sell|clear", "targetName":"", "targetAlias":"", "price":"", "stance":"", "tradeDate":"", "postDate":"", "subjectId":N, "sourceUrl":"", "srcRel":"" }
 console_add_prediction  // predict 言论落库后调用，回填 origin（参数见工具，勿臆造）
 ```
@@ -56,7 +56,7 @@ console_add_prediction  // predict 言论落库后调用，回填 origin（参�
 
 ## 6. 汇报格式（极简，一次性）
 
-按批次一行：`博主 | 帖数→言论数(类型分布) | statement/trade id | predict关联 | wiki | ⚠/缺URL条数`
+按批次一行：`博主 | 帖数→言论数(类型分布) | post/trade id | predict 关联 | wiki | ⚠/缺URL条数`
 末尾汇总：⚠清单原文、缺URL清单原文（各≤80字）、批次去向。失败明确列原因。
 
 ## 7. 防烧预算
