@@ -388,7 +388,7 @@ CREATE TABLE post_id_seq (
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子 id 序列表';
 
--- ============ 四、帖子六表（一条帖子只落其中一张）+ 只读视图 ============
+-- ============ 四、帖子六表（一条帖子只落其中一张） ============
 CREATE TABLE post_trade (
   `id` bigint unsigned NOT NULL COMMENT '帖子 id，六张帖子表全局唯一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，冗余自博主表',
