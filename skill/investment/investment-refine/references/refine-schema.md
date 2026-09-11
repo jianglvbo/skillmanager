@@ -150,7 +150,7 @@
 
 > **`wikiRef` 六表统一（2026-09-11；2026-09-12 改存路径）**：任何 `contentType` 都可填 `wikiRef`——**值是 vault 相对路径**（含 `.md`，如 `博主/Benjm_修/技术革命的领头羊悖论（1）.md`），**不是条目名**；卡片显示「已具象化：<文件名>」并可点击**在 Obsidian 本地打开**（前端拼 `obsidian://open`，路径改了也不失效）。留空时服务端按原帖 URL 反查自动回填。此前仅 research/insight 两张分表有此列，回采历史指针行时发现 view/chat/trade/predict 的链接会丢，故四表补列并重建 UNION 视图。
 | `research` | 否 | — | 能成框架 → wiki（我的/其他/宏观）；不能 → **舍弃** |
-| `predict` | 必是 | `blogger_post` → `posts`(predict) + 预测控制台。**`stance` 必填**，`view_date` 取博主下判断的时点。**结构化字段（2026-09-10 新增）**：`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`verifyStatus`/`verifyDate`/`verifyResult` —— 预测验证闭环在言论表内可直接查询，免 JOIN（预测与验证留痕：`post_predict` + 子表 `post_verify_sub`） | 否 |
+| `predict` | 必是 | `blogger_post` → `posts`(predict) + 预测控制台。**`stance` 必填**，`view_date` 取博主下判断的时点。**结构化字段（2026-09-10 新增）**：`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`statusCode`/`verifyDate`/`verifyResult` —— 预测验证闭环在言论表内可直接查询，免 JOIN（预测与验证留痕：`post_predict` + 子表 `post_verify_sub`） | 否 |
 | `view` | 是 | `blogger_post` → 言论库（看板言论追踪）。**不填 `stance`**（2026-09-11 用户确认：方向只在买卖/预测需要） | 否 |
 | `view` | 否 | — | 有价值 → wiki；无价值 → 舍弃 |
 | `insight` | 是 | `blogger_post` → 言论库（看板言论追踪）。**结构化字段**：`transferable`（可迁移性）/`wikiRef` | 仅当沉淀方法论 |
