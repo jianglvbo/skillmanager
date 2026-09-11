@@ -92,13 +92,23 @@ def main():
              ranges=[{"begin": begin, "end": end}], text=text)
     print(f"文本替换 {len(planned)} 处")
 
-    # 2) 锚点后插入：编辑完成后重新解析，取锚点之后连续空段落的真实坐标
+    # 2) 锚点插入：编辑完成后重新解析，避免坐标漂移
     for ins in cfg.get("anchor_inserts", []):
         nodes = call("doc_resolve_document_structure", file_id=file_id,
-                     mode="compact", limit=0)["nodes"]
-        # compact 模式 text_preview 仅约 4 字，锚点串必须短
+                     mode="full", text_preview_length=40, limit=0)["nodes"]
+        # 匹配串要短（compact 预览仅约 4 字），full 模式可给到 40 字
         i = next(k for k, n in enumerate(nodes)
                  if ins["after_match"] in (n.get("text_preview") or ""))
+        if ins.get("mode") == "after_heading":
+            # 子标题下没有内容槽位：直接在标题段后插入普通段落（level=0）
+            idx = nodes[i]["end_index"]
+            for text in ins["texts"]:
+                res = call("doc_insert_paragraph_with_text", file_id=file_id,
+                           idx=idx, text=text, level=0)
+                idx = res["range"]["end"]
+            print(f"锚点 {ins['after_match']} 后插入 {len(ins['texts'])} 段（after_heading）")
+            continue
+        # 默认：填充锚点之后的连续空段落
         need = len(ins["texts"])
         slots = []
         for n in nodes[i + 1:]:          # 只取锚点之后**连续**的空段落
@@ -106,7 +116,8 @@ def main():
                 break
             slots.append(n["start_index"])
         if len(slots) < need:
-            raise RuntimeError(f"锚点后空段落不足: 需 {need} 个，找到 {len(slots)} 个")
+            raise RuntimeError(f"锚点后空段落不足: 需 {need} 个，找到 {len(slots)} 个；"
+                               f"若模板子标题下本就没有槽位，请改用 mode=after_heading")
         shift = 0
         for pos, text in zip(slots, ins["texts"]):
             call("doc_insert_text", file_id=file_id, idx=pos + shift, text=text)
@@ -140,6 +151,27 @@ def main():
             call("doc_set_table_cells", file_id=file_id,
                  table_id=ids[t["index"]], cells=t["cells"])
         print(f"表格填写 {len(cfg['tables'])} 张")
+
+    # 6) 字体归一化：模板提示段常是「提示样式」（如仿宋 16pt 斜体），而模板规范要求正文
+    #    「宋体小四」→ 对**填入内容**统一归一化；模板原有元素不受影响
+    nf = cfg.get("normalize_font")
+    if nf:
+        nodes = call("doc_resolve_document_structure", file_id=file_id,
+                     mode="full", text_preview_length=60, limit=0)["nodes"]
+        done = 0
+        for n in nodes:
+            if n.get("type") == "Table" or n["start_index"] == n["end_index"]:
+                continue
+            p = n.get("text_preview") or ""
+            if not any(p.startswith(k) for k in nf["match_keys"]):
+                continue
+            call("doc_update_text_property", file_id=file_id,
+                 ranges=[{"begin": n["start_index"], "end": n["end_index"]}],
+                 font_family=nf.get("font_family", "宋体"),
+                 font_size=nf.get("font_size", 12),
+                 italic=False, bold=False)
+            done += 1
+        print(f"字体归一化 {done} 段")
 
     call("save_file", file_id=file_id)
     print("已保存:", out_path)
