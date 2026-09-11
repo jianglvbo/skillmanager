@@ -207,3 +207,11 @@
     - **修复契约**：`web/app.js` 的 `tradeCard` 按 `statementId` 合并关联言论——正文走 `replyBodyHtml()`、信号行照 `stmtCard` 输出、形态走 `form` 徽标；`blogger_trades.note` 与正文同源时（剥掉「（回应…）」前缀后相同）**不再重复打印**，含额外信息时保留。
     - **防复发**：新增任何卡片渲染路径，必须复用既有唯一实现——`replyBodyHtml()`（回应块）、`stripDirPrefix()`（信号去方向词前缀）、`setStmtLookup()`（言论 join）、`tkFiles()`（vault 链接，见 #38）；**禁止另写第二套**。
     - **数据侧无责**：本案例数据本身正确（`content_type=trade` + `stance=bullish` + `signal_text` + `form=回复` 都在），**纯展示层塌陷**——因此修在渲染层、不逐行改数据。
+
+41. 原文留档（`post_history`，2026-09-11 用户决策）：新建**单表** `post_history` 存「博主言论**提炼前**的原文」，**分博主靠字段识别**（`blogger_id` + `blogger` 冗余名），**不按博主拆物理表**，也不做分区——博主是开放集合（现 53 并在增长），拆表会让 DDL/备份/跨博主查询成本随博主数线性上涨。
+    - **唯一用途 = 避免重采**（用户原话）。它不是提炼产物表、不参与归类判定：提炼结论仍落 `blogger_statements`（六表 + UNION 视图）；本表只保证"原文丢不了"，需要回顾或重新提炼时先查它（MCP `post_history` `action=get/check`），有原文就不必再抓。
+    - **写入时机**：每次采集验收通过后立即落库（post-fetch 第三步之二 → `node ~/Project/investment-console/scripts/import-post-history.js <帖子集.md>`），以 `url_hash=md5(source_url)` 幂等；`content_hash=md5(raw_text)` 用于识别"帖被改过"。
+    - **两类不入库**：① 带「摘要」标记的帖（内容残缺，故意不存，便于下次重采）② 无 `[原文]` 链接的帖（规则 #35）。
+    - **存量**：2026-09-11 用户明确「存量的不用管」——历史 1400+ 帖不回填，从后续新采集开始积累。
+    - **关联方式**：与 `blogger_statements` 通过 `source_url` 天然对应，**不建关联表**（一帖拆多条言论的情况用同一 url 即可查出）。
+    - **建表位置**：MySQL `investment_kb.post_history`；权威 DDL 同步在 `~/Ai/tools/investment-kb/investment_kb.sql`。

@@ -605,3 +605,36 @@ CREATE TABLE quotes (
   PRIMARY KEY (id),
   UNIQUE KEY uk_seq (seq)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='首页语录表：轮播展示的激励语录，初始化时一次性灌入';
+
+-- ── 帖子原文库（2026-09-11 用户决策：单表 + blogger_id 识别博主；唯一用途=避免重采）──
+CREATE TABLE `post_history` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `blogger_id` bigint unsigned NOT NULL COMMENT '博主 id（分博主识别字段）→ bloggers.id',
+  `blogger` varchar(128) NOT NULL COMMENT '博主名（冗余，免 join）',
+  `platform_code` varchar(32) DEFAULT NULL COMMENT '平台码 dict.platform（xueqiu/xiaohongshu/douyin）',
+  `platform_post_id` varchar(64) DEFAULT NULL COMMENT '平台内帖子 id（雪球为 URL 末段）',
+  `source_url` varchar(500) NOT NULL COMMENT '原文链接',
+  `url_hash` char(32) NOT NULL COMMENT 'md5(source_url)：唯一键（varchar(500) 整列做唯一键过重）',
+  `title` varchar(500) DEFAULT NULL COMMENT '标题（专栏/长文；短文为空）',
+  `raw_text` mediumtext NOT NULL COMMENT '采集到的原文全文（提炼前，保留 //@ 等原始结构）',
+  `raw_text_len` int unsigned NOT NULL DEFAULT '0' COMMENT '原文字符数',
+  `form` varchar(10) DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏',
+  `posted_at` datetime NOT NULL COMMENT '发帖时间',
+  `edited_at` datetime DEFAULT NULL COMMENT '平台侧最后编辑时间（有值=原文被改过）',
+  `fetched_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '抓取时间',
+  `content_hash` char(32) NOT NULL COMMENT 'md5(raw_text)：内容指纹，重采时比对是否变过',
+  `reply_count` int unsigned DEFAULT NULL COMMENT '采集时评论数',
+  `retweet_count` int unsigned DEFAULT NULL COMMENT '采集时转发数',
+  `like_count` int unsigned DEFAULT NULL COMMENT '采集时点赞数',
+  `fetch_method` varchar(32) DEFAULT NULL COMMENT 'timeline/show_json/detail_page/manual',
+  `src_rel` varchar(500) DEFAULT NULL COMMENT '来源批次文件 rel（工作区/粗制品/…）',
+  `collector` varchar(64) DEFAULT NULL COMMENT '采集工具与版本',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_url` (`url_hash`),
+  UNIQUE KEY `uk_blogger_post` (`blogger_id`,`platform_post_id`),
+  KEY `idx_blogger_time` (`blogger_id`,`posted_at`),
+  KEY `idx_posted` (`posted_at`),
+  KEY `idx_platform` (`platform_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主帖子原文库（采集留档：避免重采 / 可按原文重新提炼）';
