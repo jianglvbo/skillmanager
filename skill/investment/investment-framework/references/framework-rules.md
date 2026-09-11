@@ -216,11 +216,12 @@
     - **关联方式**：与 `blogger_statements` 通过 `source_url` 天然对应，**不建关联表**（一帖拆多条言论的情况用同一 url 即可查出）。
     - **建表位置**：MySQL `investment_kb.post_history`；权威 DDL 同步在 `~/Ai/tools/investment-kb/investment_kb.sql`。
 
-42. 博主言论「八项必有字段」（2026-09-11 用户确认，服务端已硬门禁）：每条言论必须齐备 **内容时间 `view_date` / 帖子时间 `post_date` / 内容类型 `content_type` / 帖子类型 `form` / 回复 `reply_to`（回复类必带）/ 信号 `stance`+`signal_text`（预测必带方向）/ 原文链接 `source_url` / 采集时间 `fetched_at`**。
+42. 博主言论「九项必有字段」（2026-09-11 用户确认，服务端已硬门禁 + 自动反查）：每条言论必须齐备 **内容时间 `view_date` / 帖子时间 `post_date` / 内容类型 `content_type` / 帖子类型 `form` / 回复 `reply_to`（回复类必带）/ 信号 `stance`+`signal_text`（预测必带方向）/ 原文链接 `source_url` / 采集时间 `fetched_at` / 具象化 `wiki_ref`（已具象化必填）**。
+    - **具象化字段（`wiki_ref`）＝「这条被提炼进了哪个框架条目文件」**（用户 2026-09-11 补充）。**已具象化则必填、未具象化留空**；条目被删除时要清空。**服务端写入时自动反查 vault**（框架条目 frontmatter `source` 里的原帖 URL → 笔记名）并回填，`add` 返回 `wikiRefAutoFilled` 提示；存量用 `node ~/Project/investment-console/scripts/backfill-wiki-ref.js` 回填。
     - **三个时间必须分清**（用户原话举例：9/10 发帖、帖里写「我 8 月 5 号就看好X」、9/11 采集）：`post_date`＝帖子时间（9/10）｜`view_date`＝内容时间/判断成立时点（8/5，须给 `view_date_source=explicit` + `view_date_basis` 原文句）｜`fetched_at`＝采集时间（9/11，抓取该帖的日期）。`created_at` 只是入库时刻，**不得当作采集时间**。
     - **按类型加严**：`form=回复` → `reply_to` 必填（取 `//@` 之后对方原话，或至少 `@昵称`）；`content_type=predict` → `stance` 必填（预测三要素之一，缺方向说明该条应归 `view`）；此外**所有类型** `post_date`/`form`/`source_url` 均必填。
     - **写入路径**：新增列 `fetched_at`（六表统一 + 视图暴露 + MCP `fetchedAt` 入参，缺省今日）。门禁在 `blogger_statement` add 时校验，报错文案直接点名缺失项。
-    - **审计**：`node ~/Project/investment-console/scripts/audit-statement-fields.js [--by-type] [--strict]`（覆盖八项 + 两项按类型加严，`--strict` 有缺口退出码 1）。存量缺口见报告（`form`/`reply_to`/`fetched_at` 为历史遗留，新数据不再产生）。
+    - **审计**：`node ~/Project/investment-console/scripts/audit-statement-fields.js [--by-type] [--strict]`（覆盖九项 + 两项按类型加严 + **具象化完整性**：vault 带链接笔记 ↔ 库内对应行是否都回填了 `wiki_ref`；`--strict` 有缺口退出码 1）。存量缺口见报告（`form`/`reply_to`/`fetched_at` 为历史遗留，新数据不再产生）。
 
 43. 批量数据修复脚本纪律（2026-09-11 教训：一个脚本写坏 50 行正文与回应）：言论表的批量修复**比新建更危险**——新建写错只影响新数据，修复写错会覆盖已经正确的历史行。凡对 `stmt_*` 做批量 UPDATE 的脚本，必须满足：
     - **只改目标字段**：修 `reply_to` 的脚本**不得顺带覆写 `view_text`**。本轮脚本想「顺手把正文也补全」，结果把采集文件原文（含 `## N.` 标题行、`> 发布：` 行、重复片段）写进正文，50 行被污染（`view_text LIKE '## %'` 是它的指纹）。
