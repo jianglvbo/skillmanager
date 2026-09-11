@@ -654,7 +654,7 @@ CREATE TABLE post_history (
   KEY `idx_platform` (`platform_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主帖子原文库（采集留档：避免重采 / 可按原文重新提炼）';
 
--- ============ 四、补录（2026-09-11：以下 4 张表此前未入文件，现按实库补齐） ============
+-- ============ 四、补录（2026-09-11：以下 3 张表此前未入文件，现按实库补齐；legacy 已于同日删除） ============
 
 -- blogger_trades
 CREATE TABLE blogger_trades (
@@ -706,35 +706,7 @@ CREATE TABLE stmt_id_seq (
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论 id 全局发号序列（跨六张 stmt_* 表唯一，改类型搬行仍复用同一 id）';
 
--- blogger_statements_legacy
-CREATE TABLE blogger_statements_legacy (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `blogger` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，对应 vault 博主目录名',
-  `kind` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '言论类型：concrete=具象化，view=观点，signal=信号，interaction=互动',
-  `stmt_date` date DEFAULT NULL COMMENT '言论发布日期，原文未标注则为 NULL',
-  `target` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '言论涉及标的（个股/行业），无关标的为空串',
-  `view_text` text COLLATE utf8mb4_unicode_ci COMMENT '观点原文表述',
-  `signal_text` text COLLATE utf8mb4_unicode_ci COMMENT '信号描述（买卖/仓位等可执行信号）',
-  `source` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '来源名称（雪球/公众号/小红书等）',
-  `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原文链接，无则空串',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `content_type` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '内容六分：research=研究 predict=预测记录（未来走势可验证判断：方向+时间窗/事件条件+目标位） view=观点（当下判断） insight=心得总结 chat=闲聊；trade=买卖记录走 blogger_trades。由提炼环节赋值，2026-09-04 增 predict',
-  `post_date` date DEFAULT NULL COMMENT '发帖时间（雪球详情页绝对发布时间，采集环节赋值）',
-  `view_date` date DEFAULT NULL COMMENT '观点时间，默认等于 post_date；正文含相对表述时按表述推算',
-  `view_date_source` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT 'as_posted' COMMENT '观点时间来源：as_posted=默认同发帖／explicit=原文写明日期／derived=按相对表述推算',
-  `view_date_precision` varchar(8) COLLATE utf8mb4_unicode_ci DEFAULT 'day' COMMENT '观点时间粒度：day／month／year，取决于表述精度，不假装精确到日',
-  `view_date_basis` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '推算依据原文短句（如「三年前我就说过」），供人工回查',
-  `stance` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '方向立场：bullish=看多 bearish=看空 neutral=中性（绝对方向，≠tracks 的增强/反驳）',
-  `subject_id` bigint unsigned DEFAULT NULL COMMENT '关联 prediction_subjects.id（个股/行业/市场主题），无标的为 NULL',
-  `blogger_id` bigint unsigned DEFAULT NULL COMMENT '关联 bloggers.id，取代按博主名文本匹配',
-  `src_rel` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '来源批次文件的 vault 相对路径（files.rel/coarse_records.rel），固存字符串防源文件删除后断链',
-  `review_required` tinyint(1) NOT NULL DEFAULT '0' COMMENT '需人工复核：1=分类或观点时间存疑',
-  `dedup_key` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '幂等键 md5(blogger_id|post_date|正文哈希)；仅用采集期字段，保证重复提炼不产生新行',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_dedup` (`dedup_key`),
-  KEY `idx_blogger_kind` (`blogger`,`kind`,`stmt_date`),
-  KEY `idx_blogger_type_date` (`blogger_id`,`content_type`,`view_date`),
-  KEY `idx_subject` (`subject_id`),
-  KEY `idx_review` (`review_required`)
-) ENGINE=InnoDB AUTO_INCREMENT=1480 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主言论表：博主画像「言论追踪」表格的结构化落库（MySQL 权威，写库后回写画像段）';
+-- blogger_statements_legacy：2026-09-11 校验后删除（六表分表后的冗余比对副本，勿再建）
+--   依据：分表 1749 行为 legacy 1236 行的超集；legacy 独有 4 行（263/321/542/917）均为清理时
+--   有意删除的空正文行；删除前整表备份 backups/blogger_statements_legacy_final_20260911.json
+--   迁移脚本 scripts/split_statements_by_type.js 已加「勿再运行」护栏

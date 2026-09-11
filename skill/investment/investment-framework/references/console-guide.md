@@ -115,7 +115,7 @@ node ~/Project/investment-console/scripts/audit-schema-comments.js           # �
 node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
 ```
 
-审计口径：只读视图 `blogger_statements` 无列注释概念，自动排除。**当前状态：表注释 29/29、列注释 400/400**（六张 `stmt_*` 分表此前整表无注释，2026-09-11 补 135 列 + 8 张表注释；权威文件同步实库，并补齐此前遗漏的 `blogger_trades`/`statement_reviews`/`stmt_id_seq`/`blogger_statements_legacy` 四表定义）。
+审计口径：只读视图 `blogger_statements` 无列注释概念，自动排除。**当前状态：表注释 28/28、列注释 406/406**（六张 `stmt_*` 分表此前整表无注释，2026-09-11 补 135 列 + 8 张表注释；权威文件同步实库，并补齐此前遗漏的 `blogger_trades`/`statement_reviews`/`stmt_id_seq` 三表定义；`blogger_statements_legacy` 已于同日校验后删除，见 framework-rules #39）。
 
 > 另一坑：旧实例若成为孤儿进程（PPID=1）会与新实例抢状态；`launchctl kickstart -k` 之前先 `pgrep -fl "node server.js"` 确认没有残留。
 
