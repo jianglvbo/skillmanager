@@ -97,7 +97,7 @@ version: 2.1.0
 | MCP 工具调用 | Ai/tools/investment-console-mcp/README.md | 读取 |
 | 行业分类标准 | investment-framework/references/tag-taxonomy.md | 读取 |
 | 个股/指数价格 | 腾讯 kline API（web.ifzq.gtimg.cn，不复权） | 执行 |
-| 博主画像 | MySQL `bloggers` 表（单轨） | 经 add/update_blogger 读写；画像 md 已退役（仅存待删比对副本） |
+| 博主画像 | MySQL `bloggers` 表（唯一权威） | 经 add/update_blogger 读写；**画像 md 已彻底废弃**（2026-09-12：服务端删除全部回写代码与 `/api/blogger/resync`，存量文件由用户自行删除） |
 
 ---
 

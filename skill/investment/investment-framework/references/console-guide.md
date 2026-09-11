@@ -115,7 +115,7 @@ node ~/Project/investment-console/scripts/audit-schema-comments.js           # �
 node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
 ```
 
-审计口径：只读视图 `posts` 无列注释概念，自动排除。**当前状态：表注释 22/22、列注释 328/328**（六张 `stmt_*` 分表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
+审计口径：只读视图 `posts` 无列注释概念，自动排除。**当前状态：表注释 22/22、列注释 328/328**（六张帖子表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
 
 **权威 schema 是生成物（2026-09-12 起）**：改库后必须重新导出 + 回放校验，否则文件与实库漂移（本轮就抓出过视图缺列、表名不一致）：
 

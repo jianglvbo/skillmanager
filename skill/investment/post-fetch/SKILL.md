@@ -140,7 +140,7 @@ node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>
 1. **博主画像** `博主/{nickname}/{nickname}.md`：frontmatter `info_cutoff` + `updateDate`
 2. **看板 MySQL** `bloggers.info_cutoff`（经 `scripts/xq_update_cutoff.py` 回写，脚本同时更新画像）
 
-画像文件不存在 → 仅更新看板，不自动创建画像。
+博主画像 md 已废弃（2026-09-12）：一律只写看板（MySQL），**不创建、不更新任何画像文件**。
 
 **批量采集收尾核对（硬约束）**：批量结束后必须逐位核对「本次是否采集完成」，只对退出码 0/2 的博主执行双写；退出码 1 的博主列入「待重试清单」报告用户，**其 cutoff 保持原值不动**。
 
