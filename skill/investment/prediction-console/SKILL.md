@@ -71,7 +71,6 @@ version: 2.1.0
 - 判定口径：方向正确即记 correct，数值偏差进 note（如"预测-35%实际-50%→correct，备注跌幅大于预期"）；方向相反/关键数值未兑现记 wrong
 
 ### 第六步：言论跟踪
-同来源后续增强/反驳言论 → MCP `console_add_track`：`{predictionId, statementId, direction=enhance/refute/neutral}`（2026-09-11 起：跟踪＝`statement_rel` 行间关联。**先把那条言论用 `blogger_statement` 落库拿到 id**，再关联——不再单存一段文字，也不再按 `subjectId` 追加）
 - **用途边界（2026-09-03）**：本工具只记"对某条已有预测的后续跟踪"（该判断被加强还是被推翻）。**博主言论/观点/预测/研究/心得的归档不走这里**，一律走 `blogger_statement`（涉个股/行业/市场时传 `subjectId`；预测类言论用 `contentType=predict`）。
 - **`source` 必须写发言者本人**（博主名或"自己"），**禁止写「雪球采集-2026年8月11日」这类批次名**。
 
@@ -128,8 +127,7 @@ version: 2.1.0
 
 > **2026-09-11 二次收敛（预测即言论行；用户问「predictions 和 statement_predict 不是重复吗？」后拍板）**：独立预测表 `predictions` 整体退役（改名 `predictions_del` 留档，101 条已全量并入 `statement_predict`：URL 命中 37 / 新建言论 14 / 跨表改类型 26 / 内容匹配 24，按 URL 100% 可回溯），`prediction_records`→`prediction_records_del`，旧 `prediction_tracks`→`prediction_tracks_del`。
 > - **唯一预测表 = `statement_predict`**：一条预测＝一条 `predict` 言论，同表同 id；结构化字段在该行本体，读取经视图单表直取（无 JOIN），前端字段名零变更。
-> - **`prediction_stmt_rel` 随之删除**（预测↔言论本来就是同一行，无需关联）；`statement_rel(statement_id, related_stmt_id, relation_code)`（关联表 `_rel` 后缀）只承担「言论↔言论」的增强/反驳/补充跟踪。
+> - **`prediction_stmt_rel` 随之删除**（预测↔言论本来就是同一行，无需关联）；**跟踪表 `statement_rel` 也已退役**（2026-09-12 用户选 A：长期 0 行、看板无读路径），`console_add_track` 工具下架——预测的后续演进看后续言论自身的时间线即可。
 > - `console_add_prediction`：`statementId` **传了就复用该行**（补预测字段+维度关联），不传则新建预测言论并返回其 id。
-> - `console_add_track`：`predictionId` + `statementId` + `direction(enhance/refute/neutral)` → 写 `statement_rel`。
 > - `console_update_status`：写 `statement_predict.status_code`（pending/verifying/verified_correct/verified_wrong/revoked），同步最近 `verify_date`/`verify_result`；另留痕子表 `statement_verify_sub.statement_id`（同预测重复验证为覆盖式 upsert，保留最近一次；该表**不设外键**）。
 > - 言论侧写入 `contentType=predict` 即自动成为预测，无需再调 `console_add_prediction`；要加目标价/验证状态时再补调一次（传 `statementId`）。

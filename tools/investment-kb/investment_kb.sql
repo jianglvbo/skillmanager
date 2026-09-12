@@ -196,7 +196,7 @@ CREATE TABLE bloggers (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`special`)
-) ENGINE=InnoDB AUTO_INCREMENT=66931 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=67249 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -629,15 +629,6 @@ CREATE TABLE stock_market_rel (
   PRIMARY KEY (`stock_id`,`market_id`),
   KEY `idx_market` (`market_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股市场关联表';
-
-CREATE TABLE statement_rel (
-  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
-  `related_statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
-  `relation_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'primary' COMMENT '关系，取值 enhance/refute/support',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`statement_id`,`related_statement_id`),
-  KEY `idx_stmt` (`related_statement_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子关联表';
 
 CREATE TABLE statement_verify_sub (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
