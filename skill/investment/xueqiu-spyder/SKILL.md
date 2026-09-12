@@ -77,7 +77,7 @@ compatibility: macOS / Linux
 
 ```bash
 # venv 解释器（依赖已装：requests + playwright）
-PY=~/.workbuddy/binaries/python/envs/xueqiu-spyder/bin/python
+PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # 本机 venv 路径存 ~/.config/xueqiu-spyder/python（0600，不进仓库）
 $PY --version && $PY -c "import requests, playwright"
 ```
 

@@ -46,15 +46,16 @@ python3 {post-fetch}/scripts/xq_sync_console.py --apply    # 确认后落地：�
 执行模板：
 
 ```bash
-PY=~/.workbuddy/binaries/python/envs/xueqiu-spyder/bin/python
+SPYDER=~/.agents/skills/xueqiu-spyder                       # 工具层权威位置（部署目录）
+PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}
 NOW=$(date "+%Y-%m-%dT%H:%M:%S")
-$PY {xueqiu-spyder 目录}/main.py user {xq_id} \
+$PY "$SPYDER/main.py" user {xq_id} \
   --from "{info_cutoff}" --to "$NOW" \
   --outfile "雪球采集-{nickname}-{YYYY年M月D日}.md" \
   --output "{输出目录}"
 ```
 
-- `{xueqiu-spyder 目录}`：本地 `~/.workbuddy/skills/investment/xueqiu-spyder/`（与 post-fetch 同目录层级；以实际安装位置为准）
+- `{xueqiu-spyder 目录}`：**`~/.agents/skills/xueqiu-spyder/`**（部署目录＝权威；`~/.workbuddy/skills/investment/xueqiu-spyder/` 是历史镜像，勿用）
 
 - `{info_cutoff}` 取看板 `bloggers.info_cutoff`（ISO `YYYY-MM-DDTHH:mm:ss`）；新增博主默认半年前 17:50:00
 - spyder 内部完成：翻页拉取 → 置顶排除 + 时间窗过滤 → 截断帖详情页补全（含精确时间覆盖）→ 帖子集输出
@@ -63,7 +64,7 @@ $PY {xueqiu-spyder 目录}/main.py user {xq_id} \
 
 **环境检查**（调用前）：
 - venv 依赖：`$PY -c "import requests, playwright"`
-- Chrome CDP：`curl -s http://127.0.0.1:9222/json/version` 返回 JSON；端口占用时 `XUEQIU_DEBUG_PORT` 覆盖
+- Chrome CDP：`curl -s http://localhost:9222/json/version` 返回 JSON（**必须 localhost**：Chrome 152 起 `127.0.0.1` 返回 404）；端口占用时 `XUEQIU_DEBUG_PORT` 覆盖
 - 登录态：用户页标题含昵称 = 已登录
 
 **翻页数与节流（2026-09-09 实测固化，硬约束）**：
@@ -104,6 +105,7 @@ spyder 输出后逐项核对：
 |:---|:---|:---|
 | `0` | 采集成功、已产出帖子集 | ✅ |
 | `2` | 采集成功、窗口内无新帖（已确认无内容） | ✅ |
+| `3` | **窗口起点没翻到**（`--max-pages` 不足，最旧帖仍比窗口起点新） | ❌ **禁止**，加大页数重跑 |
 | `1` | **失败**（WAF/登录失效/异常，未产出） | ❌ **禁止** |
 
 ```bash
@@ -112,14 +114,34 @@ code=$?
 case $code in
   0|2) # 采集完成 → 双写 info_cutoff
        python3 post-fetch/scripts/xq_update_cutoff.py "{nickname}" "$(date '+%Y-%m-%dT%H:%M:%S')" ;;
-  1)   # 采集失败 → 保持原 cutoff，列入待重试清单报告用户
-       echo "⚠️ {nickname} 采集失败，cutoff 保持 $(看板当前值)，待重试" ;;
+  1|3) # 采集失败 / 页数不足 → 保持原 cutoff，列入待重试清单报告用户
+       echo "⚠️ {nickname} 采集未完成（退出码 $code），cutoff 保持当前值，待重试" ;;
 esac
 ```
 
 **失败时绝不更新**：否则下次从新 cutoff 起算，本次未采到的帖子永久遗漏。原则是**宁可重复采，不可漏采**（重复内容可在提炼阶段去重）。
 
-**批量收尾核对**：逐一核对退出码 → 仅对 0/2 双写 → 退出码 1 的博主列「待重试清单」报给用户，其 cutoff 原值不动。
+**批量收尾核对**：逐一核对退出码 → 仅对 0/2 双写 → 退出码 1/3 的博主列「待重试清单」报给用户，其 cutoff 原值不动。
+
+---
+
+## 第五步：原文落库 post_history + 入库校验 + 清理临时产物（2026-09-12 新增，强制）
+
+采集产物 md **不再落 vault 粗制品**，它是临时文件；原文落 `post_history`，提炼也从库里读：
+
+```bash
+# ① 落库（幂等，url_hash 判重）
+node ~/Project/investment-console/scripts/import-post-history.js "<采集产物.md>"
+# ② 入库校验（逐帖 url_hash + content_hash 一致才算留档；缺口则禁止清理）
+node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js "<采集产物.md>"
+# ③ 校验通过 → 清理临时产物（--rm 一步到位，移入废纸篓可恢复）
+node ~/Project/investment-console/scripts/import-post-history.js --rm "<采集产物.md>"
+# ④ 保留期清理：post_history 只保留 30 天（滚动窗口）
+node ~/Project/investment-console/scripts/purge-post-history.js --dry
+```
+- 摘要帖与无 `[原文]` 链接的帖**按设计不入库**（列出但不计缺口）
+- 「言论 post_history_id 取不到」「按 URL 查不到留档」在 30 天窗口外**都是正常现象**
+- 输出目录用 vault 外临时目录（默认 `~/.cache/xueqiu-spyder/out`）
 
 ---
 

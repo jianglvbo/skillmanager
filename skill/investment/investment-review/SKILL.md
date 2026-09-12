@@ -11,6 +11,8 @@ metadata:
   version: "2.15.0"
   short-description: 投资框架审查执行器（含关联备注发现、言论追踪审计 C10）
 compatibility: 通用
+  排除条件：提炼与粗加工不归本 skill；框架路径/模板/规则以 investment-framework 为准，本 skill 只做审查并落库。
+
 ---
 
 # 审查执行器
@@ -53,7 +55,7 @@ compatibility: 通用
 **C9**：输出内容审查报告
 **C0（2026-09-12 新增）：别名与规则迭代核对**——审查时对「个股指代」做一次回看：① 言论里出现、但 `stocks.aliases` 未登记的称呼 → 补登（`stock_alias`）；② 被误挂的常用词（如「好美的风景」→ 美的集团）→ 改正关联 + 若缺歧义标记则 `mark-ambiguous` + 把案例写进 `stock-mention-rules.md` 误判清单；③ 报告里单列「本次新增别名 / 新增歧义词 / **新增判定案例** / 规则修订」四项，做到**知识随审查沉淀**；案例用 `stock_alias(action=case-add)` 落 `mention_case`，不要写进 md。
 
-**C10**：言论追踪审计（**2026-09-12 起兼看「insight 帖具象化覆盖率」**——方法论沉淀是否只在嘴上说：该有框架条目的心得帖要有 `wiki_ref`（当前 4/135，缺口大）；不依赖已删除的 `transferable` 标签字段；**2026-09-11 扩一项原文留档覆盖率**：查 MySQL `post_history` 与 `statements` 的对照（言论侧回指列 `post_history_id`）——近批（**30 天窗口内**，见 framework-rules #41）采集是否都有留档、留档的 `form`/`raw_text_len` 是否缺失，用于发现「采集漏落库」；**逾 30 天的言论查不到留档属正常，不得计为缺口/缺陷**；只报告不修改，缺留档不阻断审查，仅提示后续采集补上）——执行 `scripts/tracks_audit.py --vault <vault路径>`（可选 `--mysql`，凭据经环境变量 `DB_PASS` 注入、勿硬编码），核对 MySQL `statements` 数据质量（缺原文链接/direction 码值合法性/标的占位残留；买卖帖＝`statement_trade` 言论行，已无独立买卖表）；画像 md 已彻底废弃（2026-09-12：服务端删除全部回写代码与 `/api/blogger/resync` 端点，存量文件由用户自行删除），不再做 md↔DB 对照；只报告不修改，问题并入内容审查报告
+**C10**：言论追踪审计（执行 `scripts/tracks_audit.py --vault <vault路径> [--mysql]`，凭据用环境变量 `DB_PASS`）——**2026-09-12 重写后**核对 MySQL `statements`（六表视图）数据质量：空正文/缺原文链接/缺 `form`、`content_type` 与 `stance` 码值合法性、P1 三类（trade/predict/research）缺实体关联、复核建议积压（`statement_review_sub`）；兼看「insight 帖具象化覆盖率」（该有框架条目的心得帖要有 `wiki_ref`）。**原文留档覆盖率按 30 天窗口判**（`post_history_id` 回指，逾 30 天查不到属正常、不计缺口）。画像 md 已废弃，不再做 md↔DB 对照。**只报告不修改**，问题并入内容审查报告。
 
 ### 结构审查（编号 S1-S8）——审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
 
@@ -89,86 +91,18 @@ compatibility: 通用
 
 > **2026-08-16 起：审查不再产出 md 报告文件，直接落库投资看板**。审查完成后按 `references/report-templates.md`（落库 schema 模板）组装结构化 record，`MCP 工具 `review_record`（REST POST /api/review/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）` 写入投资看板（幂等：同 date 覆盖）。落库失败不阻断主流程，但汇报中明确提示「审查数据未落入看板，需补录」。
 
-### 内容审查（C 维度）
+> **2026-08-16 起不产出 md 报告**：审查完成后按 `references/report-templates.md` 组装结构化 record，`MCP 工具 `review_record`（REST POST /api/review/record 兼容）` 写入投资看板（同 date 幂等覆盖）。落库失败不阻断主流程，但须提示「审查数据未落入看板，需补录」。
 
-| 字段 | 类型 | 说明 |
-|:---|:---|:---|
-| c_groups | array | 内容审查分组（C3 内部一致性 / C4 知行合一 / C6 经验验证 / C8 编撰脚注 / C7 关联提案 / C10 言论追踪审计），每项 `{title, severity, tag, headers, rows, text}` 入 `groups` 数组 |
+### 落库字段（完整明细见 `references/report-templates.md` §八）
 
-**rows 推荐对象数组（看板 v0.12.61+ 支持，直观性最佳）**：每行 `{列名: 值, 状态: pass|fail|warn}`，列名与 headers 对应；`状态` 显式给出（C3 内部一致性、C4 知行合一、C6 经验验证等需状态列的表格必须带），供看板直接渲染状态徽章，不再靠结果文本推断：
-```json
-{ "title": "C3 内部一致性抽查", "severity": "ok", "tag": "C3",
-  "headers": ["检查项", "结果"],
-  "rows": [
-    { "检查项": "HIS1963 新建4条 vs 既有", "结果": "认知演进自洽，非矛盾", "状态": "pass" },
-    { "检查项": "永不补仓 vs 马丁反马丁", "结果": "跨作者相反指令，需裁决", "状态": "fail" }
-  ] }
-```
-关联备注（C7）关系列值用统一词：`对立/冲突/互补/补充/增强/数据`（看板按词着色：对立粉紫、冲突红、互补绿、补充/增强蓝、数据灰）。headers 可由对象 keys 推导（可省略，但建议保留便于列序）。
-
-**rows 中 wikilink 字段值**（含"条目/关联目标/博主/条目A/条目B/目标/来源"等列名的值）应为**真实存在的完整 vault 相对路径**（如 `博主/逻辑拐点/逻辑拐点.md`），含 `.md` 后缀、含目录前缀；**禁止描述性命名**（如"逻辑拐点画像·黄酒观点"——这种不可点击、不可验证，是 v0.12.65 前的旧妥协，看板 v0.12.69+ 已通过 linkReal 兜底但根因是审查方送的数据不精确）。去除 `[[]]` 包裹。
-
-`/api/review/list` 会自动扫描每条 wikilink 在 vault 的存在性并注入 `linkExists: {path: true|false}` + `linkReal: {v: realRel}` 两份映射（v0.12.68/69 智能解析：①精确路径 ②补 .md ③index basename ④「博主名画像·主题」→博主画像 ⑤「博主名《标题》」→博主名下同名文件）。看板按 linkReal 优先展示《原文件名.md》+ 跳真实文件，缺失（linkReal==null）才走 linkExists 删除线+tooltip"待生成，建议由博主画像 skill 补全"。
-
-**server 扫描必须兼容两种 rows 形态**（v0.12.73 教训：C6 经验验证用对象数组 rows 时被 `Array.isArray(row)` 过滤跳过，linkReal 无映射 → 看板误判"已删除"）：`Array.isArray(row) ? row[ci] : row[headers[ci]]` 取值。凡改 server 扫描逻辑，必须用「字符串数组 + 对象数组」两种 rows 各测一遍。
-
-**"状态"列渲染契约**（v0.12.74）：rows 显式 `状态` 字段（headers 自带"状态"列或对象键 `status`）看板渲染为徽章（PASS 绿/FAIL 红/WARN 橙），**不允许落库纯文本 `warn` 之外的变体**；状态值统一 `pass/fail/warn`。C6 经验验证"待跟踪"预测语义 = warn（未验证/未证伪），待后续数据验证后更新 pass/fail。
-
-**C7 headers 顺序固定**：`["条目", "关联目标", "说明", "关系"]`——关系列固定最右（与检查清单"状态"列右对齐，视觉统一），说明列位于关联目标与关系之间、宽度最大、承载完整理由。
-
-**"说明"列必须写完整理由**（v0.12.69 用户反馈："显示尽可能完整"）：不少于一句完整话，包含**双方观点对比**（谁主张什么）与**关系判定**（为什么是对立/互补），便于后人无需读原文也能判断关联合理性。示例（合格）：`"逻辑拐点认为黄酒无高端土壤、炒炒别当真，与metalslime看多对立"`。反例（过短，不合格）：`"阿兰模型层视角，metalslime硬件层视角"`——只描述视角不说冲突点、无法裁决。
-
-**审查脚本生成关联备注前必须校验目标文件已存在**：用 `getIndex().files` 查真实 rel；若未生成则**降级为"待补全关联"分组**（tag=`C7-pending`）或在说明里加 `[待生成]` 标记，**避免看板出现"建议建关系但目标不存在"的违和感**。
-
-### 结构审查（S 维度）
-
-| 字段 | 类型 | 说明 |
-|:---|:---|:---|
-| s_groups | array | 结构审查分组（S2 归类错误 / S5 失效 Wikilink / S6 脚注格式 / S7 标签 / 模板段落缺失 / 其他结构问题），每项 `{title, severity, tag, headers, rows, text}` 入 `groups` 数组 |
-| checks | array | 脚本指标（vault_review.py 输出表逐行）：`{item, result, compare, status}`，**status 统一落 `pass/fail/warn`**（勿落 ok/good/error/warning 等变体；看板接口已做兼容归一，但源头统一最干净）。**`item` 落库用中文**（v0.12.71 用户要求：检查项显示中文；审查脚本英文键 → 落库前按下方对照表映射中文），看板 CHECK_LABELS 亦维护全量英文键→中文映射兜底历史数据。**新增检查项时**：①脚本英文键同步进看板 CHECK_LABELS；②落库 item 用中文。**result/compare 只存纯数据，禁 emoji 徽章**（对勾/警示/叉号等符号）：result 只落数值/文本（如 `0`、`5`），状态图标由看板按 status_code 用 SVG 渲染，禁止把展示样式写进数据（2026-08-31 用户要求，违者视为数据污染）。 |
-
-**检查项中文对照表**（英文键 → 落库中文）：
-
-| 英文键 | 中文 | 英文键 | 中文 |
-|:---|:---|:---|:---|
-| `no_fm / fm_error` | frontmatter 缺失/格式错误 | `recycle_invalid` | 回收标记无效 |
-| `missing_fields` | frontmatter 字段缺失 | `info_cutoff_mismatch` | info_cutoff 失同步 |
-| `field_order` | frontmatter 字段顺序 | `quoting` | 引号规范 |
-| `missing_core_sections` | 模板核心段落缺失 | `footnote_links_workspace` | 脚注链接指向工作区 |
-| `wikilink_issues` | wikilink 失效 | `legacy_footnote_heading` | 旧式脚注标题 |
-| `tag_issues` | 标签不匹配 | `forbidden_source_section` | 禁用 ## 来源 段 |
-| `blogger_not_registered` | 博主未登记 | `source_as_invalid` | source 形态非法 |
-| `stock_code_missing` | 股票代码缺失 | `stray_date` | 游离日期字段 |
-| `recycle_pending` | 待回收条目 | `unclassified` | 未归类文件 |
-| `recycle_expired` | 回收过期条目 | `junk_files` | 空壳文件 |
-| `macro_template_mismatch` | 宏观模板不匹配 | `blogger_has_source` | 画像比对副本误含 source |
-| `blogger_has_platform_id` | 画像副本误含 platform_id | `blogger_empty_link_row` | 画像副本空原文链接行 |
-| `blogger_table_no_link_col` | 画像副本缺原文链接列 | `verify-format 段落布局` | 段落布局 |
-
-### 总结与主要问题（结构化，便于看板直观展示）
-
-`summary` 与 `mainProblems` 建议用结构化 markdown（看板渲染为小节标题 + 圆点列表 + 段落）：
-- `###` 分小节（看板渲染为主题色小节标题）
-- `- ` 无序列表 / `1. ` 有序列表（看板渲染为圆点列表）
-- 普通段落一行一句，避免超长无断句段落
-
-### 落库 record（组装规则）
-
-| 字段 | 来源 |
+| 字段 | 说明 |
 |:---|:---|
-| date / title | 审查日期与标题 |
-| meta | 审查范围/扫描文件数/工具/对比基线/原则 |
-| method | 审查方法简述 |
-| mainProblems | 总体结论 |
-| checks | 脚本指标表 |
-| groups | **s_groups + c_groups 合并**（通用分组，看板自动渲染） |
-| recycle | 待回收处置（done/cooling/doneHist/rows） |
-| actions | 建议动作表（num/text/status） |
-| summary | 总结与建议 |
+| `c_groups` / `s_groups` | 内容审查（C3/C4/C6/C7/C8/C10）与结构审查（S 维度）分组；每项 `{title, severity, tag, headers, rows, text}` |
+| `rows` | 推荐对象数组 `{列名: 值, 状态: pass\|fail\|warn}`（带状态列的表格必须显式给状态，看板据此渲染徽章） |
+| `checks` | 脚本指标表；`recycle` 待回收处置（done/cooling/doneHist/rows）；`actions` 建议动作（num/text/status） |
+| `meta` / `method` / `summary` / `mainProblems` | 范围与基线 / 方法 / 总结 / 主要问题（markdown 结构化，看板渲染小节与列表） |
 
-> 落库 schema 见 `references/report-templates.md`。**修复动作不落库**：用户授权修复后另写 `修复记录-{YYYY-MM-DD}.md`（vault 执行日志），对应审查用 date 文字引用。
-
----
+> **修复动作不落库**：用户授权修复后另写 `修复记录-{YYYY-MM-DD}.md`（vault 执行日志），由审查 date 文字引用。
 
 ## Relative Files
 

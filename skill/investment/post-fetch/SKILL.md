@@ -59,9 +59,7 @@ compatibility: 通用
 
 每次采集会话开始**必须**先执行（无论单博主还是批量）。完整规则见 `references/execution-guide.md`「前置步骤」——获取用户 ID、分页拉取关注列表、与看板对比（新增→确认后登记 / 取关→报告由用户看板删除 / 无变动）、更新 `updateDate`。
 
-**残留检测（2026-08-14）**：比对看板登记名与 `博主/` 层文件夹——看板已移除但博主层仍有文件 → 报告并询问清理或迁移（防未登记博主悬空）。
-
-**info_cutoff 一致性（2026-08-14）**：本次「信息截止」变更的博主，核对画像 frontmatter `info_cutoff` 同值，不一致则同步（规则 #36）。
+**两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——本次变更的博主，画像 frontmatter 与看板 `bloggers.info_cutoff` 同值（规则 #36；画像 md 已废弃时只核对看板）。
 
 ### 第零步：解析雪球 ID
 
@@ -72,13 +70,13 @@ compatibility: 通用
 ### 第一步：检查工具层环境
 
 ```bash
-PY=~/.workbuddy/binaries/python/envs/xueqiu-spyder/bin/python
-$PY -c "import requests, playwright"        # 依赖就绪
-curl -s http://127.0.0.1:9222/json/version  # CDP 可达（端口被占用时按 spyder 约定换 XUEQIU_DEBUG_PORT）
+SPYDER=~/.agents/skills/xueqiu-spyder          # 工具层权威位置（部署目录）
+PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # venv 路径存本机 0600 配置，不入仓库
+$PY -c "import requests, playwright" && curl -s http://localhost:9222/json/version
 ```
-- 依赖缺失 → `pip install -r {xueqiu-spyder 目录}/requirements.txt`（本地安装位置 `~/.workbuddy/skills/investment/xueqiu-spyder/`）
-- CDP 不可达 → 提示按 xueqiu-spyder 启动调试 Chrome 并登录雪球
-- 工具层完整流程与参数见 `xueqiu-spyder` SKILL.md（加载读取）
+- 依赖缺失 → `$PY -m pip install -r "$SPYDER/requirements.txt"`
+- **CDP 预检必须 `localhost`**（Chrome 152 起 `127.0.0.1` 返 404，会被误判不可达）；端口占用用 `XUEQIU_DEBUG_PORT` 覆盖
+- CDP 不可达 → 提示启动调试 Chrome 并登录雪球；工具层细节见 `xueqiu-spyder` SKILL.md
 
 ### 第二步：执行采集（委托 xueqiu-spyder）
 
@@ -90,8 +88,7 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 - `now_iso` 先取：`date "+%Y-%m-%dT%H:%M:%S"`
 - **`{N}` 按窗口长度取**（硬约束，不得沿用默认 10）：≤24h→**3**、≤7 天→**5**、>7 天→10
 - **批量节流**：每处理 10 位博主暂停 60 秒再继续
-- 逐帖：截断补全（详情页）→ 形态判定 → 置顶排除 → 时间窗过滤 → 帖子集输出（spyder 内部完成）
-- **端点封禁自动降级**：v4 timeline 被 WAF 405 时 spyder 自动切旧版端点，无需干预；降级后仍失败才按 WAF 报错处理（稍后重试 / 人工过验证），不硬撞
+- 逐帖：截断补全（详情页）→ 形态判定 → 置顶排除 → 时间窗过滤 → 帖子集输出（spyder 内部完成）；v4 timeline 被 WAF 405 时自动降级旧端点，降级后仍失败才报错（稍后重试 / 人工过验证），不硬撞
 
 ### 第三步：格式验收（强制，不可跳过）
 
@@ -101,49 +98,26 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 - 纯文本净化已生效（无 `![[`、`![](url)`、`<img>`、`[表情]` 占位残留；Unicode emoji 正文保留）
 - 不合格 → 修复后落 vault；合格 → 进入第四步
 
-### 第三步之二：原文落库 post_history（2026-09-11 新增，强制；2026-09-12 定位升级）
+### 第三步之二：原文落库 post_history + 入库校验 + 清理临时产物（强制）
 
-**这一步就是采集的落点**（2026-09-12 用户拍板）：帖子直接落 `post_history`，**提炼也从库里读原文**，采集产物 md 只是临时载体、**不再存进 vault 的 `工作区/粗制品/`**。它的意义有两条：① 提炼的唯一原文来源；② 避免重采——原文一旦没留档，日后想回顾/重新提炼就只能重抓（曾为此回采 210 条、还因速率过快触发 WAF 405）。故**每次采集验收通过后立即落库**：
+**这一步就是采集的落点**（2026-09-12 用户拍板）：帖子直接落 `post_history`，**提炼也从库里读原文**；采集产物 md 只是临时载体、**不再存进 vault 的 `工作区/粗制品/`**。意义有两条：① 提炼的唯一原文来源；② 避免重采（原文没留档就只能重抓，曾为此回采 210 条并触发 WAF 405）。
 
 ```bash
-node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>"    # 可传多个文件
-# 输出：新增 N | 更新 M | 无变化 K | 跳过（摘要 a / 无链接或空正文 b / 博主未建档 c）
+node ~/Project/investment-console/scripts/import-post-history.js "<采集产物.md>"   # 落库（幂等，url_hash 判重）
+node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js "<采集产物.md>"  # 入库校验（逐帖 url_hash+content_hash）
+node ~/Project/investment-console/scripts/import-post-history.js --rm "<采集产物.md>"   # 校验通过后清理临时产物
+node ~/Project/investment-console/scripts/purge-post-history.js --dry              # 保留期清理：post_history 只留 30 天
 ```
 
 | 规则 | 说明 |
 |:---|:---|
-| 幂等 | 以 `url_hash`（md5 原文链接）判重：同帖再采 → 内容没变记「无变化」（只刷新抓取时间与互动数），内容变了记「更新」并覆盖原文 |
-| **摘要帖不入库** | 带「摘要」标记的帖内容残缺，**故意不存**——这样下次采集仍会重新抓取，不会被误判为"已有" |
-| **无链接不入库** | 缺 `[原文]` 链接 = 来源不可回溯（规则 #35），跳过 |
-| 博主未建档 | 会报错跳过；需先在博主控制台登记（规则 #12） |
-| 落库时机 | 第三步验收通过后、第四步报告前；报告里带上「原文留档 N 条」 |
+| 幂等 | `url_hash`（md5 原文链接）判重：内容没变记「无变化」、变了记「更新」 |
+| **摘要帖 / 无链接帖不入库** | 摘要帖内容残缺（故意不存，便于下次重采）；缺 `[原文]` 链接＝来源不可回溯（#35） |
+| **清理前必须过校验** | 有缺口 → 先补入库，禁止清理临时产物 |
+| **30 天滚动窗口** | 逾 30 天查不到留档、言论 `post_history_id` 悬空，**都是正常现象**（不是缺口、也不因此重采） |
+| 博主未建档 | 报错跳过；需先在看板 bloggers 表登记（#12） |
 
-**采集前可先查重**（可选，用于补采/回补场景）：MCP `post_history` 的 `action=check`（传 blogger + from/to）会返回该博主窗口内已留档的帖子清单（含 `platformPostId`、`contentHash`），据此跳过已采、只补缺口。
-
-**第三步之二附：保留期清理（2026-09-12 起，每次采集会话跑一次）**
-
-`post_history` **只保留 30 天**（滚动窗口，用户拍板）——采集会话开始或结束时跑一次清理，别让它无限增长：
-
-```bash
-node ~/Project/investment-console/scripts/purge-post-history.js            # 按发帖时间保留最近 30 天
-node ~/Project/investment-console/scripts/purge-post-history.js --dry      # 先看会清掉多少
-```
-
-清理后：言论行上的 `post_history_id` 允许悬空（**查不到留档是正常现象**，不是缺口、也不因此重采）。
-
-**第三步之三：入库校验 + 清理临时产物（2026-09-12 新增，强制）**
-
-采集产物是临时文件，**清理前必须逐帖确认原文已进 post_history**（同一批次、正文一致，不是"我以为采过了"）：
-
-```bash
-node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js <采集产物.md>   # 或 --dir <临时目录>
-# 校验通过 → 清理临时产物（import 脚本一步到位）：
-node ~/Project/investment-console/scripts/import-post-history.js --rm <采集产物.md>
-# ✅ 每帖 url_hash 命中且 content_hash 与正文 md5 一致 → 可安全移废纸篓
-# ❌ 存在缺口 → 先补入库（或标记待补采），禁止删除
-```
-
-判据：url_hash 命中 + content_hash 一致才算留档；标「摘要」的帖按设计不入库（列出但不计缺口）；无 `[原文]` 链接 / 博主未建档 计缺口。退出码 0=可清临时产物 / 1=有缺口（先补入库）。
+> 完整命令、节流与排错 → `references/execution-guide.md`「第五步」；采集前查重可用 MCP `post_history` `action=check`。
 
 ### 第四步：向用户报告摘要
 
@@ -162,13 +136,9 @@ node ~/Project/investment-console/scripts/import-post-history.js --rm <采集产
 >
 > **失败时绝不更新**——否则下次采集从新 cutoff 起算，会永久漏掉本次未采到的帖子。失败博主须报告用户，待重试成功后再更新；重试前其 cutoff 保持原值（宁可重复采，不可漏采）。
 >
-> **退出码 3（2026-09-12 实战教训）**：低 `--max-pages` 会让高产博主的时间线翻不到窗口起点，过滤后 0 条**被误报成"无新帖"（2）**——若按 2 推进 cutoff 就是永久漏采。实测雪月霜 09-08 窗口用 4 页判定"无帖"，加到 15 页抓到 19 条。页数按 `窗口天数 × 日均条数 ÷ 20 + 2` 估算，高产博主别省页数。
+> **退出码 3（2026-09-12 实战教训）**：低 `--max-pages` 时时间线翻不到窗口起点，过滤后 0 条会被**误报成「无新帖」(2)**，按 2 推进 cutoff 即永久漏采（实测雪月霜 09-08 窗口 4 页判"无帖"，加到 15 页抓到 19 条）。页数按 `窗口天数 × 日均条数 ÷ 20 + 2` 估算。
 
-将「信息截止」更新为**本次采集实际完成时间**（ISO `YYYY-MM-DDTHH:mm:ss`，无精确时间默认当天 `17:50:00`）：
-1. **博主画像** `博主/{nickname}/{nickname}.md`：frontmatter `info_cutoff` + `updateDate`
-2. **看板 MySQL** `bloggers.info_cutoff`（经 `scripts/xq_update_cutoff.py` 回写，脚本同时更新画像）
-
-博主画像 md 已废弃（2026-09-12）：一律只写看板（MySQL），**不创建、不更新任何画像文件**。
+将「信息截止」更新为**本次采集实际完成时间**（ISO `YYYY-MM-DDTHH:mm:ss`，无精确时间默认 `17:50:00`）——**只写看板 MySQL `bloggers.info_cutoff`**（`scripts/xq_update_cutoff.py` 回写；脚本里的画像 md 分支已废弃，2026-09-12 起不创建、不更新任何画像文件）。
 
 **批量采集收尾核对（硬约束）**：批量结束后必须逐位核对「本次是否采集完成」，只对退出码 0/2 的博主执行双写；退出码 1/3 的博主列入「待重试清单」报告用户，**其 cutoff 保持原值不动**。
 
@@ -216,19 +186,14 @@ node ~/Project/investment-console/scripts/import-post-history.js --rm <采集产
 
 ## 自检
 
-- [ ] 前置同步已执行（关注列表 ↔ 看板对比，含残留/一致性检测）？
-- [ ] xq_id 已解析（直接传入 / 看板按 blogger_name 查 / 全部博主模式）且为数字？
-- [ ] 工具层环境就绪（venv 依赖 + Chrome CDP 可达 + 雪球已登录）？
-- [ ] xueqiu-spyder SKILL.md 已加载（含其参数与自检）？
+- [ ] 前置同步已执行（关注列表 ↔ 看板对比，含残留 / info_cutoff 一致性检测）？
+- [ ] xq_id 已解析（直接传入 / 按 blogger_name 查看板 / 全部博主模式）且为数字？
+- [ ] 工具层环境就绪（venv 依赖 + CDP 可达 + 雪球已登录），且已加载 xueqiu-spyder SKILL.md？
 - [ ] 采集委托 spyder 执行（`main.py user --from {cutoff} --to {now}`），未绕过工具层直接操作浏览器？
-- [ ] **`--max-pages` 按窗口长度取值**（≤24h→3、≤7 天→5、>7 天→10），未沿用默认 10？
-- [ ] **批量采集每 10 位暂停 60 秒**（节流）？
-- [ ] **采集产物已落 post_history**（`import-post-history.js`，摘要帖与无链接帖按规则跳过）？
-- [ ] **临时采集产物清理前已过入库校验**（`check-post-history-covered.js` 返回 0；有缺口则保留产物先补入库）？
-- [ ] **未把帖子集写进 vault 的 `工作区/粗制品/`**（采集产物只在 vault 外临时目录）？
+- [ ] **`--max-pages` 按窗口长度取值**（≤24h→3、≤7 天→5、>7 天→10），**批量每 10 位暂停 60 秒**？
+- [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter / 三件套 / 发布行 / 纯文本 / 每帖带 `[原文]` / 摘要与全文标记一致）？
+- [ ] **采集产物已落 post_history**；清理临时产物前已过入库校验（返回 0），且**未把帖子集写进 vault 的 `工作区/粗制品/`**？
 - [ ] 时间窗口 = info_cutoff → 当前，置顶帖已排除？
-- [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter/三件套/发布行/纯文本）？
-- [ ] 每帖均带 `[原文]` 链接？
-- [ ] 标「摘要」的帖未混入「全文」标记？status 与摘要行一致？
-- [ ] **仅对采集完成（spyder 退出码 0/2）的博主双写 info_cutoff**；失败（退出码 1）或页数不足（退出码 3）者**保持原 cutoff 不动**并列入待重试清单报用户（防漏采）？
+- [ ] **仅对采集完成（退出码 0/2）的博主双写 info_cutoff**；退出码 1（失败）/ 3（页数不足）者**保持原 cutoff 不动**并列入待重试清单（防漏采）？
+- [ ] post_history 保留期清理已跑（30 天滚动窗口）？
 - [ ] 无浏览器自动化进程遗留？

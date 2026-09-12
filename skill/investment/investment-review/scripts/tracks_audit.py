@@ -32,6 +32,11 @@ PLACEHOLDER_TARGETS = {"", "—", "-", "/", "暂无", "持仓", "未点名", "�
 
 
 def vault_scan(vault_root: str) -> dict:
+    """vault 侧扫描：**仅针对未清理的历史画像 md**（2026-09-12 起画像 md 已废弃、言论只落 MySQL）。
+
+    因此本函数的结果**不是数据缺口**：vault 里没有「## 言论追踪」= 正常（md 已退役），
+    MySQL 侧（mysql_scan）才是权威。保留本扫描只为兼容尚未删除的历史 md 文件。
+    """
     findings = []
     blogger_dir = Path(vault_root) / "博主"
     files = sorted(glob.glob(str(blogger_dir / "*" / "*.md")))
@@ -105,41 +110,72 @@ def vault_scan(vault_root: str) -> dict:
                 stats["table_cols_abnormal"] += 1
         stats["blogger_with_rows"] += 1
     return {"vault_root": str(vault_root), "blogger_files": len(files),
-            "stats": dict(stats), "track_rows_total": track_total, "findings": findings}
+            "stats": dict(stats), "track_rows_total": track_total, "findings": findings,
+            "note": "画像 md 已废弃（2026-09-12）——本侧结果仅代表历史 md 现状，不构成数据缺口；权威在 MySQL statements"}
 
 
 def mysql_scan() -> dict:
+    """只读扫描言论库数据质量（2026-09-12 重写：对齐当日 schema）
+
+    旧实现查的 blogger_statements / statement_reviews / prediction_tracks **三张表都已不存在**
+    （言论收敛为 statements 视图 + 六张 statement_* 物理表；复核建议在 statement_review_sub；
+    预测独立表与跟踪表均已退役）→ 整段审计曾经静默失效。
+    """
     import pymysql
     conn = pymysql.connect(host="106.55.14.116", port=3306, user="jianglb",
                            password=os.environ.get("DB_PASS", ""), database="investment_kb",
                            connect_timeout=8)
     cur = conn.cursor()
     out = {}
-    # 2026-09-07 重写：言论权威已迁 blogger_statements 单轨（prediction_tracks 为迁移遗留表，
-    # 原 dict_track_direction 字典表已废弃并入 dict 单表——旧查询直接报表不存在）
-    cur.execute("SELECT COUNT(*) FROM blogger_statements")
+    # ① 言论总量与内容完整性（权威＝statements 视图，UNION 六张类型表）
+    cur.execute("SELECT COUNT(*) FROM statements")
     out["statements_total"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM blogger_statements WHERE view_text IS NULL OR TRIM(view_text)=''")
+    cur.execute("SELECT COUNT(*) FROM statements WHERE view_text IS NULL OR TRIM(view_text)=''")
     out["view_text_empty"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM blogger_statements WHERE source_url IS NULL OR TRIM(source_url)=''")
+    cur.execute("SELECT COUNT(*) FROM statements WHERE source_url IS NULL OR TRIM(source_url)=''")
     out["source_url_empty"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM blogger_statements WHERE review_required=1")
+    cur.execute("SELECT COUNT(*) FROM statements WHERE form IS NULL OR TRIM(form)=''")
+    out["form_empty"] = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM statements WHERE reply_to IS NOT NULL AND TRIM(reply_to)<>''")
+    out["reply_to_filled"] = cur.fetchone()[0]
+    # ② 回指原文留档（2026-09-12 新增；留档只保 30 天，取不到属正常）
+    cur.execute("SELECT COUNT(*) FROM statements WHERE post_history_id IS NOT NULL")
+    out["post_history_linked"] = cur.fetchone()[0]
+    # ③ 分型分布与复核标记
+    cur.execute("SELECT content_type, COUNT(*) FROM statements GROUP BY content_type")
+    out["by_content_type"] = {r[0]: r[1] for r in cur.fetchall()}
+    cur.execute("SELECT COUNT(*) FROM statements WHERE review_required=1")
     out["review_required"] = cur.fetchone()[0]
-    cur.execute("""SELECT s.content_type, COUNT(*) FROM blogger_statements s
-                   LEFT JOIN dict d ON d.type='stmt_content_type' AND d.code=s.content_type
+    # ④ 码值合法性（字典域：post_content_type / stance —— 旧写的 stmt_content_type 不存在）
+    cur.execute("""SELECT s.content_type, COUNT(*) FROM statements s
+                   LEFT JOIN dict d ON d.type='post_content_type' AND d.code=s.content_type
                    WHERE d.code IS NULL GROUP BY s.content_type""")
     out["bad_content_type"] = [list(r) for r in cur.fetchall()]
-    cur.execute("""SELECT s.stance, COUNT(*) FROM blogger_statements s
+    cur.execute("""SELECT s.stance, COUNT(*) FROM statements s
                    LEFT JOIN dict d ON d.type='stance' AND d.code=s.stance
                    WHERE s.stance IS NOT NULL AND d.code IS NULL GROUP BY s.stance""")
     out["bad_stance"] = [list(r) for r in cur.fetchall()]
-    # 复核建议积压（审查首步数据源）
-    cur.execute("SELECT status, COUNT(*) FROM statement_reviews GROUP BY status")
-    out["statement_reviews"] = {r[0]: r[1] for r in cur.fetchall()}
-    # 遗留表迁移进度（只读提示，勿当权威）
-    cur.execute("SELECT COUNT(*), SUM(migrated_to_statement_id IS NOT NULL) FROM prediction_tracks")
-    r = cur.fetchone()
-    out["legacy_tracks"] = {"total": int(r[0]), "migrated": int(r[1] or 0)}
+    # ⑤ 实体关联覆盖率（个股/行业主题靠关联表承载，target 列已删）
+    # 注：statements 视图的 content_type 由各分支字面量 UNION 而来，直接与字面量比较会报
+    # 「Illegal mix of collations」——故按物理表分别统计（P1 三类：trade/predict/research）
+    miss = 0
+    for tbl in ("statement_trade", "statement_predict", "statement_research"):
+        cur.execute(f"""SELECT COUNT(*) FROM {tbl} t
+                        LEFT JOIN statement_stock_rel k ON k.statement_id=t.id
+                        LEFT JOIN statement_industry_rel i ON i.statement_id=t.id
+                        WHERE k.statement_id IS NULL AND i.statement_id IS NULL""")
+        miss += cur.fetchone()[0]
+    out["key_types_without_subject"] = miss
+    # ⑥ 复核建议积压（审查首步数据源）
+    cur.execute("SELECT status, COUNT(*) FROM statement_review_sub GROUP BY status")
+    out["statement_review_sub"] = {r[0]: r[1] for r in cur.fetchall()}
+    # ⑦ 退役表残留检查（存在才读数；均已退役为 _del 或删除，此处仅提示）
+    for legacy in ("predictions", "prediction_tracks", "blogger_statements", "statement_reviews"):
+        try:
+            cur.execute(f"SELECT COUNT(*) FROM {legacy}")
+            out.setdefault("legacy_tables", {})[legacy] = cur.fetchone()[0]
+        except Exception:
+            out.setdefault("legacy_tables_absent", []).append(legacy)
     conn.close()
     return out
 
@@ -164,7 +200,7 @@ def main():
             "vault_track_rows": v,
             "mysql_statements": m,
             "delta_mysql_minus_vault": m - v,
-            "note": "delta 正值=库比 vault 多（增量采集/他源导入）；负值=vault 言论未入库（占位/无效行跳过）。注意：vault 统计口径为「言论追踪」section 数据行，与 blogger_statements 全量（含已删除标记行等）存在正常口径差"
+            "note": "delta 正值=库比 vault 多（增量采集/他源导入）；负值=vault 言论未入库（占位/无效行跳过）。注意：vault 统计口径为「言论追踪」section 数据行，与 MySQL statements 全量（含已删除标记行等）存在正常口径差"
         }
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
