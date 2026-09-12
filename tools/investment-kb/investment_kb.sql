@@ -193,7 +193,7 @@ CREATE TABLE bloggers (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`special`)
-) ENGINE=InnoDB AUTO_INCREMENT=68256 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=68733 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -333,6 +333,21 @@ CREATE TABLE statement_id_seq (
   `id` bigint unsigned NOT NULL COMMENT '已发放的最大帖子 id',
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子 id 序列表';
+
+CREATE TABLE mention_case (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `sentence` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '待判定的原文片段（一句/一小句）',
+  `alias` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '句中出现的称呼/产品词',
+  `stock_id` bigint unsigned DEFAULT NULL COMMENT '正确归属的个股 id，指向个股表',
+  `stock_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '个股名快照',
+  `verdict` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '正确判定：link=应建关联 / doubt=存疑 / skip=不是个股',
+  `reason` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '判定理由（命中/否决了哪条规则）',
+  `source` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'refine' COMMENT '来源：refine 提炼 / review 审查 / user 用户复核 / seed 初始',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_alias` (`alias`),
+  KEY `idx_verdict` (`verdict`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提及判定案例表';
 
 -- ============ 四、言论六表（一条帖子只落其中一张） ============
 CREATE TABLE statement_trade (
