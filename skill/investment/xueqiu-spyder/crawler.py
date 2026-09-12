@@ -32,7 +32,11 @@ def _default_chrome_path():
 
 
 CHROME_PATH = os.environ.get("XUEQIU_CHROME_PATH") or _default_chrome_path()
-USER_DATA_DIR = os.path.join(os.path.dirname(__file__), ".chrome-debug-profile")
+# 2026-09-12：CDP profile 从 skill 目录挪到用户缓存目录——它含 Cookies/Login Data/History，
+# 放在 skill 目录里会被 git add 进公共仓库（当天实测已误入 1.1 万个文件）。可用
+# XUEQIU_USER_DATA_DIR 覆盖；旧位置（skill 目录内）仅作迁移前的历史遗留，不再使用。
+USER_DATA_DIR = os.environ.get("XUEQIU_USER_DATA_DIR") or os.path.join(
+    os.path.expanduser("~"), ".cache", "xueqiu-spyder", "chrome-profile")
 # 可用环境变量 XUEQIU_DEBUG_PORT 覆盖，避免与既有 9222 调试实例冲突
 DEBUG_PORT = int(os.environ.get("XUEQIU_DEBUG_PORT", "9222"))
 # 2026-09-12：Chrome 152 起 DevTools HTTP 端点只接受 Host=localhost，
