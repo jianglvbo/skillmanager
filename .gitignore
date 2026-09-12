@@ -27,6 +27,11 @@ node_modules/
 *.log
 /tmp/
 
+# 浏览器调试 profile（2026-09-12：xueqiu-spyder 的 CDP profile 曾误入仓库 1.1 万个文件，
+# 含 Cookies/Login Data/History；现默认落 ~/.cache/xueqiu-spyder/chrome-profile）
+.chrome-debug-profile/
+**/.chrome-debug-profile/
+
 # Secrets
 .env
 *.key
