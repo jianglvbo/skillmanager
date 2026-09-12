@@ -120,6 +120,17 @@ node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>
 
 **采集前可先查重**（可选，用于补采/回补场景）：MCP `post_history` 的 `action=check`（传 blogger + from/to）会返回该博主窗口内已留档的帖子清单（含 `platformPostId`、`contentHash`），据此跳过已采、只补缺口。
 
+**第三步之二附：保留期清理（2026-09-12 起，每次采集会话跑一次）**
+
+`post_history` **只保留 30 天**（滚动窗口，用户拍板）——采集会话开始或结束时跑一次清理，别让它无限增长：
+
+```bash
+node ~/Project/investment-console/scripts/purge-post-history.js            # 按发帖时间保留最近 30 天
+node ~/Project/investment-console/scripts/purge-post-history.js --dry      # 先看会清掉多少
+```
+
+清理后：言论行上的 `post_history_id` 允许悬空（**查不到留档是正常现象**，不是缺口、也不因此重采）。
+
 **第三步之三：入库校验 + 清理临时产物（2026-09-12 新增，强制）**
 
 采集产物是临时文件，**清理前必须逐帖确认原文已进 post_history**（同一批次、正文一致，不是"我以为采过了"）：
