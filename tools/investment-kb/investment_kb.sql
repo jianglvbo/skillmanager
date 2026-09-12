@@ -15,27 +15,21 @@
 --       ⑥ **可枚举的值表进 dict**（标签、方向、状态等一律 dict，字段注释里写 dict.type 名）；
 --       ⑦ **注释写法**：表注释只写「XX表 / XX子表」，字段注释平实直述，不带括号补充说明。
 --
--- 变更日志:
---   2026-09-12 冗余清理（用户拍板）：① DROP `coarse_records`（早已无写入方，粗制品页「已加工」状态改由
---     `refine_records.from_rel` 推导）；② 删除废弃字段：六张帖子表的 `kind`（旧四类落位）与 `record_date`
---     （历史记录日期）、`post_predict.verify_status_del`，视图同步收窄为 40 列；③ 清理失效 dict 枚举
---     （coarse_status / track_direction / file_type / file_status）。删前备份 backups/drop_20260912b/。
---   2026-09-12 命名规范（用户拍板）：① 帖子一律 post——六张分表 → post_trade/post_predict/post_research/
---     post_view/post_insight/post_chat，视图 blogger_statements → statements，stmt_id/statement_id → post_id，
---     stmt_date → record_date；② 子表与关联表同步改名：stmt_verify_sub→post_verify_sub、stmt_review_sub→
---     post_review_sub、stmt_rel→post_rel、statement_entity_rel→post_entity_rel、stmt_id_seq→post_id_seq；
---     ③ **弃用表不再留档，全部 DROP**（删前导出 backups/drop_del_20260912/）；④ 表注释与字段注释改写为
---     平实写法，码值字段标注 dict.type。
---   2026-09-12 结构收口（用户拍板）：① 帖子唯一落点——blogger_trades 并入 post_trade（补 target_alias/
---     trade_note）并退役为 blogger_trades_del；② 子表加 _sub（prediction_verifications→post_verify_sub、
---     statement_reviews→post_review_sub、review_checks→review_check_sub、refine_targets→refine_target_sub）；
---     ③ 关联表加 _rel（stmt_relation→post_rel）；④ tags→dict(type=tag)，files/file_tag_rel/trash_records/
---     sync_state 退役为 _del（vault 索引改内存扫描，wiki_ref 改存 vault 相对路径并由前端生成 obsidian:// 链接）；
---     ⑤ 本文件改为**生成物**（scripts/export-schema.js）+ 空库回放校验（scripts/verify-schema-replay.js）。
---   2026-09-11 重构收敛：① 六分法分表 + 只读 UNION 视图 statements；② 预测收敛为「预测即言论行」
---     （post_predict 唯一，predictions→predictions_del、prediction_stmt_rel→post_rel）；③ 新增
---     post_entity_rel / post_history / post_id_seq；④ 弃用对象一律加 _del 后缀留档，禁止 DROP。
---   2026-09-03 与线上库对齐：bloggers 补 avatar；prediction_subjects 补 market/hk_connect；dict 补 platform=wechat。
+-- 变更日志（只记与当前结构有关的口径；历史改名过程见仓库 git 记录）:
+--   2026-09-12 终版结构（用户拍板）:
+--     ① 分层命名：**采集层叫「帖子」→ post_*；提炼后叫「言论」→ statement_***
+--        —— 六张言论表 statement_trade/predict/research/view/insight/chat + 只读 UNION 视图 `statements`
+--        + 序列 statement_id_seq + 子表 statement_verify_sub/statement_review_sub（_sub）＋关联表 _rel；
+--        `post_history` 属帖子层，表名与列名（posted_at/platform_post_id/post_id）保持 post_ 前缀不变；
+--        其 `post_id` 存「该帖提炼后的言论 id」（帖子层→言论层的回指，列名不变、注释写明语义）。
+--     ② 实体三表取代 prediction_subjects：`stocks`（个股：name/code/market_code/aliases/hk_connect）、
+--        `industries`（行业）、`markets`（市场：A股/港股/美股/韩股…）；宏观/认知/策略类概念不是实体。
+--     ③ 关联六表（全部 _rel）：statement_blogger_rel（言论必挂博主）/ statement_stock_rel /
+--        statement_industry_rel / statement_market_rel / stock_industry_rel（个股必挂行业，可多行业）/
+--        stock_market_rel；原多态表已删除。
+--     ④ 一条帖子只落一张言论表（优先级命中即止），正文完整保留帖子含义；买卖记录**不含操作字段**。
+--     ⑤ 弃用对象一律**删前备份、然后 DROP**，不留 _del 残表；派生索引（vault 文件/标签）不落库，内存扫描。
+--     ⑥ 表注释只写「XX表/XX子表」，字段注释平实直述，码值字段标注 `dict.type`。
 -- ============================================================
 CREATE DATABASE IF NOT EXISTS investment_kb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE investment_kb;
@@ -202,7 +196,7 @@ CREATE TABLE bloggers (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`special`)
-) ENGINE=InnoDB AUTO_INCREMENT=66136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=66931 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -232,7 +226,7 @@ CREATE TABLE post_history (
   `stance` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '提炼后的信号方向，字典项 dict.type=stance',
   `signal_text` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '提炼后的信号内容',
   `entities_json` json DEFAULT NULL COMMENT '提炼出的实体快照',
-  `post_id` bigint unsigned DEFAULT NULL COMMENT '对应帖子 id，指向六张帖子表之一',
+  `post_id` bigint unsigned DEFAULT NULL COMMENT '该帖提炼后的言论 id，指向六张言论表之一（post_history 属帖子层，列名保持 post_ 前缀）',
   `refined_at` datetime DEFAULT NULL COMMENT '提炼时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_url` (`url_hash`),
@@ -240,7 +234,7 @@ CREATE TABLE post_history (
   KEY `idx_blogger_time` (`blogger_id`,`posted_at`),
   KEY `idx_posted` (`posted_at`),
   KEY `idx_platform` (`platform_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=864 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子原文表';
+) ENGINE=InnoDB AUTO_INCREMENT=905 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子原文表';
 
 CREATE TABLE quotes (
   `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',

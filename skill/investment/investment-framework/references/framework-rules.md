@@ -208,7 +208,7 @@
     - **防复发**：新增任何卡片渲染路径，必须复用既有唯一实现——`replyBodyHtml()`（回应块）、`stripDirPrefix()`（信号去方向词前缀）、`setStmtLookup()`（言论 join）、`tkFiles()`（vault 链接，见 #38）；**禁止另写第二套**。
     - **数据侧无责**：本案例数据本身正确（`content_type=trade` + `stance=bullish` + `signal_text` + `form=回复` 都在），**纯展示层塌陷**——因此修在渲染层、不逐行改数据。
 
-41. 原文留档（`post_history`，2026-09-11 用户决策）：新建**单表** `post_history` 存「博主言论**提炼前**的原文」，**分博主靠字段识别**（`blogger_id` + `blogger` 冗余名），**不按博主拆物理表**，也不做分区——博主是开放集合（现 53 并在增长），拆表会让 DDL/备份/跨博主查询成本随博主数线性上涨。
+41. 原文留档（`post_history`，2026-09-11 用户决策）：新建**单表** `post_history` 存「博主言论**提炼前**的原文」，**分博主靠字段识别**（`blogger_id` + `blogger` 冗余名），**不按博主拆物理表**，也不做分区——博主是开放集合（现 53 并在增长），拆表会让 DDL/备份/跨博主查询成本随博主数线性上涨。 **提炼后回指**：`post_id` 写该帖提炼出的言论 id（帖子层→言论层的回指，列名保持 post_ 前缀），提炼时由服务端自动回填，另有 `content_type`/`stance`/`signal_text`/`entities_json`/`refined_at` 要素快照。
     - **唯一用途 = 避免重采**（用户原话）。它不是提炼产物表、不参与归类判定：提炼结论仍落 `statements`（六表 + UNION 视图）；本表只保证"原文丢不了"，需要回顾或重新提炼时先查它（MCP `post_history` `action=get/check`），有原文就不必再抓。
     - **写入时机**：每次采集验收通过后立即落库（post-fetch 第三步之二 → `node ~/Project/investment-console/scripts/import-post-history.js <帖子集.md>`），以 `url_hash=md5(source_url)` 幂等；`content_hash=md5(raw_text)` 用于识别"帖被改过"。
     - **两类不入库**：① 带「摘要」标记的帖（内容残缺，故意不存，便于下次重采）② 无 `[原文]` 链接的帖（规则 #35）。
@@ -234,7 +234,7 @@
     - **可回滚**：动手前留快照（`SELECT ... INTO OUTFILE` 或 JSON dump 到 `backups/`），写明删除/修改原因。
 
 44. 数据库结构与命名规则（2026-09-11 拍板，2026-09-12 终版：术语＝言论、实体三表、关联六表）：
-    - **术语与命名**：库内一律用 `statement` 指「言论」，**不用 post**——六张类型表 `statement_trade`/`statement_predict`/`statement_research`/`statement_view`/`statement_insight`/`statement_chat`，只读视图 `statements`（UNION），序列 `statement_id_seq`；帖子时间字段 `statement_date`。**唯一例外**：`post_history`（平台原帖原文库，那里 `post` 指雪球原帖，保持不变）。MCP 工具 `blogger_statement` / `console_statement_review`，入参 `statementId`。中文描述里「帖子」指平台侧原帖、「言论」指我们提炼落库的行，不要混用。
+    - **术语与命名**：库内一律用 `statement` 指「言论」，**不用 post**——六张类型表 `statement_trade`/`statement_predict`/`statement_research`/`statement_view`/`statement_insight`/`statement_chat`，只读视图 `statements`（UNION），序列 `statement_id_seq`；帖子时间字段 `statement_date`。**分层命名（2026-09-12 用户口径）**：**采集层叫「帖子」→ `post_*`；提炼后叫「言论」→ `statement_*`**，两层各归其位，`post_history` 不是「例外」而是帖子层：其表名与列名（`posted_at`/`platform_post_id`/`post_id`）一律保持 `post_` 前缀；只有指向**言论层**的回指列在注释里写明语义——`post_history.post_id` = 「该帖提炼后的言论 id，指向六张言论表之一」（列名按帖子层保持 `post_id`，2026-09-12 用户选 A）。MCP 工具 `blogger_statement` / `console_statement_review`，入参 `statementId`。中文描述里「帖子」指平台侧原帖、「言论」指我们提炼落库的行，不要混用。
     - **子表 `_sub` / 关联表 `_rel`**：子表 `statement_verify_sub`（验证留痕）/ `statement_review_sub`（复核建议）/ `review_check_sub` / `refine_target_sub`；关联表一律 `_rel` 后缀（见下 6 张）。
     - **实体三表（取代 prediction_subjects）**：`stocks`（个股：name/code/market_code/aliases/hk_connect）、`industries`（行业：name/code）、`markets`（市场：code/name，A股/港股/美股/韩股…）。控制台三个页签直接读这三张表。**行业表只放行业**——宏观/认知/策略/风格类（估值、周期、仓位管理、宏观经济、地缘政治…）不是实体，落 wiki「我的」层；个股名/市场名不得混进行业表（2026-09-12 清理了 27 条此类污染 + 8 条错位）。
     - **关联六张（用户拍板）**：`statement_blogger_rel`（**言论一定挂博主**）、`statement_stock_rel`、`statement_industry_rel`、`statement_market_rel`（**言论可以没有个股/行业/市场关联**）、`stock_industry_rel`（**个股一定挂行业，且可多行业**）、`stock_market_rel`（个股↔市场）。原来那张多态表已删除。
