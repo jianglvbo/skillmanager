@@ -196,7 +196,7 @@ CREATE TABLE bloggers (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`special`)
-) ENGINE=InnoDB AUTO_INCREMENT=67249 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=67779 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -234,7 +234,7 @@ CREATE TABLE post_history (
   KEY `idx_blogger_time` (`blogger_id`,`posted_at`),
   KEY `idx_posted` (`posted_at`),
   KEY `idx_platform` (`platform_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=905 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子原文表';
+) ENGINE=InnoDB AUTO_INCREMENT=1093 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子原文表';
 
 CREATE TABLE quotes (
   `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -538,6 +538,7 @@ CREATE TABLE stocks (
   `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '股票代码',
   `market_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主市场码，字典项 markets.code',
   `aliases` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '别名，逗号分隔，如 寒王,寒武纪-U',
+  `keywords` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主营/产品关键词，逗号分隔，用于判定「文中该产品词是否指这只股」（F7 同句共现）；通用词只放这里，不放 aliases',
   `hk_connect` tinyint(1) DEFAULT NULL COMMENT '是否港股通',
   `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
   `enabled` tinyint NOT NULL DEFAULT '1' COMMENT '是否启用',

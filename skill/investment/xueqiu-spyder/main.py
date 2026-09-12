@@ -12,6 +12,10 @@ from crawler import XueqiuCrawler, CrawlerError
 # 退出码约定：0=有产出 / 2=窗口内无新帖（采集完成）/ 1=失败（WAF/登录/异常）
 # 编排层据此决定是否更新 info_cutoff（失败时禁止更新，保证不漏采）
 NO_NEW_POSTS = "__NO_NEW_POSTS__"
+# 哨兵：窗口起点没被翻到（页数不足），**不等于**窗口内无帖——2026-09-12 实测：
+# 雪月霜 09-08 窗口用 4 页（80 条）只翻到 09-09 之后，过滤器判定"无帖"返回 2，
+# 编排层若据此推进 info_cutoff 就会永久漏采。故单列退出码 3。
+NO_WINDOW_REACHED = "__NO_WINDOW_REACHED__"
 from analyzer import filter_big_v, extract_opinions, summarize_opinions, posts_to_opinions
 from report import generate_report, generate_user_report
 
@@ -129,6 +133,7 @@ def run_user(user_id, max_pages=10, output_dir=None, days=None, column_only=Fals
             )
             hi = _parse_window(to_time) if to_time else None
             before = len(all_posts)
+            oldest = min((p.get("created_at") or 0) for p in all_posts) or 0
             all_posts = [
                 p for p in all_posts
                 if not (p.get("mark") == 1 or p.get("pinned"))  # 置顶帖不纳入窗口
@@ -138,6 +143,14 @@ def run_user(user_id, max_pages=10, output_dir=None, days=None, column_only=Fals
             window_desc = f"{from_time or ('最近%d天' % days if days else '起')} ~ {to_time or 'now'}"
             logger.info(f"时间窗过滤[{window_desc}]: {before} -> {len(all_posts)} 条（置顶帖已排除）")
             if not all_posts:
+                # 关键判定：本轮抓到的最旧帖仍比窗口起点新 → 是页数不足没翻到，不是"无新帖"
+                if lo and oldest and oldest > lo:
+                    logger.error(
+                        "窗口起点 %s 未被翻到：本轮最旧帖为 %s，页数不足（--max-pages %d）——"
+                        "不可判定为『窗口内无帖』，须加大 --max-pages 重跑",
+                        from_time, time.strftime('%Y-%m-%d %H:%M', time.localtime(oldest / 1000)), max_pages,
+                    )
+                    return NO_WINDOW_REACHED
                 logger.warning("过滤后无帖子（窗口内无新帖，采集完成）")
                 return NO_NEW_POSTS
 
@@ -238,7 +251,10 @@ def main():
             parser.print_help()
             sys.exit(1)
 
-        if result == NO_NEW_POSTS:
+        if result == NO_WINDOW_REACHED:
+            print("\n窗口起点未被翻到（页数不足）：不可视为『无新帖』，须加大 --max-pages 重跑")
+            sys.exit(3)
+        elif result == NO_NEW_POSTS:
             print("\n窗口内无新帖（采集完成，无新增内容）")
             sys.exit(2)
         elif result:
