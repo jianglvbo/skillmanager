@@ -49,7 +49,7 @@ compatibility: 通用
 | 全流程（新帖子） | 粗加工、提炼、归档 | investment-coarse-processor → investment-refine |
 | 仅粗加工 | 粗加工、归档 | investment-coarse-processor |
 | 仅提炼 | 提炼 | investment-refine（前置：原始资源须存在该文档且 `status=待提炼`；否则先从粗制品粗加工） |
-| 帖子集提炼 | 帖子集提炼、采集后提炼 | investment-refine（#29 例外：直接从粗制品提炼 → 删源文件） |
+| 帖子集提炼 | 帖子集提炼、采集后提炼 | investment-refine（#29 例外：**直接从 `post_history` 库内原文提炼**，不产生/不读取 vault 文件） |
 | 截图/链接直投 | （用户发送雪球截图+链接） | #30 直投路径：粗制品(临时) → 提炼 → 删源文件 |
 | 审查 | 审查、review、健康度 | investment-review |
 | 查看全貌 | 投资框架、框架全貌、pipeline | 输出框架说明 |
@@ -64,7 +64,7 @@ compatibility: 通用
 - **若原始资源中已存在 `status=待提炼` 的该文档**：直接进入 `investment-refine`。
 - **若原始资源中不存在**（即没有 `status=待提炼` 的记录）：说明文档仍在 `工作区/粗制品/`，编排者须先调用 `investment-coarse-processor` 完成粗加工（粗加工会将其移入原始资源并置 `status=待提炼`），再进入 `investment-refine`。**不要跳过粗加工、直接在粗制品上提炼。**
 - 用户说「粗加工+提炼」「全流程」「归档」时，自然走「粗加工 → 提炼」串联，无需额外判断。
-- **例外（#29 帖子集）**：`type: 帖子集` 直接从粗制品提炼，跳过粗加工和原始资源，提炼后源文件移废纸篓。提炼路由同 #30：言论 / 买卖 / 预测 → `blogger_statement`/`blogger_trade` 落库（画像单轨，不写画像 md）；有框架价值 → 同时产出 wiki 条目；二者可兼得。
+- **例外（#29 帖子集）**：雪球帖子集**直接从 `post_history` 库内原文提炼**（采集时已落库、采集产物 md 已在入库校验后清理），跳过粗加工和原始资源，**不读也不产生 vault 文件**。提炼路由同 #30：言论 / 买卖 / 预测 → `blogger_statement`/`blogger_trade` 落库（画像单轨，不写画像 md）；有框架价值 → 同时产出 wiki 条目；二者可兼得。
 - **例外（#30 截图/链接直投）**：用户直接发送雪球截图（可能多张）+ 出处链接 + 关联股票。等同于 post-fetch 采集的博主言论，跳过粗加工和原始资源。路径：粗制品(临时) → 直接提炼 → 删源文件。提炼路由由 agent 判断内容类型：言论追踪 / 买卖记录 / 预测记录 → 对应博主画像文件；有框架价值 → 同时产出 wiki 条目。
 
 ### 粗加工 → investment-coarse-processor
@@ -73,9 +73,9 @@ compatibility: 通用
 
 ### 提炼 → investment-refine（直接执行）
 
-**第一步：分析原文**——读取源文件全文（常规：原始资源；帖子集：粗制品），分析内容，判断归属层、分类、标签、库内关系。
+**第一步：分析原文**——读取原文全文（常规：原始资源文件；**帖子集：`post_history` 库内原文**，MCP `post_history` `action=get`/`check`），分析内容，判断归属层、分类、标签、库内关系。
 **第二步：创建条目**——按分析结果直接创建框架条目文件。如涉及已登记博主，更新博主档案；如涉及宏观事件，创建/更新宏观文件。
-**第三步：汇报 + 收尾**——向用户报告产出条目；将源文件 status 改为 `已提炼`（常规）或移入废纸篓（帖子集 #29）。
+**第三步：汇报 + 收尾**——向用户报告产出条目；常规路径把源文件 status 改为 `已提炼`（帖子集 #29 无源文件：采集产物在入库校验后已清理，「已提炼」用 `statements.source_url` 反查确认）。
 
 ### 审查 → investment-review
 
@@ -131,9 +131,9 @@ compatibility: 通用
 | MACRO_DIR | {VAULT_ROOT}/宏观 | 通用宏观框架与分析工具 |
 | MACRO_BLOGGER | {BLOGGER_DIR}/{博主名}/宏观 | 该博主对具体宏观事件的分析 |
 | MACRO_OTHER | {OTHER_DIR}/宏观 | 未登记投资人对具体宏观事件的分析 |
-| ROUGH_DIR | {VAULT_ROOT}/工作区/粗制品 | 粗制品暂存 |
+| ROUGH_DIR | {VAULT_ROOT}/工作区/粗制品 | 粗制品暂存（**2026-09-12 起雪球帖子集不再落这里**：采集直落 post_history，见 #29/#41） |
 | RAW_DIR | {VAULT_ROOT}/工作区/原始资源 | 粗加工后原始资源 |
-| 原文库 post_history | 看板 MySQL `post_history` 表（**采集原文留档；唯一用途=避免重采**）。写：`~/Project/investment-console/scripts/import-post-history.js <帖子集.md>`（批量）或 `MCP post_history action=upsert`；读：`MCP post_history action=get/check` | 需要回顾/重新提炼时先查这里，有原文就不必再抓（规则 #41） |
+| 原文库 post_history | 看板 MySQL `post_history` 表（**采集落点 + 提炼前原文；只存帖子必要信息，不存提炼产物**）。写：`~/Project/investment-console/scripts/import-post-history.js [--rm] <采集产物.md>`（批量；--rm 落库后清临时产物）或 `MCP post_history action=upsert`；读：`MCP post_history action=get/check` | 提炼的原文来源、回顾/重新提炼先查这里（规则 #41） |
 | 本地看板启动器 | `~/Project/investment-console/scripts/run-server.sh`（launchd `com.investment-console` 的 ProgramArguments 指向它；自愈 node 路径） | 看板 8698 启动/排障（详见 references/console-guide.md §8.5） |
 | 博主控制台 | 看板 MySQL `bloggers` 表（读 GET /api/bloggers/live、写 POST /api/bloggers 与 /api/bloggers/update；vault 工作区/博主控制台.md 已于 2026-09-07 退役删除） | 博主注册权威（编号/别名/雪球ID/平台/特别关注/信息截止） |
 

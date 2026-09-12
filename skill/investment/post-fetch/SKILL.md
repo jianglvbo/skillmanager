@@ -49,7 +49,7 @@ compatibility: 通用
 | xq_id | int | 否 | — | 雪球用户 ID（与 blogger_name 二选一；均不传则默认采集全部博主） |
 | blogger_name | string | 否 | — | 博主名称，从看板博主控制台（MySQL bloggers 表 `xueqiu_id` 字段）解析（与 xq_id 二选一；均不传则默认全部） |
 | max_posts | int | 否 | 50 | 最大采集条数 |
-| output_dir | path | 否 | {VAULT}/工作区/粗制品 | 输出目录（vault 相对路径 `工作区/粗制品`，见 investment-framework 路径表 ROUGH_DIR） |
+| output_dir | path | 否 | `~/.cache/xueqiu-spyder/out`（vault 外临时目录） | 采集产物输出目录。**2026-09-12 起不再写 vault 的 `工作区/粗制品`**：采集产物是临时文件，落库 post_history + 入库校验通过后即清理（见第三步之二/之三与规则 #41） |
 
 **时间窗口**：采集范围 = 看板博主控制台「信息截止」（MySQL bloggers 表 `info_cutoff`；API /api/bloggers/live 可读）（ISO `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间支持同日多次采集去重。新增博主默认半年前 17:50:00。
 
@@ -85,7 +85,7 @@ curl -s http://127.0.0.1:9222/json/version  # CDP 可达（端口被占用时按
 ```bash
 $PY {xueqiu-spyder}/main.py user {xq_id} \
   --from "{info_cutoff}" --to "{now_iso}" --max-pages {N} \
-  --outfile "雪球采集-{nickname}-{YYYY年M月D日}.md" --output "{输出目录}"
+  --outfile "雪球采集-{nickname}-{YYYY年M月D日}.md" --output "{输出目录}"   # 输出目录＝vault 外临时目录（默认 ~/.cache/xueqiu-spyder/out）
 ```
 - `now_iso` 先取：`date "+%Y-%m-%dT%H:%M:%S"`
 - **`{N}` 按窗口长度取**（硬约束，不得沿用默认 10）：≤24h→**3**、≤7 天→**5**、>7 天→10
@@ -101,9 +101,9 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 - 纯文本净化已生效（无 `![[`、`![](url)`、`<img>`、`[表情]` 占位残留；Unicode emoji 正文保留）
 - 不合格 → 修复后落 vault；合格 → 进入第四步
 
-### 第三步之二：原文落库 post_history（2026-09-11 新增，强制）
+### 第三步之二：原文落库 post_history（2026-09-11 新增，强制；2026-09-12 定位升级）
 
-**目的只有一个：避免重采。** 采集产物（帖子集 md）会随粗制品清理而消失，原文一旦没留档，日后想回顾/重新提炼就只能重抓——本轮就为此回采了 210 条、还因速率过快触发 WAF 405。故**每次采集验收通过后立即落库**：
+**这一步就是采集的落点**（2026-09-12 用户拍板）：帖子直接落 `post_history`，**提炼也从库里读原文**，采集产物 md 只是临时载体、**不再存进 vault 的 `工作区/粗制品/`**。它的意义有两条：① 提炼的唯一原文来源；② 避免重采——原文一旦没留档，日后想回顾/重新提炼就只能重抓（曾为此回采 210 条、还因速率过快触发 WAF 405）。故**每次采集验收通过后立即落库**：
 
 ```bash
 node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>"    # 可传多个文件
@@ -120,17 +120,19 @@ node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>
 
 **采集前可先查重**（可选，用于补采/回补场景）：MCP `post_history` 的 `action=check`（传 blogger + from/to）会返回该博主窗口内已留档的帖子清单（含 `platformPostId`、`contentHash`），据此跳过已采、只补缺口。
 
-**第三步之三：删除粗制品前的「已留档」操作门（2026-09-12 新增，强制）**
+**第三步之三：入库校验 + 清理临时产物（2026-09-12 新增，强制）**
 
-帖子集一旦提炼完就要清出粗制品，但**删除前必须逐帖确认原文已进 post_history**（是同一批次、正文一致，不是"我以为采过了"）：
+采集产物是临时文件，**清理前必须逐帖确认原文已进 post_history**（同一批次、正文一致，不是"我以为采过了"）：
 
 ```bash
-node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js --dir "{VAULT}/工作区/粗制品"
+node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js <采集产物.md>   # 或 --dir <临时目录>
+# 校验通过 → 清理临时产物（import 脚本一步到位）：
+node ~/Project/investment-console/scripts/import-post-history.js --rm <采集产物.md>
 # ✅ 每帖 url_hash 命中且 content_hash 与正文 md5 一致 → 可安全移废纸篓
 # ❌ 存在缺口 → 先补入库（或标记待补采），禁止删除
 ```
 
-判据：url_hash 命中 + content_hash 一致才算留档；标「摘要」的帖按设计不入库（列出但不计缺口）；无 `[原文]` 链接 / 博主未建档 计缺口。退出码 0=可删 / 1=有缺口。2026-09-12 首次执行：75 个文件里 74 个 ✅（863 帖全部留档）、1 个 ❌（未提炼的 `庶人哑士-2026年09月09日-new.md`，22 帖未入库 → 保留）。
+判据：url_hash 命中 + content_hash 一致才算留档；标「摘要」的帖按设计不入库（列出但不计缺口）；无 `[原文]` 链接 / 博主未建档 计缺口。退出码 0=可清临时产物 / 1=有缺口（先补入库）。
 
 ### 第四步：向用户报告摘要
 
@@ -161,7 +163,7 @@ node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js --dir "{V
 
 ### 采集完成即结束
 
-本 skill 仅负责采集编排。产出帖子集按 `framework-rules.md` #29 例外流程，由 investment-refine **直接执行**提炼（不进原始资源、不需确认、提炼后源文件移废纸篓），精华去糟粕清单见 `references/refine-checklist.md`。采集阶段不分析内容。
+本 skill 仅负责采集编排。采集产物落 `post_history` 后（第三步之二/之三），按 `framework-rules.md` #29 例外流程由 investment-refine **从库内原文直接执行**提炼（不进原始资源、不读 vault 文件、不需确认），精华去糟粕清单见 `references/refine-checklist.md`。采集阶段不分析内容。
 
 > **`[原文]` 链接是画像表原文链接的唯一权威来源**：每帖输出均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})`，采集阶段须确保**每帖都带、不得丢弃**——后续提炼填充博主画像三表「原文链接」列（framework-rules #35）一律取自此链接，禁止填采集批次名、禁止留空。
 
@@ -183,7 +185,7 @@ node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js --dir "{V
 | **关注列表同步** | `scripts/xq_sync_console.py` | 同步 + 看板对比（dry-run/--apply；依赖 browser-act + 已登录 session） | **执行** |
 | **info_cutoff 双写** | `scripts/xq_update_cutoff.py` | 画像 + 看板 MySQL 双写（参数：nickname/ISO时间） | **执行** |
 | 存量批次净化 | `scripts/clean_legacy_batches.py` | 旧批次帖子集清洗到纯文本基线（--dry-run/--dir） | **执行** |
-| **删源前操作门** | `scripts/check-post-history-covered.js` | 逐帖校验原文已留档（url_hash + content_hash），进废纸篓前强制跑 | **执行** |
+| **清临时产物前操作门** | `scripts/check-post-history-covered.js` | 逐帖校验原文已落 post_history（url_hash + content_hash），清理临时采集产物前强制跑 | **执行** |
 | 摘要帖二次补全 | `scripts/xq_refetch_summary.py` | 标「摘要」帖导航详情页补全（依赖 browser-act；--dir/--date） | **执行** |
 | **采集执行（工具层）** | xueqiu-spyder SKILL.md + main.py | 抓取 CLI、参数、输出格式（编排时加载） | 读取/执行 |
 
@@ -211,7 +213,8 @@ node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js --dir "{V
 - [ ] **`--max-pages` 按窗口长度取值**（≤24h→3、≤7 天→5、>7 天→10），未沿用默认 10？
 - [ ] **批量采集每 10 位暂停 60 秒**（节流）？
 - [ ] **采集产物已落 post_history**（`import-post-history.js`，摘要帖与无链接帖按规则跳过）？
-- [ ] **删除/移废纸篓前已过「已留档」操作门**（`check-post-history-covered.js` 返回 0，缺口文件保留）？
+- [ ] **临时采集产物清理前已过入库校验**（`check-post-history-covered.js` 返回 0；有缺口则保留产物先补入库）？
+- [ ] **未把帖子集写进 vault 的 `工作区/粗制品/`**（采集产物只在 vault 外临时目录）？
 - [ ] 时间窗口 = info_cutoff → 当前，置顶帖已排除？
 - [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter/三件套/发布行/纯文本）？
 - [ ] 每帖均带 `[原文]` 链接？

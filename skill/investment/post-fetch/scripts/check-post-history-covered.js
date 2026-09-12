@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-/* 帖子集「已留档」校验器（删除粗制品前的操作门 · 2026-09-12 新增）
+/* 采集产物「已入库」校验器（清理临时产物前的操作门 · 2026-09-12 新增）
  *
- * 用途：粗制品里的帖子集在**删除/移废纸篓前**，逐帖确认原文已进 post_history
- *      （url_hash 存在 + content_hash 一致），杜绝「原文没留档就被删」——
- *      这正是 post_history 存在的唯一意义（规则 #41：避免重采）。
+ * 用途（2026-09-12 用户拍板定位）：采集直接落 post_history、**帖子集不再存 vault 粗制品**，
+ *      采集产物 md 只是临时文件——**清理它之前**逐帖确认原文已进 post_history
+ *      （url_hash 存在 + content_hash 一致），杜绝「原文没留档就被清」——
+ *      这正是 post_history 存在的意义（规则 #41：提炼原文来源 + 避免重采）。
  *
  * 判据：
  *   - 每帖的 url_hash 必须命中 post_history，且 content_hash 与正文 md5 一致
@@ -11,9 +12,9 @@
  *   - 博主未建档 / 无 [原文] 链接 的帖列入缺口
  *
  * 用法：
- *   node check-post-history-covered.js <帖子集.md> [...]     # 校验指定文件
- *   node check-post-history-covered.js --dir <目录>          # 校验目录下全部帖子集
- * 退出码：0=全部已留档（可安全删除）/ 1=存在缺口（禁止删除）/ 2=用法错误
+ *   node check-post-history-covered.js <采集产物.md> [...]   # 校验指定文件
+ *   node check-post-history-covered.js --dir <临时目录>       # 校验目录下全部采集产物
+ * 退出码：0=全部已入库（可安全清理临时产物）/ 1=存在缺口（禁止清理，先补入库）/ 2=用法错误
  */
 const fs = require('fs');
 const path = require('path');

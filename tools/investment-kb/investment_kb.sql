@@ -20,8 +20,10 @@
 --     ① 分层命名：**采集层叫「帖子」→ post_*；提炼后叫「言论」→ statement_***
 --        —— 六张言论表 statement_trade/predict/research/view/insight/chat + 只读 UNION 视图 `statements`
 --        + 序列 statement_id_seq + 子表 statement_verify_sub/statement_review_sub（_sub）＋关联表 _rel；
---        `post_history` 属帖子层，表名与列名（posted_at/platform_post_id/post_id）保持 post_ 前缀不变；
---        其 `post_id` 存「该帖提炼后的言论 id」（帖子层→言论层的回指，列名不变、注释写明语义）。
+--        `post_history` 属帖子层，表名与列名（posted_at/platform_post_id）保持 post_ 前缀不变；
+--        **post_history 只存帖子必要信息**（2026-09-12 用户拍板）：它是采集落点 + 提炼前原文，
+--        不存提炼产物（原来的 content_type/stance/signal_text/entities_json/post_id/refined_at 六列已删，
+--        「这帖提炼了吗」用 statements.source_url 反查）。
 --     ② 实体三表取代 prediction_subjects：`stocks`（个股：name/code/market_code/aliases/hk_connect）、
 --        `industries`（行业）、`markets`（市场：A股/港股/美股/韩股…）；宏观/认知/策略类概念不是实体。
 --     ③ 关联六表（全部 _rel）：statement_blogger_rel（言论必挂博主）/ statement_stock_rel /
@@ -217,16 +219,10 @@ CREATE TABLE post_history (
   `retweet_count` int unsigned DEFAULT NULL COMMENT '转发数',
   `like_count` int unsigned DEFAULT NULL COMMENT '点赞数',
   `fetch_method` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '采集方式',
-  `src_rel` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径',
+  `src_rel` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径（历史批次专用；2026-09-12 起采集直接落库，新行不写）',
   `collector` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '采集者',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `content_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '提炼后的帖子类型，字典项 dict.type=post_content_type',
-  `stance` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '提炼后的信号方向，字典项 dict.type=stance',
-  `signal_text` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '提炼后的信号内容',
-  `entities_json` json DEFAULT NULL COMMENT '提炼出的实体快照',
-  `post_id` bigint unsigned DEFAULT NULL COMMENT '该帖提炼后的言论 id，指向六张言论表之一（post_history 属帖子层，列名保持 post_ 前缀）',
-  `refined_at` datetime DEFAULT NULL COMMENT '提炼时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_url` (`url_hash`),
   UNIQUE KEY `uk_blogger_post` (`blogger_id`,`platform_post_id`),

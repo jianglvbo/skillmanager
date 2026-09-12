@@ -57,7 +57,7 @@ compatibility: 通用
 - 原始资源中已存在该文档且 `status=待提炼` → 直接进入本 skill。
 - 原始资源中**不存在**该文档 → 说明仍在 `工作区/粗制品/`，编排者应先调用 `investment-coarse-processor` 粗加工（置 `status=待提炼`），再进入本 skill。
 
-**例外路径（#29 帖子集）**：`type: 帖子集` 的文档直接从 `工作区/粗制品/` 读取执行，不经粗加工、不进原始资源（framework-rules #29）。
+**例外路径（#29 帖子集，2026-09-12 改为「从 post_history 直提」）**：雪球帖子集的**原文已在采集时落 `post_history`**，提炼直接从库内读取执行（MCP `post_history` `action=get` 单帖全文 / `action=check` 按博主+时间窗列清单），**不经粗加工、不进原始资源、不读也不产生 vault 文件**（framework-rules #29/#41）。
 
 > **摘要帖不可提炼（2026-09-09 用户确认，硬约束）**：帖子集里标「摘要」的帖（详情页风控未补全全文、内容不完整）**一律跳过，不得提炼**。判定以每帖摘要行的 `全文` / `摘要` 标记为准；文件 frontmatter `status: "待提炼-含摘要"` 表示存在此类帖。提炼只处理标「全文」的帖，并在汇报中列出跳过的摘要帖数量（提示用户可补全后重提炼）。
 
@@ -99,11 +99,11 @@ compatibility: 通用
 
 | 顺序 | 来源 | 工具 |
 |:--|:--|:--|
-| ① | `post_history` 原文库（采集时留档的提炼前原文） | MCP `post_history` → `action=get`（传 `url`）或 `action=check`（传 `blogger`+`from`/`to` 列清单） |
-| ② | vault 帖子集 / 原始资源文件 | 常规读取 |
+| ① | **`post_history` 原文库（采集落点 + 提炼前原文；帖子集路径的默认也是唯一来源）** | MCP `post_history` → `action=get`（传 `url`）或 `action=check`（传 `blogger`+`from`/`to` 列清单） |
+| ② | vault 原始资源文件（仅常规路径） | 常规读取 |
 | ③ | 上两者都没有 → 才回采 | 按 `source_url` 单帖回采，**遵守 post-fetch `execution-guide.md` 的单帖限流**（≈0.7 req/s、405 退避 300s），回采后顺手 `post_history` `action=upsert` 落库 |
 
-> `post_history` 的唯一用途是**避免重采**：它不参与提炼逻辑，只是原文留档（`rawText` + 形态 + 发帖时间 + 互动数）。提炼产物仍落 `statements`（六表 + 视图）。
+> `post_history` 的用途有二（2026-09-12 用户拍板）：① **提炼的原文来源**（帖子集路径直接从这里读，不再落 vault 文件）；② **避免重采**。它不参与归类判定、也不存提炼产物（内容类型/信号/实体快照/言论回指六列已删），提炼产物仍落 `statements`（六表 + 视图）。
 
 ### 第一步：分析原文
 
