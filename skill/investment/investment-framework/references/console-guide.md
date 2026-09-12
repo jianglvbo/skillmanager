@@ -163,7 +163,7 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 - **原文留档**（2026-09-11 新增）→ `post_history` 表：采集验收后由 post-fetch 调 `scripts/import-post-history.js` 落库（摘要帖/无链接帖不入库）；提炼侧第 0.5 步与补采场景用 `MCP post_history`（`check` 查窗口内已留档、`get` 取原文）——**目的是避免重采**，不参与提炼判定。规则见 framework-rules #41
 - **待读/已读**（2026-09-12 用户要求）→ 言论「阅读状态」：`statement_*` 六表的 `is_read`（默认 1=已读），
   看板四层徽标＝菜单角标（总待读）/ 四维度 tab 角标 / 列表卡右上角待读数 / 言论卡**左侧红条**（不写文字，用户 2026-09-12 要求）；
-  用户划过言论卡（停留 500ms）由前端 `POST /api/statement/read` 置已读（**只写库、界面不自动刷新**——
+  用户把言论卡**向上滑出可视区**（首屏就在屏上的不算）由前端 `POST /api/statement/read` 置已读（**只写库、界面不自动刷新**——
   切菜单/换维度重读数据时标识才消失），四个维度 tab 角标与菜单角标**同款同位置**（`.nav-badge`），agent 侧维护用 `MCP statement_read`；
   **言论列表排序＝未读优先 + 时间倒序**（服务端 SQL 与前端混排同一口径）
   （stats/read/unread/all-read）。**agent 不主动标待读**（见 framework-rules #51）
