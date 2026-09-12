@@ -33,6 +33,10 @@
 --     ⑤ 回指方向（2026-09-12 用户纠正）：**六张言论表 → post_history**（各表带 `post_history_id`），
 --        不由 post_history 指出去；`post_history` 只存帖子必要信息，且**只保留 30 天**（滚动窗口，
 --        `scripts/purge-post-history.js` 清理；言论行的 post_history_id 允许悬空）。
+--     ⑥ 死字段清理（2026-09-12 用户：「看似有用，实测无用的字段都删掉」）：
+--        post_history 删 edited_at（全 NULL）/ fetch_method、collector、platform_code（常量）/ src_rel（批次文件已不进 vault）；
+--        industries 删 code（全 NULL）、sort_order、enabled（常量）；stocks 删 enabled（常量）、sort_order（常量）；markets 删 enabled（常量）。
+--        post_history 现 18 列，只留帖子必要信息。
 --     ⑤ 弃用对象一律**删前备份、然后 DROP**，不留 _del 残表；派生索引（vault 文件/标签）不落库，内存扫描。
 --     ⑥ 表注释只写「XX表/XX子表」，字段注释平实直述，码值字段标注 `dict.type`。
 -- ============================================================
@@ -206,7 +210,6 @@ CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `blogger_id` bigint unsigned NOT NULL COMMENT '博主 id，指向博主表',
   `blogger` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名',
-  `platform_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '平台，字典项 dict.type=platform',
   `platform_post_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '平台内帖子 id',
   `source_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '原文链接',
   `url_hash` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '原文链接的 md5，唯一键',
@@ -215,15 +218,11 @@ CREATE TABLE post_history (
   `raw_text_len` int unsigned NOT NULL DEFAULT '0' COMMENT '原文长度',
   `form` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态',
   `posted_at` datetime NOT NULL COMMENT '发帖时间',
-  `edited_at` datetime DEFAULT NULL COMMENT '平台侧最后编辑时间',
   `fetched_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '采集时间',
   `content_hash` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '原文内容的 md5，重采时比对',
   `reply_count` int unsigned DEFAULT NULL COMMENT '回复数',
   `retweet_count` int unsigned DEFAULT NULL COMMENT '转发数',
   `like_count` int unsigned DEFAULT NULL COMMENT '点赞数',
-  `fetch_method` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '采集方式',
-  `src_rel` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径（历史批次专用；2026-09-12 起采集直接落库，新行不写）',
-  `collector` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '采集者',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -552,8 +551,6 @@ CREATE TABLE stocks (
   `aliases` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '别名，逗号分隔，如 寒王,寒武纪-U',
   `keywords` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主营/产品关键词，逗号分隔，用于判定「文中该产品词是否指这只股」（F7 同句共现）；通用词只放这里，不放 aliases',
   `hk_connect` tinyint(1) DEFAULT NULL COMMENT '是否港股通',
-  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
-  `enabled` tinyint NOT NULL DEFAULT '1' COMMENT '是否启用',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -565,9 +562,6 @@ CREATE TABLE stocks (
 CREATE TABLE industries (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '行业名称',
-  `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '行业代码',
-  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
-  `enabled` tinyint NOT NULL DEFAULT '1' COMMENT '是否启用',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -580,7 +574,6 @@ CREATE TABLE markets (
   `code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '市场码：a/hk/us/kr…',
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '市场名称：A股/港股/美股/韩股',
   `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
-  `enabled` tinyint NOT NULL DEFAULT '1' COMMENT '是否启用',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
