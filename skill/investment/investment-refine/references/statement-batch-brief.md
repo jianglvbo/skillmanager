@@ -38,8 +38,8 @@
 
 ```json
 console_ensure_subject { "consoleType":"stock|industry|market", "name":"", "code":"", "market":"A股|港股|美股", "hkConnect":true }
-blogger_statement { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "statementDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", "srcRel":"工作区/粗制品/批次文件名.md" }
-blogger_trade   { "action":"add", "blogger":"", "targetName":"", "targetAlias":"", "price":"", "stance":"", "tradeDate":"", "statementDate":"", "subjectId":N, "industryName":"", "sourceUrl":"", "srcRel":"" }
+blogger_statement { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "statementDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", }
+blogger_trade   { "action":"add", "blogger":"", "targetName":"", "targetAlias":"", "price":"", "stance":"", "tradeDate":"", "statementDate":"", "subjectId":N, "industryName":"", "sourceUrl":"", }
 console_add_prediction  // predict 言论落库后调用，回填 origin（参数见工具，勿臆造）
 ```
 
