@@ -45,7 +45,7 @@ CREATE TABLE dict (
   PRIMARY KEY (`type`,`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典表';
 
--- dict 内容快照（123 行；type 分组）
+-- dict 内容快照（125 行；type 分组）
 INSERT INTO dict (type, code, name, sort_order, enabled, remark) VALUES
   ('ambiguous_word', '小米', '小米', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
   ('ambiguous_word', '美的', '美的', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
@@ -67,6 +67,8 @@ INSERT INTO dict (type, code, name, sort_order, enabled, remark) VALUES
   ('entity_type', 'stock', '个股', 2, 1, NULL),
   ('entity_type', 'industry', '行业', 3, 1, NULL),
   ('entity_type', 'market', '市场', 4, 1, NULL),
+  ('food_homonym', '小米', '小米', 0, 1, '与食物/日用品同名的股名：需证券语境词或产品词才判 link，仅动作词判 doubt'),
+  ('food_homonym', '苹果', '苹果', 0, 1, '与食物/日用品同名的股名：需证券语境词或产品词才判 link，仅动作词判 doubt'),
   ('layer', 'my', '我的', 1, 1, '个人总结/自建框架层'),
   ('layer', 'blogger', '博主', 2, 1, '博主画像及其产出层'),
   ('layer', 'other', '其他', 3, 1, '引用/外部资料层'),
@@ -347,7 +349,7 @@ CREATE TABLE mention_case (
   PRIMARY KEY (`id`),
   KEY `idx_alias` (`alias`),
   KEY `idx_verdict` (`verdict`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提及判定案例表';
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提及判定案例表';
 
 -- ============ 四、言论六表（一条帖子只落其中一张） ============
 CREATE TABLE statement_trade (
