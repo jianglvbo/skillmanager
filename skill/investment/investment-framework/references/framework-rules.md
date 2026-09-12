@@ -233,6 +233,13 @@
     - **优先还原而非就地清洗**：能从落库源（子任务 JSON / load 脚本 / backups）取回原值的，一律还原；就地正则清洗只作为兜底。
     - **可回滚**：动手前留快照（`SELECT ... INTO OUTFILE` 或 JSON dump 到 `backups/`），写明删除/修改原因。
 
+45. 方法论「产物优先」——不设「可迁移方法论」标签（2026-09-12 用户拍板）：
+    - **判定与展示分离**：「这条心得可不可以迁移到别的标的/时间上用」是**提炼时的判断**；页面上**只显示产物**——有产物 → 「已具象化：<框架条目文件>」（可点击本地打开，见 #44 的 wiki_ref），没有产物 → 什么都不显示。
+    - **禁止再引入「应该有产物」这类标签字段**：`post_insight.transferable` 已于同日删除（删前快照 `backups/drop_transferable_20260912/`）。删除理由：它是**空头承诺**——135 条心得里 101 条被标「可迁移」，却**没有一条真有产物**（`wiki_ref` 全空）；而且判据从未进规范，标注不可信。
+    - **提炼侧要求**：一条可迁移的方法/纪律/原则，**要么落成框架条目并回填 `wikiRef`，要么就只当经历留在正文**——不要用「标记一下」代替「做出来」。
+    - **审查侧要求**：`investment-review` 看 **`insight` 帖的具象化覆盖率**（当前 4/135）作为「方法论沉淀不足」的信号，人工复核哪些该补条目；不得依赖已删除的标签字段做自动化统计。
+    - **字段语义单一化**：每个字段只表达一种事实（产物路径就是产物路径，状态就是状态，码值就是码值）；不要用「是不是某类东西」的布尔去承载「做过没做过」。
+
 44. 数据库结构与命名规则（2026-09-11 拍板 + 2026-09-12 两次收口，投资看板 investment_kb）：
     - **命名（2026-09-12 用户定）**：**帖子一律 `post`，不用 `stmt`/`statement`**——六张分表 `post_trade`/`post_predict`/`post_research`/`post_view`/`post_insight`/`post_chat`，视图 `posts`，序列 `post_id_seq`；**子表 `_sub`**（`post_verify_sub` 验证 / `post_review_sub` 复核建议 / `review_check_sub` 审查逐项 / `refine_target_sub` 提炼产出）、**关联表 `_rel`**（`post_entity_rel` 帖子↔实体、`post_rel` 帖子↔帖子）；MCP 工具同步为 `blogger_post` / `console_post_review`，入参 `postId`。
     - **弃用表直接 DROP（2026-09-12 用户定，替代原「加 `_del` 保留」）**：确认不再使用的表**删前先导出 DDL+数据到 `backups/`，然后 DROP**，库里不留 `_del` 残表。已删：`blogger_trades_del`、`files_del`、`file_tag_rel_del`、`tags_del`、`trash_records_del`、`sync_state_del`、`prediction_records_del`、`predictions_del`、`prediction_tracks_del`（备份 `backups/drop_del_20260912/`）、**`coarse_records`**（粗制品状态表：早已无写入方，页面「已加工」状态改由 `refine_records.from_rel` 推导，备份 `backups/drop_20260912b/`）。

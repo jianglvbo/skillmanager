@@ -139,6 +139,8 @@
 
 > **判定法**：**去掉后可提炼的信息 = 0** → 丢弃。丢弃不写库、不建条目，仅在提炼汇报中列出数量与理由；**遇到「六类全不命中但又不像上述三类」的内容，禁止静默丢弃，须单列「⚠ 待确认分类」交用户裁决**。
 
+**雪球组合不是主题（2026-09-12 用户指出 `miniAAA` 被误建为个股）**：帖子里形如 `$组合名(ZH123456)$` 的是**雪球组合**（往往是别人的组合），**不入个股/行业/市场三大主题**，也不建 `console_ensure_subject`。处理方式：组合名连同代号原样留在 `target` 文本里（如 `miniAAA(ZH3207194)`），正文照录；组合的收益/调仓本身不构成对该组合所持个股的判断。**同类**：纯小写拉丁短名（如 `cww`）是博主的代称/未识别代号 → 先用原文线索还原成真名，还原不了就只留 `target` 文本、不建主题（不要拿代号当主题名）。服务端已内置门禁拦截这两类。
+
 **优先级（2026-09-10 更新）**：**P1 必查必录** = `trade 买卖记录` / `research 研究` / **`predict 预测记录`**（2026-09-10 用户拍板由 P2 提升）→ P2 = `view 观点` / `insight 心得总结` → P3 `chat 闲聊`（高门槛）。
 
 > **`predict` 提为 P1 的理由**：预测是**可验证判断**，漏录即永久丢失验证样本（无法回补准确率）；且看板预测控制台的验证闭环依赖言论库侧可查。
@@ -153,7 +155,7 @@
 | `predict` | 必是 | `blogger_post` → `posts`(predict) + 预测控制台。**`stance` 必填**，`view_date` 取博主下判断的时点。**结构化字段（2026-09-10 新增）**：`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`statusCode`/`verifyDate`/`verifyResult` —— 预测验证闭环在言论表内可直接查询，免 JOIN（预测与验证留痕：`post_predict` + 子表 `post_verify_sub`） | 否 |
 | `view` | 是 | `blogger_post` → 言论库（看板言论追踪）。**不填 `stance`**（2026-09-11 用户确认：方向只在买卖/预测需要） | 否 |
 | `view` | 否 | — | 有价值 → wiki；无价值 → 舍弃 |
-| `insight` | 是 | `blogger_post` → 言论库（看板言论追踪）。**结构化字段**：`transferable`（可迁移性）/`wikiRef` | 仅当沉淀方法论 |
+| `insight` | 是 | `blogger_post` → 言论库（看板言论追踪）。**结构化字段**：`wikiRef` | **方法论的价值＝有没有产物**：可迁移的原则必须具象化成框架条目并回填 `wikiRef`（卡片显示「已具象化：<文件>」）；只描述经历的留在正文，不额外打标签 |
 
 > **`predict` 的结构化信息去向（2026-09-11 收敛：预测即言论行）**：预测类言论落库后，**参考价/目标价/目标时间/状态/验证结果就写在这一行 `post_predict` 本体**（`ref_price`/`target_price`/`target_date`/`date_precision`/`status_code`/`verify_date`/`verify_result`）——独立预测表 `predictions` 已退役为 `predictions_del`，`prediction_stmt_rel` 亦随之退役（预测与言论本来就是同一行，无需关联表）。调用方照常传 `refPrice/targetPrice/targetDate/datePrecision/verify*`；`subjectId` 仍是主题入参（同时写入维度关联表）。
 | `insight` | 否 | — | 有价值 → wiki；否则舍弃 |
