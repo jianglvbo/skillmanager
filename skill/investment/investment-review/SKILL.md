@@ -51,6 +51,8 @@ compatibility: 通用
 **C7**：关联备注——为缺少跨条目关联的条目补充脚注（脚注类型和格式见 `investment-framework/references/footnote-taxonomy.md`），在正文相关论述处嵌入标记，文末脚注定义（无 ## 脚注 标题、无 --- 分隔线）写 wikilink + 关系类型 + 一句话说明
 **C8**：关系依据复核——逐条打开文件中**已存在**的关联脚注，核对目标文件原文是否支撑其关系声明；无依据的一律记为"编撰关系"，在报告中建议删除或降级为 enhance（见 footnote-taxonomy.md「关系依据校验」）
 **C9**：输出内容审查报告
+**C0（2026-09-12 新增）：别名与规则迭代核对**——审查时对「个股指代」做一次回看：① 言论里出现、但 `stocks.aliases` 未登记的称呼 → 补登（`stock_alias`）；② 被误挂的常用词（如「好美的风景」→ 美的集团）→ 改正关联 + 若缺歧义标记则 `mark-ambiguous` + 把案例写进 `stock-mention-rules.md` 误判清单；③ 报告里单列「本次新增别名 / 新增歧义词 / 规则修订」三项，做到**知识随审查沉淀**。
+
 **C10**：言论追踪审计（**2026-09-12 起兼看「insight 帖具象化覆盖率」**——方法论沉淀是否只在嘴上说：该有框架条目的心得帖要有 `wiki_ref`（当前 4/135，缺口大）；不依赖已删除的 `transferable` 标签字段；**2026-09-11 扩一项原文留档覆盖率**：查 MySQL `post_history` 与 `statements` 的对照——近批采集是否都有留档、留档的 `form`/`raw_text_len` 是否缺失，用于发现「采集漏落库」；只报告不修改，缺留档不阻断审查，仅提示后续采集补上）——执行 `scripts/tracks_audit.py --vault <vault路径>`（可选 `--mysql`，凭据经环境变量 `DB_PASS` 注入、勿硬编码），核对 MySQL `statements` 数据质量（缺原文链接/direction 码值合法性/标的占位残留；买卖帖＝`statement_trade` 言论行，已无独立买卖表）；画像 md 已彻底废弃（2026-09-12：服务端删除全部回写代码与 `/api/blogger/resync` 端点，存量文件由用户自行删除），不再做 md↔DB 对照；只报告不修改，问题并入内容审查报告
 
 ### 结构审查（编号 S1-S8）——审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。

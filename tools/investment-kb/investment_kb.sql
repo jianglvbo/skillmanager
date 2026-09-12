@@ -45,8 +45,10 @@ CREATE TABLE dict (
   PRIMARY KEY (`type`,`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典表';
 
--- dict 内容快照（126 行；type 分组）
+-- dict 内容快照（123 行；type 分组）
 INSERT INTO dict (type, code, name, sort_order, enabled, remark) VALUES
+  ('ambiguous_word', '小米', '小米', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
+  ('ambiguous_word', '美的', '美的', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
   ('category', 'analysis_framework', '分析框架', 1, 1, '方法论/思维框架类条目'),
   ('category', 'trading_system', '交易体系', 2, 1, '交易规则/体系类条目'),
   ('category', 'investment_mentality', '投资心态', 3, 1, '心态/心理类条目'),
@@ -165,11 +167,6 @@ INSERT INTO dict (type, code, name, sort_order, enabled, remark) VALUES
   ('target_type', 'wiki', '框架条目', 1, 1, '六大分类 wiki 框架条目'),
   ('target_type', 'blogger', '博主画像', 2, 1, '博主画像/言论追踪'),
   ('target_type', 'macro', '宏观条目', 3, 1, '宏观层条目'),
-  ('trade_op', 'buy', '买入', 1, 1, '建仓'),
-  ('trade_op', 'add', '加仓', 2, 1, '增持'),
-  ('trade_op', 'reduce', '减仓', 3, 1, '减持'),
-  ('trade_op', 'sell', '卖出', 4, 1, '卖出'),
-  ('trade_op', 'clear', '清仓', 5, 1, '全部清出'),
   ('verify_result', 'correct', '正确', 1, 1, '方向正确即正确'),
   ('verify_result', 'wrong', '错误', 2, 1, '方向相反/关键数值未兑现'),
   ('verify_result', 'revoked', '已撤销', 3, 1, '撤销验证');
@@ -196,7 +193,7 @@ CREATE TABLE bloggers (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`special`)
-) ENGINE=InnoDB AUTO_INCREMENT=67779 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=68256 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -548,7 +545,7 @@ CREATE TABLE stocks (
   UNIQUE KEY `uq_name` (`name`),
   KEY `idx_code` (`code`),
   KEY `idx_market` (`market_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=174 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股表';
+) ENGINE=InnoDB AUTO_INCREMENT=176 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股表';
 
 CREATE TABLE industries (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
