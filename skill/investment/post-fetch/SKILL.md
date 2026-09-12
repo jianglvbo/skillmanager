@@ -120,6 +120,18 @@ node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>
 
 **采集前可先查重**（可选，用于补采/回补场景）：MCP `post_history` 的 `action=check`（传 blogger + from/to）会返回该博主窗口内已留档的帖子清单（含 `platformPostId`、`contentHash`），据此跳过已采、只补缺口。
 
+**第三步之三：删除粗制品前的「已留档」操作门（2026-09-12 新增，强制）**
+
+帖子集一旦提炼完就要清出粗制品，但**删除前必须逐帖确认原文已进 post_history**（是同一批次、正文一致，不是"我以为采过了"）：
+
+```bash
+node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js --dir "{VAULT}/工作区/粗制品"
+# ✅ 每帖 url_hash 命中且 content_hash 与正文 md5 一致 → 可安全移废纸篓
+# ❌ 存在缺口 → 先补入库（或标记待补采），禁止删除
+```
+
+判据：url_hash 命中 + content_hash 一致才算留档；标「摘要」的帖按设计不入库（列出但不计缺口）；无 `[原文]` 链接 / 博主未建档 计缺口。退出码 0=可删 / 1=有缺口。2026-09-12 首次执行：75 个文件里 74 个 ✅（863 帖全部留档）、1 个 ❌（未提炼的 `庶人哑士-2026年09月09日-new.md`，22 帖未入库 → 保留）。
+
 ### 第四步：向用户报告摘要
 
 采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文，输出文件路径。
@@ -168,6 +180,7 @@ node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>
 | **关注列表同步** | `scripts/xq_sync_console.py` | 同步 + 看板对比（dry-run/--apply；依赖 browser-act + 已登录 session） | **执行** |
 | **info_cutoff 双写** | `scripts/xq_update_cutoff.py` | 画像 + 看板 MySQL 双写（参数：nickname/ISO时间） | **执行** |
 | 存量批次净化 | `scripts/clean_legacy_batches.py` | 旧批次帖子集清洗到纯文本基线（--dry-run/--dir） | **执行** |
+| **删源前操作门** | `scripts/check-post-history-covered.js` | 逐帖校验原文已留档（url_hash + content_hash），进废纸篓前强制跑 | **执行** |
 | 摘要帖二次补全 | `scripts/xq_refetch_summary.py` | 标「摘要」帖导航详情页补全（依赖 browser-act；--dir/--date） | **执行** |
 | **采集执行（工具层）** | xueqiu-spyder SKILL.md + main.py | 抓取 CLI、参数、输出格式（编排时加载） | 读取/执行 |
 
@@ -195,6 +208,7 @@ node ~/Project/investment-console/scripts/import-post-history.js "<帖子集.md>
 - [ ] **`--max-pages` 按窗口长度取值**（≤24h→3、≤7 天→5、>7 天→10），未沿用默认 10？
 - [ ] **批量采集每 10 位暂停 60 秒**（节流）？
 - [ ] **采集产物已落 post_history**（`import-post-history.js`，摘要帖与无链接帖按规则跳过）？
+- [ ] **删除/移废纸篓前已过「已留档」操作门**（`check-post-history-covered.js` 返回 0，缺口文件保留）？
 - [ ] 时间窗口 = info_cutoff → 当前，置顶帖已排除？
 - [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter/三件套/发布行/纯文本）？
 - [ ] 每帖均带 `[原文]` 链接？

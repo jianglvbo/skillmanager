@@ -23,7 +23,7 @@
 
 ## 2. 双时间
 
-- `view_date` 默认 = `post_date`（as_posted）
+- `view_date` 默认 = `statement_date`（as_posted）
 - 相对表述（"三年前"等）→ derived + `view_date_basis` 存原句，粒度不假装精确
 - **帖内无日期 → 两字段留空，不编造**；URL 缺失的帖见 §5
 
@@ -38,8 +38,8 @@
 
 ```json
 console_ensure_subject { "consoleType":"stock|industry|market", "name":"", "code":"", "market":"A股|港股|美股", "hkConnect":true }
-blogger_post { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "postDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", "srcRel":"工作区/粗制品/批次文件名.md" }
-blogger_trade   { "action":"add", "blogger":"", "op":"buy|add|reduce|sell|clear", "targetName":"", "targetAlias":"", "price":"", "stance":"", "tradeDate":"", "postDate":"", "subjectId":N, "sourceUrl":"", "srcRel":"" }
+blogger_statement { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "statementDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", "srcRel":"工作区/粗制品/批次文件名.md" }
+blogger_trade   { "action":"add", "blogger":"", "targetName":"", "targetAlias":"", "price":"", "stance":"", "tradeDate":"", "statementDate":"", "subjectId":N, "industryName":"", "sourceUrl":"", "srcRel":"" }
 console_add_prediction  // predict 言论落库后调用，回填 origin（参数见工具，勿臆造）
 ```
 
@@ -52,7 +52,7 @@ console_add_prediction  // predict 言论落库后调用，回填 origin（参�
 - **能成 wiki**：内容提供可脱离语境复用的判断逻辑/框架 → 才建（博主层模板 + verify-format）；不硬造
 - **⚠待确认**：分类不明/价值高去向不明 → 不写不丢，汇报「原文+原因+候选」
 - **#29 收尾**：批次处理完 `mv 工作区/粗制品/{批次}.md ~/.Trash/{批次}.20260906.md`（不可写则 rm 注明）
-- 博主画像 md 已废弃（2026-09-12 用户决定）：内容只在看板（`bloggers`/`posts` 表），**不写、不同步、不手改画像 md**
+- 博主画像 md 已废弃（2026-09-12 用户决定）：内容只在看板（`bloggers`/`statements` 表），**不写、不同步、不手改画像 md**
 
 ## 6. 汇报格式（极简，一次性）
 

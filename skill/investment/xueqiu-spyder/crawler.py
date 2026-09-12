@@ -35,6 +35,9 @@ CHROME_PATH = os.environ.get("XUEQIU_CHROME_PATH") or _default_chrome_path()
 USER_DATA_DIR = os.path.join(os.path.dirname(__file__), ".chrome-debug-profile")
 # 可用环境变量 XUEQIU_DEBUG_PORT 覆盖，避免与既有 9222 调试实例冲突
 DEBUG_PORT = int(os.environ.get("XUEQIU_DEBUG_PORT", "9222"))
+# 2026-09-12：Chrome 152 起 DevTools HTTP 端点只接受 Host=localhost，
+# 用 127.0.0.1 直连会返回 404（/json/version 不可用）。故主机名可覆盖，默认 localhost。
+DEBUG_HOST = os.environ.get("XUEQIU_DEBUG_HOST", "localhost")
 
 
 class CrawlerError(Exception):
@@ -78,7 +81,7 @@ class XueqiuCrawler:
         self._pw = sync_playwright().start()
         try:
             self._browser = self._pw.chromium.connect_over_cdp(
-                f"http://127.0.0.1:{DEBUG_PORT}"
+                f"http://{DEBUG_HOST}:{DEBUG_PORT}"
             )
             logger.info("已连接到运行中的 Chrome")
         except Exception:
@@ -86,7 +89,7 @@ class XueqiuCrawler:
             self._launch_chrome()
             time.sleep(3)
             self._browser = self._pw.chromium.connect_over_cdp(
-                f"http://127.0.0.1:{DEBUG_PORT}"
+                f"http://{DEBUG_HOST}:{DEBUG_PORT}"
             )
             logger.info("Chrome 启动并连接成功")
 
@@ -259,9 +262,22 @@ class XueqiuCrawler:
                     const m = document.body?.innerText?.match(/发布于\\s*(\\d{4}-\\d{2}-\\d{2}\\s*\\d{2}:\\d{2})/);
                     if (m) published = m[1];
                 }
-                return {text: text, published: published};
+                return {text: text, published: published,
+                        title: document.title || '',
+                        snippet: (document.body?.innerText || '').slice(0, 300)};
             }""")
+            # 2026-09-12：详情页可能被 WAF 拦成 405/验证页——此前静默返回空正文，
+            # 整批继续硬撞直到封禁加重（09-08 批 69 条摘要帖就是这么来的）。
+            # 这里改为显式抛错中止本轮，交由编排层等待冷却后重跑。
+            blob = f"{result.get('title', '')} {result.get('snippet', '')}"
+            if re.search(r"(?<!\d)405(?!\d)|滑动|安全验证|访问验证|请完成验证|captcha", blob, re.I):
+                raise CrawlerError(
+                    f"详情页命中 WAF/405（{target}）—— 中止本轮采集，等待冷却后重跑；"
+                    f"页面特征: {blob.strip()[:80]}"
+                )
             return result.get("text", ""), result.get("published") or None
+        except CrawlerError:
+            raise
         except Exception as e:
             logger.warning(f"获取帖子详情失败 {target}: {e}")
             return "", None

@@ -64,7 +64,7 @@ compatibility: 通用
 - **若原始资源中已存在 `status=待提炼` 的该文档**：直接进入 `investment-refine`。
 - **若原始资源中不存在**（即没有 `status=待提炼` 的记录）：说明文档仍在 `工作区/粗制品/`，编排者须先调用 `investment-coarse-processor` 完成粗加工（粗加工会将其移入原始资源并置 `status=待提炼`），再进入 `investment-refine`。**不要跳过粗加工、直接在粗制品上提炼。**
 - 用户说「粗加工+提炼」「全流程」「归档」时，自然走「粗加工 → 提炼」串联，无需额外判断。
-- **例外（#29 帖子集）**：`type: 帖子集` 直接从粗制品提炼，跳过粗加工和原始资源，提炼后源文件移废纸篓。提炼路由同 #30：言论 / 买卖 / 预测 → `blogger_post`/`blogger_trade` 落库（画像单轨，不写画像 md）；有框架价值 → 同时产出 wiki 条目；二者可兼得。
+- **例外（#29 帖子集）**：`type: 帖子集` 直接从粗制品提炼，跳过粗加工和原始资源，提炼后源文件移废纸篓。提炼路由同 #30：言论 / 买卖 / 预测 → `blogger_statement`/`blogger_trade` 落库（画像单轨，不写画像 md）；有框架价值 → 同时产出 wiki 条目；二者可兼得。
 - **例外（#30 截图/链接直投）**：用户直接发送雪球截图（可能多张）+ 出处链接 + 关联股票。等同于 post-fetch 采集的博主言论，跳过粗加工和原始资源。路径：粗制品(临时) → 直接提炼 → 删源文件。提炼路由由 agent 判断内容类型：言论追踪 / 买卖记录 / 预测记录 → 对应博主画像文件；有框架价值 → 同时产出 wiki 条目。
 
 ### 粗加工 → investment-coarse-processor
@@ -79,7 +79,7 @@ compatibility: 通用
 
 ### 审查 → investment-review
 
-**第零步（复核首步 · 必做）**：处理用户在「言论追踪」左滑写入的复核建议——见 review-rules.md「复核建议处理（审查首步）」（list open → blogger_post 修正 → apply/delete）
+**第零步（复核首步 · 必做）**：处理用户在「言论追踪」左滑写入的复核建议——见 review-rules.md「复核建议处理（审查首步）」（list open → blogger_statement 修正 → apply/delete）
 **第一步**：确定审查范围（内容审查 or 结构审查，见 references/review-rules.md）
 **第二步**：内容审查——检查框架一致性、知行合一、我的 vs 博主冲突、经验验证
 **第三步**：结构审查——检查归类正确性、frontmatter 完整性、wikilink 有效性、标签匹配

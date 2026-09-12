@@ -24,7 +24,7 @@ compatibility: macOS / Linux
 
 ### 核心原则
 - **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 双写 / 归档提炼均不在此层）。
-- **CDP 复用登录态**：连接本机已登录 Chrome 的调试端口（默认 9222，`XUEQIU_DEBUG_PORT` 覆盖），不重复登录、不依赖 browser-act。
+- **CDP 复用登录态**：连接本机已登录 Chrome 的调试端口（默认 9222，主机名默认 `localhost`——Chrome 152 起不接受 `127.0.0.1`；端口用 `XUEQIU_DEBUG_PORT` 覆盖、主机名用 `XUEQIU_DEBUG_HOST` 覆盖），不重复登录、不依赖 browser-act。
 - **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
 - **风控自控**：WAF/滑块检测（`滑动|安全验证|captcha|访问验证`）命中即抛错停止，不硬撞；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
 - **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
@@ -84,7 +84,8 @@ $PY --version && $PY -c "import requests, playwright"
 ### 第二步：确认 Chrome CDP 可达且已登录
 
 - Chrome 需带调试端口启动：`--remote-debugging-port=9222`（端口可被占用时用 `XUEQIU_DEBUG_PORT` 覆盖）；启动失败处理见 crawler.py docstring
-- 验证：`curl -s http://127.0.0.1:{PORT}/json/version` 返回 JSON；打开用户页标题含昵称 = 已登录
+- **主机名必须用 `localhost`（2026-09-12 实测，Chrome 152）**：DevTools HTTP 端点只接受 `Host: localhost`，用 `127.0.0.1` 直连 `/json/version` 返回 404（`connect_over_cdp` 报 "Unexpected status 404"）。crawler 默认 `localhost`，可用 `XUEQIU_DEBUG_HOST` 覆盖
+- 验证：`curl -s http://localhost:{PORT}/json/version` 返回 JSON；`curl -s http://localhost:{PORT}/json/list` 里能看到「我的首页 - 雪球」页面 = 已登录
 - 未登录 → 停止，提示用户先在 Chrome 登录雪球
 
 ### 第三步：执行采集
@@ -166,7 +167,7 @@ tags: []
 | 优先级 | 来源 |
 |:---|:---|
 | 1 | 用户显式参数 / post-fetch 编排传入参数（user_id、--from/--to、--outfile） |
-| 2 | 环境变量 `XUEQIU_DEBUG_PORT` / `XUEQIU_CHROME_PATH`（本机覆盖默认） |
+| 2 | 环境变量 `XUEQIU_DEBUG_PORT` / `XUEQIU_DEBUG_HOST` / `XUEQIU_CHROME_PATH`（本机覆盖默认） |
 | 3 | `config.py` 默认值 |
 | 4 | 雪球页面/API 实际结构 |
 

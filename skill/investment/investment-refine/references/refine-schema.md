@@ -141,25 +141,27 @@
 
 **雪球组合不是主题（2026-09-12 用户指出 `miniAAA` 被误建为个股）**：帖子里形如 `$组合名(ZH123456)$` 的是**雪球组合**（往往是别人的组合），**不入个股/行业/市场三大主题**，也不建 `console_ensure_subject`。处理方式：组合名连同代号原样留在 `target` 文本里（如 `miniAAA(ZH3207194)`），正文照录；组合的收益/调仓本身不构成对该组合所持个股的判断。**同类**：纯小写拉丁短名（如 `cww`）是博主的代称/未识别代号 → 先用原文线索还原成真名，还原不了就只留 `target` 文本、不建主题（不要拿代号当主题名）。服务端已内置门禁拦截这两类。
 
+**实体与提及判定（2026-09-12 新结构）**：言论落库时按 `investment-refine/references/stock-mention-rules.md` 判定文中出现的词是不是个股（关键词邻接 + 二元分类特征），并写 `statement_stock_rel`；行业/市场命中 `industries.name` / `markets.name` 才建对应 rel。**言论一定挂博主**；**个股一定挂行业**（`stock_industry_rel`，可多行业，建股时用 `industryName` 传入）。**组合（`$名称(ZH123456)$`）与未识别代号不入实体**，只留 `target` 文本。
+
 **优先级（2026-09-10 更新）**：**P1 必查必录** = `trade 买卖记录` / `research 研究` / **`predict 预测记录`**（2026-09-10 用户拍板由 P2 提升）→ P2 = `view 观点` / `insight 心得总结` → P3 `chat 闲聊`（高门槛）。
 
 > **`predict` 提为 P1 的理由**：预测是**可验证判断**，漏录即永久丢失验证样本（无法回补准确率）；且看板预测控制台的验证闭环依赖言论库侧可查。
 
 | content_type | 涉及个股/行业/市场 | 去向 | 另落 wiki？ |
 |---|---|---|---|
-| `trade` | 必是 | `blogger_trade` → **买卖帖言论行 `post_trade`**（一帖一表；原独立表 `blogger_trades` 已并入并退役为 `blogger_trades_del`；画像 md 已退役不回写）。**方向 `stance` 必填**（看空/看多/中性），有价必标 `price`（开盘竞价位），`note` → `trade_note` 只记操作理由。**结构化字段**：`op`/`price`/`marketCap`/`tradeDate`/`targetAlias`（原文代称）/`tradeNote` | 否 |
-| `research` | 是 | `blogger_post` → `posts` 表。**结构化字段**：`dataRefs`（数据来源）/`wikiRef`（已具象化条目） | 仅当沉淀出可复用框架（言论库记事实，wiki 记方法，**不重复记录**） |
+| `trade` | 必是 | `blogger_trade` → **买卖帖言论行 `statement_trade`**（一帖一表；原独立表 `blogger_trades` 已并入并退役为 `blogger_trades_del`；画像 md 已退役不回写）。**方向 `stance` 必填**（看空/看多/中性），有价必标 `price`（开盘竞价位），`note` → `trade_note` 只记操作理由。**结构化字段**：`op`/`price`/`marketCap`/`tradeDate`/`targetAlias`（原文代称）/`tradeNote` | 否 |
+| `research` | 是 | `blogger_statement` → `statements` 表。**结构化字段**：`dataRefs`（数据来源）/`wikiRef`（已具象化条目） | 仅当沉淀出可复用框架（言论库记事实，wiki 记方法，**不重复记录**） |
 
 > **`wikiRef` 六表统一（2026-09-11；2026-09-12 改存路径）**：任何 `contentType` 都可填 `wikiRef`——**值是 vault 相对路径**（含 `.md`，如 `博主/Benjm_修/技术革命的领头羊悖论（1）.md`），**不是条目名**；卡片显示「已具象化：<文件名>」并可点击**在 Obsidian 本地打开**（前端拼 `obsidian://open`，路径改了也不失效）。留空时服务端按原帖 URL 反查自动回填。此前仅 research/insight 两张分表有此列，回采历史指针行时发现 view/chat/trade/predict 的链接会丢，故四表补列并重建 UNION 视图。
 | `research` | 否 | — | 能成框架 → wiki（我的/其他/宏观）；不能 → **舍弃** |
-| `predict` | 必是 | `blogger_post` → `posts`(predict) + 预测控制台。**`stance` 必填**，`view_date` 取博主下判断的时点。**结构化字段（2026-09-10 新增）**：`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`statusCode`/`verifyDate`/`verifyResult` —— 预测验证闭环在言论表内可直接查询，免 JOIN（预测与验证留痕：`post_predict` + 子表 `post_verify_sub`） | 否 |
-| `view` | 是 | `blogger_post` → 言论库（看板言论追踪）。**不填 `stance`**（2026-09-11 用户确认：方向只在买卖/预测需要） | 否 |
+| `predict` | 必是 | `blogger_statement` → `statements`(predict) + 预测控制台。**`stance` 必填**，`view_date` 取博主下判断的时点。**结构化字段（2026-09-10 新增）**：`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`statusCode`/`verifyDate`/`verifyResult` —— 预测验证闭环在言论表内可直接查询，免 JOIN（预测与验证留痕：`statement_predict` + 子表 `statement_verify_sub`） | 否 |
+| `view` | 是 | `blogger_statement` → 言论库（看板言论追踪）。**不填 `stance`**（2026-09-11 用户确认：方向只在买卖/预测需要） | 否 |
 | `view` | 否 | — | 有价值 → wiki；无价值 → 舍弃 |
-| `insight` | 是 | `blogger_post` → 言论库（看板言论追踪）。**结构化字段**：`wikiRef` | **方法论的价值＝有没有产物**：可迁移的原则必须具象化成框架条目并回填 `wikiRef`（卡片显示「已具象化：<文件>」）；只描述经历的留在正文，不额外打标签 |
+| `insight` | 是 | `blogger_statement` → 言论库（看板言论追踪）。**结构化字段**：`wikiRef` | **方法论的价值＝有没有产物**：可迁移的原则必须具象化成框架条目并回填 `wikiRef`（卡片显示「已具象化：<文件>」）；只描述经历的留在正文，不额外打标签 |
 
-> **`predict` 的结构化信息去向（2026-09-11 收敛：预测即言论行）**：预测类言论落库后，**参考价/目标价/目标时间/状态/验证结果就写在这一行 `post_predict` 本体**（`ref_price`/`target_price`/`target_date`/`date_precision`/`status_code`/`verify_date`/`verify_result`）——独立预测表 `predictions` 已退役为 `predictions_del`，`prediction_stmt_rel` 亦随之退役（预测与言论本来就是同一行，无需关联表）。调用方照常传 `refPrice/targetPrice/targetDate/datePrecision/verify*`；`subjectId` 仍是主题入参（同时写入维度关联表）。
+> **`predict` 的结构化信息去向（2026-09-11 收敛：预测即言论行）**：预测类言论落库后，**参考价/目标价/目标时间/状态/验证结果就写在这一行 `statement_predict` 本体**（`ref_price`/`target_price`/`target_date`/`date_precision`/`status_code`/`verify_date`/`verify_result`）——独立预测表 `predictions` 已退役为 `predictions_del`，`prediction_stmt_rel` 亦随之退役（预测与言论本来就是同一行，无需关联表）。调用方照常传 `refPrice/targetPrice/targetDate/datePrecision/verify*`；`subjectId` 仍是主题入参（同时写入维度关联表）。
 | `insight` | 否 | — | 有价值 → wiki；否则舍弃 |
-| `chat` | — | 仅当能刻画「擅长与局限 / 投资心态」→ `blogger_post`；否则**舍弃** | 否 |
+| `chat` | — | 仅当能刻画「擅长与局限 / 投资心态」→ `blogger_statement`；否则**舍弃** | 否 |
 
 **全类型共同字段（2026-09-10 新增）**：`form`（帖子形态：回复/短文/长文/专栏）——取自采集侧摘要行，**零解析读取**，用于分流先验与质检（专栏/长文判 `research` 概率高；回复必先做 `//@` 切分）。**`form` 与 `contentType` 同属必填**（2026-09-11 用户确认）：每行都必须能回答「这条是什么类型的内容 / 什么形态的帖子」；采集侧有摘要行时零解析读取，回补历史行时按采集侧同一规则判定（`is_column`→专栏；原文以「回复@」开头→回复；正文≥300 字→长文；其余→短文）。
 
@@ -168,7 +170,7 @@
 | # | 字段 | 含义 | 缺省与加严 |
 |:--|:--|:--|:--|
 | ① | `viewDate` 内容时间 | **该判断成立的时点** | 缺省＝帖子时间；帖中若自述「我在 8 月 5 号就看好X」→ 填 8 月 5 号，并给 `viewDateSource=explicit` + `viewDateBasis=原文句`。**这是与帖子时间区分的关键字段**（示例：8/5 看好黄酒、9/10 才发帖 → 内容时间 8/5，帖子时间 9/10） |
-| ② | `postDate` 帖子时间 | 帖子上屏日期 | **必填**（服务端拒写） |
+| ② | `statementDate` 帖子时间 | 帖子上屏日期 | **必填**（服务端拒写） |
 | ③ | `contentType` 内容类型 | 预测/买卖/研究/心得/观点/闲聊 | 必有（六分法） |
 | ④ | `form` 帖子类型 | 回复/短文/长文/专栏 | **必填**（服务端拒写） |
 | ⑤ | `replyTo` 回复 | 被回应的对方原话/话题 | **可空**（无回应对象/对方内容已删则留空）；有则取 `//@` 之后的内容或被回应者核心观点 |
@@ -177,7 +179,7 @@
 | ⑨ | `wikiRef` 具象化 | **本条被提炼进了哪个框架条目文件**（笔记名） | **可空**（未沉淀成条目就留空）；已具象化则服务端自动反查回填。写库时服务端会自动反查 vault（笔记 frontmatter `source` 里的原帖 URL）并回填，人工漏填也不会丢——但提炼时若刚创建/追加了条目，应主动填上；对应条目已删除时要清空 |
 | ⑧ | `fetchedAt` 采集时间 | **抓取该帖的日期**（≠ 帖子时间、≠ 入库时间） | 缺省＝今日；**提炼历史批次时传该批次的采集日期**（取自帖子集 frontmatter `recorded` 或文件名日期） |
 
-> **三个时间必须分清**：`postDate` 帖子时间（9/10 发帖）→ `viewDate` 内容时间（8/5 就看好）→ `fetchedAt` 采集时间（9/11 抓的）；`created_at` 只是入库时刻，不替代采集时间。
+> **三个时间必须分清**：`statementDate` 帖子时间（9/10 发帖）→ `viewDate` 内容时间（8/5 就看好）→ `fetchedAt` 采集时间（9/11 抓的）；`created_at` 只是入库时刻，不替代采集时间。
 
 **字段化铁律（2026-09-11 用户确认）**：卡片上的每个要素都必须落在**独立的、有类型的字段**里，**禁止把多个要素拼进一个文本字段再靠正则拆**：
 
@@ -294,12 +296,12 @@
 
 **标的解析须还原代称**：寒王→寒武纪、赵姨→兆易创新、兆易→兆易创新；原文代称写入 `targetAlias` 留痕，能挂上主题时带 `subjectId`。
 
-**观点时间（双时间）判定**：默认 `view_date = post_date`（`as_posted`）；原文写明日期 → `explicit`；含"三年前/今年五月份我的预判"等相对表述 → 以 `post_date` 折算，置 `derived` 并把原句抄进 `view_date_basis`。粒度按表述给（只说"三年前"不得写成精确到日）。硬约束 `view_date ≤ post_date`；跨度 ≥2 年或表述模糊（"很早以前"）→ 同时标待复核。转述他人判断不得算博主本人观点时间。
+**观点时间（双时间）判定**：默认 `view_date = statement_date`（`as_posted`）；原文写明日期 → `explicit`；含"三年前/今年五月份我的预判"等相对表述 → 以 `statement_date` 折算，置 `derived` 并把原句抄进 `view_date_basis`。粒度按表述给（只说"三年前"不得写成精确到日）。硬约束 `view_date ≤ statement_date`；跨度 ≥2 年或表述模糊（"很早以前"）→ 同时标待复核。转述他人判断不得算博主本人观点时间。
 
 **能成 wiki 的一刀切判据**：内容是否提供**可脱离发帖语境复用的判断逻辑／框架／数据关系**？是 → wiki；否 → 只留言论（不硬造条目）。
 
-**铁律（2026-09-08 画像单轨化 + 言论分表）**：言论/买卖/画像一律只落 MySQL（`blogger_post`/`blogger_trade`/`update_blogger`；言论按类型物理分表 post_research/post_predict/post_view/post_insight/post_chat/post_trade，工具自动路由，见 framework-rules #39）。画像 md 已退役——不再镜像回写，vault 内残留画像文件仅为待删除的比对副本。**手改画像 md 表格、为画像文件写内容均为违规**。
-**两条补充（2026-09-03）**：① 涉个股/行业/市场的言论调用 `blogger_post` 时**必须传 `subjectId`**，否则该言论不会出现在「言论追踪」控制台——行业维度主题**按需创建**（词汇权威源 = tag-taxonomy 第五节申万分级；选最精确标准名，主题不存在则按标准名即时创建，**禁止自创非标准行业名**，见 framework-rules #38 行业主题按需创建）；② **写入前先查重**——同一段文字已存在于该博主的 `posts` 行时，合并/更新那一行，**禁止新增第二份**（"言论登记在谁名下就是谁的言论"既是归因依据，也是去重依据）。
+**铁律（2026-09-08 画像单轨化 + 言论分表）**：言论/买卖/画像一律只落 MySQL（`blogger_statement`/`blogger_trade`/`update_blogger`；言论按类型物理分表 statement_research/statement_predict/statement_view/statement_insight/statement_chat/statement_trade，工具自动路由，见 framework-rules #39）。画像 md 已退役——不再镜像回写，vault 内残留画像文件仅为待删除的比对副本。**手改画像 md 表格、为画像文件写内容均为违规**。
+**两条补充（2026-09-03）**：① 涉个股/行业/市场的言论调用 `blogger_statement` 时**必须传 `subjectId`**，否则该言论不会出现在「言论追踪」控制台——行业维度主题**按需创建**（词汇权威源 = tag-taxonomy 第五节申万分级；选最精确标准名，主题不存在则按标准名即时创建，**禁止自创非标准行业名**，见 framework-rules #38 行业主题按需创建）；② **写入前先查重**——同一段文字已存在于该博主的 `statements` 行时，合并/更新那一行，**禁止新增第二份**（"言论登记在谁名下就是谁的言论"既是归因依据，也是去重依据）。
 
 ### 分类不明处置（禁止静默丢弃 · 2026-09-06 用户规则）
 
@@ -307,6 +309,6 @@
 
 1. **禁止丢弃、禁止强行套类**——强行套类会污染准确率追踪与子表结构，静默丢弃会永久丢失高价值言论，两者都比「列出来问一句」代价高。
 2. **必须在执行汇报中单列「⚠ 待确认分类」一节**，逐条给出：原文全文（不得截断改写）、不确定原因（如「既有研究成分又有交易动作」「既非当下判断也无未来指向但明显是方法论雏形」）、候选建议（最接近的 1-2 个既有类型 + 理由，或「建议新增分类」+ 建议类名中英文名，供 dict 录入）。
-3. **用户裁决两种结局**：**指定归属** → 按指定 content_type 正常经 `blogger_post` 落库；**新增分类** → 走 dict 字典流程（`INSERT INTO dict`，type=`post_content_type`，remark 存判据、sort_order 定序，framework-rules #30 码值权威源——**只改字典，服务端校验与前端标签/tab 自动生效**，禁止在代码里加并行定义），再落库。
+3. **用户裁决两种结局**：**指定归属** → 按指定 content_type 正常经 `blogger_statement` 落库；**新增分类** → 走 dict 字典流程（`INSERT INTO dict`，type=`post_content_type`，remark 存判据、sort_order 定序，framework-rules #30 码值权威源——**只改字典，服务端校验与前端标签/tab 自动生效**，禁止在代码里加并行定义），再落库。
 4. **裁决前**：该言论不写入任何表、也**不丢弃**，保持在待确认清单中（宁挂起、不流失）。
 5. 「能成 wiki 的一刀切判据」仍然适用：分类不明 ≠ 没价值；确定有价值只是去向不明的，必须走本流程而不是丢弃。

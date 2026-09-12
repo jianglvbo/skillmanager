@@ -21,7 +21,7 @@
 --     （历史记录日期）、`post_predict.verify_status_del`，视图同步收窄为 40 列；③ 清理失效 dict 枚举
 --     （coarse_status / track_direction / file_type / file_status）。删前备份 backups/drop_20260912b/。
 --   2026-09-12 命名规范（用户拍板）：① 帖子一律 post——六张分表 → post_trade/post_predict/post_research/
---     post_view/post_insight/post_chat，视图 blogger_statements → posts，stmt_id/statement_id → post_id，
+--     post_view/post_insight/post_chat，视图 blogger_statements → statements，stmt_id/statement_id → post_id，
 --     stmt_date → record_date；② 子表与关联表同步改名：stmt_verify_sub→post_verify_sub、stmt_review_sub→
 --     post_review_sub、stmt_rel→post_rel、statement_entity_rel→post_entity_rel、stmt_id_seq→post_id_seq；
 --     ③ **弃用表不再留档，全部 DROP**（删前导出 backups/drop_del_20260912/）；④ 表注释与字段注释改写为
@@ -32,7 +32,7 @@
 --     ③ 关联表加 _rel（stmt_relation→post_rel）；④ tags→dict(type=tag)，files/file_tag_rel/trash_records/
 --     sync_state 退役为 _del（vault 索引改内存扫描，wiki_ref 改存 vault 相对路径并由前端生成 obsidian:// 链接）；
 --     ⑤ 本文件改为**生成物**（scripts/export-schema.js）+ 空库回放校验（scripts/verify-schema-replay.js）。
---   2026-09-11 重构收敛：① 六分法分表 + 只读 UNION 视图 posts；② 预测收敛为「预测即言论行」
+--   2026-09-11 重构收敛：① 六分法分表 + 只读 UNION 视图 statements；② 预测收敛为「预测即言论行」
 --     （post_predict 唯一，predictions→predictions_del、prediction_stmt_rel→post_rel）；③ 新增
 --     post_entity_rel / post_history / post_id_seq；④ 弃用对象一律加 _del 后缀留档，禁止 DROP。
 --   2026-09-03 与线上库对齐：bloggers 补 avatar；prediction_subjects 补 market/hk_connect；dict 补 platform=wechat。
@@ -202,22 +202,7 @@ CREATE TABLE bloggers (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`special`)
-) ENGINE=InnoDB AUTO_INCREMENT=63592 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
-
-CREATE TABLE prediction_subjects (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `console_type_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '控制台类型，字典项 dict.type=console_type',
-  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主题名',
-  `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '证券代码',
-  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `market` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '市场，取值 sh/sz/hk/kr/us',
-  `hk_connect` tinyint(1) DEFAULT NULL COMMENT '是否港股通',
-  `enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否启用',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_console_name` (`console_type_code`,`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=441 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测主题表';
+) ENGINE=InnoDB AUTO_INCREMENT=66136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -255,7 +240,7 @@ CREATE TABLE post_history (
   KEY `idx_blogger_time` (`blogger_id`,`posted_at`),
   KEY `idx_posted` (`posted_at`),
   KEY `idx_platform` (`platform_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子原文表';
+) ENGINE=InnoDB AUTO_INCREMENT=864 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子原文表';
 
 CREATE TABLE quotes (
   `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -352,17 +337,17 @@ CREATE TABLE review_check_sub (
   CONSTRAINT `fk_rc_review` FOREIGN KEY (`review_id`) REFERENCES `review_records` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审查检查项子表';
 
-CREATE TABLE post_id_seq (
+CREATE TABLE statement_id_seq (
   `name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '序列名',
   `id` bigint unsigned NOT NULL COMMENT '已发放的最大帖子 id',
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子 id 序列表';
 
--- ============ 四、帖子六表（一条帖子只落其中一张） ============
-CREATE TABLE post_trade (
+-- ============ 四、言论六表（一条帖子只落其中一张） ============
+CREATE TABLE statement_trade (
   `id` bigint unsigned NOT NULL COMMENT '帖子 id，六张帖子表全局唯一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，冗余自博主表',
-  `post_date` date DEFAULT NULL COMMENT '发帖时间',
+  `statement_date` date DEFAULT NULL COMMENT '言论时间，该言论的发布日',
   `view_date` date DEFAULT NULL COMMENT '观点时间，判断成立时点',
   `view_date_source` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间来源：as_posted/explicit/derived',
   `view_date_precision` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间精度：day/month/year',
@@ -375,14 +360,12 @@ CREATE TABLE post_trade (
   `source` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '来源批次或平台',
   `source_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原文链接',
   `blogger_id` bigint unsigned DEFAULT NULL COMMENT '博主 id，指向博主表',
-  `subject_id` bigint unsigned DEFAULT NULL COMMENT '预测主题 id，指向预测主题表',
   `src_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径',
   `review_required` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否待复核',
   `dedup_key` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '去重键',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `form` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '帖子形态：回复/短文/长文/专栏',
-  `op` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '买卖操作，字典项 dict.type=trade_op',
   `price` decimal(16,4) DEFAULT NULL COMMENT '成交价',
   `market_cap` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '当时市值',
   `trade_date` date DEFAULT NULL COMMENT '操作日期',
@@ -393,14 +376,13 @@ CREATE TABLE post_trade (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_dedup` (`dedup_key`),
   KEY `idx_blogger_date` (`blogger`,`view_date`),
-  KEY `idx_subject` (`subject_id`),
   KEY `idx_review` (`review_required`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='买卖记录帖子表';
 
-CREATE TABLE post_predict (
+CREATE TABLE statement_predict (
   `id` bigint unsigned NOT NULL COMMENT '帖子 id，六张帖子表全局唯一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，冗余自博主表',
-  `post_date` date DEFAULT NULL COMMENT '发帖时间',
+  `statement_date` date DEFAULT NULL COMMENT '言论时间，该言论的发布日',
   `view_date` date DEFAULT NULL COMMENT '观点时间，判断成立时点',
   `view_date_source` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间来源：as_posted/explicit/derived',
   `view_date_precision` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间精度：day/month/year',
@@ -412,7 +394,6 @@ CREATE TABLE post_predict (
   `source` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '来源批次或平台',
   `source_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原文链接',
   `blogger_id` bigint unsigned DEFAULT NULL COMMENT '博主 id，指向博主表',
-  `subject_id` bigint unsigned DEFAULT NULL COMMENT '预测主题 id，指向预测主题表',
   `src_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径',
   `review_required` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否待复核',
   `dedup_key` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '去重键',
@@ -432,14 +413,13 @@ CREATE TABLE post_predict (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_dedup` (`dedup_key`),
   KEY `idx_blogger_date` (`blogger`,`view_date`),
-  KEY `idx_subject` (`subject_id`),
   KEY `idx_review` (`review_required`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测记录帖子表';
 
-CREATE TABLE post_research (
+CREATE TABLE statement_research (
   `id` bigint unsigned NOT NULL COMMENT '帖子 id，六张帖子表全局唯一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，冗余自博主表',
-  `post_date` date DEFAULT NULL COMMENT '发帖时间',
+  `statement_date` date DEFAULT NULL COMMENT '言论时间，该言论的发布日',
   `view_date` date DEFAULT NULL COMMENT '观点时间，判断成立时点',
   `view_date_source` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间来源：as_posted/explicit/derived',
   `view_date_precision` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间精度：day/month/year',
@@ -451,7 +431,6 @@ CREATE TABLE post_research (
   `source` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '来源批次或平台',
   `source_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原文链接',
   `blogger_id` bigint unsigned DEFAULT NULL COMMENT '博主 id，指向博主表',
-  `subject_id` bigint unsigned DEFAULT NULL COMMENT '预测主题 id，指向预测主题表',
   `src_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径',
   `review_required` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否待复核',
   `dedup_key` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '去重键',
@@ -465,14 +444,13 @@ CREATE TABLE post_research (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_dedup` (`dedup_key`),
   KEY `idx_blogger_date` (`blogger`,`view_date`),
-  KEY `idx_subject` (`subject_id`),
   KEY `idx_review` (`review_required`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='研究帖子表';
 
-CREATE TABLE post_view (
+CREATE TABLE statement_view (
   `id` bigint unsigned NOT NULL COMMENT '帖子 id，六张帖子表全局唯一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，冗余自博主表',
-  `post_date` date DEFAULT NULL COMMENT '发帖时间',
+  `statement_date` date DEFAULT NULL COMMENT '言论时间，该言论的发布日',
   `view_date` date DEFAULT NULL COMMENT '观点时间，判断成立时点',
   `view_date_source` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间来源：as_posted/explicit/derived',
   `view_date_precision` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间精度：day/month/year',
@@ -484,7 +462,6 @@ CREATE TABLE post_view (
   `source` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '来源批次或平台',
   `source_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原文链接',
   `blogger_id` bigint unsigned DEFAULT NULL COMMENT '博主 id，指向博主表',
-  `subject_id` bigint unsigned DEFAULT NULL COMMENT '预测主题 id，指向预测主题表',
   `src_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径',
   `review_required` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否待复核',
   `dedup_key` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '去重键',
@@ -497,14 +474,13 @@ CREATE TABLE post_view (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_dedup` (`dedup_key`),
   KEY `idx_blogger_date` (`blogger`,`view_date`),
-  KEY `idx_subject` (`subject_id`),
   KEY `idx_review` (`review_required`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='观点帖子表';
 
-CREATE TABLE post_insight (
+CREATE TABLE statement_insight (
   `id` bigint unsigned NOT NULL COMMENT '帖子 id，六张帖子表全局唯一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，冗余自博主表',
-  `post_date` date DEFAULT NULL COMMENT '发帖时间',
+  `statement_date` date DEFAULT NULL COMMENT '言论时间，该言论的发布日',
   `view_date` date DEFAULT NULL COMMENT '观点时间，判断成立时点',
   `view_date_source` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间来源：as_posted/explicit/derived',
   `view_date_precision` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间精度：day/month/year',
@@ -516,7 +492,6 @@ CREATE TABLE post_insight (
   `source` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '来源批次或平台',
   `source_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原文链接',
   `blogger_id` bigint unsigned DEFAULT NULL COMMENT '博主 id，指向博主表',
-  `subject_id` bigint unsigned DEFAULT NULL COMMENT '预测主题 id，指向预测主题表',
   `src_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径',
   `review_required` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否待复核',
   `dedup_key` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '去重键',
@@ -529,14 +504,13 @@ CREATE TABLE post_insight (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_dedup` (`dedup_key`),
   KEY `idx_blogger_date` (`blogger`,`view_date`),
-  KEY `idx_subject` (`subject_id`),
   KEY `idx_review` (`review_required`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='心得总结帖子表';
 
-CREATE TABLE post_chat (
+CREATE TABLE statement_chat (
   `id` bigint unsigned NOT NULL COMMENT '帖子 id，六张帖子表全局唯一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名，冗余自博主表',
-  `post_date` date DEFAULT NULL COMMENT '发帖时间',
+  `statement_date` date DEFAULT NULL COMMENT '言论时间，该言论的发布日',
   `view_date` date DEFAULT NULL COMMENT '观点时间，判断成立时点',
   `view_date_source` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间来源：as_posted/explicit/derived',
   `view_date_precision` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '观点时间精度：day/month/year',
@@ -548,7 +522,6 @@ CREATE TABLE post_chat (
   `source` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '来源批次或平台',
   `source_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '原文链接',
   `blogger_id` bigint unsigned DEFAULT NULL COMMENT '博主 id，指向博主表',
-  `subject_id` bigint unsigned DEFAULT NULL COMMENT '预测主题 id，指向预测主题表',
   `src_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源批次文件路径',
   `review_required` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否待复核',
   `dedup_key` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '去重键',
@@ -561,35 +534,120 @@ CREATE TABLE post_chat (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_dedup` (`dedup_key`),
   KEY `idx_blogger_date` (`blogger`,`view_date`),
-  KEY `idx_subject` (`subject_id`),
   KEY `idx_review` (`review_required`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='闲聊帖子表';
 
--- ============ 五、关联表与子表 ============
-CREATE TABLE post_entity_rel (
-  `post_id` bigint unsigned NOT NULL COMMENT '帖子 id，指向六张帖子表之一',
-  `entity_type_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '实体类型，字典项 dict.type=entity_type',
-  `entity_id` bigint unsigned NOT NULL COMMENT '实体 id，按实体类型指向博主表或预测主题表',
-  `entity_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '实体名快照',
-  `role_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'subject' COMMENT '角色：subject 归属，mention 文中提及',
+-- ============ 五、实体三表（个股 / 行业 / 市场） ============
+CREATE TABLE stocks (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '个股名称',
+  `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '股票代码',
+  `market_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主市场码，字典项 markets.code',
+  `aliases` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '别名，逗号分隔，如 寒王,寒武纪-U',
+  `hk_connect` tinyint(1) DEFAULT NULL COMMENT '是否港股通',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
+  `enabled` tinyint NOT NULL DEFAULT '1' COMMENT '是否启用',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`post_id`,`entity_type_code`,`entity_id`),
-  KEY `idx_entity` (`entity_type_code`,`entity_id`),
-  KEY `idx_name` (`entity_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子实体关联表';
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_name` (`name`),
+  KEY `idx_code` (`code`),
+  KEY `idx_market` (`market_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=174 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股表';
 
-CREATE TABLE post_rel (
-  `post_id` bigint unsigned NOT NULL COMMENT '帖子 id，跟踪对象',
-  `related_post_id` bigint unsigned NOT NULL COMMENT '关联帖子 id',
+CREATE TABLE industries (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '行业名称',
+  `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '行业代码',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
+  `enabled` tinyint NOT NULL DEFAULT '1' COMMENT '是否启用',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_name` (`name`),
+  KEY `idx_code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=267 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='行业表';
+
+CREATE TABLE markets (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '市场码：a/hk/us/kr…',
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '市场名称：A股/港股/美股/韩股',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序',
+  `enabled` tinyint NOT NULL DEFAULT '1' COMMENT '是否启用',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_code` (`code`),
+  UNIQUE KEY `uq_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='市场表';
+
+-- ============ 六、关联表与子表 ============
+CREATE TABLE statement_blogger_rel (
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
+  `blogger_id` bigint unsigned NOT NULL COMMENT '博主 id，指向博主表',
+  `blogger_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '博主名快照',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`statement_id`,`blogger_id`),
+  KEY `idx_blogger` (`blogger_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论博主关联表';
+
+CREATE TABLE statement_stock_rel (
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
+  `stock_id` bigint unsigned NOT NULL COMMENT '个股 id，指向个股表',
+  `role_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'subject' COMMENT '角色：subject 主体，mention 文中提及',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`statement_id`,`stock_id`),
+  KEY `idx_stock` (`stock_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论个股关联表';
+
+CREATE TABLE statement_industry_rel (
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
+  `industry_id` bigint unsigned NOT NULL COMMENT '行业 id，指向行业表',
+  `role_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'subject' COMMENT '角色：subject 主体，mention 文中提及',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`statement_id`,`industry_id`),
+  KEY `idx_industry` (`industry_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论行业关联表';
+
+CREATE TABLE statement_market_rel (
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
+  `market_id` bigint unsigned NOT NULL COMMENT '市场 id，指向市场表',
+  `role_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'subject' COMMENT '角色：subject 主体，mention 文中提及',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`statement_id`,`market_id`),
+  KEY `idx_market` (`market_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论市场关联表';
+
+CREATE TABLE stock_industry_rel (
+  `stock_id` bigint unsigned NOT NULL COMMENT '个股 id，指向个股表',
+  `industry_id` bigint unsigned NOT NULL COMMENT '行业 id，指向行业表',
+  `role_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'primary' COMMENT '角色：primary 主行业，secondary 次要行业，derived 由言论共现推导',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`stock_id`,`industry_id`),
+  KEY `idx_industry` (`industry_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股行业关联表';
+
+CREATE TABLE stock_market_rel (
+  `stock_id` bigint unsigned NOT NULL COMMENT '个股 id，指向个股表',
+  `market_id` bigint unsigned NOT NULL COMMENT '市场 id，指向市场表',
+  `role_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'primary' COMMENT '角色：primary 主市场，secondary 次市场',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`stock_id`,`market_id`),
+  KEY `idx_market` (`market_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股市场关联表';
+
+CREATE TABLE statement_rel (
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
+  `related_statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
   `relation_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'primary' COMMENT '关系，取值 enhance/refute/support',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`post_id`,`related_post_id`),
-  KEY `idx_stmt` (`related_post_id`)
+  PRIMARY KEY (`statement_id`,`related_statement_id`),
+  KEY `idx_stmt` (`related_statement_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子关联表';
 
-CREATE TABLE post_verify_sub (
+CREATE TABLE statement_verify_sub (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `post_id` bigint unsigned NOT NULL COMMENT '帖子 id，指向预测记录帖子表',
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
   `verify_date` date DEFAULT NULL COMMENT '验证日期',
   `verifier` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '验证人',
   `basis` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '验证依据',
@@ -597,23 +655,23 @@ CREATE TABLE post_verify_sub (
   `note` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_prediction` (`post_id`),
+  UNIQUE KEY `uq_prediction` (`statement_id`),
   KEY `idx_result` (`result_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预测验证子表';
 
-CREATE TABLE post_review_sub (
+CREATE TABLE statement_review_sub (
   `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `post_id` int unsigned NOT NULL COMMENT '帖子 id，指向六张帖子表之一',
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
   `blogger` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '博主名',
   `suggestion` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '复核建议内容',
   `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open' COMMENT '处理状态：open/applied',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_stmt` (`post_id`),
+  UNIQUE KEY `uniq_stmt` (`statement_id`),
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子复核建议子表';
 
--- ============ 六、只读视图（帖子六表 UNION ALL，39 列） ============
+-- ============ 六、只读视图（言论六表 UNION ALL，38 列） ============
 -- 分类权威 = content_type 六分法；非本类型列补 NULL；预测/交易专属列直取本表（帖子唯一落点，无需关联表）
-CREATE ALGORITHM=UNDEFINED DEFINER=`jianglb`@`%` SQL SECURITY DEFINER VIEW posts AS select `post_research`.`id` AS `id`,`post_research`.`blogger` AS `blogger`,`post_research`.`post_date` AS `post_date`,`post_research`.`view_date` AS `view_date`,`post_research`.`view_date_source` AS `view_date_source`,`post_research`.`view_date_precision` AS `view_date_precision`,`post_research`.`view_date_basis` AS `view_date_basis`,`post_research`.`stance` AS `stance`,`post_research`.`target` AS `target`,NULL AS `target_alias`,`post_research`.`view_text` AS `view_text`,`post_research`.`signal_text` AS `signal_text`,`post_research`.`source` AS `source`,`post_research`.`source_url` AS `source_url`,`post_research`.`blogger_id` AS `blogger_id`,`post_research`.`subject_id` AS `subject_id`,`post_research`.`src_rel` AS `src_rel`,`post_research`.`review_required` AS `review_required`,`post_research`.`dedup_key` AS `dedup_key`,`post_research`.`created_at` AS `created_at`,`post_research`.`updated_at` AS `updated_at`,`post_research`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,`post_research`.`data_refs` AS `data_refs`,`post_research`.`wiki_ref` AS `wiki_ref`,`post_research`.`reply_to` AS `reply_to`,`post_research`.`fetched_at` AS `fetched_at`,'research' AS `content_type`,NULL AS `status_code` from `post_research` union all select `post_predict`.`id` AS `id`,`post_predict`.`blogger` AS `blogger`,`post_predict`.`post_date` AS `post_date`,`post_predict`.`view_date` AS `view_date`,`post_predict`.`view_date_source` AS `view_date_source`,`post_predict`.`view_date_precision` AS `view_date_precision`,`post_predict`.`view_date_basis` AS `view_date_basis`,`post_predict`.`stance` AS `stance`,`post_predict`.`target` AS `target`,NULL AS `target_alias`,`post_predict`.`view_text` AS `view_text`,`post_predict`.`signal_text` AS `signal_text`,`post_predict`.`source` AS `source`,`post_predict`.`source_url` AS `source_url`,`post_predict`.`blogger_id` AS `blogger_id`,`post_predict`.`subject_id` AS `subject_id`,`post_predict`.`src_rel` AS `src_rel`,`post_predict`.`review_required` AS `review_required`,`post_predict`.`dedup_key` AS `dedup_key`,`post_predict`.`created_at` AS `created_at`,`post_predict`.`updated_at` AS `updated_at`,`post_predict`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,`post_predict`.`ref_price` AS `ref_price`,`post_predict`.`target_price` AS `target_price`,`post_predict`.`target_date` AS `target_date`,`post_predict`.`date_precision` AS `date_precision`,`post_predict`.`verify_date` AS `verify_date`,`post_predict`.`verify_result` AS `verify_result`,NULL AS `data_refs`,`post_predict`.`wiki_ref` AS `wiki_ref`,`post_predict`.`reply_to` AS `reply_to`,`post_predict`.`fetched_at` AS `fetched_at`,'predict' AS `content_type`,`post_predict`.`status_code` AS `status_code` from `post_predict` union all select `post_view`.`id` AS `id`,`post_view`.`blogger` AS `blogger`,`post_view`.`post_date` AS `post_date`,`post_view`.`view_date` AS `view_date`,`post_view`.`view_date_source` AS `view_date_source`,`post_view`.`view_date_precision` AS `view_date_precision`,`post_view`.`view_date_basis` AS `view_date_basis`,`post_view`.`stance` AS `stance`,`post_view`.`target` AS `target`,NULL AS `target_alias`,`post_view`.`view_text` AS `view_text`,`post_view`.`signal_text` AS `signal_text`,`post_view`.`source` AS `source`,`post_view`.`source_url` AS `source_url`,`post_view`.`blogger_id` AS `blogger_id`,`post_view`.`subject_id` AS `subject_id`,`post_view`.`src_rel` AS `src_rel`,`post_view`.`review_required` AS `review_required`,`post_view`.`dedup_key` AS `dedup_key`,`post_view`.`created_at` AS `created_at`,`post_view`.`updated_at` AS `updated_at`,`post_view`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`post_view`.`wiki_ref` AS `wiki_ref`,`post_view`.`reply_to` AS `reply_to`,`post_view`.`fetched_at` AS `fetched_at`,'view' AS `content_type`,NULL AS `status_code` from `post_view` union all select `post_insight`.`id` AS `id`,`post_insight`.`blogger` AS `blogger`,`post_insight`.`post_date` AS `post_date`,`post_insight`.`view_date` AS `view_date`,`post_insight`.`view_date_source` AS `view_date_source`,`post_insight`.`view_date_precision` AS `view_date_precision`,`post_insight`.`view_date_basis` AS `view_date_basis`,`post_insight`.`stance` AS `stance`,`post_insight`.`target` AS `target`,NULL AS `target_alias`,`post_insight`.`view_text` AS `view_text`,`post_insight`.`signal_text` AS `signal_text`,`post_insight`.`source` AS `source`,`post_insight`.`source_url` AS `source_url`,`post_insight`.`blogger_id` AS `blogger_id`,`post_insight`.`subject_id` AS `subject_id`,`post_insight`.`src_rel` AS `src_rel`,`post_insight`.`review_required` AS `review_required`,`post_insight`.`dedup_key` AS `dedup_key`,`post_insight`.`created_at` AS `created_at`,`post_insight`.`updated_at` AS `updated_at`,`post_insight`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`post_insight`.`wiki_ref` AS `wiki_ref`,`post_insight`.`reply_to` AS `reply_to`,`post_insight`.`fetched_at` AS `fetched_at`,'insight' AS `content_type`,NULL AS `status_code` from `post_insight` union all select `post_chat`.`id` AS `id`,`post_chat`.`blogger` AS `blogger`,`post_chat`.`post_date` AS `post_date`,`post_chat`.`view_date` AS `view_date`,`post_chat`.`view_date_source` AS `view_date_source`,`post_chat`.`view_date_precision` AS `view_date_precision`,`post_chat`.`view_date_basis` AS `view_date_basis`,`post_chat`.`stance` AS `stance`,`post_chat`.`target` AS `target`,NULL AS `target_alias`,`post_chat`.`view_text` AS `view_text`,`post_chat`.`signal_text` AS `signal_text`,`post_chat`.`source` AS `source`,`post_chat`.`source_url` AS `source_url`,`post_chat`.`blogger_id` AS `blogger_id`,`post_chat`.`subject_id` AS `subject_id`,`post_chat`.`src_rel` AS `src_rel`,`post_chat`.`review_required` AS `review_required`,`post_chat`.`dedup_key` AS `dedup_key`,`post_chat`.`created_at` AS `created_at`,`post_chat`.`updated_at` AS `updated_at`,`post_chat`.`form` AS `form`,NULL AS `op`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`post_chat`.`wiki_ref` AS `wiki_ref`,`post_chat`.`reply_to` AS `reply_to`,`post_chat`.`fetched_at` AS `fetched_at`,'chat' AS `content_type`,NULL AS `status_code` from `post_chat` union all select `post_trade`.`id` AS `id`,`post_trade`.`blogger` AS `blogger`,`post_trade`.`post_date` AS `post_date`,`post_trade`.`view_date` AS `view_date`,`post_trade`.`view_date_source` AS `view_date_source`,`post_trade`.`view_date_precision` AS `view_date_precision`,`post_trade`.`view_date_basis` AS `view_date_basis`,`post_trade`.`stance` AS `stance`,`post_trade`.`target` AS `target`,`post_trade`.`target_alias` AS `target_alias`,`post_trade`.`view_text` AS `view_text`,`post_trade`.`signal_text` AS `signal_text`,`post_trade`.`source` AS `source`,`post_trade`.`source_url` AS `source_url`,`post_trade`.`blogger_id` AS `blogger_id`,`post_trade`.`subject_id` AS `subject_id`,`post_trade`.`src_rel` AS `src_rel`,`post_trade`.`review_required` AS `review_required`,`post_trade`.`dedup_key` AS `dedup_key`,`post_trade`.`created_at` AS `created_at`,`post_trade`.`updated_at` AS `updated_at`,`post_trade`.`form` AS `form`,`post_trade`.`op` AS `op`,`post_trade`.`price` AS `price`,`post_trade`.`market_cap` AS `market_cap`,`post_trade`.`trade_date` AS `trade_date`,`post_trade`.`trade_note` AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`post_trade`.`wiki_ref` AS `wiki_ref`,`post_trade`.`reply_to` AS `reply_to`,`post_trade`.`fetched_at` AS `fetched_at`,'trade' AS `content_type`,NULL AS `status_code` from `post_trade`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`jianglb`@`%` SQL SECURITY DEFINER VIEW statements AS select `statement_research`.`id` AS `id`,`statement_research`.`blogger` AS `blogger`,`statement_research`.`statement_date` AS `statement_date`,`statement_research`.`view_date` AS `view_date`,`statement_research`.`view_date_source` AS `view_date_source`,`statement_research`.`view_date_precision` AS `view_date_precision`,`statement_research`.`view_date_basis` AS `view_date_basis`,`statement_research`.`stance` AS `stance`,`statement_research`.`target` AS `target`,NULL AS `target_alias`,`statement_research`.`view_text` AS `view_text`,`statement_research`.`signal_text` AS `signal_text`,`statement_research`.`source` AS `source`,`statement_research`.`source_url` AS `source_url`,`statement_research`.`blogger_id` AS `blogger_id`,`statement_research`.`src_rel` AS `src_rel`,`statement_research`.`review_required` AS `review_required`,`statement_research`.`dedup_key` AS `dedup_key`,`statement_research`.`created_at` AS `created_at`,`statement_research`.`updated_at` AS `updated_at`,`statement_research`.`form` AS `form`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,`statement_research`.`data_refs` AS `data_refs`,`statement_research`.`wiki_ref` AS `wiki_ref`,`statement_research`.`reply_to` AS `reply_to`,`statement_research`.`fetched_at` AS `fetched_at`,NULL AS `transferable`,'research' AS `content_type`,NULL AS `status_code` from `statement_research` union all select `statement_predict`.`id` AS `id`,`statement_predict`.`blogger` AS `blogger`,`statement_predict`.`statement_date` AS `statement_date`,`statement_predict`.`view_date` AS `view_date`,`statement_predict`.`view_date_source` AS `view_date_source`,`statement_predict`.`view_date_precision` AS `view_date_precision`,`statement_predict`.`view_date_basis` AS `view_date_basis`,`statement_predict`.`stance` AS `stance`,`statement_predict`.`target` AS `target`,NULL AS `target_alias`,`statement_predict`.`view_text` AS `view_text`,`statement_predict`.`signal_text` AS `signal_text`,`statement_predict`.`source` AS `source`,`statement_predict`.`source_url` AS `source_url`,`statement_predict`.`blogger_id` AS `blogger_id`,`statement_predict`.`src_rel` AS `src_rel`,`statement_predict`.`review_required` AS `review_required`,`statement_predict`.`dedup_key` AS `dedup_key`,`statement_predict`.`created_at` AS `created_at`,`statement_predict`.`updated_at` AS `updated_at`,`statement_predict`.`form` AS `form`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,`statement_predict`.`ref_price` AS `ref_price`,`statement_predict`.`target_price` AS `target_price`,`statement_predict`.`target_date` AS `target_date`,`statement_predict`.`date_precision` AS `date_precision`,`statement_predict`.`verify_date` AS `verify_date`,`statement_predict`.`verify_result` AS `verify_result`,NULL AS `data_refs`,`statement_predict`.`wiki_ref` AS `wiki_ref`,`statement_predict`.`reply_to` AS `reply_to`,`statement_predict`.`fetched_at` AS `fetched_at`,NULL AS `transferable`,'predict' AS `content_type`,`statement_predict`.`status_code` AS `status_code` from `statement_predict` union all select `statement_view`.`id` AS `id`,`statement_view`.`blogger` AS `blogger`,`statement_view`.`statement_date` AS `statement_date`,`statement_view`.`view_date` AS `view_date`,`statement_view`.`view_date_source` AS `view_date_source`,`statement_view`.`view_date_precision` AS `view_date_precision`,`statement_view`.`view_date_basis` AS `view_date_basis`,`statement_view`.`stance` AS `stance`,`statement_view`.`target` AS `target`,NULL AS `target_alias`,`statement_view`.`view_text` AS `view_text`,`statement_view`.`signal_text` AS `signal_text`,`statement_view`.`source` AS `source`,`statement_view`.`source_url` AS `source_url`,`statement_view`.`blogger_id` AS `blogger_id`,`statement_view`.`src_rel` AS `src_rel`,`statement_view`.`review_required` AS `review_required`,`statement_view`.`dedup_key` AS `dedup_key`,`statement_view`.`created_at` AS `created_at`,`statement_view`.`updated_at` AS `updated_at`,`statement_view`.`form` AS `form`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`statement_view`.`wiki_ref` AS `wiki_ref`,`statement_view`.`reply_to` AS `reply_to`,`statement_view`.`fetched_at` AS `fetched_at`,NULL AS `transferable`,'view' AS `content_type`,NULL AS `status_code` from `statement_view` union all select `statement_insight`.`id` AS `id`,`statement_insight`.`blogger` AS `blogger`,`statement_insight`.`statement_date` AS `statement_date`,`statement_insight`.`view_date` AS `view_date`,`statement_insight`.`view_date_source` AS `view_date_source`,`statement_insight`.`view_date_precision` AS `view_date_precision`,`statement_insight`.`view_date_basis` AS `view_date_basis`,`statement_insight`.`stance` AS `stance`,`statement_insight`.`target` AS `target`,NULL AS `target_alias`,`statement_insight`.`view_text` AS `view_text`,`statement_insight`.`signal_text` AS `signal_text`,`statement_insight`.`source` AS `source`,`statement_insight`.`source_url` AS `source_url`,`statement_insight`.`blogger_id` AS `blogger_id`,`statement_insight`.`src_rel` AS `src_rel`,`statement_insight`.`review_required` AS `review_required`,`statement_insight`.`dedup_key` AS `dedup_key`,`statement_insight`.`created_at` AS `created_at`,`statement_insight`.`updated_at` AS `updated_at`,`statement_insight`.`form` AS `form`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`statement_insight`.`wiki_ref` AS `wiki_ref`,`statement_insight`.`reply_to` AS `reply_to`,`statement_insight`.`fetched_at` AS `fetched_at`,NULL AS `transferable`,'insight' AS `content_type`,NULL AS `status_code` from `statement_insight` union all select `statement_chat`.`id` AS `id`,`statement_chat`.`blogger` AS `blogger`,`statement_chat`.`statement_date` AS `statement_date`,`statement_chat`.`view_date` AS `view_date`,`statement_chat`.`view_date_source` AS `view_date_source`,`statement_chat`.`view_date_precision` AS `view_date_precision`,`statement_chat`.`view_date_basis` AS `view_date_basis`,`statement_chat`.`stance` AS `stance`,`statement_chat`.`target` AS `target`,NULL AS `target_alias`,`statement_chat`.`view_text` AS `view_text`,`statement_chat`.`signal_text` AS `signal_text`,`statement_chat`.`source` AS `source`,`statement_chat`.`source_url` AS `source_url`,`statement_chat`.`blogger_id` AS `blogger_id`,`statement_chat`.`src_rel` AS `src_rel`,`statement_chat`.`review_required` AS `review_required`,`statement_chat`.`dedup_key` AS `dedup_key`,`statement_chat`.`created_at` AS `created_at`,`statement_chat`.`updated_at` AS `updated_at`,`statement_chat`.`form` AS `form`,NULL AS `price`,NULL AS `market_cap`,NULL AS `trade_date`,NULL AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`statement_chat`.`wiki_ref` AS `wiki_ref`,`statement_chat`.`reply_to` AS `reply_to`,`statement_chat`.`fetched_at` AS `fetched_at`,NULL AS `transferable`,'chat' AS `content_type`,NULL AS `status_code` from `statement_chat` union all select `statement_trade`.`id` AS `id`,`statement_trade`.`blogger` AS `blogger`,`statement_trade`.`statement_date` AS `statement_date`,`statement_trade`.`view_date` AS `view_date`,`statement_trade`.`view_date_source` AS `view_date_source`,`statement_trade`.`view_date_precision` AS `view_date_precision`,`statement_trade`.`view_date_basis` AS `view_date_basis`,`statement_trade`.`stance` AS `stance`,`statement_trade`.`target` AS `target`,`statement_trade`.`target_alias` AS `target_alias`,`statement_trade`.`view_text` AS `view_text`,`statement_trade`.`signal_text` AS `signal_text`,`statement_trade`.`source` AS `source`,`statement_trade`.`source_url` AS `source_url`,`statement_trade`.`blogger_id` AS `blogger_id`,`statement_trade`.`src_rel` AS `src_rel`,`statement_trade`.`review_required` AS `review_required`,`statement_trade`.`dedup_key` AS `dedup_key`,`statement_trade`.`created_at` AS `created_at`,`statement_trade`.`updated_at` AS `updated_at`,`statement_trade`.`form` AS `form`,`statement_trade`.`price` AS `price`,`statement_trade`.`market_cap` AS `market_cap`,`statement_trade`.`trade_date` AS `trade_date`,`statement_trade`.`trade_note` AS `trade_note`,NULL AS `ref_price`,NULL AS `target_price`,NULL AS `target_date`,NULL AS `date_precision`,NULL AS `verify_date`,NULL AS `verify_result`,NULL AS `data_refs`,`statement_trade`.`wiki_ref` AS `wiki_ref`,`statement_trade`.`reply_to` AS `reply_to`,`statement_trade`.`fetched_at` AS `fetched_at`,NULL AS `transferable`,'trade' AS `content_type`,NULL AS `status_code` from `statement_trade`;

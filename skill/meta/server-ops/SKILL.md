@@ -67,7 +67,7 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/fitness-data-$(date +%Y%
   ```bash
   cd ~/Project/investment-console
   python3 scripts/redis-inspect.py keys               # 所有 key：键 / 大小 / 剩余 TTL / 值预览
-  python3 scripts/redis-inspect.py keys 'ik:posts:*'  # 按 pattern 过滤
+  python3 scripts/redis-inspect.py keys 'ik:statements:*'  # 按 pattern 过滤
   python3 scripts/redis-inspect.py get '<key>'        # 单键的值（自动解压 gzip + 格式化 JSON）
   python3 scripts/redis-inspect.py raw '<key>'        # 原始值（看 g: 前缀）
   python3 scripts/redis-inspect.py info               # 键数 / epoch / 内存 / 上限 / keyspace
@@ -75,7 +75,7 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/fitness-data-$(date +%Y%
   bash scripts/redis.sh                                # 交互式 redis-cli（要原生命令时用）
   ```
   ⚠️ **`KEYS *` 不可用**（已按加固策略改名禁用，阻塞式全库遍历）：取全量用 `SCAN` / `redis-inspect.py keys` / `redis-cli --scan`。
-- **缓存内容是什么**：全部是看板读接口的结果（`ik:posts|subject|subjects|trades|bloggerProfile|bloggerCounts:v<epoch>:<hash>`）+ 一个 `ik:epoch` 版本号键；
+- **缓存内容是什么**：全部是看板读接口的结果（`ik:statements|subject|subjects|trades|bloggerProfile|bloggerCounts:v<epoch>:<hash>`）+ 一个 `ik:epoch` 版本号键；
   **无持久化 → 重启 Redis 即全空**；键都带 300s TTL（仅 `ik:epoch` 无 TTL）。
 - **客户端健壮性（2026-09-12，公网链路的三个坑）**：① **空闲连接会被 NAT 静默掐死** → 命令超时即判定连接已死并重连 + **15s 心跳保活**（实测空闲 45s 后首次读仍命中）；② 失败退避为**指数**（1s→15s，成功后归零）；③ `ik:epoch` 键若被 LRU 淘汰，**读取端不回落成固定值**（那会读到本该失效的老键）而是生成随机 epoch + `SET NX`，`cacheBump` 用 `SET` 而非 `INCR`。
 - **安全提醒**：Redis 监听 0.0.0.0 时全靠 `requirepass` 兜底；若要收紧，把安全组规则限定到本机出口 IP，或维持 loopback + SSH 隧道（本 skill 的推荐姿势）

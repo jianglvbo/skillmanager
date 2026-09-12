@@ -4,11 +4,11 @@
 
 ## 复核建议处理（审查首步）
 
-**每次审查开始前，先处理用户在「言论追踪」左滑写入的复核建议**（存于 MySQL `post_review_sub`，子表 `_sub` 后缀）：
+**每次审查开始前，先处理用户在「言论追踪」左滑写入的复核建议**（存于 MySQL `statement_review_sub`，子表 `_sub` 后缀）：
 
-1. 调 MCP `console_post_review(action=list, status=open)` 取出全部未处理建议（返回含建议正文 + 该言论当前 `contentType/stance/target/viewText` 上下文）。
-2. 逐条按建议修正：用 `blogger_post(action=update, id, contentType/stance/…)` 把归类改到用户要求；成功后 `console_post_review(action=apply, postId)` 置为已处理。
-3. 若判断建议不成立（与 dict 判据冲突），`console_post_review(action=delete, postId)` 并在审查报告中说明理由，不静默丢弃。
+1. 调 MCP `console_statement_review(action=list, status=open)` 取出全部未处理建议（返回含建议正文 + 该言论当前 `contentType/stance/target/viewText` 上下文）。
+2. 逐条按建议修正：用 `blogger_statement(action=update, id, contentType/stance/…)` 把归类改到用户要求；成功后 `console_statement_review(action=apply, statementId)` 置为已处理。
+3. 若判断建议不成立（与 dict 判据冲突），`console_statement_review(action=delete, statementId)` 并在审查报告中说明理由，不静默丢弃。
 4. **可泛化即固化**：凡某条复核暴露出通用规律，回写 `framework-rules.md #30` 的归类判据（观点/预测/研究…），让下次提炼自动遵循。典型例：`白酒处于底部（公募持仓全面退出为信号）` 属**当下判断 → 观点·看多(bullish)**，非预测（无未来时间窗/可验证目标位）——此判据已固化进 #30「易错判据（观点 vs 预测记录）」。
 
 > 看板 UI 侧：原「待复核」badge 已移除，仅当存在复核记录时显示「复核」badge（tooltip 见建议原文）。

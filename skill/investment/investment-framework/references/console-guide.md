@@ -14,7 +14,7 @@
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
 | 粗制品队列 | `GET /api/coarse/list` | 直接读 vault `工作区/粗制品/`；「已加工」状态由提炼记录 `refine_records.from_rel` 推导（原 `coarse_records` 表已于 2026-09-12 删除，评分字段不再展示） | 粗制品模块 |
 | post-fetch 第三步之二 | `scripts/import-post-history.js`（批量）/ `MCP post_history`（单条 upsert） | 采集原文落 `post_history` 表（提炼前原文留档，**唯一用途=避免重采**） | 不呈现（后端留档；`post_history action=get/check` 供提炼与补采读取） |
-| prediction-console（言论追踪·2026-09-11 收敛：预测即言论行，唯一预测表 `post_predict`；`predictions_del` 留档） | `MCP console_add_prediction` / `console_update_status` / `console_add_track` | 预测/验证留痕/言论跟踪（个股/行业/市场三控制台，含 subjectMarket/subjectHkConnect） | 言论追踪模块（市场徽+港股通徽、验证留痕） |
+| prediction-console（言论追踪·2026-09-11 收敛：预测即言论行，唯一预测表 `statement_predict`；`predictions_del` 留档） | `MCP console_add_prediction` / `console_update_status` / `console_add_track` | 预测/验证留痕/言论跟踪（个股/行业/市场三控制台，含 subjectMarket/subjectHkConnect） | 言论追踪模块（市场徽+港股通徽、验证留痕） |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。
 
@@ -115,7 +115,7 @@ node ~/Project/investment-console/scripts/audit-schema-comments.js           # �
 node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
 ```
 
-审计口径：只读视图 `posts` 无列注释概念，自动排除。**当前状态：表注释 22/22、列注释 328/328**（六张帖子表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
+审计口径：只读视图 `statements` 无列注释概念，自动排除。**当前状态：表注释 22/22、列注释 328/328**（六张帖子表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
 
 **权威 schema 是生成物（2026-09-12 起）**：改库后必须重新导出 + 回放校验，否则文件与实库漂移（本轮就抓出过视图缺列、表名不一致）：
 
@@ -145,7 +145,7 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 > 15s 心跳保活、`epoch` 键被 LRU 淘汰时生成随机 epoch 而**不回落固定值**（否则会读到本该失效的老键）。
 > 安装/配置/安全细节与查看命令见 server-ops skill。
 
-> **结构约定速查**：帖子一律 `post`（六张分表 `post_trade`/`post_predict`/`post_research`/`post_view`/`post_insight`/`post_chat` + 视图 `posts`），一条帖子只落一张表｜四维度走 `post_entity_rel`｜子表 `_sub`、关联表 `_rel`｜**弃用表删前备份后直接 DROP**（不留 `_del`）｜可枚举值进 `dict`、字段注释标注 `dict.type`｜vault 文件索引/标签**不落库**（服务端内存扫描 `buildIndex()`）｜`wiki_ref` 存 vault 相对路径、前端生成 `obsidian://` 本地打开链接。详见 framework-rules #44。
+> **结构约定速查**：帖子一律 `post`（六张分表 `statement_trade`/`statement_predict`/`statement_research`/`statement_view`/`statement_insight`/`statement_chat` + 视图 `statements`），一条帖子只落一张表｜四维度走 `实体关联表`｜子表 `_sub`、关联表 `_rel`｜**弃用表删前备份后直接 DROP**（不留 `_del`）｜可枚举值进 `dict`、字段注释标注 `dict.type`｜vault 文件索引/标签**不落库**（服务端内存扫描 `buildIndex()`）｜`wiki_ref` 存 vault 相对路径、前端生成 `obsidian://` 本地打开链接。详见 framework-rules #44。
 
 > 另一坑：旧实例若成为孤儿进程（PPID=1）会与新实例抢状态；`launchctl kickstart -k` 之前先 `pgrep -fl "node server.js"` 确认没有残留。
 
