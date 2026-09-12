@@ -136,8 +136,10 @@ curl -s http://127.0.0.1:8698/api/cache/stats                 # 进程内命中/
 curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（epoch+1）
 ```
 
-> Redis 装在服务器 `/home/jianglb/redis`（systemd `redis-investment`），本机经 launchd `com.investment-redis-tunnel`
-> 的 SSH 隧道访问 `127.0.0.1:6379`；安装/配置/安全细节见 server-ops skill。
+> Redis 装在服务器 `/home/jianglb/redis`（systemd `redis-investment`），看板**直连 `106.55.14.116:6379`**
+> （安全组已放行；备用通路为 SSH 隧道，`scripts/redis-endpoint.sh [check|direct|tunnel]` 可一键切换复验）。
+> **缓存值 >2KB 自动 gzip+base64 压缩**（`g:` 前缀）：98KB 的主题详情压到 32KB，热读 0.14s→0.05s——缓存值同样跨公网回传，
+> 不压缩等于把「查库 RTT」换成「传大 JSON 带宽」。安装/配置/安全细节见 server-ops skill。
 
 > **结构约定速查**：帖子一律 `post`（六张分表 `post_trade`/`post_predict`/`post_research`/`post_view`/`post_insight`/`post_chat` + 视图 `posts`），一条帖子只落一张表｜四维度走 `post_entity_rel`｜子表 `_sub`、关联表 `_rel`｜**弃用表删前备份后直接 DROP**（不留 `_del`）｜可枚举值进 `dict`、字段注释标注 `dict.type`｜vault 文件索引/标签**不落库**（服务端内存扫描 `buildIndex()`）｜`wiki_ref` 存 vault 相对路径、前端生成 `obsidian://` 本地打开链接。详见 framework-rules #44。
 

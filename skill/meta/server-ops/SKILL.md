@@ -55,7 +55,9 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/fitness-data-$(date +%Y%
 - **安装位置**：`/home/jianglb/redis`（源码编译，v8.10.1；`bin/`、`conf/redis.conf`、`data/`、`log/` 全在 home 下，删除 = `rm -rf /home/jianglb/redis`）
 - **服务**：systemd 单元 `redis-investment`（User=jianglb，`sudo systemctl {status,restart,stop} redis-investment`，已 enable 开机自启）
 - **配置要点**：`bind 0.0.0.0` + `requirepass`；`maxmemory 256mb` + `allkeys-lru`；**纯缓存不持久化**（`save ""`、`appendonly no`）；危险命令已改名禁用（FLUSHALL/FLUSHDB/KEYS/CONFIG/SHUTDOWN）
-- **本机访问路径**：`ssh -L 6379:127.0.0.1:6379` 隧道，由 launchd `com.investment-redis-tunnel` 常驻（`launchctl kickstart -k gui/501/com.investment-redis-tunnel` 重启）。**直连 106.55.14.116:6379 目前不通**（安全组放行需含本机出口 IP，见下）
+- **接入点（2026-09-12 用户放开 6379 后）**：看板**直连 `106.55.14.116:6379`**（安全组入站 TCP:6379 已放行，曾因规则加错安全组导致不通——抓包 0 SYN + 外部节点探测可定位）。**备用通路**：SSH 隧道（launchd `com.investment-redis-tunnel`，本地 6379 → 服务器 127.0.0.1:6379），切回用 `bash ~/Project/investment-console/scripts/redis-endpoint.sh tunnel`
+- **两条通路都验证过的命令**：`bash ~/Project/investment-console/scripts/redis-endpoint.sh check`（先探测再改配置）；`direct`/`tunnel` 一键切换并复验看板缓存连接
+- **注意**：直连 RTT 实测中位 ~57ms（移动网到腾讯云一跳），与隧道相当；直连省掉 SSH 加密转发但**依赖本机出口 IP 会变**（移动网），隧道更稳
 - **凭据**：`~/.config/server-ops/credentials.md` 的 `## Redis` 段（0600）；看板侧写在 `~/Project/investment-console/config.json` 的 `redis` 段（该文件已被 .gitignore）
 - **一键体检**：`bash ~/Project/investment-console/scripts/cache-stats.sh`（看板侧进程统计 + 服务器 Redis 内存/键数 + 隧道状态）
 - **安全提醒**：Redis 监听 0.0.0.0 时全靠 `requirepass` 兜底；若要收紧，把安全组规则限定到本机出口 IP，或维持 loopback + SSH 隧道（本 skill 的推荐姿势）
