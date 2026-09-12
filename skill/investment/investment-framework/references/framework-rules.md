@@ -201,7 +201,7 @@
 39. 言论分表存储（2026-09-08 用户决策：各类型字段可独立演进）：言论按 contentType 拆六张物理表——`statement_research` / `statement_predict` / `statement_view` / `statement_insight` / `statement_chat` / `statement_trade`；`statements` 是只读 UNION 视图，承接全部查询与统计。**Agent 侧契约不变**：读写一律走 MCP `blogger_statement`（服务端按 contentType 自动路由），禁止直连 SQL 写物理表。id 由全局序列 `statement_id_seq` 发号、跨表唯一——复核建议（`statement_review_sub`）、验证留痕（`statement_verify_sub`）、预测原生字段（`statement_predict.ref_price`/`status_code` 等，预测即言论行）、买卖原生字段（`statement_trade.op`/`price`/`trade_note`）等松散引用不受分表影响。**改类型 = 跨表搬行且 id 不变**（审查第零步的 contentType 修正照常走 `blogger_statement(action=update)`，关联自动跟随）。将来某类型需要专属字段时只 ALTER 对应 `post_*` 表，不波及其他类型。原单表曾保留为 `blogger_statements_legacy` 作比对副本，**2026-09-11 校验后已删除**：分表 1749 行为 legacy 1236 行的超集（+517 为拆分后新增），legacy 独有 4 行（263/321/542/917）均为清理时有意删除的空正文行（纯转述 2 行 + 被覆盖重复 1 行 + 原文仅「—」占位 1 行）；删除前整表备份 `~/Project/investment-console/backups/blogger_statements_legacy_final_20260911.json`。迁移脚本 `split_statements_by_type.js` 已加「勿再运行」护栏。
 
 40. 看板卡片展示一致性（2026-09-11 用户发现「铝」案例后确认）：**同一条言论在任何入口——言论追踪 / 博主详情 / 预测控制台时间线 / 买卖记录卡——必须展示同样的要素**：博主正文、**回应**（`reply_to` 字段）、信号行（`方向 · 内容`）、形态标记（`form`）、原文链接；**不得因所属类型不同而丢掉其中任何一项**。
-    - **字段化（2026-09-11 用户确认）**：卡片每个要素都必须有独立且带类型的字段——`contentType`（类型）/`form`（形态）/`target`（标的）/`view`（正文，**只放博主自己的话**）/`reply_to`（回应的对方原话/话题，六表统一列 + 视图已暴露 + MCP `replyTo`）/`stance`+`signal_text`（信号）/`source_url`（原文）/`wiki_ref`（已具象化）。**禁止把回应内嵌进正文**（旧写法 `（回应"…"）博主观点` 已废弃，前端只在兜底路径上仍解析历史数据）；`//@` 之后 = 被回应者 → `reply_to`（**原文照抄、不提炼**，见下条）。
+    - **字段化（2026-09-11 用户确认）**：卡片每个要素都必须有独立且带类型的字段——`contentType`（类型）/`form`（形态）/`target`（标的）/`view`（正文，**只放博主自己的话**）/`reply_to`（回应的对方说的话，六表统一列 + 视图已暴露 + MCP `replyTo`）/`stance`+`signal_text`（信号）/`source_url`（原文）/`wiki_ref`（已具象化）。**禁止把回应内嵌进正文**（旧写法 `（回应"…"）博主观点` 已废弃，前端只在兜底路径上仍解析历史数据）；`//@` 之后 = 被回应者的话 → `reply_to`（**原话照抄但剥掉 `//@某人：`/`回复@某人:` 包装**，见下条规则 #46）。
     - **根因案例**：命中「买卖记录」优先级的帖子（如 metalslime 铝 2026-09-09「（回应"我昨天献祭了铝，现在想哭"）那是纯菜：我才开始买，你就跑。」）当时只走 `tradeCard`，渲染结构化字段（操作/价格/日期）+ 被截断的 `note`，于是**正文排版、回应块、信号行、形态标记全部消失**，与同批 view 卡完全两个样子（用户比对「贵州茅台(600519) 看空·高端圈层茅台消费递减」一卡发现）。
     - **修复契约**：`web/app.js` 的 `tradeCard` 按 `statementId` 合并关联言论——正文走 `replyBodyHtml()`、信号行照 `stmtCard` 输出、形态走 `form` 徽标；买卖行的 `statement_trade.trade_note` 与正文同源时（剥掉「（回应…）」前缀后相同）**不再重复打印**，含额外信息时保留。
     - **防复发**：新增任何卡片渲染路径，必须复用既有唯一实现——`replyBodyHtml()`（回应块）、`stripDirPrefix()`（信号去方向词前缀）、`setStmtLookup()`（言论 join）、`tkFiles()`（vault 链接，见 #38）；**禁止另写第二套**。
@@ -227,7 +227,7 @@
     - **必须非空的只有四项**：`statement_date` / `content_type` / `form` / `source_url`（`view_date` 缺省=帖子时间、`fetched_at` 缺省=今日，故必然有值）。
     - **具象化字段（`wiki_ref`）＝「这条被提炼进了哪个框架条目文件」**（用户 2026-09-11 补充）。**已具象化则必填、未具象化留空**；条目被删除时要清空。**已具象化时**服务端写入时自动反查 vault（框架条目 frontmatter `source` 里的原帖 URL → 笔记名）并回填，`add` 返回 `wikiRefAutoFilled` 提示；存量用 `node ~/Project/investment-console/scripts/backfill-wiki-ref.js` 回填。
     - **三个时间必须分清**（用户原话举例：9/10 发帖、帖里写「我 8 月 5 号就看好X」、9/11 采集）：`statement_date`＝帖子时间（9/10）｜`view_date`＝内容时间/判断成立时点（8/5，须给 `view_date_source=explicit` + `view_date_basis` 原文句）｜`fetched_at`＝采集时间（9/11，抓取该帖的日期）。`created_at` 只是入库时刻，**不得当作采集时间**。
-    - **按类型加严**：`form=回复` → `reply_to` 必填（取 `//@` 之后对方原话，或至少 `@昵称`）；`content_type=predict` → `stance` 必填（预测三要素之一，缺方向说明该条应归 `view`）；此外**所有类型** `statement_date`/`form`/`source_url` 均必填。
+    - **按类型加严**：`form=回复` → `reply_to` 必填（取 `//@` 之后对方说的话，**剥掉 `//@某人：` 与 `回复@某人:` 包装**；确实只剩包装/对方内容已删则留空）；`content_type=predict` → `stance` 必填（预测三要素之一，缺方向说明该条应归 `view`）；此外**所有类型** `statement_date`/`form`/`source_url` 均必填。
     - **写入路径**：新增列 `fetched_at`（六表统一 + 视图暴露 + MCP `fetchedAt` 入参，缺省今日）。门禁在 `blogger_statement` add 时校验，报错文案直接点名缺失项。
     - **审计**：`node ~/Project/investment-console/scripts/audit-post-fields.js [--by-type] [--strict]`（覆盖九项 + 两项按类型加严 + **具象化完整性**：vault 带链接笔记 ↔ 库内对应行是否都回填了 `wiki_ref`；`--strict`：仅当**必填四项**出现缺口才退出码 1，可空三项不计违规）。存量缺口见报告（`form`/`reply_to`/`fetched_at` 为历史遗留，新数据不再产生）。
 
@@ -261,14 +261,16 @@
     - **审查侧要求**：`investment-review` 看 **`insight` 帖的具象化覆盖率**（当前 4/135）作为「方法论沉淀不足」的信号，人工复核哪些该补条目；不得依赖已删除的标签字段做自动化统计。
     - **字段语义单一化**：每个字段只表达一种事实（产物路径就是产物路径，状态就是状态，码值就是码值）；不要用「是不是某类东西」的布尔去承载「做过没做过」。
 
-46. 回复内容「原样照抄」——`reply_to` 是引文，不是摘要（2026-09-12 用户拍板）：
-    - **原话**：用户报「我怎么没在下面看到回复的内容，还有回复的内容不要提炼，直接原文塞到回复里面」。
-    - **定义**：回复类帖的采集原文形如 `回复@A: <博主新话>//@B：<B 的话>`；第一个 `//@` **之前**归 `view`（博主自己的话），**之后**原样照抄进 `reply_to`。
-    - **四条禁令**：① 不提炼（不得把「财主，当下的腾讯，您怎么看」写成「「当下的腾讯怎么看」」）；② 不概括（不得把一段质疑写成「对其看好泰它西普的质疑」）；③ 不截断、不加省略号（旧写法末尾 `…` 截到 50/500 字属违规——**实测库里 232 行是概括或截断版，已全部换回原文**）；④ 不因「太长」而删（`reply_to` 已由 `varchar(500)` 改 `TEXT`，最长实测 1647 字）。
+46. 回复内容「原样照抄 + 去包装」——`reply_to` 是引文，不是摘要、也不是雪球语法串（2026-09-12 用户拍板，同日二次修正）：
+    - **原话（第一次）**：用户报「我怎么没在下面看到回复的内容，还有回复的内容不要提炼，直接原文塞到回复里面」。
+    - **原话（第二次，本条新规）**：用户报「你的言论里面落的回复内容是这样的『回应 //@空仓三十天：回复@metalslime:药神能告诉我科技是看通信etf吗』，但是我想要的只有『药神能告诉我科技是看通信etf吗』这一段」。
+    - **定义**：回复类帖的采集原文形如 `回复@A: <博主新话>//@B：回复@C:B 的话`；第一个 `//@` **之前**归 `view`（博主自己的话），**之后**取「B 说的话」进 `reply_to`。**规则 v3：平台包装一律剥掉**——`//@昵称：` 引用块署名（变体 `//[@昵称](url):`）与嵌套的 `回复@昵称:` 标注（变体 `回复[@昵称](url):`）都不进字段；**说话人昵称也不进字段**（要查「回的是谁」去 `post_history.raw_text` 留档查）。**v2 的「保留说话人 → 写成 `//@昵称：原话`」条款已作废**（就是它把 `//@…` 语法串露到了卡片上）。
+    - **四条禁令**（内容本身仍一字不改）：① 不提炼（不得把「财主，当下的腾讯，您怎么看」写成「「当下的腾讯怎么看」」）；② 不概括（不得把一段质疑写成「对其看好泰它西普的质疑」）；③ 不截断、不加省略号（旧写法末尾 `…` 截到 50/500 字属违规）；④ 不因「太长」而删（`reply_to` 已由 `varchar(500)` 改 `TEXT`，最长实测 1647 字）。
+    - **三个落点都要改**（缺一个就会有旧格式重新流回库里）：**写入侧** `server.js` `_cleanReplyTo()`（`_statementExtraVals` 里对 `reply_to` 生效——前端表单与 MCP 共用这一个写入口）；**渲染侧** `web/app.js` `stripReplyWrapper()`（兜底，防旧缓存/直接改库）；**存量清洗** `scripts/strip-reply-wrappers.js`（2026-09-12 首次执行改写 **304 行**，旧值备份 `backups/reply_wrapper_strip_20260912.json`，幂等可重跑）。
     - **没有就留空**：采集原文无 `//@` 段 → 留空 + 看板显示「被回应者内容未采集（点编辑可补录）」；**禁止用概括顶上**（概括会伪装成「已有数据」，让缺口不可见）。当前缺口 74 行（38 行留档里本就没有 `//@`、36 行无留档）→ 属采集侧问题，重采才能补。
-    - **采集侧连带**：`xueqiu-spyder` 必须保留 `回复@` / `//@` 引用结构（SKILL.md 已有此约束）；`post_history.raw_text` 是**唯一留档**（2026-09-12 起采集产物即临时文件、不进 vault），**导入时不得清洗引用块**。
-    - **回填与审计**：`~/Project/investment-console/scripts/backfill-reply-to.js`（空值写入 / 截断升级 / 概括改写；明细存 `backups/reply_to_verbatim_audit.tsv`）。凡是新增「字段语义」类规则，都要配一个可重跑的核对脚本，别靠一次性手工 UPDATE。
-    - **展示对照**：卡片上的「回应」块 = `reply_to` 原文；缺失时显示虚线占位块。表单已补「回复内容」textarea（此前只能靠 MCP 写，人工无法补录）。
+    - **采集侧连带**：`xueqiu-spyder` 必须保留 `回复@` / `//@` 引用结构（SKILL.md 已有此约束）；`post_history.raw_text` 是**唯一留档**（2026-09-12 起采集产物即临时文件、不进 vault），**导入时不得清洗引用块**——正因为库里不留说话人，「回的是谁」只能靠留档回溯。
+    - **回填与审计**：`~/Project/investment-console/scripts/backfill-reply-to.js`（空值写入 / 截断升级 / 概括改写；抽取端已同步按 v3 剥包装；明细存 `backups/reply_to_verbatim_audit.tsv`）。凡是新增「字段语义」类规则，都要配一个可重跑的核对脚本，别靠一次性手工 UPDATE。
+    - **展示对照**：卡片上的「回应」块 = `reply_to`（只显示对方的话，前面那个「回应」小标签是 UI 标签，不属于数据）；缺失时显示虚线占位块。表单已补「回复内容」textarea（此前只能靠 MCP 写，人工无法补录）。
     - **顺带澄清 `target`**：买卖卡上重复的「标的：中芯国际(688981)」行已删（标的名在卡头 `cs-who` 已有）；但 `statement_*` 的 `target` **列保留**——它是卡头标的名（`TRADE_SEL` 的 `target AS target_name`）、实体解析与跟踪的输入，不是可有可无的展示字段。显示层去重 ≠ 删列。
 
 47. 形态 `form` 以留档为准，禁止自行推断；`target`/`target_alias` 两列已删除（2026-09-12 用户拍板）：
@@ -282,5 +284,5 @@
 
 48. 能用留档就别重采（2026-09-12 用户纠正）：
     - 用户原话：「现有的已经在数据库了……数据库的 post_history 就是为了你乱重采设计的，能不能用起来啊，别一直重采啊」。
-    - `post_history` 是**采集原文留档**（含 `form`、`raw_text`、原文链接、互动数；**2026-09-12 起不再含要素快照**——`entities_json`/`post_id`/`content_type`/`stance`/`signal_text`/`refined_at` 六列已删），存在的意义就是「不用再抓一次」。修数据先查留档：形态、回复内容（`//@` 段）都能在留档里解决（`backfill-reply-to.js`、`fix-form-from-archive.js`）；要素回溯改走 `statements` + 三张关联表。
+    - `post_history` 是**采集原文留档**（含 `form`、`raw_text`、原文链接、互动数；**2026-09-12 起不再含要素快照**——`entities_json`/`post_id`/`content_type`/`stance`/`signal_text`/`refined_at` 六列已删），存在的意义就是「不用再抓一次」。修数据先查留档：形态、回复内容（`//@` 段）都能在留档里解决（`backfill-reply-to.js`、`strip-reply-wrappers.js`、`fix-form-from-archive.js`）；要素回溯改走 `statements` + 三张关联表。**注意**：`reply_to` 按规则 #46 v3 只存对方的话、不留昵称，所以「回的是谁」的唯一出处就是留档的 `raw_text`。
     - 只有**留档里确实没有**的东西（例如留档也缺 `//@` 段）才是真缺口——而且**要如实报缺口，不要用重采去填**；用户还可能明确说「某个日期以前的都不要了」，那就更不该重采。
