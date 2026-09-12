@@ -54,7 +54,9 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/fitness-data-$(date +%Y%
 - **用途**：投资看板读 `investment_kb` 的缓存层。看板跑在本机 macOS，读库要跨公网 RTT，缓存把「N 次查询」压成「1 次 GET」。
 - **安装位置**：`/home/jianglb/redis`（源码编译，v8.10.1；`bin/`、`conf/redis.conf`、`data/`、`log/` 全在 home 下，删除 = `rm -rf /home/jianglb/redis`）
 - **服务**：systemd 单元 `redis-investment`（User=jianglb，`sudo systemctl {status,restart,stop} redis-investment`，已 enable 开机自启）
-- **配置要点**：`bind 0.0.0.0` + `requirepass`；`maxmemory 256mb` + `allkeys-lru`；**纯缓存不持久化**（`save ""`、`appendonly no`）；危险命令已改名禁用（FLUSHALL/FLUSHDB/KEYS/CONFIG/SHUTDOWN）
+- **配置要点**：`bind 0.0.0.0` + `requirepass`（28 位 ≈167 bits）；`maxmemory 256mb` + `allkeys-lru`；**纯缓存不持久化**（`save ""`、`appendonly no`，所以**重启 Redis = 缓存全清**，看板会短暂回落到查库，属预期）
+- **命令面加固（2026-09-12，公网可达后追加）**：改名禁用 `CONFIG/DEBUG/MONITOR/REPLICAOF/SLAVEOF/MODULE/SAVE/BGSAVE/BGREWRITEAOF/MIGRATE/CLIENT/ACL/FAILOVER/PSYNC/SYNC/REPLCONF` + 原有的 `FLUSHALL/FLUSHDB/KEYS/SHUTDOWN`。改前备份 `redis.conf.bak-20260912`；改动后重启 Redis 并复验常用命令（PING/GET/SET/SCAN/INFO/DBSIZE 正常）
+- **性能实测（2026-09-12）**：单次 1KB GET 往返 **直连 61ms（中位） vs SSH 隧道 114ms** → **直连快约 1.8×**，故看板默认走直连；隧道保留为备用（加密、不依赖出口 IP）
 - **接入点（2026-09-12 用户放开 6379 后）**：看板**直连 `106.55.14.116:6379`**（安全组入站 TCP:6379 已放行，曾因规则加错安全组导致不通——抓包 0 SYN + 外部节点探测可定位）。**备用通路**：SSH 隧道（launchd `com.investment-redis-tunnel`，本地 6379 → 服务器 127.0.0.1:6379），切回用 `bash ~/Project/investment-console/scripts/redis-endpoint.sh tunnel`
 - **两条通路都验证过的命令**：`bash ~/Project/investment-console/scripts/redis-endpoint.sh check`（先探测再改配置）；`direct`/`tunnel` 一键切换并复验看板缓存连接
 - **注意**：直连 RTT 实测中位 ~57ms（移动网到腾讯云一跳），与隧道相当；直连省掉 SSH 加密转发但**依赖本机出口 IP 会变**（移动网），隧道更稳
