@@ -44,6 +44,17 @@ compatibility: 通用
 
 按 `investment-framework/references/review-rules.md`「复核建议处理（审查首步）」执行：`console_statement_review(action=list, status=open)` 取全部未处理建议（返回含该言论当前 `contentType/stance/target/viewText` 上下文）→ 逐条按建议用 `blogger_statement(action=update)` 修正归类 → `console_statement_review(action=apply)` 置已处理；判断建议不成立则 `action=delete` 并在报告说明理由。**本步未处理完，不得进入 C/S 维度**；修正结果并入审查报告。
 
+### 第零步之二：待复核队列处理（审查首步之二 · 必做；2026-09-12 新增）
+
+用户原话：「显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，让我以后可以不用再审核类似的帖子」。队列在看板「待复核」页（左侧菜单，在「审查」**前面**），agent 侧走 `MCP pending_review`：
+
+1. `action=list, status=pending_internalize` → **已答复但规则还没落地**的项（这批是本步的核心工作）；
+2. 逐条：按用户答复**修数据**（改归类/补标的名/改时间/补别名…）→ 把答复**内化成规则/案例**（落点四选一，见 framework-rules #49：`framework-rules.md` 条目 / `stocks.aliases` / `mention_case` / `refine-schema.md` 细则）→ `action=internalize` 把落点写回 `internalized`；
+3. 再看 `action=list, status=open`：**还没答的**不要替用户决定——在报告里列出「待用户裁决 N 条」即可（含每条的问题与候选）；若发现某条其实规则已覆盖，改为 `action=resolve` 并写清依据（同时把规则落点写进 `internalized`）；
+4. 报告里写明结果：**「待复核：处理 N 条（内化 M 条 / 忽略 K 条），仍待裁决 J 条」**。
+
+**只答不内化＝违规**：用户答一次是为了以后不再答同类问题，答复不进规则就等于让用户重复劳动（framework-rules #49）。
+
 ### 内容审查（编号 C1-C10）
 
 **C1**：读取参数 `{ scope_dirs, blogger_console_path }`；**C2**：扫描 scope_dirs 下所有 .md 文件
@@ -129,6 +140,7 @@ compatibility: 通用
 
 ## 自检
 
+- [ ] **待复核队列是否处理**（第零步之二）？已答复未内化的项是否都**修了数据 + 内化成规则/案例 + 回写 `internalized`**？仍未裁决的项是否在报告里列清（未替用户决定）？报告是否写了「处理 N 条（内化 M / 忽略 K），仍待裁决 J 条」？
 - [ ] 内容审查 C1-C10 是否全部执行？（读取参数、扫描、一致性、知行合一、我的vs博主〔仅用户要求时〕、经验验证、关联备注、关系依据复核、言论追踪审计 C10、输出报告）
 - [ ] 结构审查 S1-S8 是否全部执行？（读取参数、归类、frontmatter完整性含updateDate/**author**/**source**、**字段顺序canonical(#27)**、**无流浪date(#27)**、引号有效性、wikilink含source字段、脚注格式、标签、输出报告）；归类正确性是否覆盖「博主层条目作者是否均在博主控制台登记，未登记者误挂需迁移其他层」？
 - [ ] 审查范围是否正确排除「我的」层（规则 #15 用户自管）？是否仅覆盖 博主/其他/宏观？是否覆盖了编排者指定的所有目录？

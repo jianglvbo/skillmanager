@@ -288,3 +288,11 @@
     - 用户原话：「现有的已经在数据库了……数据库的 post_history 就是为了你乱重采设计的，能不能用起来啊，别一直重采啊」。
     - `post_history` 是**采集原文留档**（含 `form`、`raw_text`、原文链接、互动数；**2026-09-12 起不再含要素快照**——`entities_json`/`post_id`/`content_type`/`stance`/`signal_text`/`refined_at` 六列已删），存在的意义就是「不用再抓一次」。修数据先查留档：形态、回复内容（`//@` 段）都能在留档里解决（`backfill-reply-to.js`、`strip-reply-wrappers.js`、`fix-form-from-archive.js`）；要素回溯改走 `statements` + 三张关联表。**注意**：`reply_to` 按规则 #46 v3 只存对方的话、不留昵称，所以「回的是谁」的唯一出处就是留档的 `raw_text`。
     - 只有**留档里确实没有**的东西（例如留档也缺 `//@` 段）才是真缺口——而且**要如实报缺口，不要用重采去填**；用户还可能明确说「某个日期以前的都不要了」，那就更不该重采。
+
+49. 待复核队列：处理不了的**上报**，用户裁决后**内化成规则**（2026-09-12 用户要求）：
+    - **用户原话**：「在审查按钮前面插入一个待复核按钮，作用是显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，**让我以后可以不用再审核类似的帖子**」。
+    - **三步入队**：① **agent 上报**——提炼/审查中拿不准的一律进队列（`MCP pending_review add`），不许瞎猜、不许留空：归类边界（predict↔view、trade↔insight）、标的名解析不出、称呼歧义、时间存疑、规则没覆盖的新情况；系统也会自动上报一类（`blogger_statement` 遇到解析不出的标的名时，返回的 warnings 里带「已登记「待复核」#id」）。② **用户裁决**——看板「待复核」页（左侧菜单，在「审查」**前面**）点候选按钮或自由作答 → `status=resolved`。③ **下次审查内化**——见下条。
+    - **上报质量硬要求**：必须带**候选 `options`**（`/` 分隔，让用户点一下就完事）；`question` 一句话能独立看懂；`excerpt` 放原文片段（用户不必去翻原文）；能定位到帖子就给 `statementId` + `sourceUrl`。
+    - **内化是闭环的关键（只答不内化＝违规）**：审查时先取 `status=pending_internalize`（已答复、`internalized` 为空）→ 修数据 → 把答复**落成规则/案例**（四选一或组合）：`framework-rules.md` 新条目/修订（编号 + 用户原话）、`stocks.aliases`（`stock_alias add`，称呼类）、`mention_case`（`stock_alias case-add`，误判/漏判案例）、`refine-schema.md` 判定细则 → 调 `pending_review action=internalize` 把落点写回 `internalized`。**`internalized` 非空＝这条经验已进规则，同类帖子以后不再问用户**——这正是用户要的「以后不用再审核类似的帖子」；只把答复当一次性修正、不写回规则，等于让用户把同一类问题答第二遍。
+    - **不该上报的**（避免噪声）：规则里已经写明的（先查 `framework-rules.md` / `refine-schema.md` / `stock-mention-rules.md`）、能靠留档/关联表自己查出来的、纯采集缺口且用户已明确「缺口如实报不必补」的。**上报前先按 kind 搜一遍队列**，别重复问同一个问题。
+    - **审查报告要带结果**：审查记录里写明「本次处理待复核 N 条（内化 M 条 / 忽略 K 条）」，用户据此确认闭环走完了。

@@ -154,6 +154,9 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 
 - **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking v2 自由对象数组/basis/relation）→ 提炼时间轴 + 决策链路图
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
+- **待复核**（2026-09-12 用户要求）→ `MCP pending_review`：agent 处理不了的帖子/问题进队（带候选答案），
+  用户在看板「待复核」页（菜单在「审查」**前面**，带未处理数角标）点选或作答；**下次审查把答复内化成规则/别名/案例并回写 `internalized`**，同类帖子以后不再问用户（framework-rules #49）。
+  三个 tab：待你裁决（open）/ 待内化（resolved 且 internalized 空）/ 全部；卡片含原文片段、候选按钮、自由作答与「已内化→落点」。`blogger_statement` 遇到解析不出的标的名会**自动上报**一类（warnings 里带编号）。
 - **原文留档**（2026-09-11 新增）→ `post_history` 表：采集验收后由 post-fetch 调 `scripts/import-post-history.js` 落库（摘要帖/无链接帖不入库）；提炼侧第 0.5 步与补采场景用 `MCP post_history`（`check` 查窗口内已留档、`get` 取原文）——**目的是避免重采**，不参与提炼判定。规则见 framework-rules #41
 - **决策链路图 v2（思考时间线，2026-08-31 起替代旧 10 节点流程图）**：源→拆分决策→每条产物一条思考轨道（kind 徽章 + 推理文本，决策步红点、quote 原文引用、alt 否决块）→产物卡即终点；判断只留给有真实分叉处（归属层/关系），关系判断落在 thinking 的「决策」步，审查 C3/C7=写后质检不重复。详见 console-guide §4
 - **产物展示**：多产物**横向并联**（产物徽章并排、无箭头，不用 SVG 分叉图——用户试用后否决）
