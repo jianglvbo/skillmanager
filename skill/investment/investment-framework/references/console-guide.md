@@ -127,11 +127,13 @@ node ~/Project/investment-console/scripts/verify-schema-replay.js # 空库回放
 > **连接 collation 坑（2026-09-12）**：服务端与脚本连 MySQL 必须用 `charset: 'utf8mb4_unicode_ci'`。沿用 `'utf8mb4'` 会落到 `utf8mb4_general_ci`，与视图里字面量派生的列（`utf8mb4_bin`）比较时直接报 `Illegal mix of collations`（`COALESCE(content_type,'view')<>'trade'` 这类写法首当其冲）。
 
 **读缓存（2026-09-12 起，Redis）**：看板读 MySQL 的热点走 Redis 缓存——键格式 `ik:<域>:v<epoch>:<hash>`，
-**写操作 INCR 全局 epoch 令全部旧键立即失效**（TTL 300s 兜底），Redis 不可用时静默回退直连 MySQL（缓存绝不阻断业务）。
+**写操作换一个新 epoch（`SET`）令全部旧键立即失效**（TTL 300s 兜底），Redis 不可用时静默回退直连 MySQL（缓存绝不阻断业务）。
 覆盖：博主列表计数、博主详情、帖子列表、买卖列表、控制台主题列表/详情。运维：
 
 ```bash
-bash ~/Project/investment-console/scripts/cache-stats.sh     # 看板侧命中率 + 服务器 Redis 状态 + 隧道
+bash ~/Project/investment-console/scripts/cache-stats.sh                  # 看板侧命中率 + 服务器 Redis 状态 + 隧道
+python3 ~/Project/investment-console/scripts/redis-inspect.py keys        # 缓存里有什么（键/大小/TTL/值预览）
+python3 ~/Project/investment-console/scripts/redis-inspect.py get '<key>' # 单键的值（自动解压+格式化）
 curl -s http://127.0.0.1:8698/api/cache/stats                 # 进程内命中/未命中/键数
 curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（epoch+1）
 ```
@@ -139,7 +141,9 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 > Redis 装在服务器 `/home/jianglb/redis`（systemd `redis-investment`），看板**直连 `106.55.14.116:6379`**
 > （安全组已放行；备用通路为 SSH 隧道，`scripts/redis-endpoint.sh [check|direct|tunnel]` 可一键切换复验）。
 > **缓存值 >2KB 自动 gzip+base64 压缩**（`g:` 前缀）：98KB 的主题详情压到 32KB，热读 0.14s→0.05s——缓存值同样跨公网回传，
-> 不压缩等于把「查库 RTT」换成「传大 JSON 带宽」。安装/配置/安全细节见 server-ops skill。
+> 不压缩等于把「查库 RTT」换成「传大 JSON 带宽」。客户端另有三个 WAN 必备健壮性：命令超时即重连（空闲连接会被 NAT 静默掐死）、
+> 15s 心跳保活、`epoch` 键被 LRU 淘汰时生成随机 epoch 而**不回落固定值**（否则会读到本该失效的老键）。
+> 安装/配置/安全细节与查看命令见 server-ops skill。
 
 > **结构约定速查**：帖子一律 `post`（六张分表 `post_trade`/`post_predict`/`post_research`/`post_view`/`post_insight`/`post_chat` + 视图 `posts`），一条帖子只落一张表｜四维度走 `post_entity_rel`｜子表 `_sub`、关联表 `_rel`｜**弃用表删前备份后直接 DROP**（不留 `_del`）｜可枚举值进 `dict`、字段注释标注 `dict.type`｜vault 文件索引/标签**不落库**（服务端内存扫描 `buildIndex()`）｜`wiki_ref` 存 vault 相对路径、前端生成 `obsidian://` 本地打开链接。详见 framework-rules #44。
 
