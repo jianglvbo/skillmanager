@@ -51,7 +51,7 @@ compatibility: 通用
 | max_posts | int | 否 | 50 | 最大采集条数 |
 | output_dir | path | 否 | `~/.cache/xueqiu-spyder/out`（vault 外临时目录） | 采集产物输出目录。**2026-09-12 起不再写 vault 的 `工作区/粗制品`**：采集产物是临时文件，落库 post_history + 入库校验通过后即清理（见第三步之二/之三与规则 #41） |
 
-**时间窗口**：采集范围 = 看板博主控制台「信息截止」（MySQL bloggers 表 `info_cutoff`；API /api/bloggers/live 可读）（ISO `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间支持同日多次采集去重。新增博主默认半年前 17:50:00。
+**时间窗口**：采集范围 = 看板博主控制台「信息截止」（MySQL bloggers 表 `info_cutoff_datetime`；API /api/bloggers/live 可读）（ISO `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间支持同日多次采集去重。新增博主默认半年前 17:50:00。
 
 > 两参均不传 → 逐博主执行看板中所有「雪球ID」非空博主。同时传入 → 以 xq_id 为准。
 

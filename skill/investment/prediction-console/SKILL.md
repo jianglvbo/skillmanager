@@ -6,7 +6,7 @@ version: 2.1.0
 
 # 预测控制台维护（MySQL 版）
 
-> **2026-08-31 方案 A 落地**：预测控制台由 vault Markdown 迁移至 MySQL（investment_kb 预测域 4 表 + 4 字典），vault 不再存控制台文件。所有读写走 MCP 工具（`mcp__investment-console__console_*`）。博主控制台仍由 `bloggers` 表 + `*_blogger` MCP 工具管理。
+> **2026-08-31 方案 A 落地**：预测控制台由 vault Markdown 迁移至 MySQL（investment_kb 预测域 4 表 + 4 字典），vault 不再存控制台文件。所有读写走 MCP 工具（`mcp__investment-console__console_*`）。博主控制台仍由 `blogger` 表 + `*_blogger` MCP 工具管理。
 
 ## Default Stance
 
@@ -75,7 +75,7 @@ version: 2.1.0
 - **`source` 必须写发言者本人**（博主名或"自己"），**禁止写「雪球采集-2026年8月11日」这类批次名**。
 
 ### 第七步：（已退役）同步博主画像
-2026-09-08 画像单轨化：本步取消。来源言论已由 `blogger_statement` 落库（**预测即言论行，本就是同一行，无 origin_id 关联**），画像字段存 `bloggers` 表；**禁止再读写 vault 画像文件**。
+2026-09-08 画像单轨化：本步取消。来源言论已由 `blogger_statement` 落库（**预测即言论行，本就是同一行，无 origin_id 关联**），画像字段存 `blogger` 表；**禁止再读写 vault 画像文件**。
 
 ---
 
@@ -98,7 +98,7 @@ version: 2.1.0
 | MCP 工具调用 | Ai/tools/investment-console-mcp/README.md | 读取 |
 | 行业分类标准 | investment-framework/references/tag-taxonomy.md | 读取 |
 | 个股/指数价格 | 腾讯 kline API（web.ifzq.gtimg.cn，不复权） | 执行 |
-| 博主画像 | MySQL `bloggers` 表（唯一权威） | 经 add/update_blogger 读写；**画像 md 已彻底废弃**（2026-09-12：服务端删除全部回写代码与 `/api/blogger/resync`，存量文件由用户自行删除） |
+| 博主画像 | MySQL `blogger` 表（唯一权威） | 经 add/update_blogger 读写；**画像 md 已彻底废弃**（2026-09-12：服务端删除全部回写代码与 `/api/blogger/resync`，存量文件由用户自行删除） |
 
 ---
 
@@ -122,7 +122,7 @@ version: 2.1.0
 - [ ] 预测日期是否为原始判断日期？月级是否走 yyyy-MM？
 - [ ] 状态变更是否带 verify（result+basis）？
 - [ ] 源自已有言论的预测是否带了 `statementId`（或确认自动关联命中，返回 `linkedStatementId`）？
-- [ ] 来源言论是否已落 `statements`？（预测即言论行——`console_add_prediction` 是否传了 `statementId` 复用那一行，而非又新造一行；画像 md 已退役，禁写）
+- [ ] 来源言论是否已落 `statement`？（预测即言论行——`console_add_prediction` 是否传了 `statementId` 复用那一行，而非又新造一行；画像 md 已退役，禁写）
 - [ ] 是否未写 vault 预测控制台文件？
 
 > **2026-09-11 二次收敛（预测即言论行；用户问「predictions 和 statement_predict 不是重复吗？」后拍板）**：独立预测表 `predictions` 整体退役（改名 `predictions_del` 留档，101 条已全量并入 `statement_predict`：URL 命中 37 / 新建言论 14 / 跨表改类型 26 / 内容匹配 24，按 URL 100% 可回溯），`prediction_records`→`prediction_records_del`，旧 `prediction_tracks`→`prediction_tracks_del`。

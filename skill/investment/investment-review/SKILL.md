@@ -71,7 +71,7 @@ compatibility: 通用
 **C9**：输出内容审查报告
 **C0（2026-09-12 新增）：别名与规则迭代核对**——审查时对「个股指代」做一次回看：① 言论里出现、但 `stocks.aliases` 未登记的称呼 → 补登（`stock_alias`）；② 被误挂的常用词（如「好美的风景」→ 美的集团）→ 改正关联 + 若缺歧义标记则 `mark-ambiguous` + 把案例写进 `stock-mention-rules.md` 误判清单；③ 报告里单列「本次新增别名 / 新增歧义词 / **新增判定案例** / 规则修订」四项，做到**知识随审查沉淀**；案例用 `stock_alias(action=case-add)` 落 `mention_case`，不要写进 md。
 
-**C10**：言论追踪审计（执行 `scripts/tracks_audit.py --vault <vault路径> [--mysql]`，凭据用环境变量 `DB_PASS`）——**2026-09-12 重写后**核对 MySQL `statements`（六表视图）数据质量：空正文/缺原文链接/缺 `form`、`content_type` 与 `stance` 码值合法性、P1 三类（trade/predict/research）缺实体关联、复核建议积压（`statement_review_sub`）；兼看「insight 帖具象化覆盖率」（该有框架条目的心得帖要有 `wiki_ref`）。**原文留档覆盖率按 30 天窗口判**（`post_history_id` 回指，逾 30 天查不到属正常、不计缺口）。画像 md 已废弃，不再做 md↔DB 对照。**只报告不修改**，问题并入内容审查报告。
+**C10**：言论追踪审计（执行 `scripts/tracks_audit.py --vault <vault路径> [--mysql]`，凭据用环境变量 `DB_PASS`）——**2026-09-12 重写后**核对 MySQL `statement`（六表视图）数据质量：空正文/缺原文链接/缺 `form`、`content_type` 与 `stance` 码值合法性、P1 三类（trade/predict/research）缺实体关联、复核建议积压（`statement_review_sub`）；兼看「insight 帖具象化覆盖率」（该有框架条目的心得帖要有 `wiki_ref`）。**原文留档覆盖率按 30 天窗口判**（`post_history_id` 回指，逾 30 天查不到属正常、不计缺口）。画像 md 已废弃，不再做 md↔DB 对照。**只报告不修改**，问题并入内容审查报告。
 
 ### 结构审查（编号 S1-S8）——审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
 
