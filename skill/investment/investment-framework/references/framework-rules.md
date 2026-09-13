@@ -374,3 +374,16 @@
         - **组B（362 条）＝标记是噪音**：内容时间就是帖子时间（`as_posted`）→ **清掉标记**（提炼时保守打标、事后看是普通帖，留着只会淹掉队列）。
     - **与 #52 的关系**：`is_review_required` 默认「只置位、不清除」是防**批量修正时误清**；**用户显式下令的清理**（本次即用户拍板）不受此限，但必须先备份、先 dry-run 给用户看分流结果。
     - **看板入口**：不再需要单独的「只看待复核」开关——入口就是**待决策菜单**；`data-bact="review"` / `?reviewOnly=1` 是死代码，可一并清掉。
+
+54. 提炼链路：**每步一条记录，用户可逐步复核**（2026-09-13 用户拍板，表已建）：
+    - **为什么要记步骤**：用户原话「如果提炼有问题，我要根据提炼链路看出来是哪一步的问题，我需要能对这一步做复核，这样下次审计能知道要改」。所以记的不是「走了哪些流程」，而是**每一步的判定结论 + 依据 + 复核状态**——动作型步骤（读原文、调工具）不进链路，**只有能判对错的判定才进**。
+    - **7 步**（`dict.type=refine_step`，`sort_order` 即顺序）：`worth` 值不值得提炼 / `content_type` 内容类型 / `split` 拆分 / `attribution` 归属与分类 / `subjects` 标的关联 / `signal_time` 信号与时间 / `relation` 关系与落点。复核意见按 `step_code` 能**直接定位到要改的规则文件**（第 5 步 → `stock-mention-rules.md`，第 2 步 → 分流矩阵，第 1 步 → 低质帖判据表…）。
+    - **两条链路共用一套步骤编号**（用户选 1A）：模板表 `refine_chain_step` 决定适用子集——`statement`（帖子→言论）7 步全上；`wiki`（粗制品→wiki）6 步（无 `content_type`，`subjects`/`signal_time` 标 `is_required=0` 允许留空）。**不做两套编号**（否则审计要查两遍、口径会分裂）。
+    - **一个源可以走两条链路**（用户选 2A）：一个帖子同时产出言论和 wiki 条目时**建两条 `refine_item`**（同一 source、不同 `chain_code`）——「值不值得成条目」和「值不值得落成言论」是两个独立判断，合成一条后打回时说不清是哪一半错。
+    - **结论来源分两种**（`refine_step.is_derived`）：帖子链路的多数步，结论**可从 `statement` 行直接带出**（`content_type`/`stance_code`/`view_date_source`/`post_form`/关联表），agent 不必重写，标 `is_derived=1` + 补依据即可；**wiki 链路没有库内实体**（看板也看不到文件），步记录**必须自己写全**，标 `is_derived=0`。这是两条链路最本质的差别。
+    - **复核双档**（用户口径「步级更细，但没空时我就复核整帖」）：**步级**＝抠某一步（`refine_review.step_id`）；**帖级**＝整帖过一遍（`statement_id`，wiki 用 `target_rel`）。帖级是**合法路径**，粒度诚实记为帖级。**帖级 confirm 只把「还没复核过」的步标 confirmed，绝不覆盖已打回的步**（2026-09-13 自检抓到：原来无条件覆盖，会把 rejected 抹成 confirmed，等于丢失复核结论）。
+    - **结论改了，复核作废**：`refine_trace` 重写某步 `verdict` 时该步回到 `pending`（不能拿旧复核盖新结论）；verdict 没变则保留用户已复核状态。
+    - **复核必须内化才能关**（沿用 #49/#50）：`refine_review action=apply` 的 `internalized` 必填（写清改了哪条规则/哪个文件）；`action=add` 且 `verdict=wrong` 时 `correction`/`note` 至少给一个——否则审查不知道该改什么。
+    - **表结构（四张，用户选「5→4」）**：`refine_chain_step`（模板：链路×步骤）/ `refine_item`（单元＝源×链路）/ `refine_step`（每步一条）/ `refine_review`（复核，独立成表）。步骤定义与链路定义进 `dict`，不另建定义表。
+    - **落库与读取**：写链路 MCP `refine_trace`（REST `POST /api/refine/trace`）；复核 MCP `refine_review`（REST `POST /api/refine/review`）；读某条言论的链路 `refine_trace action=get`（`GET /api/refine/chain?statementId=`）；**待处理复核队列 `refine_review action=list&status=open`＝审查首步必查**。
+    - **旧表不迁**（用户选 7B）：`refine_record`/`refine_target_sub`（187 条，其中 92 条本就是无产物的空壳）保留查历史，**新数据一律走新四表**。

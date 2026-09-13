@@ -136,6 +136,16 @@ python3 investment-framework/scripts/verify-format.py --preflight /tmp/draft.md
 
 提炼完成后**必须**调 MCP `refine_record`（REST `POST /api/refine/record` 兼容）落库，看板据此展示本次提炼的产物 + 决策链路：
 
+**4.0 先写「提炼链路」（2026-09-13 起，硬约束）**：每条产物都要调 MCP `refine_trace` 落 7 步判定——这是用户逐步骤复核的依据（缺了用户就只能凭结果猜错在哪）。规则与字段含义见 **framework-rules #54**：
+
+- `chainCode`：帖子→言论填 `statement`；粗制品→wiki 填 `wiki`。**一个帖子同时产出言论和 wiki 条目时建两条**（同一 source、不同 chain）。
+- 锚：帖子链路传 `statementId`（幂等键）；wiki 链路传 `sourceRel`（vault 相对路径）+ `batchKey`。
+- `steps`：按 `dict.type=refine_step` 的 7 步给结论 —— `worth`/`content_type`/`split`/`attribution`/`subjects`/`signal_time`/`relation`。**帖子链路的多数步结论可从 `statement` 行直接带出**（`isDerived=1`，只补 `basis`）；**wiki 链路没有库内实体，必须自己写全**（`isDerived=0`）。
+- `verdict` 写这一步的结论（一句话）；`basis` 写依据（原文句）；结构化结论可选放 `verdictJson`。
+- 返回里的 `missingRequired`/`warning` 说明模板要求的步没给，要补齐。
+
+**4.1 再写「产物 + 决策链路图」**：调 MCP `refine_record`（REST `POST /api/refine/record` 兼容）落库，看板据此展示本次提炼的产物 + 决策链路：
+
 - **请求体 / 字段规范 / 字典英文码 / thinking v2 细则** → `references/refine-schema.md`（唯一权威 schema）
 - 每条 `targets` 必填 `basis`（依据原文句）+ `thinking`（思考链路 v2：`[{kind,text,quote?,alt?}]`，真实推理步骤，**归属层／拆分／关系三个决策点必含**，禁止套话）
 - 涉及已登记博主：`targets` 含 `type:"blogger"` 条目 + `bloggerUpdated:true`

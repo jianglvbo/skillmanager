@@ -56,7 +56,7 @@ CREATE TABLE dict (
   PRIMARY KEY (`type`,`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典表';
 
--- dict 内容快照（125 行；type 分组）
+-- dict 内容快照（145 行；type 分组）
 INSERT INTO dict (type, code, name, sort_order, is_enabled, remark) VALUES
   ('ambiguous_word', '小米', '小米', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
   ('ambiguous_word', '美的', '美的', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
@@ -100,6 +100,26 @@ INSERT INTO dict (type, code, name, sort_order, is_enabled, remark) VALUES
   ('prediction_status', 'verified_correct', '已验证(正确)', 3, 1, '方向正确（数值偏差进验证备注）'),
   ('prediction_status', 'verified_wrong', '已验证(错误)', 4, 1, '方向相反/关键数值未兑现'),
   ('prediction_status', 'revoked', '已撤销', 5, 1, '博主撤回或判断失效'),
+  ('refine_chain', 'statement', '帖子→言论', 1, 1, NULL),
+  ('refine_chain', 'wiki', '粗制品→wiki', 2, 1, NULL),
+  ('refine_review_state', 'open', '待审查处理', 1, 1, NULL),
+  ('refine_review_state', 'internalized', '已内化成规则', 2, 1, NULL),
+  ('refine_review_state', 'dismissed', '忽略', 3, 1, NULL),
+  ('refine_review_status', 'pending', '待复核', 1, 1, NULL),
+  ('refine_review_status', 'confirmed', '已确认', 2, 1, NULL),
+  ('refine_review_status', 'rejected', '已打回', 3, 1, NULL),
+  ('refine_review_verdict', 'wrong', '这步错了', 1, 1, NULL),
+  ('refine_review_verdict', 'confirm', '整帖确认无误', 2, 1, NULL),
+  ('refine_source_kind', 'post', '帖子（post_history 原文）', 1, 1, NULL),
+  ('refine_source_kind', 'coarse', '粗制品／原始资源', 2, 1, NULL),
+  ('refine_source_kind', 'attachment', '附件', 3, 1, NULL),
+  ('refine_step', 'worth', '值不值得提炼', 1, 1, '这条内容该不该产出（信息密度门槛／值不值得沉淀成条目）'),
+  ('refine_step', 'content_type', '内容类型', 2, 1, '六选一：trade>predict>research>insight>view>chat（wiki 链路不适用）'),
+  ('refine_step', 'split', '拆分', 3, 1, '一个源产出几条（一帖一条／多对象必拆／一篇拆成 N 个条目）'),
+  ('refine_step', 'attribution', '归属与分类', 4, 1, '归属层（我的/博主/其他/宏观）+ 分类'),
+  ('refine_step', 'subjects', '标的关联', 5, 1, '挂哪些个股/行业/市场（可以 0 个）'),
+  ('refine_step', 'signal_time', '信号与时间', 6, 1, 'stance + signal + 内容时间 view_date/view_date_source'),
+  ('refine_step', 'relation', '关系与落点', 7, 1, '与已有内容的关系（新建/追加/互补/冲突）+ 落到哪张表/哪个路径'),
   ('source_type', 'raw', '原始资源', 1, 1, '直接由原始资源提炼'),
   ('source_type', 'coarse', '粗制品', 2, 1, '由粗制品提炼'),
   ('stance', 'bullish', '看多', 1, 1, '方向：看多/看好/认为便宜'),
@@ -206,7 +226,7 @@ CREATE TABLE blogger (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`is_special`)
-) ENGINE=InnoDB AUTO_INCREMENT=79015 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=79333 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -279,6 +299,68 @@ CREATE TABLE pending_decision (
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='待决策队列：agent 处理不了或用户打回的问题，裁决后内化成规则';
 
 -- ============ 三、流水与流程记录 ============
+CREATE TABLE refine_chain_step (
+  `chain_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '链路，字典项 dict.type=refine_chain',
+  `step_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '步骤，字典项 dict.type=refine_step',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '顺序，越小越靠前',
+  `is_required` tinyint(1) NOT NULL DEFAULT '1' COMMENT '该链路是否强制走这步：1强制 0弱化可留空',
+  `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`chain_code`,`step_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼链路模板表：一条链路按顺序拼哪些步骤';
+
+CREATE TABLE refine_item (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `chain_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '链路，字典项 dict.type=refine_chain',
+  `batch_key` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '批次分组键（原 refine_record.from_rel，如 post_history/{博主} {采集日}）',
+  `source_kind_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '来源种类，字典项 dict.type=refine_source_kind',
+  `source_rel` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT 'vault 相对路径（粗制品/原始资源链路）',
+  `post_history_id` bigint unsigned DEFAULT NULL COMMENT '帖子链路：post_history 原文留档 id',
+  `blogger_name` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '博主名',
+  `statement_id` bigint unsigned DEFAULT NULL COMMENT '帖子链路的产物：言论 id',
+  `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_statement` (`statement_id`),
+  KEY `idx_statement` (`statement_id`),
+  KEY `idx_batch` (`batch_key`),
+  KEY `idx_created` (`created_datetime`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼单元表：一个来源走一条链路算一个单元';
+
+CREATE TABLE refine_step (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `item_id` bigint unsigned NOT NULL COMMENT '提炼单元 id，指向提炼单元表',
+  `step_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '步骤，字典项 dict.type=refine_step',
+  `verdict` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '这一步的结论（自然语言，给人看）',
+  `verdict_json` json DEFAULT NULL COMMENT '结论的结构化形态（给统计用，如 {"content_type":"view"}）',
+  `basis` varchar(1000) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '依据：原文句／规则条目',
+  `is_derived` tinyint(1) NOT NULL DEFAULT '1' COMMENT '结论来源：1引用自产物字段 0本步自己写的',
+  `review_status_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending' COMMENT '复核状态，字典项 dict.type=refine_review_status',
+  `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_item_step` (`item_id`,`step_code`),
+  KEY `idx_review` (`review_status_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼步骤表：每个提炼单元的每一步一条记录';
+
+CREATE TABLE refine_review (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `step_id` bigint unsigned DEFAULT NULL COMMENT '步级复核：指到具体某一步（为空＝帖级复核）',
+  `item_id` bigint unsigned DEFAULT NULL COMMENT '帖级复核：指到提炼单元',
+  `statement_id` bigint unsigned DEFAULT NULL COMMENT '帖级复核：言论 id（便于从言论卡直接发起）',
+  `target_rel` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '帖级复核：wiki 产物路径（wiki 无 statement_id）',
+  `verdict_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'wrong' COMMENT '复核性质，字典项 dict.type=refine_review_verdict',
+  `correction` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '正确做法（审查据此改规则）',
+  `note` varchar(1000) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '用户写的理由',
+  `status_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open' COMMENT '处理状态，字典项 dict.type=refine_review_state',
+  `internalized` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '内化落点：改了哪条规则/文件；非空＝同类以后不用再复核',
+  `raised_by_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'user' COMMENT '发起方：user 用户复核 / agent / system',
+  `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `resolved_datetime` datetime DEFAULT NULL COMMENT '答复/内化时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_step` (`step_id`),
+  KEY `idx_item` (`item_id`),
+  KEY `idx_statement` (`statement_id`),
+  KEY `idx_status` (`status_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
+
 CREATE TABLE refine_record (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `source_url` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源链接',
