@@ -155,7 +155,7 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 
 - **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking v2 自由对象数组/basis/relation）→ 提炼时间轴 + 决策链路图
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
-- **待复核**（2026-09-12 用户要求）→ `MCP pending_review`：agent 处理不了的帖子/问题进队（带候选答案），
+- **待复核**（2026-09-12 用户要求）→ `MCP pending_decision`：agent 处理不了的帖子/问题进队（带候选答案），
   用户在看板「待复核」页（菜单在「审查」**前面**，带未处理数角标）点选或作答；**下次审查把答复内化成规则/别名/案例并回写 `internalized`**，同类帖子以后不再问用户（framework-rules #49）。
   三个 tab：待你裁决（open）/ 待内化（resolved 且 internalized 空）/ 全部；卡片含原文片段、候选按钮、自由作答与「已内化→落点」。
   **用户在卡片上还能点「建议删除这条言论」**（＝帖子质量不够却被提炼了，**理由必填**）：答复落成 `verdict=delete`，

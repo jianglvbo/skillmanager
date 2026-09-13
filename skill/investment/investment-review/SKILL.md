@@ -46,12 +46,12 @@ compatibility: 通用
 
 ### 第零步之二：待复核队列处理（审查首步之二 · 必做；2026-09-12 新增）
 
-用户原话：「显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，让我以后可以不用再审核类似的帖子」。队列在看板「待复核」页（左侧菜单，在「审查」**前面**），agent 侧走 `MCP pending_review`：
+用户原话：「显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，让我以后可以不用再审核类似的帖子」。队列在看板「待复核」页（左侧菜单，在「审查」**前面**），agent 侧走 `MCP pending_decision`：
 
 1. `action=list, status=pending_internalize` → **已答复但规则还没落地**的项（这批是本步的核心工作）；
 2. 逐条：按用户答复**修数据**（改归类/补标的名/改时间/补别名…）→ 把答复**内化成规则/案例**（落点四选一，见 framework-rules #49：`framework-rules.md` 条目 / `stocks.aliases` / `mention_case` / `refine-schema.md` 细则）→ `action=internalize` 把落点写回 `internalized`；
 2b. **`verdict=delete`（用户写了「删除：<理由>」）＝必须真的删**（2026-09-12 用户明确：「有的帖子质量不够，但是你提炼了，这种我就会在复核意见写上删除」）：
-    - 取清单：`pending_review(action=list, status=pending_internalize, verdict=delete)`；
+    - 取清单：`pending_decision(action=list, status=pending_internalize, verdict=delete)`；
     - 逐条 `blogger_statement(action=delete, id)`（买卖帖走 `blogger_trade delete`）→ `action=internalize` 写「已删除言论 #id + 规则落点」；
     - **必须把删除理由内化**：追加到 `refine-schema.md` 信息密度门槛的**「用户删过的类型」判据表**，并按判据回看同批/存量同类帖子一并处理；
     - **不许反问用户「确定要删吗」**、不许只改内容、不许跳过（理由已给＝已授权；删除不可逆但这是用户明确要求）。
