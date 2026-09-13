@@ -368,7 +368,7 @@
 
 **标的解析须还原代称**：寒王→寒武纪、赵姨→兆易创新、兆易→兆易创新；原文代称写入 `targetAlias` 留痕，能挂上主题时带 `subjectId`。
 
-**观点时间（双时间）判定**：默认 `view_date = statement_date`（`as_posted`）；原文写明日期 → `explicit`；含"三年前/今年五月份我的预判"等相对表述 → 以 `statement_datetime` 折算，置 `derived` 并把原句抄进 `view_date_basis`。粒度按表述给（只说"三年前"不得写成精确到日）。硬约束 `view_date ≤ statement_date`；跨度 ≥2 年或表述模糊（"很早以前"）→ 同时标待复核。转述他人判断不得算博主本人观点时间。
+**观点时间（双时间）判定**：默认 `view_date = statement_date`（`as_posted`）；原文写明日期 → `explicit`；含"三年前/今年五月份我的预判"等相对表述 → 以 `statement_datetime` 折算，置 `derived` 并把原句抄进 `view_date_basis`。粒度按表述给（只说"三年前"不得写成精确到日）。硬约束 `view_date ≤ statement_date`；跨度 ≥2 年或表述模糊（"很早以前"）→ **同时标 `is_review_required=1` 并调 `pending_decision action=add` 上报一条**（kind=`时间存疑`，question 要带**内容时间 + 帖子时间 + 判定依据**三要素，options 给候选）。**只打标记不上报＝死信**（用户看不见，标记等于没打）——见 framework-rules #53。转述他人判断不得算博主本人观点时间。
 
 **能成 wiki 的一刀切判据**：内容是否提供**可脱离发帖语境复用的判断逻辑／框架／数据关系**？是 → wiki；否 → 只留言论（不硬造条目）。
 

@@ -273,7 +273,8 @@
         - **泛化名加语义前缀**：`post_title`/`post_text`/`post_text_length`/`review_title`/`review_method`/`review_meta`/`review_groups`/`review_summary`/`review_actions`/`review_recycle`/`review_main_problems`/`refine_reason`/`refine_steps`/`case_sentence`/`case_alias`/`case_reason`/`quote_text`/`todo_content`。长度用 `_length` 全拼。
         - **⚠ 接口名 ≠ 列名**：MCP 参数名保持 camelCase 或原词（`blogger`/`form`/`stance`/`source`/`statementDate`/`viewDate`/`fetchedAt`/`wikiRef`…），**不要跟着列名改**——API 契约稳定，改列名只动服务端 SQL 与 DB。改列名时先 `grep` 分清「SQL 字符串里的列名」与「JS 变量/参数名/URL 路径」，盲替会同时改坏接口。
         - **改完必须清一次缓存再冒烟**：旧缓存会把坏 SQL 盖住（2026-09-13 实测：4 个接口 SQL 已错但全返回 200，`POST /api/cache/clear` 后才暴露）。
-        - **改列名后必须**同时**冒写路径，且读路径全绿不代表改名完成**（2026-09-13 实测踩坑）：改名当轮只把 28 个 GET 接口跑通就以为收工，结果**写入路径全线报 `Unknown column`**——言论六表的新建/更新/买卖/预测、待决策的 add/resolve/dismiss、复核建议、审查记录、提炼记录、待办、`dict`/`mention_case`/`post_history` 全部挂着旧列名；其中 `pending_decision resolve` 甚至引用了被误改名的 JS 变量 `verdict_code`（ReferenceError）。**收口口径**：改名后跑一遍端到端自检（增/改/删各表 + 读回校验 + 清测试数据），并确认日志零错误；只测 GET 不算数。**另**：`statement_review_sub.status` 是**唯一未跟 `_code` 规则改名**的枚举列（`review_check_sub` 用的是 `status_code`），改它要连带 MCP `statement_review` 工具与看板前端，**动之前先问用户**。
+        - **改列名后必须**同时**冒写路径，且读路径全绿不代表改名完成**（2026-09-13 实测踩坑）：改名当轮只把 28 个 GET 接口跑通就以为收工，结果**写入路径全线报 `Unknown column`**——言论六表的新建/更新/买卖/预测、待决策的 add/resolve/dismiss、复核建议、审查记录、提炼记录、待办、`dict`/`mention_case`/`post_history` 全部挂着旧列名；其中 `pending_decision resolve` 甚至引用了被误改名的 JS 变量 `verdict_code`（ReferenceError）。**收口口径**：改名后跑一遍端到端自检（增/改/删各表 + 读回校验 + 清测试数据），并确认日志零错误；只测 GET 不算数。
+        - **枚举列现已全部合规**：`statement_review_sub.status` 是本轮最后一条漏网的枚举列（`review_check_sub` 用的是 `status_code`），2026-09-13 经用户拍板已改为 **`status_code`**（连带 `server.js` 的 `CREATE TABLE`/增删改查四处与 `ensureStatementReviews()` 幂等建表语句；MCP 工具名 `console_statement_review` 不变）。**注意 MySQL 里 `status` 是保留词**，写在 SQL 里要反引号——改名顺带消掉这个坑。
 
 45. 方法论「产物优先」——不设「可迁移方法论」标签（2026-09-12 用户拍板）：
     - **判定与展示分离**：「这条心得可不可以迁移到别的标的/时间上用」是**提炼时的判断**；页面上**只显示产物**——有产物 → 「已具象化：<框架条目文件>」（可点击本地打开，见 #44 的 wiki_ref），没有产物 → 什么都不显示。
@@ -322,7 +323,7 @@
         - **不放提炼结果**：`content_type`/`stance`/`signal_text`/`view_text`/`wiki_ref` 这些是提炼产物，此页一律不展示（那正是「还没提炼」要用户判断的东西）。
         - **页面名＝「待决策」（2026-09-13 用户要求改名）**：导航按钮、左栏标题、空状态文案全部改为「待决策」（原名「待复核」易与 `is_review_required` 标记混淆）。后端队列仍叫 `pending_decision`（不改表名）。
         - **原文的布局要和提炼后的卡片一致（2026-09-13 用户要求）**：原文里 `//@昵称：对方的话` 是**平台引用结构**，渲染前按它切一刀——博主自己的话进正文、对方的话进**回应块**，然后交给**同一个 `replyBodyHtml()`**（规则 #40 防复发：禁止另写第二套渲染）。这样待决策页看到的原文排版，与提炼后卡片（正文 + 回应块）完全同构。列表行用纯文本版（`rawPostPlain()`：只留博主自己的话，剥掉 `回复@某人：` 与 `//@某人：` 两段包装）。
-        - **⚠ 已知空洞（2026-09-13 发现）**：`statement.is_review_required`（370 条，提炼侧为「跨度≥2年/表述模糊」等标出）**在界面上没有任何入口**——原来的「只看待复核」开关（`data-bact="review"` / `?reviewOnly=1`）在 `web/app.js` 里只有事件处理、**没有渲染**，是死代码；卡片上也不显示该标记。用户若想用这个标记，需要先把入口补出来（或明确废弃它）。
+        - **⚠ 曾经的空洞（2026-09-13 发现，同日已收口）**：`statement.is_review_required`（370 条，提炼侧为「跨度≥2年/表述模糊」等标出）**在界面上没有入口**——原「只看待复核」开关（`data-bact="review"` / `?reviewOnly=1`）只有事件处理、**没有渲染**，是死代码。收口口径见 **#53**：标记必须有出口（打标记＝同时上报待决策），存量 370 条已分流处理完。
 
 50. 用户复核里的「**删除**」意见：不许意外、不许反问，删掉 + 内化成低质帖判据（2026-09-12 用户补充）：
     - **用户原话**：「我的复核可能会有删除的建议，但是我会附上删除的理由，这个规则你也记住，审核到删除的情况也不要意外，因为有的帖子质量不够，但是你提炼了，这种我就会在复核意见写上删除，然后你审核后要记得删除，并且内化规则，**减少这种帖子提炼成言论的情况**」。
@@ -364,3 +365,12 @@
         - **标的＝并集**（把被删行的关联表搬到存活行）——例：HIS1963 那条中报前瞻现在一行挂 **中远海控+中国海洋石油+云铝股份+中国石油** 四个标的。
         - 脚本 `~/Project/investment-console/scripts/merge-same-url-groups.js`（同样默认 dry-run）。结果：1669 → **1640**，**同 `source_url` 多行的组归零**，子表零孤儿。
     - **「无关联」不是缺陷（2026-09-13 用户口径）**：不要因为一条言论没挂个股/行业/市场就去补——**可以是 0 个关联**。只有「正文里明确点到某实体、却没挂上」才算漏挂，且必须按 `stock-mention-rules` 判定，不能拿名字子串硬匹配（「银行」「铝」这类词在宏观/泛泛而谈里出现并不构成个股或行业判断）。
+
+53. `is_review_required` 必须有出口：打标记 ≠ 完事（2026-09-13 用户拍板，同日收口）：
+    - **问题**：这个标记是提炼侧留的疑问（「跨度≥2年」「表述模糊」等），但界面上从来没有入口——370 条标了等于没标，用户根本看不见。
+    - **规则（2026-09-13 起，硬约束）**：提炼时凡置 `is_review_required=1`，**必须同时调 `pending_decision action=add` 上报一条**（kind 按情况取 `时间存疑`/`归类待定`/…，**必须给候选 options**，让用户点一下就完事）。**标记 = 「这行曾被质疑过」的痕迹，裁决走待决策队列**；只打标记不上报＝死信，禁止。
+    - **存量收口（同日照此办完）**：脚本 `~/Project/investment-console/scripts/fix-review-required-20260913.js`（默认 dry-run，`--apply` 落库，先整批备份到 `backups/review_required_<时间戳>/`）。370 条按「有没有独立内容时间」分流——
+        - **组A（8 条）＝真要裁决**：`view_date_source IN ('explicit','derived')` 或内容时间跨度 >2 年 → 转成待决策「时间存疑」（问题带上内容时间/帖子时间/判定依据三要素），**保留标记**（问题没裁决，痕迹不能丢）。
+        - **组B（362 条）＝标记是噪音**：内容时间就是帖子时间（`as_posted`）→ **清掉标记**（提炼时保守打标、事后看是普通帖，留着只会淹掉队列）。
+    - **与 #52 的关系**：`is_review_required` 默认「只置位、不清除」是防**批量修正时误清**；**用户显式下令的清理**（本次即用户拍板）不受此限，但必须先备份、先 dry-run 给用户看分流结果。
+    - **看板入口**：不再需要单独的「只看待复核」开关——入口就是**待决策菜单**；`data-bact="review"` / `?reviewOnly=1` 是死代码，可一并清掉。

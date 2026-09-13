@@ -206,7 +206,7 @@ CREATE TABLE blogger (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`is_special`)
-) ENGINE=InnoDB AUTO_INCREMENT=78432 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=79015 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -253,7 +253,7 @@ CREATE TABLE todo (
   `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页待办表';
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页待办表';
 
 CREATE TABLE pending_decision (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -276,7 +276,7 @@ CREATE TABLE pending_decision (
   KEY `idx_kind` (`kind_code`),
   KEY `idx_stmt` (`statement_id`),
   KEY `idx_created` (`created_datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='待复核队列：agent 处理不了的帖子/问题，交用户裁决后内化成规则';
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='待决策队列：agent 处理不了或用户打回的问题，裁决后内化成规则';
 
 -- ============ 三、流水与流程记录 ============
 CREATE TABLE refine_record (
@@ -297,7 +297,7 @@ CREATE TABLE refine_record (
   KEY `idx_source_type` (`source_type_code`),
   KEY `idx_from` (`from_rel`),
   KEY `idx_at` (`refined_datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=258 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼记录表';
 
 CREATE TABLE refine_target_sub (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -336,7 +336,7 @@ CREATE TABLE review_record (
   `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
   KEY `idx_date` (`review_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审查记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审查记录表';
 
 CREATE TABLE review_check_sub (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -350,7 +350,7 @@ CREATE TABLE review_check_sub (
   KEY `idx_review` (`review_id`),
   KEY `idx_status` (`status_code`),
   CONSTRAINT `fk_rc_review` FOREIGN KEY (`review_id`) REFERENCES `review_record` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审查检查项子表';
+) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审查检查项子表';
 
 CREATE TABLE statement_id_seq (
   `name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '序列名',
@@ -587,7 +587,7 @@ CREATE TABLE stock (
   UNIQUE KEY `uq_name` (`name`),
   KEY `idx_code` (`code`),
   KEY `idx_market` (`market_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=312 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股表';
+) ENGINE=InnoDB AUTO_INCREMENT=314 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='个股表';
 
 CREATE TABLE industry (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -684,13 +684,13 @@ CREATE TABLE statement_review_sub (
   `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
   `blogger_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '博主名',
   `suggestion` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '复核建议内容',
-  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open' COMMENT '处理状态：open/applied',
+  `status_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open' COMMENT '处理状态，字典项 dict.type=review_sub_status：open/applied',
   `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_stmt` (`statement_id`),
-  KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子复核建议子表';
+  KEY `idx_status` (`status_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子复核建议子表';
 
 -- ============ 七、只读视图（言论六表 UNION ALL，36 列） ============
 -- 分类权威 = content_type 六分法；非本类型列补 NULL；预测/交易专属列直取本表（帖子唯一落点，无需关联表）
