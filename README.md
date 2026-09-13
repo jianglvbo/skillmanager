@@ -100,16 +100,25 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
 │   ├── content/                   ← 内容提取
 │   │   ├── wechat-article/        ←   公众号文章提取
-│   │   └── full-text-organizer/   ←   语音转录稿→书面文章
+│   │   ├── full-text-organizer/   ←   语音转录稿→书面文章
+│   │   ├── browser-act/           ←   BrowserAct 浏览器自动化 CLI（隐身/反爬/结构化提取）
+│   │   └── douyin-video-summary/  ←   抖音视频转写与结构化总结
 │   ├── investment/                ← 投资知识框架
 │   │   ├── investment-framework/  ←   全局编排者
 │   │   ├── investment-coarse-processor/ ← 粗加工
 │   │   ├── investment-refine/     ←   提炼执行器
 │   │   ├── investment-review/     ←   审查执行器
-│   │   ├── xq-post-fetch/         ←   雪球帖子采集
+│   │   ├── post-fetch/            ←   雪球帖子采集编排层
+│   │   ├── xueqiu-spyder/         ←   雪球抓取工具层（CDP 会话复用）
 │   │   ├── prediction-console/    ←   预测控制台（录入/验证/言论跟踪，MySQL 落库）
-│   └── frontend/                  ← 前端开发（console-style 风格）
-│       └── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
+│   │   └── tradingagents-deploy/  ←   TradingAgents 多智能体投研框架国内部署与运行
+│   ├── frontend/                  ← 前端开发（console-style 风格）
+│   │   └── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
+│   └── office/                    ← 文档与系统工具
+│       ├── docx-from-markdown/    ←   Markdown → 排版 Word（.docx）
+│       ├── docx-template-fill/    ←   按既有 Word 模板填充（保留原格式）
+│       ├── mac-cleaner/           ←   macOS 磁盘空间分析与安全清理
+│       └── qmd/                   ←   本地文档全文/语义索引与搜索（含 MCP 模式）
 └── tools/
     ├── autocli/
     ├── browser-act-cli/
@@ -227,6 +236,8 @@ git push origin main
 |:---|:---|
 | `wechat-article` | 微信公众号文章提取与转 Markdown |
 | `full-text-organizer` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
+| `browser-act` | BrowserAct 浏览器自动化 CLI：隐身反爬、Stealth 结构化提取、多浏览器并行、CAPTCHA 处理 |
+| `douyin-video-summary` | 抖音视频音频提取 → whisper.cpp 转写 → 结构化总结（可选同步飞书） |
 
 ### frontend/ — 前端开发（console-style 风格）
 
@@ -242,8 +253,19 @@ git push origin main
 | `investment-coarse-processor` | 粗加工：格式整理 + 去广告 + metadata 补全 |
 | `investment-refine` | 提炼执行器：直接执行，原始资源/帖子集 → 框架条目（一对多，可读性优先） |
 | `investment-review` | 审查执行器：内容审查 + 结构审查 + 关联备注发现 |
-| `xq-post-fetch` | 雪球帖子采集：browser-act 抓全文 + 截断补全 + 结构化 markdown 输出 |
+| `post-fetch` | 雪球帖子采集编排层：前置同步 + 时间窗解析 + 调用工具层执行采集 + info_cutoff 双写 |
+| `xueqiu-spyder` | 雪球抓取工具层：CDP 复用已登录 Chrome 会话 + timeline API + 详情页补全 |
 | `prediction-console` | 预测控制台：个股/行业/市场三类录入、状态验证、言论跟踪，MCP 落库 MySQL |
+| `tradingagents-deploy` | TradingAgents 多智能体投研框架国内部署与运行：colima/Docker 踩坑、CN 版 compose（清华源+重试+build-arg 代理）、DeepSeek/Tushare 配置、一键分析脚本 |
+
+### office/ — 文档与系统工具
+
+| Skill | 说明 |
+|:---|:---|
+| `docx-from-markdown` | 从 Markdown 生成规范排版的本地 Word（.docx） |
+| `docx-template-fill` | 按既有 Word 模板填充内容并保留模板原格式 |
+| `mac-cleaner` | macOS 磁盘空间分析与垃圾清理（先扫描报告、确认后再清理） |
+| `qmd` | 本地文档全文索引与语义搜索：BM25 + 向量 + 混合查询（LLM 重排序），支持 MCP Server 模式 |
 
 ---
 
@@ -253,4 +275,4 @@ MIT
 
 ---
 
-*最后更新：2026-09-09*
+*最后更新：2026-09-13*
