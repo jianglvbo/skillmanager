@@ -56,7 +56,7 @@ CREATE TABLE dict (
   PRIMARY KEY (`type`,`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典表';
 
--- dict 内容快照（145 行；type 分组）
+-- dict 内容快照（146 行；type 分组）
 INSERT INTO dict (type, code, name, sort_order, is_enabled, remark) VALUES
   ('ambiguous_word', '小米', '小米', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
   ('ambiguous_word', '美的', '美的', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
@@ -80,6 +80,7 @@ INSERT INTO dict (type, code, name, sort_order, is_enabled, remark) VALUES
   ('entity_type', 'market', '市场', 4, 1, NULL),
   ('food_homonym', '小米', '小米', 0, 1, '与食物/日用品同名的股名：需证券语境词或产品词才判 link，仅动作词判 doubt'),
   ('food_homonym', '苹果', '苹果', 0, 1, '与食物/日用品同名的股名：需证券语境词或产品词才判 link，仅动作词判 doubt'),
+  ('hk_connect_source', 'eastmoney_dlmk0146', '东方财富·港股通板块（沪深港通口径）', 1, 1, NULL),
   ('layer', 'my', '我的', 1, 1, '个人总结/自建框架层'),
   ('layer', 'blogger', '博主', 2, 1, '博主画像及其产出层'),
   ('layer', 'other', '其他', 3, 1, '引用/外部资料层'),
@@ -226,7 +227,7 @@ CREATE TABLE blogger (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`is_special`)
-) ENGINE=InnoDB AUTO_INCREMENT=80234 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=80870 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -323,7 +324,7 @@ CREATE TABLE refine_item (
   KEY `idx_statement` (`statement_id`),
   KEY `idx_batch` (`batch_key`),
   KEY `idx_created` (`created_datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼单元表：一个来源走一条链路算一个单元';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼单元表：一个来源走一条链路算一个单元';
 
 CREATE TABLE refine_step (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -338,7 +339,7 @@ CREATE TABLE refine_step (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_item_step` (`item_id`,`step_code`),
   KEY `idx_review` (`review_status_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼步骤表：每个提炼单元的每一步一条记录';
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼步骤表：每个提炼单元的每一步一条记录';
 
 CREATE TABLE refine_review (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -359,7 +360,7 @@ CREATE TABLE refine_review (
   KEY `idx_item` (`item_id`),
   KEY `idx_statement` (`statement_id`),
   KEY `idx_status` (`status_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
 
 CREATE TABLE review_record (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -612,7 +613,7 @@ CREATE TABLE statement_chat (
   KEY `idx_is_read` (`is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='闲聊帖子表';
 
--- ============ 五、实体三表（个股 / 行业 / 市场） ============
+-- ============ 五、实体三表（个股 / 行业 / 市场）+ 港股通名单 ============
 CREATE TABLE stock (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '个股名称',
@@ -649,6 +650,27 @@ CREATE TABLE market (
   UNIQUE KEY `uq_code` (`code`),
   UNIQUE KEY `uq_name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='市场表';
+
+CREATE TABLE hk_connect_snapshot (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `source_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '名单来源，字典项 dict.type=hk_connect_source',
+  `member_count` int NOT NULL COMMENT '本快照成员数（完整性校验用：过小说明抓取被截断）',
+  `is_current` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否当前生效快照：1 是 0 否',
+  `fetched_datetime` datetime NOT NULL COMMENT '名单的抓取时间（判断是否过期用这个）',
+  `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_current` (`is_current`),
+  KEY `idx_fetched` (`fetched_datetime`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='港股通名单快照表：每次抓取一条，保留历史便于比对增减';
+
+CREATE TABLE hk_connect_member (
+  `snapshot_id` bigint unsigned NOT NULL COMMENT '所属快照 id，指向港股通名单快照表',
+  `stock_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '港股代码（5 位数字）',
+  `stock_name` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '名单里的证券简称',
+  `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`snapshot_id`,`stock_code`),
+  KEY `idx_code` (`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='港股通名单成员表：一条=该快照里的一只标的';
 
 -- ============ 六、关联表与子表 ============
 CREATE TABLE statement_blogger_rel (

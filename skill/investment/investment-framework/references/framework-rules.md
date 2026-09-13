@@ -388,3 +388,11 @@
     - **落库与读取**：写链路 MCP `refine_trace`（REST `POST /api/refine/trace`）；复核 MCP `refine_review`（REST `POST /api/refine/review`）；读某条言论的链路 `refine_trace action=get`（`GET /api/refine/chain?statementId=`）；**待处理复核队列 `refine_review action=list&status=open`＝审查首步必查**。
     - **旧表已下架**（用户 7B 选「不迁移」+ A2 选「替换决策链路图」+ 2026-09-14 拍板下架）：`refine_record`/`refine_target_sub` 的 **187 条记录先备份再清空**（`~/Project/investment-console/backups/refine_legacy_20260913155544/`，含 267 条 target 行），随后**两张表已 DROP**（不留残表）。同时下架 **MCP `refine_record`**（工具定义 / 分发分支 / 写缓存清单）、**REST `/api/refine/list`、`/api/refine/record`**（现返回 404）、服务端 `saveRefineRecord`/`_readRefineRecordsRaw`/`listRefine` 及其专用 `infer*` 辅助函数。看板「提炼记录」页只读新四表，**新提炼只调 `refine_trace`**。
     - **粗制品「是否已加工」换了数据源**（同批）：原来按 `refine_record.from_rel` 推导，表下架后改按 **`refine_item.source_rel`（`chain_code='wiki'`）** 推导——旧数据已清，所以粗制品队列现在会先全部显示「待加工」，等下次真实提炼写入新表后恢复。
+
+55. 港股通名单：**落库 + 有过期时间 + 双向都必须准**（2026-09-14 用户拍板）：
+    - **用户口径（原话）**：「港股通名单很久才会更新一次的，你可以给他存起来，以后好判断，只要设计好过期时间重新获取即可。**港股通多的就是错的，少的也是错的，必须要一直**（准）」。
+    - **落库**：名单存 `hk_connect_snapshot`（每次抓取一条：来源、成员数、抓取时间、`is_current`）+ `hk_connect_member`（快照 × 标的）。**历史快照保留**，便于看某只标的是什么时候被调进/调出的。
+    - **过期**：默认 **30 天**（`--max-age-days N` 可覆盖）。快照还在有效期内就**不重抓**（省得白打接口、也少触发限流）。
+    - **双向对齐（用户重点）**：`stock.has_hk_connect` 只允许 **1 / 0**，**NULL 也算错**——该标「通」的补上（少＝错）、不该标的取消（多＝错），一次跑完必须 **0 个未判**。个股卡的「港+通」标识就靠它。
+    - **完整性防线（踩过才加）**：接口 `pz` 传 >100 会被**静默截断**成 100 行（2026-09-13 首次比对因此得出满屏假阴性）→ 抓取**必须分页**；抓到 <400 只判定为不完整抓取、**拒绝覆盖**现有快照；与上一快照相差 >80 只只告警不阻断（可能真是大调仓）。同理，**没有 `code` 的个股无法判定**，脚本会单独报警——必须先补代码，否则「多的少的都是错」无法闭环。
+    - **工具**：`~/Project/investment-console/scripts/sync-hk-connect.js`（默认 dry-run；`--refresh` 重抓、`--apply` 落库、`--from-file` 离线灌入、`--max-age-days N`）；状态查询 `GET /api/hk-connect/snapshot`（成员数 / 抓取时间 / 已过天数 / 是否过期 / 库里 通·非通·未判 计数 / 重跑命令）。
