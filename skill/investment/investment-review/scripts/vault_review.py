@@ -69,7 +69,9 @@ def load_blogger_console():
         with urllib.request.urlopen("http://127.0.0.1:8698/api/bloggers/live", timeout=10) as r:
             data = _json.load(r)
         for b in data["data"]["bloggers"]:
-            if b.get("registered"):
+            # 2026-09-14：**已删除的博主不算「已登记」**——他们走回收流程（制品会挪到「其他」层、
+            # 言论逻辑删除），若不排除，规则 #12 的 other_author_registered 会一直把回收后的制品误报成「误挂」。
+            if b.get("registered") and not b.get("deleted"):
                 names.add(b["name"])
     except Exception as e:
         print(f"[vault_review] 看板博主控制台不可读（{e}），博主层登记校验跳过", file=sys.stderr)
