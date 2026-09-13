@@ -144,13 +144,19 @@ python3 investment-framework/scripts/verify-format.py --preflight /tmp/draft.md
 - `verdict` 写这一步的结论（一句话）；`basis` 写依据（原文句）；结构化结论可选放 `verdictJson`。
 - 返回里的 `missingRequired`/`warning` 说明模板要求的步没给，要补齐。
 
-**4.1 再写「产物 + 决策链路图」**：调 MCP `refine_record`（REST `POST /api/refine/record` 兼容）落库，看板据此展示本次提炼的产物 + 决策链路：
+**4.1（已退役，2026-09-13 用户选 A2）**：原「产物 + 决策链路图」落库（MCP `refine_record` / REST `POST /api/refine/record`，读 `refine_record`+`refine_target_sub`）**不再调用**——看板「提炼记录」页已改读 4.0 的提炼链路四表，旧的 187 条记录已备份并清空（`backups/refine_legacy_20260913155544/`）。下段保留仅为查阅旧数据契约，新提炼**只调 `refine_trace`**。
+
+<details><summary>旧契约（仅供查历史数据，不要再写入）</summary>
+
+看板据此展示本次提炼的产物 + 决策链路：
 
 - **请求体 / 字段规范 / 字典英文码 / thinking v2 细则** → `references/refine-schema.md`（唯一权威 schema）
 - 每条 `targets` 必填 `basis`（依据原文句）+ `thinking`（思考链路 v2：`[{kind,text,quote?,alt?}]`，真实推理步骤，**归属层／拆分／关系三个决策点必含**，禁止套话）
 - 涉及已登记博主：`targets` 含 `type:"blogger"` 条目 + `bloggerUpdated:true`
 - 自由文本里的 `.md` 路径**只写真实存在文件**或本条产物/源；假想/否决条目写《名称》不带 `.md`
 - **落库失败不阻断主流程**，但汇报必须提示「看板数据未写入，需补录」
+
+</details>
 
 ## Output Format
 

@@ -386,4 +386,4 @@
     - **复核必须内化才能关**（沿用 #49/#50）：`refine_review action=apply` 的 `internalized` 必填（写清改了哪条规则/哪个文件）；`action=add` 且 `verdict=wrong` 时 `correction`/`note` 至少给一个——否则审查不知道该改什么。
     - **表结构（四张，用户选「5→4」）**：`refine_chain_step`（模板：链路×步骤）/ `refine_item`（单元＝源×链路）/ `refine_step`（每步一条）/ `refine_review`（复核，独立成表）。步骤定义与链路定义进 `dict`，不另建定义表。
     - **落库与读取**：写链路 MCP `refine_trace`（REST `POST /api/refine/trace`）；复核 MCP `refine_review`（REST `POST /api/refine/review`）；读某条言论的链路 `refine_trace action=get`（`GET /api/refine/chain?statementId=`）；**待处理复核队列 `refine_review action=list&status=open`＝审查首步必查**。
-    - **旧表不迁**（用户选 7B）：`refine_record`/`refine_target_sub`（187 条，其中 92 条本就是无产物的空壳）保留查历史，**新数据一律走新四表**。
+    - **旧表退役**（用户 7B 选「不迁移」+ A2 选「替换决策链路图」）：`refine_record`/`refine_target_sub` 的 **187 条记录已备份并清空**（`~/Project/investment-console/backups/refine_legacy_20260913155544/`，含 267 条 target 行）。看板「提炼记录」页已改读新四表，**MCP `refine_record` / REST `/api/refine/record` 不再调用**（工具与表暂留，待用户拍板后一并下架）。新提炼**只调 `refine_trace`**。
