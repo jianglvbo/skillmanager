@@ -134,9 +134,7 @@ python3 investment-framework/scripts/verify-format.py --preflight /tmp/draft.md
 
 ### 第四步：同步数据看板
 
-提炼完成后**必须**调 MCP `refine_record`（REST `POST /api/refine/record` 兼容）落库，看板据此展示本次提炼的产物 + 决策链路：
-
-**4.0 先写「提炼链路」（2026-09-13 起，硬约束）**：每条产物都要调 MCP `refine_trace` 落 7 步判定——这是用户逐步骤复核的依据（缺了用户就只能凭结果猜错在哪）。规则与字段含义见 **framework-rules #54**：
+**唯一落库动作：调 MCP `refine_trace`**（REST `POST /api/refine/trace` 兼容）——看板「提炼记录」页据此展示产物 + **7 步判定**，用户可对某一步打回。规则与字段含义见 **framework-rules #54**：
 
 - `chainCode`：帖子→言论填 `statement`；粗制品→wiki 填 `wiki`。**一个帖子同时产出言论和 wiki 条目时建两条**（同一 source、不同 chain）。
 - 锚：帖子链路传 `statementId`（幂等键）；wiki 链路传 `sourceRel`（vault 相对路径）+ `batchKey`。
@@ -144,7 +142,7 @@ python3 investment-framework/scripts/verify-format.py --preflight /tmp/draft.md
 - `verdict` 写这一步的结论（一句话）；`basis` 写依据（原文句）；结构化结论可选放 `verdictJson`。
 - 返回里的 `missingRequired`/`warning` 说明模板要求的步没给，要补齐。
 
-**4.1（已退役，2026-09-13 用户选 A2）**：原「产物 + 决策链路图」落库（MCP `refine_record` / REST `POST /api/refine/record`，读 `refine_record`+`refine_target_sub`）**不再调用**——看板「提炼记录」页已改读 4.0 的提炼链路四表，旧的 187 条记录已备份并清空（`backups/refine_legacy_20260913155544/`）。下段保留仅为查阅旧数据契约，新提炼**只调 `refine_trace`**。
+**4.1 已下架（2026-09-13 选 A2 + 2026-09-14 拍板下架）**：原「产物 + 决策链路图」落库（MCP `refine_record` / REST `POST /api/refine/record`，读 `refine_record`+`refine_target_sub`）**工具与两张表都已删除**——旧 187 条记录先备份（`backups/refine_legacy_20260913155544/`）再清空，表随后 DROP。看板「提炼记录」页只读提炼链路四表，新提炼**只调 `refine_trace`**。
 
 <details><summary>旧契约（仅供查历史数据，不要再写入）</summary>
 

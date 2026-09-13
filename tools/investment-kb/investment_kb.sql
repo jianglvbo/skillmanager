@@ -226,7 +226,7 @@ CREATE TABLE blogger (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`is_special`)
-) ENGINE=InnoDB AUTO_INCREMENT=79333 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=80234 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE post_history (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -323,7 +323,7 @@ CREATE TABLE refine_item (
   KEY `idx_statement` (`statement_id`),
   KEY `idx_batch` (`batch_key`),
   KEY `idx_created` (`created_datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼单元表：一个来源走一条链路算一个单元';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼单元表：一个来源走一条链路算一个单元';
 
 CREATE TABLE refine_step (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -338,7 +338,7 @@ CREATE TABLE refine_step (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_item_step` (`item_id`,`step_code`),
   KEY `idx_review` (`review_status_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼步骤表：每个提炼单元的每一步一条记录';
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼步骤表：每个提炼单元的每一步一条记录';
 
 CREATE TABLE refine_review (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -359,49 +359,7 @@ CREATE TABLE refine_review (
   KEY `idx_item` (`item_id`),
   KEY `idx_statement` (`statement_id`),
   KEY `idx_status` (`status_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
-
-CREATE TABLE refine_record (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `source_url` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源链接',
-  `source_type_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '来源类型，字典项 dict.type=source_type',
-  `from_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '来源文件路径',
-  `blogger_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '博主名',
-  `is_blogger_updated` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否更新博主条目',
-  `refine_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '提炼理由',
-  `refine_steps` json DEFAULT NULL COMMENT '推理步骤',
-  `is_verify_ok` tinyint(1) DEFAULT NULL COMMENT '是否通过校验',
-  `verify_detail` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '校验详情',
-  `verification_hints` json DEFAULT NULL COMMENT '待验证提示',
-  `refined_datetime` datetime DEFAULT NULL COMMENT '提炼时间',
-  `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_source_type` (`source_type_code`),
-  KEY `idx_from` (`from_rel`),
-  KEY `idx_at` (`refined_datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=258 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼记录表';
-
-CREATE TABLE refine_target_sub (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `record_id` bigint unsigned NOT NULL COMMENT '提炼记录 id，指向提炼记录表',
-  `target_rel` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '产出文件路径',
-  `target_type_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '目标类型，字典项 dict.type=target_type',
-  `layer_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '归属层，字典项 dict.type=layer',
-  `relation_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'other' COMMENT '与已有条目的关系，字典项 dict.type=target_relation',
-  `relation_note` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '关系说明',
-  `category_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '分类，字典项 dict.type=category',
-  `tags` json DEFAULT NULL COMMENT '标签',
-  `thinking` json DEFAULT NULL COMMENT '思考链路',
-  `basis` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '依据',
-  `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_record` (`record_id`),
-  KEY `idx_target_type` (`target_type_code`),
-  KEY `idx_layer` (`layer_code`),
-  KEY `idx_relation` (`relation_code`),
-  KEY `idx_category` (`category_code`),
-  CONSTRAINT `fk_rt_record` FOREIGN KEY (`record_id`) REFERENCES `refine_record` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=431 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼目标子表';
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
 
 CREATE TABLE review_record (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',

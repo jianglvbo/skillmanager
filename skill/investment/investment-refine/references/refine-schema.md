@@ -1,5 +1,9 @@
 # 提炼落库模板（POST /api/refine/record · schema）
 
+> ⚠️ **本模板已于 2026-09-14 退役**：`refine_record` 工具与 `refine_record`/`refine_target_sub` 两张表都已下架（用户拍板 A2 + 下架）。
+> **新提炼只调 MCP `refine_trace`**（7 步判定，见 framework-rules #54），落库模板见 SKILL.md 第四步 4.0。
+> 本文件保留**仅供查阅 2026-09-14 之前的历史数据契约**（旧记录已备份在 `~/Project/investment-console/backups/refine_legacy_20260913155544/`），**不要再按本文件写入**。
+
 > 由 investment-refine SKILL.md 第四步引用。**提炼完成后按本模板规定字段，`MCP 工具 `refine_record`（REST POST /api/refine/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）` 写入投资看板**，看板完整展示产物 + 决策链路。
 
 ---

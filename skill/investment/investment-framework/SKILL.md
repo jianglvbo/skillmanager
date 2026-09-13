@@ -102,7 +102,7 @@ compatibility: 通用
 
 ### 看板联动（investment-console · 2026-08-17 新增）
 
-完整清单见 `references/console-guide.md` §9（refine_record / review_record / console_* 三类 MCP 落库、决策链路图 v2 思考时间线、产物展示横向并联、失败处理）。提炼/审查执行器各自负责落库调用，编排者只在汇报中核对「看板数据未写入」提示。
+完整清单见 `references/console-guide.md` §9（提炼链路 `refine_trace`／复核 `refine_review`／`review_record` / `console_*` 几类 MCP 落库、逐步复核与产物展示、失败处理）。提炼/审查执行器各自负责落库调用，编排者只在汇报中核对「看板数据未写入」提示。
 
 ---
 
@@ -193,6 +193,6 @@ compatibility: 通用
 - [ ] 待提炼文档是否满足前置条件？（常规：原始资源 `status=待提炼`，否则先粗加工、**禁止跳过**；**帖子集例外：原文取自 `post_history` 库内**，不读 vault 文件）
 - [ ] **操作门是否已过**？——删除/回收/移动前已运行 `check_inbound.py` 反查并清理引用；批量操作后已运行 `vault_review.py --incremental` 增量校验
 - [ ] 待回收处置是否严格按 #26（用户加 `delete` 字段标记、7 天冷静期、超期真删+双向清理+理由报告），Agent 不替用户标记、不 shortcut？**粗制品例外**：跳过冷静期即时可回收（2026-08-16 确认）
-- [ ] 看板是否已联动（refine_record / review_record）？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md §9）
+- [ ] 看板是否已联动（提炼链路 `refine_trace`／审查 `review_record`）？API 失败时是否汇报「看板数据未写入」？（契约见 references/console-guide.md §9）
 
 > 提炼/粗加工/审查的**执行层**自检（标签体系、归属层、模板完整、字段规范等）在各执行 skill 的自检节，编排者不重复。

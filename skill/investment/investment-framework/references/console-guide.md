@@ -10,9 +10,9 @@
 
 | 写入方 | 端点 | 数据 | 看板呈现 |
 |:---|:---|:---|:---|
-| investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking v2 思考链路/basis/relation） | 提炼时间轴 + 思考时间线（决策链路图） |
+| investment-refine 第四步 | **`MCP refine_trace`**（2026-09-14 起；原 `refine_record` 已下架） | 一个提炼单元 + 该链路 7 步判定（verdict/basis/复核状态） | 提炼记录页：单元卡 + 逐步复核（每步可确认/打回）；复核意见写 `refine_review` |
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
-| 粗制品队列 | `GET /api/coarse/list` | 直接读 vault `工作区/粗制品/`；「已加工」状态由提炼记录 `refine_record.from_rel` 推导（原 `coarse_records` 表已于 2026-09-12 删除，评分字段不再展示） | 粗制品模块 |
+| 粗制品队列 | `GET /api/coarse/list` | 直接读 vault `工作区/粗制品/`；「已加工」状态由 **`refine_item.source_rel`**（wiki 链路）推导（2026-09-14 换源；原 `coarse_records`/`refine_record` 表均已删除，评分字段不再展示） | 粗制品模块 |
 | post-fetch 第三步之二 | `scripts/import-post-history.js`（批量）/ `MCP post_history`（单条 upsert） | 采集原文落 `post_history` 表（提炼前原文留档，**唯一用途=避免重采**） | 不呈现（后端留档；`post_history action=get/check` 供提炼与补采读取） |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。
@@ -153,7 +153,7 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 
 流水线结果写入本地运行的投资看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管 com.investment-console；读本地 iCloud vault、连远程 MySQL；连接与 token 见 `Ai/tools/investment-console-mcp/README.md`），看板不产生知识、只呈现结果：
 
-- **提炼** → `MCP refine_record`（refine 第四步已实现，targets 含 thinking v2 自由对象数组/basis/relation）→ 提炼时间轴 + 决策链路图
+- **提炼** → `MCP refine_trace`（refine 第四步 4.0，写 7 步判定）→ 提炼记录页（单元卡 + 逐步复核）；复核走 `MCP refine_review`
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
 - **待复核**（2026-09-12 用户要求）→ `MCP pending_decision`：agent 处理不了的帖子/问题进队（带候选答案），
   用户在看板「待复核」页（菜单在「审查」**前面**，带未处理数角标）点选或作答；**下次审查把答复内化成规则/别名/案例并回写 `internalized`**，同类帖子以后不再问用户（framework-rules #49）。

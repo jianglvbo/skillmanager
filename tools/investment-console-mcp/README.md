@@ -27,7 +27,7 @@
 | 博主 | `list_bloggers`、`get_blogger`、`add_blogger`、`remove_blogger`、`update_blogger` |
 | 标签 | `list_tags` |
 | 日志 | `get_logs`、`git_log`、`git_status`、`git_commit` |
-| 流水线落库 | `refine_record`（提炼落库）、`review_record`（审查落库） |
+| 流水线落库 | `refine_trace`（提炼链路：7 步判定）、`refine_review`（逐步/整帖复核）、`review_record`（审查落库）。原 `refine_record` 已于 2026-09-14 下架 |
 | 预测控制台（2026-08-31 新增） | `console_list_subjects`、`console_get_subject`、`console_add_prediction`、`console_update_status`、`console_add_track` |
 | 言论追踪（2026-09-02 新增，**2026-09-10 分型改造**） | `blogger_statement`（博主言论结构化落库，MySQL 为权威）。六分法 `contentType` 为唯一分类（research/predict/view/insight/chat/trade），按类型路由物理分表 `stmt_*`；**分型专属字段**：trade→`op`/`price`/`marketCap`/`tradeDate`；predict→`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`verifyStatus`/`verifyDate`/`verifyResult`（验证闭环表内可查）；research→`dataRefs`/`wikiRef`；insight→`transferable`/`wikiRef`；全类型共有 `form`（帖子形态：回复/短文/长文/专栏）。**优先级**：P1 必录 = trade / research / **predict**（2026-09-10 由 P2 提升）；旧 `kind` 四类落位同日退役。 |
 
@@ -35,7 +35,7 @@
 
 ## ⚠️ 枚举码硬约束（落库避坑 · 2026-08-31 实测）
 
-`refine_record` / `review_record` 的 `layer`/`category`/`relation`/`type`/`sourceType`/`checks[].status` **优先传 MySQL 字典英文码，传中文会外键报错**（`foreign key constraint fails ... dict_*`）。全量对照见投资框架 skill 的 `investment-refine/references/refine-schema.md`「二B 字典码对照表」，要点：
+`review_record` 的 `checks[].status` 等枚举 **优先传 MySQL 字典英文码，传中文会外键报错**（`foreign key constraint fails ... dict_*`）。全量对照见投资框架 skill 的 `investment-refine/references/refine-schema.md`「二B 字典码对照表」，要点：
 
 - `layer`：`my`/`blogger`/`other`/`macro`/`workspace`（**2026-08-31 起兼容中文**：我的/博主/其他/宏观，服务端自动映射；`category`/`relation` 同样兼容中文）
 - `category`：`analysis_framework`/`trading_system`/`investment_mentality`/`investment_insight`/`stock`/`industry`/`macro`
@@ -43,7 +43,7 @@
 - `type`：`wiki`/`blogger`/`macro`；`sourceType`：`raw`/`coarse`
 - 审查 `checks[].status`：仅 `pass`/`warn`/`fail`（无 `info`）
 
-**已知限制（2026-08-31 已修复）**：`refine_record` 此前不接受 `source`/`sourceType` 参数（原文链接不入库），现已支持——`source`=原文链接 markdown、`sourceType`=raw/coarse（缺省按 `from` 路径推断）。
+**提炼链路（2026-09-14 起）**：提炼落库改走 `refine_trace`——一个提炼单元（源 × 链路）写 7 步判定（`worth`/`content_type`/`split`/`attribution`/`subjects`/`signal_time`/`relation`），用户在看板上**逐步骤复核**；复核写 `refine_review`（步级带 `step_id`，帖级带 `statement_id`/`target_rel`）。设计见 framework-rules #54。
 
 ## 调用示例（JSON-RPC）
 
@@ -78,4 +78,4 @@ mcpServers:
 ## 职责边界
 
 - 本 MCP = 控制台域（读 MySQL 派生数据 + vault 文件操作 + 提炼/审查落库）
-- 知识库流水线（提炼/审查/粗加工的执行逻辑）走投资框架 skill（`investment-refine` / `investment-review`），落库调用本 MCP 的 `refine_record` / `review_record`（REST POST /api/refine/record、/api/review/record 兼容）
+- 知识库流水线（提炼/审查/粗加工的执行逻辑）走投资框架 skill（`investment-refine` / `investment-review`），落库调用本 MCP 的 `refine_trace` / `refine_review` / `review_record`（REST POST /api/refine/trace、/api/refine/review、/api/review/record 兼容）
