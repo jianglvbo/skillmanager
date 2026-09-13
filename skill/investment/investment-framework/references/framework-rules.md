@@ -273,6 +273,7 @@
         - **泛化名加语义前缀**：`post_title`/`post_text`/`post_text_length`/`review_title`/`review_method`/`review_meta`/`review_groups`/`review_summary`/`review_actions`/`review_recycle`/`review_main_problems`/`refine_reason`/`refine_steps`/`case_sentence`/`case_alias`/`case_reason`/`quote_text`/`todo_content`。长度用 `_length` 全拼。
         - **⚠ 接口名 ≠ 列名**：MCP 参数名保持 camelCase 或原词（`blogger`/`form`/`stance`/`source`/`statementDate`/`viewDate`/`fetchedAt`/`wikiRef`…），**不要跟着列名改**——API 契约稳定，改列名只动服务端 SQL 与 DB。改列名时先 `grep` 分清「SQL 字符串里的列名」与「JS 变量/参数名/URL 路径」，盲替会同时改坏接口。
         - **改完必须清一次缓存再冒烟**：旧缓存会把坏 SQL 盖住（2026-09-13 实测：4 个接口 SQL 已错但全返回 200，`POST /api/cache/clear` 后才暴露）。
+        - **改列名后必须**同时**冒写路径，且读路径全绿不代表改名完成**（2026-09-13 实测踩坑）：改名当轮只把 28 个 GET 接口跑通就以为收工，结果**写入路径全线报 `Unknown column`**——言论六表的新建/更新/买卖/预测、待决策的 add/resolve/dismiss、复核建议、审查记录、提炼记录、待办、`dict`/`mention_case`/`post_history` 全部挂着旧列名；其中 `pending_decision resolve` 甚至引用了被误改名的 JS 变量 `verdict_code`（ReferenceError）。**收口口径**：改名后跑一遍端到端自检（增/改/删各表 + 读回校验 + 清测试数据），并确认日志零错误；只测 GET 不算数。**另**：`statement_review_sub.status` 是**唯一未跟 `_code` 规则改名**的枚举列（`review_check_sub` 用的是 `status_code`），改它要连带 MCP `statement_review` 工具与看板前端，**动之前先问用户**。
 
 45. 方法论「产物优先」——不设「可迁移方法论」标签（2026-09-12 用户拍板）：
     - **判定与展示分离**：「这条心得可不可以迁移到别的标的/时间上用」是**提炼时的判断**；页面上**只显示产物**——有产物 → 「已具象化：<框架条目文件>」（可点击本地打开，见 #44 的 wiki_ref），没有产物 → 什么都不显示。
