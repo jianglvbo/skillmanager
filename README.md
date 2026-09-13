@@ -100,9 +100,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
 │   ├── content/                   ← 内容提取
 │   │   ├── wechat-article/        ←   公众号文章提取
-│   │   ├── full-text-organizer/   ←   语音转录稿→书面文章
-│   │   ├── browser-act/           ←   BrowserAct 浏览器自动化 CLI（隐身/反爬/结构化提取）
-│   │   └── douyin-video-summary/  ←   抖音视频转写与结构化总结
+│   │   └── full-text-organizer/   ←   语音转录稿→书面文章
 │   ├── investment/                ← 投资知识框架
 │   │   ├── investment-framework/  ←   全局编排者
 │   │   ├── investment-coarse-processor/ ← 粗加工
@@ -120,8 +118,6 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │       ├── mac-cleaner/           ←   macOS 磁盘空间分析与安全清理
 │       └── qmd/                   ←   本地文档全文/语义索引与搜索（含 MCP 模式）
 └── tools/
-    ├── autocli/
-    ├── browser-act-cli/
     ├── investment-console-mcp/  ← 看板 MCP 服务接入说明
     └── investment-kb/           ← investment_kb schema 权威记录
 ```
@@ -236,8 +232,6 @@ git push origin main
 |:---|:---|
 | `wechat-article` | 微信公众号文章提取与转 Markdown |
 | `full-text-organizer` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
-| `browser-act` | BrowserAct 浏览器自动化 CLI：隐身反爬、Stealth 结构化提取、多浏览器并行、CAPTCHA 处理 |
-| `douyin-video-summary` | 抖音视频音频提取 → whisper.cpp 转写 → 结构化总结（可选同步飞书） |
 
 ### frontend/ — 前端开发（console-style 风格）
 
