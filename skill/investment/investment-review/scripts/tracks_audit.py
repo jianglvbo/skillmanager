@@ -111,14 +111,14 @@ def vault_scan(vault_root: str) -> dict:
         stats["blogger_with_rows"] += 1
     return {"vault_root": str(vault_root), "blogger_files": len(files),
             "stats": dict(stats), "track_rows_total": track_total, "findings": findings,
-            "note": "画像 md 已废弃（2026-09-12）——本侧结果仅代表历史 md 现状，不构成数据缺口；权威在 MySQL statements"}
+            "note": "画像 md 已废弃（2026-09-12）——本侧结果仅代表历史 md 现状，不构成数据缺口；权威在 MySQL statement 视图"}
 
 
 def mysql_scan() -> dict:
     """只读扫描言论库数据质量（2026-09-12 重写：对齐当日 schema）
 
     旧实现查的 blogger_statements / statement_reviews / prediction_tracks **三张表都已不存在**
-    （言论收敛为 statements 视图 + 六张 statement_* 物理表；复核建议在 statement_review_sub；
+    （言论收敛为 statement 视图 + 六张 statement_* 物理表；复核建议在 statement_review_sub；
     预测独立表与跟踪表均已退役）→ 整段审计曾经静默失效。
     """
     import pymysql
@@ -127,33 +127,33 @@ def mysql_scan() -> dict:
                            connect_timeout=8)
     cur = conn.cursor()
     out = {}
-    # ① 言论总量与内容完整性（权威＝statements 视图，UNION 六张类型表）
-    cur.execute("SELECT COUNT(*) FROM statements")
+    # ① 言论总量与内容完整性（权威＝statement 视图，UNION 六张类型表；2026-09-13 起表名单数）
+    cur.execute("SELECT COUNT(*) FROM statement")
     out["statements_total"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM statements WHERE view_text IS NULL OR TRIM(view_text)=''")
+    cur.execute("SELECT COUNT(*) FROM statement WHERE view_text IS NULL OR TRIM(view_text)=''")
     out["view_text_empty"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM statements WHERE source_url IS NULL OR TRIM(source_url)=''")
+    cur.execute("SELECT COUNT(*) FROM statement WHERE source_url IS NULL OR TRIM(source_url)=''")
     out["source_url_empty"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM statements WHERE form IS NULL OR TRIM(form)=''")
+    cur.execute("SELECT COUNT(*) FROM statement WHERE post_form IS NULL OR TRIM(post_form)=''")
     out["form_empty"] = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM statements WHERE reply_to IS NOT NULL AND TRIM(reply_to)<>''")
+    cur.execute("SELECT COUNT(*) FROM statement WHERE reply_to IS NOT NULL AND TRIM(reply_to)<>''")
     out["reply_to_filled"] = cur.fetchone()[0]
     # ② 回指原文留档（2026-09-12 新增；留档只保 30 天，取不到属正常）
-    cur.execute("SELECT COUNT(*) FROM statements WHERE post_history_id IS NOT NULL")
+    cur.execute("SELECT COUNT(*) FROM statement WHERE post_history_id IS NOT NULL")
     out["post_history_linked"] = cur.fetchone()[0]
     # ③ 分型分布与复核标记
-    cur.execute("SELECT content_type, COUNT(*) FROM statements GROUP BY content_type")
+    cur.execute("SELECT content_type, COUNT(*) FROM statement GROUP BY content_type")
     out["by_content_type"] = {r[0]: r[1] for r in cur.fetchall()}
-    cur.execute("SELECT COUNT(*) FROM statements WHERE review_required=1")
+    cur.execute("SELECT COUNT(*) FROM statement WHERE is_review_required=1")
     out["review_required"] = cur.fetchone()[0]
     # ④ 码值合法性（字典域：post_content_type / stance —— 旧写的 stmt_content_type 不存在）
-    cur.execute("""SELECT s.content_type, COUNT(*) FROM statements s
+    cur.execute("""SELECT s.content_type, COUNT(*) FROM statement s
                    LEFT JOIN dict d ON d.type='post_content_type' AND d.code=s.content_type
                    WHERE d.code IS NULL GROUP BY s.content_type""")
     out["bad_content_type"] = [list(r) for r in cur.fetchall()]
-    cur.execute("""SELECT s.stance, COUNT(*) FROM statements s
-                   LEFT JOIN dict d ON d.type='stance' AND d.code=s.stance
-                   WHERE s.stance IS NOT NULL AND d.code IS NULL GROUP BY s.stance""")
+    cur.execute("""SELECT s.stance_code, COUNT(*) FROM statement s
+                   LEFT JOIN dict d ON d.type='stance' AND d.code=s.stance_code
+                   WHERE s.stance_code IS NOT NULL AND d.code IS NULL GROUP BY s.stance_code""")
     out["bad_stance"] = [list(r) for r in cur.fetchall()]
     # ⑤ 实体关联覆盖率（个股/行业主题靠关联表承载，target 列已删）
     # 注：statements 视图的 content_type 由各分支字面量 UNION 而来，直接与字面量比较会报

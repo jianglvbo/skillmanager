@@ -57,7 +57,7 @@ $PY "$SPYDER/main.py" user {xq_id} \
 
 - `{xueqiu-spyder 目录}`：**`~/.agents/skills/xueqiu-spyder/`**（部署目录＝权威；`~/.workbuddy/skills/investment/xueqiu-spyder/` 是历史镜像，勿用）
 
-- `{info_cutoff}` 取看板 `bloggers.info_cutoff`（ISO `YYYY-MM-DDTHH:mm:ss`）；新增博主默认半年前 17:50:00
+- `{info_cutoff}` 取看板 `blogger.info_cutoff_datetime`（ISO `YYYY-MM-DDTHH:mm:ss`）；新增博主默认半年前 17:50:00
 - spyder 内部完成：翻页拉取 → 置顶排除 + 时间窗过滤 → 截断帖详情页补全（含精确时间覆盖）→ 帖子集输出
 - spyder 用户名传参：可直接传数字 ID；传昵称时自动搜索解析
 - 输出文件命名与 vault 路径由本层控制（spyder `--outfile/--output`）

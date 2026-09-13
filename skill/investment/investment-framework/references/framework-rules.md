@@ -31,7 +31,7 @@
 9. 个股按市场（港股/A股/美股）分文件夹
 10. 博主层按博主名字建子文件夹，档案文件放在该文件夹根目录，按需创建不预建空文件夹
 11. 博主的分析框架下有方法论/和分析档案/两个子文件夹；我的和其他的分析框架下不设子文件夹。**博主层方法论条目必须放 `博主/{name}/分析框架/方法论/` 子目录，禁止直接放 `分析框架/` 根（2026-09-07 审查固化：7 条误放根目录，其中雪月霜《周期行业去产能…》因文件名含「行业」曾被 vault_review 模板误判为行业——根目录让模板判定依赖文件名猜测，一律归位子目录）**
-12. 博主归类仅限博主控制台已登记的博主（登记权威 = 看板 MySQL `blogger` 表；vault 工作区/博主控制台.md 已于 2026-09-07 退役删除，勿再读写）。**粗加工/提炼时 Agent 严禁自动将新作者「补登」进博主控制台**——若原始资源 `author` 不在控制台，其框架条目一律归「其他」层（未登记投资人层），`author` 字段照实填写但不占用博主层路径、不建博主档案。**唯一例外**：post-fetch 前置步骤可从用户雪球关注列表同步新增博主到控制台（用户明确授权，见 post-fetch SKILL.md「前置步骤」），同步时须向用户报告变动并确认。除此之外，任何情况下 Agent 不得自行新增博主。**删除为软删除（2026-09-08 起）**：`remove_blogger` 只置 `bloggers.deleted_at`，博主目录与全部产物（wiki/言论/买卖/制品）原样保留、看板标「已删除」并沉底；恢复走 `restore_blogger`；同名重新登记会自动复活原行（保留言论关联）。Agent 不得物理删除 bloggers 行。
+12. 博主归类仅限博主控制台已登记的博主（登记权威 = 看板 MySQL `blogger` 表；vault 工作区/博主控制台.md 已于 2026-09-07 退役删除，勿再读写）。**粗加工/提炼时 Agent 严禁自动将新作者「补登」进博主控制台**——若原始资源 `author` 不在控制台，其框架条目一律归「其他」层（未登记投资人层），`author` 字段照实填写但不占用博主层路径、不建博主档案。**唯一例外**：post-fetch 前置步骤可从用户雪球关注列表同步新增博主到控制台（用户明确授权，见 post-fetch SKILL.md「前置步骤」），同步时须向用户报告变动并确认。除此之外，任何情况下 Agent 不得自行新增博主。**删除为软删除（2026-09-08 起）**：`remove_blogger` 只置 `blogger.deleted_datetime`，博主目录与全部产物（wiki/言论/买卖/制品）原样保留、看板标「已删除」并沉底；恢复走 `restore_blogger`；同名重新登记会自动复活原行（保留言论关联）。Agent 不得物理删除 blogger 行。
 
     - **#12 反例（2026-09-07 审查固化，2026-09-09 恢复——03e9d8d 重构误删）**：其他层条目 `author` 若已是登记博主，属误挂——登记后应回迁博主层（历史案例：景风长赢 5 / 庶人哑士 2 / 七彩云龙 2 / 文主任 / 柯中 / 令狐不败等 15 条，多为登记前创建、登记后未回迁）。审查时 `vault_review.py` 反向校验 `other_author_registered` 提示；**登记/同步新博主后应顺带扫描该作者在「其他」层的既有条目并提请迁移**。甄别例外：解读/第三方整理某位大师思想（author 只是内容主角、非本人产出）不算误挂——「巴菲特谈投资」类以原文链接/背景为准人工裁决，勿机械迁移。
 13. "其他"层只接收投资相关、来自具体投资人的内容；与投资无关的信息直接丢弃
@@ -109,7 +109,7 @@
 29. 帖子集例外流程（post-fetch 产出，**2026-09-12 改为「从 post_history 直提」**）：雪球博主采集集**不走常规流水线**（不进原始资源、不做粗加工），按以下例外处理：
     - **原文来源＝`post_history`**：采集完成后帖子已直接落 `post_history`（规则 #41），提炼（investment-refine）**从库里读原文**（MCP `post_history` `action=get` 取单帖全文、`action=check` 按博主+时间窗列清单），**不再读取也不产生 vault 文件**——采集产物 md 是临时文件，落库 + 入库校验通过后即清理，`工作区/粗制品/` 不再保存帖子集。这是 #22（粗加工前置）的明确例外。
     - **摘要帖不可提炼（2026-09-09 用户确认，硬约束）**：标「摘要」的帖（详情页风控未补全全文、内容不完整）**一律跳过，不得提炼**——它们按设计不入 `post_history`，所以从库里取原文时天然只有「全文」帖。判定以采集侧发布行的 `全文`/`摘要` 标记为准（采集阶段已完成）。
-    - **提炼后无需删源文件**：不存在源文件（同上）；库内「已提炼」状态由 `statements.source_url` 反查确认，不再回写帖子层标记。
+    - **提炼后无需删源文件**：不存在源文件（同上）；库内「已提炼」状态由 `statement.source_url` 反查确认，不再回写帖子层标记。
     - **`source` 写真实原文链接（禁止用批次名）**：框架条目的 `source` 字段必须填**雪球原文帖子链接**——`[标题（博主 日期）](https://xueqiu.com/.../XXXXXX)`，取自该帖的 `[原文]` 链接（`post_history.source_url`）。**严禁用采集批次文件名**（如 `雪球采集-metalslime-2026年7月20日`）当 source：批次文件已不再留存，会成悬空/不可追溯引用。一条产物综合多篇帖则列多个链接。
     - **精华去糟粕（价值流水线）**：帖子集内容不全有价值，提炼前必须逐条判价值，分三态：
         - **① 具象化（精华落地）**：内容能具象成对应分析框架/方法论/行业/交易体系等文件，且判断有价值 → **生成框架条目文件**。
@@ -154,7 +154,7 @@
         - ~10s 内连续多张截图 → 视为同一帖子的分段截图，**合并为一条**处理，不拆成独立条目；
         - 雪球链接 → 用**浏览器**打开读取（WebFetch/curl 会被雪球反爬拦截），提取正文和评论区作者回复；
         - 截图 + 链接 → 以截图内容为主，链接补充原文链接字段。
-    - **识别博主**：优先从截图内容（昵称/头像/上下文）推断博主身份，查看板博主控制台（MySQL bloggers 表，GET /api/bloggers/live）确认登记状态；无法确定时询问用户。
+    - **识别博主**：优先从截图内容（昵称/头像/上下文）推断博主身份，查看板博主控制台（MySQL blogger 表，GET /api/bloggers/live）确认登记状态；无法确定时询问用户。
         - 已登记但 `blogger` 表无行 → `add_blogger` 建 DB 行即可（summary/strengths/limitations 可空），不询问用户；**不建画像 md**（2026-09-08 画像单轨化）；
         - 未登记 → 归「其他」层，**不补登、不询问**（见 #12）。
     - **原文链接必填**：截图输入时若用户未提供原文链接，**主动提醒用户补链接**，不默默用 `-` 占位。
@@ -180,13 +180,13 @@
 
 35. 帖子「原文链接」统一规范（治本防悬空/丢失；2026-09-08 画像单轨化、2026-09-12 画像 md 废弃后只适用 DB）：`statement`（六表 UNION 视图）与其背后的六张帖子表 **一律必填 `source_url`**（服务端强校验），任意行原文链接禁止为空；买卖/预测的原文链接就在各自的言论行上（`statement_trade` / `statement_predict`），无需另表。画像 md 三表已退役（`assets/博主.md` 仅存历史参考）。
     - **粗制品三种来源都必须有原文链接**（2026-09-03 用户明确）：① 微信截图进件；② `post-fetch` 雪球博主言论采集；③ 其他正常粗制品。截图类须在录入前补到该言论的原始帖子链接，链接缺失即来源不可回溯。
-    - **已由落库端强制**（不再只靠文档）：`blogger_statement` / `blogger_trade` 缺 `sourceUrl` 一律拒绝写入；更新时未传该字段则保留原值（防止编辑一次就把链接抹掉）。存量无链接行已置 `review_required=1`，可在看板「仅待复核」筛出补链接。
+    - **已由落库端强制**（不再只靠文档）：`blogger_statement` / `blogger_trade` 缺 `sourceUrl` 一律拒绝写入；更新时未传该字段则保留原值（防止编辑一次就把链接抹掉）。存量无链接行已置 `is_review_required=1`，可在看板「仅待复核」筛出补链接。
     - **原文链接必填真实雪球原文帖子 URL**：格式 `[原文](https://xueqiu.com/.../XXXXXX)`，取自采集批次该帖的 `[原文]` 链接；综合多篇帖则列多个链接。
     - **禁止留空 `-`**：某行原文链接为 `-` / 空值 = **不合格记录**。撰写时若无来源帖链接，**该行不建**（不得建空链接占位行）；已落库但发现空链接的行 = 删除或补链接。
     - **三表列定义**：言论追踪 5 子表见 #30；个股买卖记录见 #31（已含原文链接列）；预测记录（准确率追踪）列：预测内容 | 时间 | 状态 | 原文链接。
     - **审查联动**：`investment-review` / `vault_review.py` 据此检测「三表是否都含原文链接列」「是否存在空原文链接行」，空链接行标为问题级。
 
-36. 博主画像字段规范（2026-09-08 单轨化：字段存 `blogger` 表；**2026-09-12 用户决定：画像 md 彻底废弃**——服务端已删除全部回写代码与 `/api/blogger/resync` 端点，`博主/{名}/{名}.md` 不再读作数据源、不再同步，存量文件由用户自行删除）：`name` / `alias` / `xueqiu_id` / `platform_code` / `is_special` / `summary` / `strengths`（擅长）/ `limitations`（盲区·局限）/ `info_cutoff_datetime` / `avatar`（canonical 顺序按此；`vault_review.py` 的 `CANON["博主画像"]` 据此校验）。**`info_cutoff_datetime`（信息截止）为 ISO 时间格式 `YYYY-MM-DDTHH:mm:ss`**（如 `2026-08-04T17:50:00`），表示「已采集信息的时间截止点」，**默认当天 `17:50:00`**，采集完成后按实际完成时间更新——精确到时间是为了支持同日多次采集时窗口去重（后续采集只取 `info_cutoff_datetime` 之后的帖子）；看板 bloggers 表 `info_cutoff_datetime` 字段同格式，`vault_review.py` 经看板 API 校验画像与 bloggers 表一致性。**无 `platform_id` 字段**——博主平台永久数字 ID 统一存储于看板 bloggers 表 `xueqiu_id` 字段（博主可能改名但 ID 不变），画像不重复存储（2026-08-04 用户确认此设计）；`special_following`（是否特别关注）取值 `true` / `false`，**取自博主控制台「是否特别关注」**（看板 bloggers 表为博主层唯一权威清单，见 #12）；「关注」由「在控制台登记」本身隐含，故不单独设 `following` 字段。`market` / `style_keywords` / `tags` 原属内容领域分类，已随用户决定从博主画像移除——**博主画像是全部模板中唯一不含 `tags` 的模板**，`vault_review.py` 对博主画像豁免 `tag_issues` 空标签检查（代码中 `tpl!="博主画像"` 分支）。审查反向校验：画像 frontmatter 出现 `platform_id` 即报错（`blogger_has_platform_id`），防止字段回流。
+36. 博主画像字段规范（2026-09-08 单轨化：字段存 `blogger` 表；**2026-09-12 用户决定：画像 md 彻底废弃**——服务端已删除全部回写代码与 `/api/blogger/resync` 端点，`博主/{名}/{名}.md` 不再读作数据源、不再同步，存量文件由用户自行删除）：`name` / `alias` / `xueqiu_id` / `platform_code` / `is_special` / `summary` / `strengths`（擅长）/ `limitations`（盲区·局限）/ `info_cutoff_datetime` / `avatar`（canonical 顺序按此；`vault_review.py` 的 `CANON["博主画像"]` 据此校验）。**`info_cutoff_datetime`（信息截止）为 ISO 时间格式 `YYYY-MM-DDTHH:mm:ss`**（如 `2026-08-04T17:50:00`），表示「已采集信息的时间截止点」，**默认当天 `17:50:00`**，采集完成后按实际完成时间更新——精确到时间是为了支持同日多次采集时窗口去重（后续采集只取 `info_cutoff_datetime` 之后的帖子）；看板 blogger 表 `info_cutoff_datetime` 字段同格式，`vault_review.py` 经看板 API 校验画像与 blogger 表一致性。**无 `platform_id` 字段**——博主平台永久数字 ID 统一存储于看板 blogger 表 `xueqiu_id` 字段（博主可能改名但 ID 不变），画像不重复存储（2026-08-04 用户确认此设计）；`special_following`（是否特别关注）取值 `true` / `false`，**取自博主控制台「是否特别关注」**（看板 blogger 表为博主层唯一权威清单，见 #12）；「关注」由「在控制台登记」本身隐含，故不单独设 `following` 字段。`market` / `style_keywords` / `tags` 原属内容领域分类，已随用户决定从博主画像移除——**博主画像是全部模板中唯一不含 `tags` 的模板**，`vault_review.py` 对博主画像豁免 `tag_issues` 空标签检查（代码中 `tpl!="博主画像"` 分支）。审查反向校验：画像 frontmatter 出现 `platform_id` 即报错（`blogger_has_platform_id`），防止字段回流。
 
 37. Emoji 边界（2026-08-09 用户确认；2026-09-03 补言论链路例外）：**emoji 限制只影响 wiki 产物（提炼环节）**——非言论来源（视频转录、长文研究、其他平台）的采集与粗加工必须尽可能保持原文（含 emoji 表情，雪球表情图片转 `[表情名]` 文本占位、Unicode 表情原样保留，禁止删除清洗）；**例外：雪球博主言论采集链路按《博主言论设计》§采集2 产出纯文本**，删除图片、图片链接与表情（含 `[表情名]` 占位，不留占位），详见 investment-coarse-processor 作用域例外；**wiki 产物与落库文本（框架条目、言论/买卖/画像 DB 字段）禁止任何 emoji 表情**——标题、正文、frontmatter 均不得含 emoji 表情字符。`→` 流程箭头、表格 `---` 分隔线、`[原文](URL)` 等非表情符号不受限。
 
@@ -196,7 +196,7 @@
     - **唯一实现含芯片样式**：`.tk-file` 一律由 `tkLink()` 产出，**不加"点击在 Obsidian 打开"这类多余 title**（可点性由 `cursor:pointer` + hover 下划线表达），仅"文件不存在"保留提示 title；提炼决策链路曾有第二套 `.tk-file` 硬写模板，已收编回 `tkLink()`。
     - **预测主题归类守卫**：新建主题（`console_add_prediction` 的 `subjectName`）必须与控制台维度一致——**`market` 是封闭清单**（2026-09-12 用户拍板：「市场只有 A股、港股、美股、汇率、虚拟货币、美债、国债、日债这种」）：只收 `A股 / 港股 / 美股 / 韩股 / 汇率 / 虚拟货币 / 美债 / 国债 / 日债`，**`大盘`、`××股市`、`××市场`、`通胀`、`市场结构` 一律不是市场**；常见写法可直接传，服务端归一到清单内标准名（A股市场/沪深→A股、加密货币/数字货币→虚拟货币、人民币汇率/外汇→汇率、美国国债→美债、日本国债→日债、韩国股市→韩股；**`A股市场` 现在是 `A股` 的别名**——2026-09-12 用户要求把实体名从「A股市场」改成「A股」），返回体里 `name` 是**实际落点**、`requestedName` 是你传的原名。`industry` 不得收市场维度名；认知/方法论类内容（含 心态/理念/认知/体系/市赚率/方法论/哲学）不得作为任何控制台的预测主题，应落「我的/其他」层 wiki；博主名不得成为主题（见 2026-09-03 `isBloggerName` 守卫）。守卫**只拦新建、不拦存量**（已有主题仍可正常维护），避免历史数据无法更新。
     - **市场封闭清单的由来与纠偏（2026-09-12 用户报错）**：用户发现市场维度里混着「投资认知(466 条关联)/市场结构(118)/投资理念(90)/交易体系(59)/投资心态(23)/市赚率(9)」等**心得方法论主题**与「大盘/通胀/韩国股市」。根因两条：① 旧 `prediction_subjects` 迁移时凡 `console_type_code='market'` 一律搬成市场（认不出 A股/港/美的还生成了 `x28` 这类兜底码）；② 旧守卫是**宽松正则**（`…|股市$|市场$`），放过 `韩国股市`、`××市场`。纠偏动作：`~/Project/investment-console/scripts/fix-markets-taxonomy.js`（韩国股市→韩股、大盘→A股、6 个心得主题+通胀解绑删除、按清单重建、修 `stock_market_rel`）；同日用户又把实体名「A股市场」改成 **A股**（旧名降为别名，历史笔记/旧调用照样解析得到）；守卫改为 `MARKET_CANON`/`MARKET_ALIAS` 封闭清单 + `CANON` 同步维护。
-    - **顺带修掉的真 bug（同批排查发现）**：① 迁移时 market 码复用——`us` 本属美股，但「美债」也命中 `contains('美')` 拿到 `us`，`ON DUPLICATE KEY UPDATE name=VALUES(name)` 把**美股改名成了美债**（库里长期没有美股，另有 8 只美股被挂到「美债」名下）；② `subjectOf` 建市场用的是通用 `INSERT INTO markets (name)`，而 `markets.code` 是 NOT NULL 无默认值 → **市场建档从建表起一直是坏的**（报 `Field 'code' doesn't have a default value`），现已按清单给 code/sort_order。**教训**：迁移脚本里"按名字猜码"必须防撞码；NOT NULL 无默认值的列不能靠通用 INSERT 兜。
+    - **顺带修掉的真 bug（同批排查发现）**：① 迁移时 market 码复用——`us` 本属美股，但「美债」也命中 `contains('美')` 拿到 `us`，`ON DUPLICATE KEY UPDATE name=VALUES(name)` 把**美股改名成了美债**（库里长期没有美股，另有 8 只美股被挂到「美债」名下）；② `subjectOf` 建市场用的是通用 `INSERT INTO market (name)`，而 `market.code` 是 NOT NULL 无默认值 → **市场建档从建表起一直是坏的**（报 `Field 'code' doesn't have a default value`），现已按清单给 code/sort_order。**教训**：迁移脚本里"按名字猜码"必须防撞码；NOT NULL 无默认值的列不能靠通用 INSERT 兜。
     - **行业主题按需创建（2026-09-06 用户规则：看板只显示有数据的行业）**：行业主题**不预建、不留空壳**——词汇权威源 = `tag-taxonomy.md` 第五节（申万2021版 31 一级 + 4 自定义一级 + 各二级）。涉行业的言论/预测，**选最精确的标准名**（一级，或「一级/二级」二级名）；该主题在看板不存在时，**即时按标准名创建**（`subjectOf`/console 工具已支持按需建，创建即启用、与言论共生），**禁止自创非标准行业名**。无数据的空主题定期清理（2026-09-06 曾全量预建 160 个空主题，当日纠偏删除，快照 `outputs/industry_empty_deleted.json`；存量并转快照 `outputs/industry_fix_snapshot.json`）。
 
 
@@ -215,10 +215,10 @@
 
 41. 原文留档（`post_history`，2026-09-11 建表 / **2026-09-12 定位收敛**）：**单表** `post_history` 存「博主言论**提炼前**的原文」，**分博主靠字段识别**（`blogger_id` + `blogger` 冗余名），**不按博主拆物理表**，也不做分区——博主是开放集合（现 53 并在增长），拆表会让 DDL/备份/跨博主查询成本随博主数线性上涨。
     - **双重定位（2026-09-12 用户拍板）**：① **采集落点**——采集完成后帖子直接落这里；② **提炼前原文**——提炼直接从库里读原文。**采集产物（帖子集 md）不再存进 vault 的 `工作区/粗制品/`**：它降级为临时文件，落库 + 入库校验通过后即清理（`import-post-history.js --rm`）。
-    - **只存帖子必要信息（同一条拍板）**：博主标识（`blogger_id`+`blogger`）/ `platform_post_id` / 原文链接与 `url_hash` / 标题 / `post_text` + 长度 / `form` / `posted_datetime`·`fetched_datetime` / `content_hash` / 三个互动数 / 时间戳——**共 18 列**。**不存任何提炼后字段**——原 `content_type`/`stance`/`signal_text`/`entities_json`/`post_id`/`refined_at` 六列已于 2026-09-12 **删除**（迁移 `scripts/migrations/20260912n-post-history-slim.js`，原值备份在 `backups/post_history_slim_20260912/`）。
-      **2026-09-12 死字段清理（用户：「看似有用，实测无用的字段都删掉」，全库体检脚本 `scripts/audit-dead-columns.js`）**：再删 `edited_at`（全 NULL）、`platform_code`（常量 xueqiu，平台由 bloggers 承载）、`fetch_method`、`collector`（常量）、`src_rel`（批次文件已不进 vault，路径失效）；同批删 `industries.code`（全 NULL）/`industries.sort_order`/`industries.enabled`/`stocks.enabled`/`stocks.sort_order`/`markets.enabled`（均常量）。
-      同日晚续清（用户：「来源批次文件路径字段是不是应该去掉了，都是直接从数据库采集的了」）：**删六张言论表的 `src_rel`**（六表 1785 行全量，121 个批次路径值已死；迁移 `scripts/migrations/20260912q-drop-statement-src-rel.js`）；`refine_records.from_rel` 的**帖子集批次值改写为数据库引用** `post_history/{博主} {采集日}`（170 条，迁移 `20260912r`；常规路径的原始资源文件不动）。**言论→原文的回指统一靠 `post_history_id`，来源标识统一靠 `from_rel` 的 DB 引用**——vault 路径不再出现在帖子/言论层。备份见 `backups/trim_dead_columns_20260912/`。
-      **未删但已知未产生数据**（属既有契约、删了丢能力，留着）：`statement_*.view_date_source`/`view_date_precision`/`view_date_basis`（explicit/derived 场景）、`statement_predict.verify_date`/`verify_result`（预测验证闭环）、`statement_trade.market_cap`、`statement_*.wiki_ref`、`*_rel.role_code`、`todos.due_date`/`done_at`。**「这帖提炼了吗」不再靠本表标记，用 `statements.source_url` 反查**（同 URL 有言论行即已提炼）。
+    - **只存帖子必要信息（同一条拍板）**：博主标识（`blogger_id`+`blogger_name`）/ `platform_post_id` / 原文链接与 `url_hash` / 标题 / `post_text` + 长度 / `post_form` / `posted_datetime`·`fetched_datetime` / `content_hash` / 三个互动数 / 时间戳——**共 18 列**。**不存任何提炼后字段**——原 `content_type`/`stance`/`signal_text`/`entities_json`/`post_id`/`refined_at` 六列已于 2026-09-12 **删除**（迁移 `scripts/migrations/20260912n-post-history-slim.js`，原值备份在 `backups/post_history_slim_20260912/`）。
+      **2026-09-12 死字段清理（用户：「看似有用，实测无用的字段都删掉」，全库体检脚本 `scripts/audit-dead-columns.js`）**：再删 `edited_at`（全 NULL）、`platform_code`（常量 xueqiu，平台由 blogger 表承载）、`fetch_method`、`collector`（常量）、`src_rel`（批次文件已不进 vault，路径失效）；同批删 `industry.code`（全 NULL）/`industry.sort_order`/`industry.enabled`/`stock.enabled`/`stock.sort_order`/`market.enabled`（均常量）。
+      同日晚续清（用户：「来源批次文件路径字段是不是应该去掉了，都是直接从数据库采集的了」）：**删六张言论表的 `src_rel`**（六表 1785 行全量，121 个批次路径值已死；迁移 `scripts/migrations/20260912q-drop-statement-src-rel.js`）；`refine_record.from_rel` 的**帖子集批次值改写为数据库引用** `post_history/{博主} {采集日}`（170 条，迁移 `20260912r`；常规路径的原始资源文件不动）。**言论→原文的回指统一靠 `post_history_id`，来源标识统一靠 `from_rel` 的 DB 引用**——vault 路径不再出现在帖子/言论层。备份见 `backups/trim_dead_columns_20260912/`。
+      **未删但已知未产生数据**（属既有契约、删了丢能力，留着）：`statement_*.view_date_source`/`view_date_precision`/`view_date_basis`（explicit/derived 场景）、`statement_predict.verify_date`/`verify_result`（预测验证闭环）、`statement_trade.market_cap`、`statement_*.wiki_ref`、`*_rel.role_code`、`todo.due_date`/`done_datetime`。**「这帖提炼了吗」不再靠本表标记，用 `statement.source_url` 反查**（同 URL 有言论行即已提炼）。
     - **回指方向＝言论表 → post_history（2026-09-12 用户纠正）**：由**六张言论表各带 `post_history_id` 指回留档行**（迁移 `scripts/migrations/20260912o-statement-post-history-id.js`，`statement` 视图同步带出该列），**不是** post_history 指出去。服务端在言论落库/更新时按 `source_url` 解析并写入；解析不到就写 NULL。
     - **只保留 30 天（2026-09-12 用户拍板，硬约束）**：post_history 是**滚动窗口**，不是永久存储——清理脚本 `~/Project/investment-console/scripts/purge-post-history.js`（默认按 `posted_datetime` 保留最近 30 天，可 `--days/--by/--dry`）。**因此「言论的 `post_history_id` 查不到对应行」「按 URL 查不到留档」都是正常现象**，工具、看板、审查、提炼都不得当成异常或数据缺口；也不许据此去重采（先确认是否已逾 30 天）。
     - **用途 = 提炼原文来源 + 避免重采**（用户原话）。它不是提炼产物表、不参与归类判定：提炼结论仍落 `statement`（六表 + UNION 视图）；需要回顾或重新提炼时先查它（MCP `post_history` `action=get/check`），有原文就不必再抓。
@@ -233,7 +233,7 @@
     - **必须非空的只有四项**：`statement_datetime` / `content_type` / `form` / `source_url`（`view_date` 缺省=帖子时间、`fetched_datetime` 缺省=今日，故必然有值）。
     - **具象化字段（`wiki_ref`）＝「这条被提炼进了哪个框架条目文件」**（用户 2026-09-11 补充）。**已具象化则必填、未具象化留空**；条目被删除时要清空。**已具象化时**服务端写入时自动反查 vault（框架条目 frontmatter `source` 里的原帖 URL → 笔记名）并回填，`add` 返回 `wikiRefAutoFilled` 提示；存量用 `node ~/Project/investment-console/scripts/backfill-wiki-ref.js` 回填。
     - **三个时间必须分清**（用户原话举例：9/10 发帖、帖里写「我 8 月 5 号就看好X」、9/11 采集）：`statement_datetime`＝帖子时间（9/10）｜`view_date`＝内容时间/判断成立时点（8/5，须给 `view_date_source=explicit` + `view_date_basis` 原文句）｜`fetched_datetime`＝采集时间（9/11，抓取该帖的日期）。`created_datetime` 只是入库时刻，**不得当作采集时间**。
-    - **内容时间必须真的推导，不能 100% 停在缺省（2026-09-13 实测发现）**：全库 1785 行 `view_date_source` **无一例外都是 `as_posted`**——意味着「8 月 5 号就看好X」「三年前」这类原文表述**从来没被折算过**，`view_date` 只是帖子时间的副本。`audit-post-fields.js` 查不出这个问题（只查「非空」，而缺省值本身非空，见 refine-schema ③）。提炼时逐条判断：原文写明日期 → `explicit` + `view_date_basis` 抄原句；相对表述 → `derived` + 原句，粒度按表述给（不得把「三年前」写成精确到日）。**审查抽查**：`SELECT view_date_source, COUNT(*) FROM statements GROUP BY 1`——`explicit`/`derived` 长期为 0 即说明这条规则没被执行。
+    - **内容时间必须真的推导，不能 100% 停在缺省（2026-09-13 实测发现）**：全库 1785 行 `view_date_source` **无一例外都是 `as_posted`**——意味着「8 月 5 号就看好X」「三年前」这类原文表述**从来没被折算过**，`view_date` 只是帖子时间的副本。`audit-post-fields.js` 查不出这个问题（只查「非空」，而缺省值本身非空，见 refine-schema ③）。提炼时逐条判断：原文写明日期 → `explicit` + `view_date_basis` 抄原句；相对表述 → `derived` + 原句，粒度按表述给（不得把「三年前」写成精确到日）。**审查抽查**：`SELECT view_date_source, COUNT(*) FROM statement GROUP BY 1`——`explicit`/`derived` 长期为 0 即说明这条规则没被执行。
         - **首次回填结果（2026-09-13）**：全量扫过 1785 条正文，**只有 13 条**真的提到了「博主本人更早形成该判断」的时点（其余 1772 条确实没有独立内容时间——内容时间本来就该是空的，不是每帖都有）。脚本 `~/Project/investment-console/scripts/backfill-view-date.js`（默认 dry-run 打印「旧值 → 新值」，`--apply` 才落库，落库前自动备份受影响行到 `backups/`）。
         - **判定口径（宁可少判、不可错判）**：只算**博主本人更早形成该判断**。以下一律**不算**内容时间：转述他人判断（「高盛去年看好…」）、报表/业绩期间（上半年/二季度）、未来预期（明年/下半年）、以及「当时/此前/当初/早前」这类**没有锚点**的模糊表述（无从折算，不猜）。
         - **值的约定**：`view_date` 一律存**周期首日**（年→`1/1`、月→`1 号`），**显示粒度由 `view_date_precision` 决定**——`day`→`2026-08-05`、`month`→`2025-11`、`year`→`2020`；前端 `_viewDateText()` 负责截断。**不得把「去年」显示成精确到日**（规则原文：粒度按表述给）。
@@ -256,7 +256,7 @@
     - **实体三表（取代 prediction_subjects）**：`stock`（个股：name/code/market_code/aliases/hk_connect）、`industry`（行业：name/code）、`market`（市场：code/name，A股/港股/美股/韩股…）。控制台三个页签直接读这三张表。**行业表只放行业**——宏观/认知/策略/风格类（估值、周期、仓位管理、宏观经济、地缘政治…）不是实体，落 wiki「我的」层；个股名/市场名不得混进行业表（2026-09-12 清理了 27 条此类污染 + 8 条错位）。
     - **关联六张（用户拍板）**：`statement_blogger_rel`（**言论一定挂博主**）、`statement_stock_rel`、`statement_industry_rel`、`statement_market_rel`（**言论可以没有个股/行业/市场关联**）、`stock_industry_rel`（**个股一定挂行业，且可多行业**）、`stock_market_rel`（个股↔市场）。原来那张多态表已删除。**跟踪表 `statement_rel` 也已退役（2026-09-12 用户选 A）**：它长期 0 行、看板无读路径（「有写入无读取」的死功能），`console_add_track` 工具一并下架——预测的后续演进由后续言论自身承载（时间线上正文与时间可见）。
     - **不变量（写入即校验，2026-09-12 实测全库 0 违规）**：① 每条言论必有 `statement_blogger_rel`；② 每只个股至少一条 `stock_industry_rel`（服务端 `blogger_trade` / `console_ensure_subject` 支持传 `industryName` 建关联，缺则记缺口待补）；③ 通胀之类宏观概念**不属于市场**，不建实体关联。
-    - **个股别名与提及判定**：见 `investment-refine/references/stock-mention-rules.md`（关键词邻接 + 二元分类特征；别名存 `stocks.aliases`，逗号分隔）。
+    - **个股别名与提及判定**：见 `investment-refine/references/stock-mention-rules.md`（关键词邻接 + 二元分类特征；别名存 `stock.aliases`，逗号分隔）。
     - **弃用对象直接删**：确认无用的表/字段**删前导出到 `backups/`，然后 DROP**，不留 `_del` 残表（本批已删 `post_entity_rel`、`prediction_subjects` 及历史的 9 张 `_del` 表）。
     - **注释写法**：表注释只写平实的「XX表 / XX子表」；字段注释直述含义；**码值字段必须写明字典项与 `dict.type`**。
     - **可枚举的值进 `dict`**：方向/状态/内容类型等一律 `dict(type,code,name,sort_order,enabled,remark)`；标签也是 `dict(type='tag')`。`trade_op`（买卖操作）随 op 字段一起废弃（2026-09-12 用户：买卖记录不要操作字段）。
@@ -300,18 +300,18 @@
     - **`target`/`target_alias` 列已删除**（六张言论表；备份 `backups/drop_target_20260912/`）。标的名一律由 `statement_stock_rel`/`statement_industry_rel`/`statement_market_rel` 承载；写入时传的 `target` 参数**只作解析输入**（`linkSubjectsByText` → `resolveEntityByName`，支持个股别名与「银行股」这类后缀），**解析不到的段会在 warnings 里返回**（没有列兜底了，必须让调用方看见）。
     - **删列前置三件事**（顺序不能反，否则标的名会丢）：① `backfill-statement-subject-rel.js` 把 504 条「有 target 文本无关联」的言论解析成关联；② 418 种标的名值的映射表（个股/行业/市场/不入实体）；③ `20260912l` 给买卖帖补标的关联（否则买卖卡标的名会空）。
     - **读契约**：`_statementRow` 仍输出 `target` 字符串，但它是**派生字段**（＝关联实体名用 `/` 连接），只为兼容既有前端；权威是 `subjects` 数组与三张关联表。**不要把它写回数据库**。
-    - **个股表同步扩充**：本轮建档 122 只 + 12 只（映射表），行业 +14；`resolveEntityByName` 现在也认 `stocks.aliases` 与「股/板块/概念/指数」后缀。
+    - **个股表同步扩充**：本轮建档 122 只 + 12 只（映射表），行业 +14；`resolveEntityByName` 现在也认 `stock.aliases` 与「股/板块/概念/指数」后缀。
 
 48. 能用留档就别重采（2026-09-12 用户纠正）：
     - 用户原话：「现有的已经在数据库了……数据库的 post_history 就是为了你乱重采设计的，能不能用起来啊，别一直重采啊」。
-    - `post_history` 是**采集原文留档**（含 `form`、`post_text`、原文链接、互动数；**2026-09-12 起不再含要素快照**——`entities_json`/`post_id`/`content_type`/`stance`/`signal_text`/`refined_at` 六列已删），存在的意义就是「不用再抓一次」。修数据先查留档：形态、回复内容（`//@` 段）都能在留档里解决（`backfill-reply-to.js`、`strip-reply-wrappers.js`、`fix-form-from-archive.js`）；要素回溯改走 `statement` + 三张关联表。**注意**：`reply_to` 按规则 #46 v3 只存对方的话、不留昵称，所以「回的是谁」的唯一出处就是留档的 `post_text`。
+    - `post_history` 是**采集原文留档**（含 `post_form`、`post_text`、原文链接、互动数；**2026-09-12 起不再含要素快照**——`entities_json`/`post_id`/`content_type`/`stance`/`signal_text`/`refined_at` 六列已删），存在的意义就是「不用再抓一次」。修数据先查留档：形态、回复内容（`//@` 段）都能在留档里解决（`backfill-reply-to.js`、`strip-reply-wrappers.js`、`fix-form-from-archive.js`）；要素回溯改走 `statement` + 三张关联表。**注意**：`reply_to` 按规则 #46 v3 只存对方的话、不留昵称，所以「回的是谁」的唯一出处就是留档的 `post_text`。
     - 只有**留档里确实没有**的东西（例如留档也缺 `//@` 段）才是真缺口——而且**要如实报缺口，不要用重采去填**；用户还可能明确说「某个日期以前的都不要了」，那就更不该重采。
 
 49. 待复核队列：处理不了的**上报**，用户裁决后**内化成规则**（2026-09-12 用户要求）：
     - **用户原话**：「在审查按钮前面插入一个待复核按钮，作用是显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，**让我以后可以不用再审核类似的帖子**」。
     - **三步入队**：① **agent 上报**——提炼/审查中拿不准的一律进队列（`MCP pending_decision add`），不许瞎猜、不许留空：归类边界（predict↔view、trade↔insight）、标的名解析不出、称呼歧义、时间存疑、规则没覆盖的新情况；系统也会自动上报一类（`blogger_statement` 遇到解析不出的标的名时，返回的 warnings 里带「已登记「待复核」#id」）。② **用户裁决**——看板「待复核」页（左侧菜单，在「审查」**前面**）点候选按钮或自由作答 → `status=resolved`。③ **下次审查内化**——见下条。
     - **上报质量硬要求**：必须带**候选 `options`**（`/` 分隔，让用户点一下就完事）；`question` 一句话能独立看懂；`excerpt` 放原文片段（用户不必去翻原文）；能定位到帖子就给 `statementId` + `sourceUrl`。
-    - **内化是闭环的关键（只答不内化＝违规）**：审查时先取 `status=pending_internalize`（已答复、`internalized` 为空）→ 修数据 → 把答复**落成规则/案例**（四选一或组合）：`framework-rules.md` 新条目/修订（编号 + 用户原话）、`stocks.aliases`（`stock_alias add`，称呼类）、`mention_case`（`stock_alias case-add`，误判/漏判案例）、`refine-schema.md` 判定细则 → 调 `pending_decision action=internalize` 把落点写回 `internalized`。**`internalized` 非空＝这条经验已进规则，同类帖子以后不再问用户**——这正是用户要的「以后不用再审核类似的帖子」；只把答复当一次性修正、不写回规则，等于让用户把同一类问题答第二遍。
+    - **内化是闭环的关键（只答不内化＝违规）**：审查时先取 `status=pending_internalize`（已答复、`internalized` 为空）→ 修数据 → 把答复**落成规则/案例**（四选一或组合）：`framework-rules.md` 新条目/修订（编号 + 用户原话）、`stock.aliases`（`stock_alias add`，称呼类）、`mention_case`（`stock_alias case-add`，误判/漏判案例）、`refine-schema.md` 判定细则 → 调 `pending_decision action=internalize` 把落点写回 `internalized`。**`internalized` 非空＝这条经验已进规则，同类帖子以后不再问用户**——这正是用户要的「以后不用再审核类似的帖子」；只把答复当一次性修正、不写回规则，等于让用户把同一类问题答第二遍。
     - **不该上报的**（避免噪声）：规则里已经写明的（先查 `framework-rules.md` / `refine-schema.md` / `stock-mention-rules.md`）、能靠留档/关联表自己查出来的、纯采集缺口且用户已明确「缺口如实报不必补」的。**上报前先按 kind 搜一遍队列**，别重复问同一个问题。
     - **审查报告要带结果**：审查记录里写明「本次处理待复核 N 条（内化 M 条 / 忽略 K 条）」，用户据此确认闭环走完了。
     - **卡片样式：给「博主 + 原文 + 时间」，不给提炼结果（2026-09-13 用户纠正）**：用户原话「这个待决策设计我觉得设计的不好，**原文都看不到，原文链接也没有**……我的目标是，对于某一个帖子，你无法判断他属于什么内容、或者无法判断是否应该内化的，由我来决策，但是**卡片样式应该要包含博主、包含原文、包含时间，不包含提炼后信息，因为还没提炼**」。待复核是**提炼之前**的决策点，所以：
@@ -321,7 +321,7 @@
         - **不放提炼结果**：`content_type`/`stance`/`signal_text`/`view_text`/`wiki_ref` 这些是提炼产物，此页一律不展示（那正是「还没提炼」要用户判断的东西）。
         - **页面名＝「待决策」（2026-09-13 用户要求改名）**：导航按钮、左栏标题、空状态文案全部改为「待决策」（原名「待复核」易与 `is_review_required` 标记混淆）。后端队列仍叫 `pending_decision`（不改表名）。
         - **原文的布局要和提炼后的卡片一致（2026-09-13 用户要求）**：原文里 `//@昵称：对方的话` 是**平台引用结构**，渲染前按它切一刀——博主自己的话进正文、对方的话进**回应块**，然后交给**同一个 `replyBodyHtml()`**（规则 #40 防复发：禁止另写第二套渲染）。这样待决策页看到的原文排版，与提炼后卡片（正文 + 回应块）完全同构。列表行用纯文本版（`rawPostPlain()`：只留博主自己的话，剥掉 `回复@某人：` 与 `//@某人：` 两段包装）。
-        - **⚠ 已知空洞（2026-09-13 发现）**：`statements.review_required`（370 条，提炼侧为「跨度≥2年/表述模糊」等标出）**在界面上没有任何入口**——原来的「只看待复核」开关（`data-bact="review"` / `?reviewOnly=1`）在 `web/app.js` 里只有事件处理、**没有渲染**，是死代码；卡片上也不显示该标记。用户若想用这个标记，需要先把入口补出来（或明确废弃它）。
+        - **⚠ 已知空洞（2026-09-13 发现）**：`statement.is_review_required`（370 条，提炼侧为「跨度≥2年/表述模糊」等标出）**在界面上没有任何入口**——原来的「只看待复核」开关（`data-bact="review"` / `?reviewOnly=1`）在 `web/app.js` 里只有事件处理、**没有渲染**，是死代码；卡片上也不显示该标记。用户若想用这个标记，需要先把入口补出来（或明确废弃它）。
 
 50. 用户复核里的「**删除**」意见：不许意外、不许反问，删掉 + 内化成低质帖判据（2026-09-12 用户补充）：
     - **用户原话**：「我的复核可能会有删除的建议，但是我会附上删除的理由，这个规则你也记住，审核到删除的情况也不要意外，因为有的帖子质量不够，但是你提炼了，这种我就会在复核意见写上删除，然后你审核后要记得删除，并且内化规则，**减少这种帖子提炼成言论的情况**」。
@@ -342,7 +342,7 @@
     - **角标位置与样式**：菜单角标与四个维度 tab 角标**同款同位置**（红色胶囊、贴各自元素右上角，`.nav-badge` 一个类两处复用）——用户 2026-09-12 明确要求「和言论追踪菜单的一样，右上角显示，样式也是一样」。改角标样式只改这一类，别给 tab 另起一套。
     - **言论列表排序（2026-09-12 用户规则）**：**未读优先排前面，未读之间按时间倒序**；已读部分同样按时间倒序。**服务端与前端同一口径**（服务端 SQL `ORDER BY is_read ASC, COALESCE(view_date,statement_date) DESC`；前端 `byUnreadThenTime()` 兜底合并后的列表，因为「全部」时间线要在客户端把言论/预测/买卖混排）。时间键取**内容时间** `view_date`（缺则回退发帖时间/买卖时间），与卡片上 `内容 YYYY-MM-DD` 的展示口径一致。**改排序别只改一处**：博主言论列表、主体详情三路（关联言论/提及兜底/预测）、客户端混排时间线、分类 tab 都是同一规则。
     - **维度口径**：博主维度＝全部未读言论（每条都挂在博主下）；个股/行业/市场按关联表去重统计，**三个主题维度可以重叠**（一条言论挂多个标的名时会计入多个维度），所以三个角标之和 ≥ 总数，这是设计如此、不是 bug。
-    - **「个股」tab 是双模按钮＝市场筛选（2026-09-13 用户要求）**：**未选中时点击＝选中并跳转**（落到「个股」＝全部）；**已选中时再点＝循环筛选** 个股(全部) → A股 → 港股 → 美股 → 个股，tab 文案跟着变。纯前端筛已加载的个股数据（不打接口）。**切走即复位**：切到别的维度再回来，一定是「个股（全部）」。**市场判定口径**：`stocks.market_code` 优先，**没填的按代码形状兜底**（5 位数字＝港股、1~5 位字母＝美股，与卡片上「港」标识同一口径，见 `codeTag`）——库里还有 12 条 `market_code` 为空的存量（小米/美团/MiniMax/智谱 是港股、SpaceX/英特尔/Tema 是美股、SK海力士是 `kr`），不兜底它们就只能在「个股（全部）」里出现；`kr` 等非目标市场一律只在全部里出现。**角标跟着筛选走**：`/api/unread/stats` 的 `dimensions.stockByMarket`（按市场去重、口径与前端 `mktOf` 一致）给出 a/hk/us 的待读数，筛到港股就显示港股的待读，不再一律显示整个个股维度的数。改动入口：`web/app.js` 的 `MKT_CYCLE` / `MKT_LABEL` / `mktOf` / `setStockTabLabel()` / `visibleConsoleSubjects()`。
+    - **「个股」tab 是双模按钮＝市场筛选（2026-09-13 用户要求）**：**未选中时点击＝选中并跳转**（落到「个股」＝全部）；**已选中时再点＝循环筛选** 个股(全部) → A股 → 港股 → 美股 → 个股，tab 文案跟着变。纯前端筛已加载的个股数据（不打接口）。**切走即复位**：切到别的维度再回来，一定是「个股（全部）」。**市场判定口径**：`stock.market_code` 优先，**没填的按代码形状兜底**（5 位数字＝港股、1~5 位字母＝美股，与卡片上「港」标识同一口径，见 `codeTag`）——库里还有 12 条 `market_code` 为空的存量（小米/美团/MiniMax/智谱 是港股、SpaceX/英特尔/Tema 是美股、SK海力士是 `kr`），不兜底它们就只能在「个股（全部）」里出现；`kr` 等非目标市场一律只在全部里出现。**角标跟着筛选走**：`/api/unread/stats` 的 `dimensions.stockByMarket`（按市场去重、口径与前端 `mktOf` 一致）给出 a/hk/us 的待读数，筛到港股就显示港股的待读，不再一律显示整个个股维度的数。改动入口：`web/app.js` 的 `MKT_CYCLE` / `MKT_LABEL` / `mktOf` / `setStockTabLabel()` / `visibleConsoleSubjects()`。
     - **改了列要跟着改视图**：`statement` 是六表 UNION，加列必须重建视图——用 `scripts/migrations/20260912u-statement-is-read.js` 那种「按表结构自动生成 UNION」的写法（手写 36 列 UNION 迟早漏列）。
 
 52. 言论去重（「一帖一条」的存量清理，2026-09-13）：**同一帖在库里只允许一行**（refine-schema 的「一帖一条」是写入约束，本条是存量清理口径）。2026-09-05 那批导入把「（信号：xxx）」**内嵌进正文**重新入库、且没和 09-02 已入库的行去重，于是全库多出 72 条重复（相同 `source_url`）。

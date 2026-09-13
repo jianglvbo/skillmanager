@@ -47,11 +47,11 @@ compatibility: 通用
 | 参数 | 类型 | 必填 | 默认 | 说明 |
 |:---|:---|:---|:---|:---|
 | xq_id | int | 否 | — | 雪球用户 ID（与 blogger_name 二选一；均不传则默认采集全部博主） |
-| blogger_name | string | 否 | — | 博主名称，从看板博主控制台（MySQL bloggers 表 `xueqiu_id` 字段）解析（与 xq_id 二选一；均不传则默认全部） |
+| blogger_name | string | 否 | — | 博主名称，从看板博主控制台（MySQL blogger 表 `xueqiu_id` 字段）解析（与 xq_id 二选一；均不传则默认全部） |
 | max_posts | int | 否 | 50 | 最大采集条数 |
 | output_dir | path | 否 | `~/.cache/xueqiu-spyder/out`（vault 外临时目录） | 采集产物输出目录。**2026-09-12 起不再写 vault 的 `工作区/粗制品`**：采集产物是临时文件，落库 post_history + 入库校验通过后即清理（见第三步之二/之三与规则 #41） |
 
-**时间窗口**：采集范围 = 看板博主控制台「信息截止」（MySQL bloggers 表 `info_cutoff_datetime`；API /api/bloggers/live 可读）（ISO `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间支持同日多次采集去重。新增博主默认半年前 17:50:00。
+**时间窗口**：采集范围 = 看板博主控制台「信息截止」（MySQL blogger 表 `info_cutoff_datetime`；API /api/bloggers/live 可读）（ISO `YYYY-MM-DDTHH:mm:ss`）→ 当前时间；精确到时间支持同日多次采集去重。新增博主默认半年前 17:50:00。
 
 > 两参均不传 → 逐博主执行看板中所有「雪球ID」非空博主。同时传入 → 以 xq_id 为准。
 
@@ -59,7 +59,7 @@ compatibility: 通用
 
 每次采集会话开始**必须**先执行（无论单博主还是批量）。完整规则见 `references/execution-guide.md`「前置步骤」——获取用户 ID、分页拉取关注列表、与看板对比（新增→确认后登记 / 取关→报告由用户看板删除 / 无变动）、更新 `updateDate`。
 
-**两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——本次变更的博主，画像 frontmatter 与看板 `bloggers.info_cutoff` 同值（规则 #36；画像 md 已废弃时只核对看板）。
+**两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——本次变更的博主，画像 frontmatter 与看板 `blogger.info_cutoff_datetime` 同值（规则 #36；画像 md 已废弃时只核对看板）。
 
 ### 第零步：解析雪球 ID
 
@@ -115,7 +115,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 | **摘要帖 / 无链接帖不入库** | 摘要帖内容残缺（故意不存，便于下次重采）；缺 `[原文]` 链接＝来源不可回溯（#35） |
 | **清理前必须过校验** | 有缺口 → 先补入库，禁止清理临时产物 |
 | **30 天滚动窗口** | 逾 30 天查不到留档、言论 `post_history_id` 悬空，**都是正常现象**（不是缺口、也不因此重采） |
-| 博主未建档 | 报错跳过；需先在看板 bloggers 表登记（#12） |
+| 博主未建档 | 报错跳过；需先在看板 blogger 表登记（#12） |
 
 > 完整命令、节流与排错 → `references/execution-guide.md`「第五步」；采集前查重可用 MCP `post_history` `action=check`。
 
@@ -138,7 +138,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 >
 > **退出码 3（2026-09-12 实战教训）**：低 `--max-pages` 时时间线翻不到窗口起点，过滤后 0 条会被**误报成「无新帖」(2)**，按 2 推进 cutoff 即永久漏采（实测雪月霜 09-08 窗口 4 页判"无帖"，加到 15 页抓到 19 条）。页数按 `窗口天数 × 日均条数 ÷ 20 + 2` 估算。
 
-将「信息截止」更新为**本次采集实际完成时间**（ISO `YYYY-MM-DDTHH:mm:ss`，无精确时间默认 `17:50:00`）——**只写看板 MySQL `bloggers.info_cutoff`**（`scripts/xq_update_cutoff.py` 回写；脚本里的画像 md 分支已废弃，2026-09-12 起不创建、不更新任何画像文件）。
+将「信息截止」更新为**本次采集实际完成时间**（ISO `YYYY-MM-DDTHH:mm:ss`，无精确时间默认 `17:50:00`）——**只写看板 MySQL `blogger.info_cutoff_datetime`**（`scripts/xq_update_cutoff.py` 回写；脚本里的画像 md 分支已废弃，2026-09-12 起不创建、不更新任何画像文件）。
 
 **批量采集收尾核对（硬约束）**：批量结束后必须逐位核对「本次是否采集完成」，只对退出码 0/2 的博主执行双写；退出码 1/3 的博主列入「待重试清单」报告用户，**其 cutoff 保持原值不动**。
 
@@ -177,7 +177,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 | 优先级 | 来源 |
 |:---|:---|
 | 1 | 用户显式参数（xq_id、blogger_name、max_posts） |
-| 2 | 看板博主控制台（MySQL bloggers 表，`GET /api/bloggers/live`） |
+| 2 | 看板博主控制台（MySQL blogger 表，`GET /api/bloggers/live`） |
 | 3 | xueqiu-spyder 工具层输出（帖子集文件） |
 | 4 | `references/output-format.md`（验收规范） |
 | 5 | 雪球页面/API 实际结构（由 spyder 解析，本层不持有） |

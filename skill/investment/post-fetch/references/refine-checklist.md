@@ -53,6 +53,6 @@
 
 ## 5. 提炼收尾
 - [ ] 所有精华已落位（框架文件 / 言论追踪 / 增量补充）
-- [ ] 「已提炼」已用 `statements.source_url` 反查确认（无源文件可删——采集产物在入库校验后即清理）
+- [ ] 「已提炼」已用 `statement.source_url` 反查确认（无源文件可删——采集产物在入库校验后即清理）
 - [ ] 博主画像 `info_cutoff_datetime` 已更新（采集第八步已做，此处复核）
 - [ ] 新建框架条目 frontmatter 符合 framework-rules 规范（无 `date` 字段、source 描述性）

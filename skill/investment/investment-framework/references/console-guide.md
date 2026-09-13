@@ -12,7 +12,7 @@
 |:---|:---|:---|:---|
 | investment-refine 第四步 | `MCP refine_record` | targets[]（含 thinking v2 思考链路/basis/relation） | 提炼时间轴 + 思考时间线（决策链路图） |
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
-| 粗制品队列 | `GET /api/coarse/list` | 直接读 vault `工作区/粗制品/`；「已加工」状态由提炼记录 `refine_records.from_rel` 推导（原 `coarse_records` 表已于 2026-09-12 删除，评分字段不再展示） | 粗制品模块 |
+| 粗制品队列 | `GET /api/coarse/list` | 直接读 vault `工作区/粗制品/`；「已加工」状态由提炼记录 `refine_record.from_rel` 推导（原 `coarse_records` 表已于 2026-09-12 删除，评分字段不再展示） | 粗制品模块 |
 | post-fetch 第三步之二 | `scripts/import-post-history.js`（批量）/ `MCP post_history`（单条 upsert） | 采集原文落 `post_history` 表（提炼前原文留档，**唯一用途=避免重采**） | 不呈现（后端留档；`post_history action=get/check` 供提炼与补采读取） |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。
@@ -115,7 +115,7 @@ node ~/Project/investment-console/scripts/audit-schema-comments.js           # �
 node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
 ```
 
-审计口径：只读视图 `statement` 无列注释概念，自动排除。**当前状态：表注释 22/22、列注释 328/328**（六张帖子表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
+审计口径：只读视图 `statement` 无列注释概念，自动排除。**当前状态：表注释 29/29、列注释 330/330**（六张帖子表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
 
 **权威 schema 是生成物（2026-09-12 起）**：改库后必须重新导出 + 回放校验，否则文件与实库漂移（本轮就抓出过视图缺列、表名不一致）：
 

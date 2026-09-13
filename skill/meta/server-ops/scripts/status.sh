@@ -16,7 +16,7 @@ echo "  \"mysql\": \"$(sudo systemctl is-active mysql)\","
 echo "  \"redis\": \"$(sudo systemctl is-active redis-investment)\","
 echo "  \"fitness_http\": \"$(curl -s -o /dev/null -w %{http_code} http://127.0.0.1:8699/)\","
 echo "  \"qa_http\": \"$(curl -s -o /dev/null -w %{http_code} http://127.0.0.1:8700/)\","
-cnt=$(sudo mysql -N -e "SELECT CONCAT('bloggers=',(SELECT COUNT(*) FROM investment_kb.bloggers),' statements=',(SELECT COUNT(*) FROM investment_kb.statements),' post_history=',(SELECT COUNT(*) FROM investment_kb.post_history),' stocks=',(SELECT COUNT(*) FROM investment_kb.stocks))")
+cnt=$(sudo mysql -N -e "SELECT CONCAT('bloggers=',(SELECT COUNT(*) FROM investment_kb.blogger),' statements=',(SELECT COUNT(*) FROM investment_kb.statement),' post_history=',(SELECT COUNT(*) FROM investment_kb.post_history),' stocks=',(SELECT COUNT(*) FROM investment_kb.stock))")
 echo "  \"investment_kb_counts\": \"$cnt\""
 echo "}"
 REMOTE
@@ -30,6 +30,6 @@ echo "== HTTP =="
 curl -s -o /dev/null -w "fitness(8699): %{http_code}\n" http://127.0.0.1:8699/
 curl -s -o /dev/null -w "qa(8700): %{http_code}\n" http://127.0.0.1:8700/
 echo "== investment_kb 行数快检 =="
-sudo mysql -N -e "SELECT CONCAT('bloggers=', (SELECT COUNT(*) FROM investment_kb.bloggers), ' statements=', (SELECT COUNT(*) FROM investment_kb.statements), ' post_history=', (SELECT COUNT(*) FROM investment_kb.post_history), ' stocks=', (SELECT COUNT(*) FROM investment_kb.stocks))"
+sudo mysql -N -e "SELECT CONCAT('bloggers=', (SELECT COUNT(*) FROM investment_kb.blogger), ' statements=', (SELECT COUNT(*) FROM investment_kb.statement), ' post_history=', (SELECT COUNT(*) FROM investment_kb.post_history), ' stocks=', (SELECT COUNT(*) FROM investment_kb.stock))"
 REMOTE
 fi

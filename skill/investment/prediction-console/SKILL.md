@@ -14,7 +14,7 @@ version: 2.1.0
 - **组合与代号不入主题（2026-09-12）**：雪球组合（`$名称(ZH123456)$`）不是个股/行业/市场主题，**不建 subject**（组合信息留在帖子 `target` 文本里）；纯小写拉丁短名（如 `cww`）是未识别代号，须先还原真名再建主题。建主题接口已内置门禁拦截，报错即按提示改写。
 
 - **三控制台分工**：`consoleType=stock`（个股，标题含代码）/ `industry`（行业，申万最下级标签）/ `market`（市场，**封闭清单 9 个**：A股/港股/美股/韩股/汇率/虚拟货币/美债/国债/日债）
-- **一主题一段**：每只股票/行业/市场独立 `prediction_subjects` 记录（含代码字段），禁止合并（如"神火/云铝"合成一段）
+- **一主题一段**：每只股票/行业/市场在实体三表（`stock`/`industry`/`market`）各占一行，个股含 `code`+`market_code` 字段，禁止合并（如"神火/云铝"合成一段）
 - **去重由 DB 兜底**：`console_add_prediction` 按（主题+预测日期+预测人+内容）唯一键幂等，重复自动跳过并返回 `duplicate: true`
 - **验证留痕由服务端强制**：状态改为 `verified_correct/verified_wrong/revoked` 时 `verify`（result+basis）必填，缺了直接报错——状态枚举里禁止夹带证据
 - **言论单轨（2026-09-11 收敛：预测即言论行）**：预测**就是** `statement_predict` 表里的一行 `predict` 言论——与博主言论同表同 id，结构化预测字段（参考价/目标价/目标时间/状态/验证结果）就在该行本体，**没有第二张预测表**；画像 md 已退役（2026-09-08），不再写任何 vault 画像文件
@@ -62,7 +62,7 @@ version: 2.1.0
 | `refPrice` | 当前价/参考价：个股=预测日收盘价（不复权，腾讯 kline API），行业/市场=商品价/指数点位；月级日期留空 |
 | `targetPrice` / `targetDate` | 有明确数字/区间才填（如 2023~2027+），否则省略 |
 | `sourceUrl` | 原文链接 |
-| `statementId` | 该预测源自哪条博主言论（`statements.id`）；**同一条判断已由言论链路落库时必传**——预测即言论行，传了就在该行上补预测字段与维度关联（漏传而带 `sourceUrl` 时，服务端按同链接复用已有 `statement_predict` 行；仍无则新建） |
+| `statementId` | 该预测源自哪条博主言论（`statement.id`）；**同一条判断已由言论链路落库时必传**——预测即言论行，传了就在该行上补预测字段与维度关联（漏传而带 `sourceUrl` 时，服务端按同链接复用已有 `statement_predict` 行；仍无则新建） |
 | `status` | pending/verifying/verified_correct/verified_wrong/revoked（缺省 pending） |
 
 ### 第五步：状态变更（强制验证留痕）

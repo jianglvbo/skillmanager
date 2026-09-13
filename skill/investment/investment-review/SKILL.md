@@ -49,7 +49,7 @@ compatibility: 通用
 用户原话：「显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，让我以后可以不用再审核类似的帖子」。队列在看板「待复核」页（左侧菜单，在「审查」**前面**），agent 侧走 `MCP pending_decision`：
 
 1. `action=list, status=pending_internalize` → **已答复但规则还没落地**的项（这批是本步的核心工作）；
-2. 逐条：按用户答复**修数据**（改归类/补标的名/改时间/补别名…）→ 把答复**内化成规则/案例**（落点四选一，见 framework-rules #49：`framework-rules.md` 条目 / `stocks.aliases` / `mention_case` / `refine-schema.md` 细则）→ `action=internalize` 把落点写回 `internalized`；
+2. 逐条：按用户答复**修数据**（改归类/补标的名/改时间/补别名…）→ 把答复**内化成规则/案例**（落点四选一，见 framework-rules #49：`framework-rules.md` 条目 / `stock.aliases` / `mention_case` / `refine-schema.md` 细则）→ `action=internalize` 把落点写回 `internalized`；
 2b. **`verdict=delete`（用户写了「删除：<理由>」）＝必须真的删**（2026-09-12 用户明确：「有的帖子质量不够，但是你提炼了，这种我就会在复核意见写上删除」）：
     - 取清单：`pending_decision(action=list, status=pending_internalize, verdict=delete)`；
     - 逐条 `blogger_statement(action=delete, id)`（买卖帖走 `blogger_trade delete`）→ `action=internalize` 写「已删除言论 #id + 规则落点」；
@@ -69,7 +69,7 @@ compatibility: 通用
 **C7**：关联备注——为缺少跨条目关联的条目补充脚注（脚注类型和格式见 `investment-framework/references/footnote-taxonomy.md`），在正文相关论述处嵌入标记，文末脚注定义（无 ## 脚注 标题、无 --- 分隔线）写 wikilink + 关系类型 + 一句话说明
 **C8**：关系依据复核——逐条打开文件中**已存在**的关联脚注，核对目标文件原文是否支撑其关系声明；无依据的一律记为"编撰关系"，在报告中建议删除或降级为 enhance（见 footnote-taxonomy.md「关系依据校验」）
 **C9**：输出内容审查报告
-**C0（2026-09-12 新增）：别名与规则迭代核对**——审查时对「个股指代」做一次回看：① 言论里出现、但 `stocks.aliases` 未登记的称呼 → 补登（`stock_alias`）；② 被误挂的常用词（如「好美的风景」→ 美的集团）→ 改正关联 + 若缺歧义标记则 `mark-ambiguous` + 把案例写进 `stock-mention-rules.md` 误判清单；③ 报告里单列「本次新增别名 / 新增歧义词 / **新增判定案例** / 规则修订」四项，做到**知识随审查沉淀**；案例用 `stock_alias(action=case-add)` 落 `mention_case`，不要写进 md。
+**C0（2026-09-12 新增）：别名与规则迭代核对**——审查时对「个股指代」做一次回看：① 言论里出现、但 `stock.aliases` 未登记的称呼 → 补登（`stock_alias`）；② 被误挂的常用词（如「好美的风景」→ 美的集团）→ 改正关联 + 若缺歧义标记则 `mark-ambiguous` + 把案例写进 `stock-mention-rules.md` 误判清单；③ 报告里单列「本次新增别名 / 新增歧义词 / **新增判定案例** / 规则修订」四项，做到**知识随审查沉淀**；案例用 `stock_alias(action=case-add)` 落 `mention_case`，不要写进 md。
 
 **C10**：言论追踪审计（执行 `scripts/tracks_audit.py --vault <vault路径> [--mysql]`，凭据用环境变量 `DB_PASS`）——**2026-09-12 重写后**核对 MySQL `statement`（六表视图）数据质量：空正文/缺原文链接/缺 `form`、`content_type` 与 `stance` 码值合法性、P1 三类（trade/predict/research）缺实体关联、复核建议积压（`statement_review_sub`）；兼看「insight 帖具象化覆盖率」（该有框架条目的心得帖要有 `wiki_ref`）。**原文留档覆盖率按 30 天窗口判**（`post_history_id` 回指，逾 30 天查不到属正常、不计缺口）。画像 md 已废弃，不再做 md↔DB 对照。**只报告不修改**，问题并入内容审查报告。
 
@@ -78,7 +78,7 @@ compatibility: 通用
 **辅助 · 预扫（可选）**：① 结构/元数据——`scripts/vault_review.py --vault <vault路径>` 生成 `vault_review_result.json`（归类/frontmatter 含 updateDate/引号/wikilink 含 source/脚注格式/标签 六维 + 言论/买卖/预测三表原文链接（#35；画像 md 已退役，vault_review 的画像文件检查仅作比对期参考）/禁用 `## 来源`/source 形态（#23）/空壳 junk 扩展检查，只报告不修改）；② 段落布局——`investment-framework/scripts/verify-format.py <vault路径> --scope 其他,博主,宏观`（同行标题/标题间距/段落紧凑/脚注内联孤儿/模板残留，`--fix` 可自动修复）。人工据 JSON 撰写报告时聚焦机器无法判定的部分（段落缺失是否确无内容、标签语义、关联备注提案）。
 
 **S1**：读取参数 `{ scope_dirs }`
-**S2**：归类正确性——含博主层条目其作者是否均在博主控制台（看板 MySQL bloggers 表）登记，未登记者误挂博主层须标记迁移至其他层（见 framework-rules #12）
+**S2**：归类正确性——含博主层条目其作者是否均在博主控制台（看板 MySQL blogger 表）登记，未登记者误挂博主层须标记迁移至其他层（见 framework-rules #12）
 **S3**：frontmatter 完整性——必填字段 title/createDate/updateDate/**author**/tags/**source** 齐全（author/source 缺失即标记）；字段顺序须按所属分类模板 canonical 排列（标准 8 字段 `title→createDate→updateDate→author→star→delete→tags→source`，分析档案/宏观事件型见 framework-rules #27）；**禁止出现 `date` 字段**（层间边界硬约束，见 framework-rules #27）；日期字段裸写无引号
 **S4**：引号有效性（全局规则 #21）
 **S5**：wikilink 有效性——扫描**正文与 frontmatter `source` 字段**中的所有 wikilink，目标不存在即标记

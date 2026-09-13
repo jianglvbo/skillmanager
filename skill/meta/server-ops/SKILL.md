@@ -82,15 +82,15 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/fitness-data-$(date +%Y%
 
 ### 第四步：investment_kb 数据链路（2026-09-03 起本地直连）
 - **架构**：本地看板（`~/Project/investment-console`，launchd 8698，vault=iCloud 绝对基准）→ buildIndex → `syncFilesToDb` **批量同步**（多行 upsert ~20 查询，串行队列）→ 服务器 MySQL investment_kb（远端唯一共享库）
-- **vault 不再推送服务器**（`vault_sync.sh` 已随服务器版退役 2026-09-03；本机 `migrate_to_mysql.py` 2026-08-31 已退役）——MySQL 的 files/tags/bloggers 派生数据由本地实例维护
-- 同步范围：只动 files/tags/bloggers 三张文件派生表；运营表（refine/review/coarse/trash/prediction 域）一律不碰
+- **vault 不再推送服务器**（`vault_sync.sh` 已随服务器版退役 2026-09-03；本机 `migrate_to_mysql.py` 2026-08-31 已退役）——MySQL 的 blogger 表由本地实例维护（files/tags 已退役，改为内存索引）
+- 同步范围：只动 blogger 表（files/tags 已退役，改为内存索引）；运营表（refine/review/coarse/trash/prediction 域）一律不碰
 - 强制重建本地索引缓存：`POST http://127.0.0.1:8698/api/index/rebuild`
-- 库表 DDL 权威：`~/Ai/tools/investment-kb/investment_kb.sql`（16 表，单 dict 表）
+- 库表 DDL 权威：`~/Ai/tools/investment-kb/investment_kb.sql`（**实况 29 表 + 1 只读视图**：六张 `statement_*` 类型表 + `statement` UNION 视图 + 关联表 + `post_history` 等；单 `dict` 表承载全部码值。2026-09-13 表名/列名规范化后由 `scripts/export-schema.js` 从实库生成）
 - **本地服务管理**：launchd 单元 `com.investment-console`（`launchctl kickstart -k gui/501/com.investment-console` 重启）；启动前置：config.json + vault 可达 + node_modules 含 mysql2
-- 本地 MCP 端点：`http://127.0.0.1:8698/mcp`（token = config.json `mcpToken`，~/.workbuddy/mcp.json 已指向本地）
+- 本地 MCP 端点：`http://127.0.0.1:8698/mcp`（token = config.json `mcpToken`；MCP 客户端配置里指向本地端点即可）
 
-### 第五步：fitness-console 部署执行（开发规范见 fitness-dev-workflow skill）
-- **职责边界**：本 skill 只负责服务器侧运维与**部署执行**；开发规范（环境边界/双库隔离/本地工作流/git/配置双轨/部署触发规则）→ 调用 **fitness-dev-workflow** skill，两 skill 由 agent 按任务自判断调用
+### 第五步：fitness-console 部署执行（开发规范见 `console-style-fitness` skill —— 2026-09-12 修正：原写的 `console-style-fitness` 这个 skill 不存在）
+- **职责边界**：本 skill 只负责服务器侧运维与**部署执行**；开发规范（环境边界/双库隔离/本地工作流/git/配置双轨/部署触发规则）→ 调用 **console-style-fitness** skill，两 skill 由 agent 按任务自判断调用
 - **双库双用户（生产侧）**：服务器 config.json 指向 `fitness` 库 / `jianglb` 用户（host=127.0.0.1 本机）；开发库 fitness_dev/jianglb_dev 只供本地开发，服务器生产进程不碰开发库
 - **rsync 部署命令（2026-09-07 用户指示：代码改完默认直接部署，无需等「部署」指令；变更前仍须说明影响，部署后要做线上验收）**：
 ```bash

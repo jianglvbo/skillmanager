@@ -75,7 +75,7 @@ compatibility: 通用
 
 **第一步：分析原文**——读取原文全文（常规：原始资源文件；**帖子集：`post_history` 库内原文**，MCP `post_history` `action=get`/`check`），分析内容，判断归属层、分类、标签、库内关系。
 **第二步：创建条目**——按分析结果直接创建框架条目文件。如涉及已登记博主，更新博主档案；如涉及宏观事件，创建/更新宏观文件。
-**第三步：汇报 + 收尾**——向用户报告产出条目；常规路径把源文件 status 改为 `已提炼`（帖子集 #29 无源文件：采集产物在入库校验后已清理，「已提炼」用 `statements.source_url` 反查确认）。
+**第三步：汇报 + 收尾**——向用户报告产出条目；常规路径把源文件 status 改为 `已提炼`（帖子集 #29 无源文件：采集产物在入库校验后已清理，「已提炼」用 `statement.source_url` 反查确认）。
 
 ### 审查 → investment-review
 
@@ -112,7 +112,7 @@ compatibility: 通用
 
 | 信息 | 获取方式 | 用途 |
 |:---|:---|:---|
-| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、看板 bloggers「信息截止」更新（post-fetch 第五步） |
+| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、看板 blogger「信息截止」更新（post-fetch 第五步） |
 | 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（post-fetch 第二步） |
 | 待提炼文档状态 | 查询原始资源 frontmatter `status` | 判定走粗加工 or 直接提炼（粗加工前置规则） |
 
