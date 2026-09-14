@@ -96,6 +96,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   ├── meta/                      ← 元工具（skill 管理类）
 │   │   ├── ai-repo-manager/       ←   Ai/ 仓库管理
 │   │   ├── git-ops/               ←   通用 git 提交管理
+│   │   ├── model-usage/           ←   CodexBar 本地模型用量/成本汇总
 │   │   ├── server-ops/            ←   云服务器运维（MySQL / fitness-console）
 │   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
 │   ├── content/                   ← 内容提取
@@ -223,6 +224,7 @@ git push origin main
 |:---|:---|
 | `ai-repo-manager` | Ai/ 仓库 GitHub 版本管理（README 更新约定、cp -r 安装） |
 | `git-ops` | 通用 git 提交管理（检测变更/提交/自定义信息/历史/推送） |
+| `model-usage` | CodexBar 本地成本日志按模型汇总（Codex/Claude，当前模型或全量；依赖 `codexbar` CLI，来源 openclaw/openclaw） |
 | `server-ops` | 云服务器运维：MySQL 管理与备份、fitness-console 部署与重启 |
 | `skill-guidelines` | Agent Skill 设计准则（五层认知架构 + 六段模板） |
 
