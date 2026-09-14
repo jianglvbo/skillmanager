@@ -276,7 +276,12 @@
         - **⚠ 接口名 ≠ 列名**：MCP 参数名保持 camelCase 或原词（`blogger`/`form`/`stance`/`source`/`statementDate`/`viewDate`/`fetchedAt`/`wikiRef`…），**不要跟着列名改**——API 契约稳定，改列名只动服务端 SQL 与 DB。改列名时先 `grep` 分清「SQL 字符串里的列名」与「JS 变量/参数名/URL 路径」，盲替会同时改坏接口。
         - **改完必须清一次缓存再冒烟**：旧缓存会把坏 SQL 盖住（2026-09-13 实测：4 个接口 SQL 已错但全返回 200，`POST /api/cache/clear` 后才暴露）。
         - **改列名后必须**同时**冒写路径，且读路径全绿不代表改名完成**（2026-09-13 实测踩坑）：改名当轮只把 28 个 GET 接口跑通就以为收工，结果**写入路径全线报 `Unknown column`**——言论六表的新建/更新/买卖/预测、待决策的 add/resolve/dismiss、复核建议、审查记录、提炼记录、待办、`dict`/`mention_case`/`post_history` 全部挂着旧列名；其中 `pending_decision resolve` 甚至引用了被误改名的 JS 变量 `verdict_code`（ReferenceError）。**收口口径**：改名后跑一遍端到端自检（增/改/删各表 + 读回校验 + 清测试数据），并确认日志零错误；只测 GET 不算数。
-        - **改了列名，JS 读旧属性名不会报错、只会静默变空**（2026-09-14 补，本会话被咬 5 次）：改的是数据库列名，但 JS 里 `r.special` / `r.blogger` / `r.content` / `r.done` 这类**属性读取**照样能跑——读不存在的属性＝`undefined`，于是星标全丢、主体 market 恒空、博主言论数全 0、待办正文消失。**收口办法**：`node ~/Project/investment-console/scripts/audit-row-reads.js`（对 `server.js` 扫「SQL 里选了新列名、代码却读旧名」的可疑点；对修复前的版本实测能精确命中真 bug，对修好的版本报 0）。**改了库列名之后跑一次这个脚本**，比肉眼 grep 旧名靠谱。
+        - **⚠ 改库列名后必须跑审计脚本：JS 读旧属性名不会报错，只会静默变空**（2026-09-14 用户要求「自己脑子记住」，升为**强制步骤**）：
+            - **症状**：改的是数据库列名，但 JS 里 `r.special` / `rows[idx].text` 这类**属性读取**照样能跑——读不存在的属性＝`undefined`，**不抛异常、不写日志**，只是悄悄变成 `0` / 空串 / `false`。用户看到的是「星标全丢了」「统计都变 0 了」「那句话怎么不展示了」，而不是报错。
+            - **本会话已中 6 次**（全是同一根因）：`b.special`→星标全丢 · `s.market`→主体市场恒空 · `r.blogger`→博主言论数全 0 且排序失效 · `r.content`/`r.done`→待办正文消失、勾选永远 false · `post_history` 两处 `r.blogger` · `rows[idx].seq/.text`→首页每日激励语空白。**每一次都是「改列名只改了 SQL 和 DDL，忘了改读属性侧」**。
+            - **强制动作（改完列名，紧挨着做，别等用户报）**：`node ~/Project/investment-console/scripts/audit-row-reads.js`。它扫 `server.js` 里「同一段 SQL 里出现了新列名、代码却读旧名」的可疑点并逐行列出。**判据已做过反向验证**：对修复前的版本能精确命中真 bug，对修好的版本报 0；报出来的逐条人工确认（读 JS 局部对象时是合法误报）。
+            - **脚本自身的坑**：变量名模式要含**下标访问**（`rows[idx]` / `st[0]`）——2026-09-14 就因为它只认 `r.` / `rows[0].` 而漏掉了 `rows[idx].text`，首页激励语的 bug 藏了一整天才被发现。改动该脚本时别把它改窄。
+            - **配套**：改列名必须**读写路径一起冒烟**（见上一条），只测 GET 不算数；前端 `web/app.js` 若也直接读接口字段，同样要按新字段名核对一遍。
         - **枚举列现已全部合规**：`statement_review_sub.status` 是本轮最后一条漏网的枚举列（`review_check_sub` 用的是 `status_code`），2026-09-13 经用户拍板已改为 **`status_code`**（连带 `server.js` 的 `CREATE TABLE`/增删改查四处与 `ensureStatementReviews()` 幂等建表语句；MCP 工具名 `console_statement_review` 不变）。**注意 MySQL 里 `status` 是保留词**，写在 SQL 里要反引号——改名顺带消掉这个坑。
 
 45. 方法论「产物优先」——不设「可迁移方法论」标签（2026-09-12 用户拍板）：
