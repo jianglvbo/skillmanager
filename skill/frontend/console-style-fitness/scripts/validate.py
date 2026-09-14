@@ -4,12 +4,17 @@
 用法: python3 validate.py [index.html 路径，默认 web/index.html]
 输出: 每项 OK/FAIL；任一 FAIL 退出码 1。
 """
+import os
 import re
 import subprocess
 import sys
 import urllib.request
 
-HTML = sys.argv[1] if len(sys.argv) > 1 else "/Users/jianglb/WorkBuddy/2026-08-10-21-02-24/fitness-console/web/index.html"
+# 2026-09-12：默认路径从已失效的 WorkBuddy 私有临时目录（~/WorkBuddy/2026-08-10-21-02-24/...，
+# 该目录已不存在）改为真实工程；也可用 FITNESS_INDEX 环境变量或第一个参数覆盖。
+HTML = (sys.argv[1] if len(sys.argv) > 1
+        else os.environ.get("FITNESS_INDEX")
+        or os.path.expanduser("~/Project/fitness-console/web/index.html"))
 
 fail = []
 
@@ -38,7 +43,7 @@ check("div 平衡", o == cl, f"开{o} 闭{cl}")
 # 3. section 开标签完整（5 个主页面 section 闭合正确、无粘连）
 bad = re.findall(r"</section>\s*id=", c)
 sections = re.findall(r'<section class="page[^"]*" id="page-([a-z]+)"', c)
-need = {"plan", "diet", "workout", "me", "settings"}
+need = {"plan", "diet", "workout", "settings"}   # 2026-09-12：真实 index.html 无 me 页，原集合含 me 导致门禁恒失败
 check("section 完整", not bad and need.issubset(set(sections)), f"缺失:{need-set(sections)} 粘连:{len(bad)}")
 
 # 4. 服务可用（可选）

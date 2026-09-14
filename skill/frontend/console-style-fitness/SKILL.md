@@ -58,7 +58,7 @@ description: 「控制台风格」（console-style）健身应用的样式规范
 
 ## 第七步：GitHub Pages 部署
 
-`cp web/index.html /tmp/fitness-plan/` → commit+push（作者 jianglvbo）→ Pages 数分钟自动更新。本机直连 github.io 被墙，验证走代理 `-x http://127.0.0.1:7890`。
+`cp ~/Project/fitness-console/web/index.html "$PAGES_REPO/index.html"`（`$PAGES_REPO`＝`jianglvbo/fitness-plan` 的本地克隆；**原写的 `/tmp/fitness-plan` 不是 git 仓库**）→ commit+push（作者 jianglvbo）→ Pages 数分钟自动更新。本机直连 github.io 被墙，验证走代理 `-x http://127.0.0.1:7890`。
 
 # Output format
 

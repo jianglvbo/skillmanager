@@ -244,22 +244,44 @@ def extract_article(url: str) -> dict:
     }
 
 
+def _slug_date(raw: str) -> str:
+    """把抓到的日期规整成裸 yyyy-MM-dd（2026-09-12：SKILL.md 明令禁止中文年月日与引号）。
+
+    源站日期形态多样（2026-09-12 / 2026年9月12日 / 09月12日 / 空），判不出就留空。
+    """
+    t = str(raw or "").strip()
+    if not t:
+        return ""
+    m = re.search(r"(20\d{2})\D{1,3}(\d{1,2})\D{1,3}(\d{1,2})", t)
+    if m:
+        return "%s-%02d-%02d" % (m.group(1), int(m.group(2)), int(m.group(3)))
+    m = re.search(r"^(\d{1,2})\D{1,3}(\d{1,2})$", t)          # 缺年份 → 用当年
+    if m:
+        return "%d-%02d-%02d" % (datetime.now().year, int(m.group(1)), int(m.group(2)))
+    return ""
+
+
 def format_markdown(article: dict, inline_images: bool = False) -> str:
-    """输出带 frontmatter 的 Markdown"""
-    now = datetime.now()
-    recorded = f"{now.year}年{now.month}月{now.day}日"
+    """输出带 frontmatter 的 Markdown（字段规范见 SKILL.md 第二步）"""
+    recorded = datetime.now().strftime("%Y-%m-%d")
+    title = str(article.get("title", "")).strip()
+    url = str(article.get("url", "")).strip()
+    date = _slug_date(article.get("date", ""))
+    # source 必须是**真实原文链接**的 markdown（禁止"微信公众号"这类渠道名占位）
+    source = "[%s](%s)" % (title or "原文", url) if url else ""
 
     fm = [
         "---",
-        f'title: "{article["title"]}"',
-        f'source: "微信公众号"',
+        f'title: "{title}"',
+        f'source: "{source}"',
         f'author: "{article.get("author", "")}"',
         f'account: "{article.get("account", "")}"',
-        f'date: "{article.get("date", "")}"',
-        f'url: "{article["url"]}"',
-        f'recorded: "{recorded}"',
-        f'type: "长文"',
-        f'status: "待提炼"',
+        f'date: {date}' if date else 'date: ',
+        f'url: {url}',
+        f'recorded: {recorded}',
+        'type: "长文"',
+        'status: "待提炼"',
+        "tags: []",
         "---",
         "",
     ]

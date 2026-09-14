@@ -6,6 +6,8 @@ description: >
   触发词：「git 提交」「提交仓库」「commit」「提交管理」「git-ops」「同步仓库」「查看提交历史」。
   与 ai-repo-manager 并存：ai-repo-manager 描述「~/Ai 仓库」的专属管理约定；git-ops 是通用提交管理工具，两者互不依赖，由 agent 按场景自行判断使用。
 agent_created: true
+  排除条件：Ai 仓库的专属约定（README 强制更新、cp -r 安装、识别合并同步）见 ai-repo-manager；本 skill 只做通用提交动作。
+
 ---
 
 # git-ops · 通用 Git 提交管理

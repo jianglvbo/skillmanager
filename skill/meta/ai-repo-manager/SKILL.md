@@ -5,6 +5,8 @@ description: >
   变更提交与推送触发。触发词：「存到仓库」「更新仓库」「推送到GitHub」「仓库管理」「同步仓库」「Ai仓库」。
   本 skill 只描述 Ai 仓库的专属管理规则；提交/推送的具体执行方式由 agent 根据场景自行判断选择（如 git-ops skill 或直接 git 命令）。
 agent_created: true
+  排除条件：具体提交/推送的执行方式不在本 skill（可用 git-ops 或直接 git 命令）；非 Ai 仓库的版本管理不归本 skill。
+
 ---
 
 # Ai/ 仓库管理 Skill

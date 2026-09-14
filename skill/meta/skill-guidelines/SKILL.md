@@ -5,6 +5,8 @@ description: >
   定义 6 段标准模板、核心原则、工程规律。创建或修改 Skill 时按本规范执行。
   触发词：「skill准则」「skill设计」「skill修改」「skill规范」「skill审查」「skill四层」「从零写skill」。
   Skill 核心理念：不是一次性对话设定，而是可持续演进的"数字员工入职培训手册"。
+  排除条件：具体业务 skill 的内容规范由各自 skill 定义（如投资框架规则见 investment-framework）；本 skill 只定义 skill 的通用设计准则。
+
 ---
 
 # Default stance

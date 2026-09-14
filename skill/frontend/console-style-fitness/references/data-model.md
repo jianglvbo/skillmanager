@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |:--|:--|
-| 应用根 | `~/WorkBuddy/2026-08-10-21-02-24/fitness-console/web/` |
+| 应用根 | `~/Project/fitness-console/web/`（2026-09-12 修正：原 WorkBuddy 私有临时目录已不存在） |
 | 核心文件 | `web/index.html`（单文件，约 3200 行） |
 | 后端 | `server.js`（数据同步 `/api/data/{user}`、AI Key 分发 `/api/ai-key`） |
 | 本机服务 | `http://127.0.0.1:8699`（Tailscale `100.88.254.127:8699`） |
@@ -67,6 +67,6 @@
 
 ## 部署流程
 
-1. `cp web/index.html /tmp/fitness-plan/index.html`
-2. `/tmp/fitness-plan` 内 `git add/commit/push`（user.name=jianglvbo, user.email=jianglvbo@users.noreply.github.com）
+1. `cp ~/Project/fitness-console/web/index.html "$PAGES_REPO/index.html"`（`$PAGES_REPO`＝本机 `jianglvbo/fitness-plan` 的克隆目录，2026-09-12 实测本机尚无该克隆 → **首次发布前先 `git clone git@github.com:jianglvbo/fitness-plan.git`**；原写的 `/tmp/fitness-plan` 不是 git 仓库，push 必然失败）
+2. 在 `$PAGES_REPO` 内 `git add/commit/push`（user.name=jianglvbo, user.email=jianglvbo@users.noreply.github.com）
 3. Pages 自动构建（约 1-2 分钟）；验证走代理

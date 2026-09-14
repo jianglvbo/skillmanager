@@ -97,7 +97,8 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── ai-repo-manager/       ←   Ai/ 仓库管理
 │   │   ├── git-ops/               ←   通用 git 提交管理
 │   │   ├── server-ops/            ←   云服务器运维（MySQL / fitness-console）
-│   │   └── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
+│   │   ├── skill-guidelines/      ←   Skill 设计准则（skill-guidelines）
+│   │   └── mac-cleaner/           ←   macOS 磁盘空间分析与安全清理
 │   ├── content/                   ← 内容提取
 │   │   ├── wechat-article/        ←   公众号文章提取
 │   │   └── full-text-organizer/   ←   语音转录稿→书面文章
@@ -225,6 +226,7 @@ git push origin main
 | `git-ops` | 通用 git 提交管理（检测变更/提交/自定义信息/历史/推送） |
 | `server-ops` | 云服务器运维：MySQL 管理与备份、fitness-console 部署与重启 |
 | `skill-guidelines` | Agent Skill 设计准则（五层认知架构 + 六段模板） |
+| `mac-cleaner` | macOS 磁盘空间分析与垃圾清理（系统数据/缓存/应用残留，先扫描报告再确认） |
 
 ### content/ — 内容提取
 
@@ -269,4 +271,4 @@ MIT
 
 ---
 
-*最后更新：2026-09-13*
+*最后更新：2026-09-14*
