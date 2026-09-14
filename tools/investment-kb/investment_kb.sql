@@ -92,12 +92,12 @@ INSERT INTO dict (type, code, name, sort_order, is_enabled, remark) VALUES
   ('platform', 'xueqiu', '雪球', 1, 1, '雪球平台'),
   ('platform', 'douyin', '抖音', 2, 1, '抖音平台'),
   ('platform', 'xiaohongshu', '小红书', 3, 1, '小红书平台'),
-  ('post_content_type', 'research', '研究', 1, 1, '含数据/估值/行业结构的可复用分析；已沉淀框架文件则观点列写见 [[分类/文件名]]'),
-  ('post_content_type', 'predict', '预测记录', 2, 1, '对未来走势的可验证判断，三要素：明确方向＋未来指向（时间窗或事件条件）＋可判对错（目标位/幅度/点位进信号列）。2026-09-04 用户补漏'),
-  ('post_content_type', 'view', '观点', 3, 1, '对个股/行业/市场/政策的当下判断（无未来指向），须带方向'),
-  ('post_content_type', 'insight', '心得总结', 4, 1, '投资心得、方法论、复盘框架'),
-  ('post_content_type', 'chat', '闲聊', 5, 1, '仅当能刻画「擅长与局限/投资心态」时留存，否则舍弃'),
-  ('post_content_type', 'trade', '买卖记录', 6, 1, '明确买卖动作；权威存 blogger_trades，本表仅作历史遗留标记（新数据走 blogger_trade）'),
+  ('post_content_type', 'research', '研究', 1, 1, '含数据/估值/行业结构的可复用分析；已沉淀框架文件则观点列写见 [[分类/文件名]]；判定优先级见 refine-schema §六（trade>predict>research>insight>view>chat），本 sort_order 仅看板分节顺序'),
+  ('post_content_type', 'predict', '预测记录', 2, 1, '对未来的判断（不强制可验证，2026-09-14 放宽）：①方向（stance 必填）②未来指向（时间窗或事件条件；"下一轮牛市""至少 5 年内"这类粗口径也算）。有目标位/幅度/点位则写进信号列、可进预测控制台闭环；没有不影响归类。可判对错不是门槛；判定优先级见 refine-schema §六（trade>predict>research>insight>view>chat），本 sort_order 仅看板分节顺序'),
+  ('post_content_type', 'view', '观点', 3, 1, '对个股/行业/市场/政策的当下判断（无未来指向），须带方向；判定优先级见 refine-schema §六（trade>predict>research>insight>view>chat），本 sort_order 仅看板分节顺序'),
+  ('post_content_type', 'insight', '心得总结', 4, 1, '投资心得、方法论、复盘框架；判定优先级见 refine-schema §六（trade>predict>research>insight>view>chat），本 sort_order 仅看板分节顺序'),
+  ('post_content_type', 'chat', '闲聊', 5, 1, '仅当能刻画「擅长与局限/投资心态」时留存，否则舍弃；判定优先级见 refine-schema §六（trade>predict>research>insight>view>chat），本 sort_order 仅看板分节顺序'),
+  ('post_content_type', 'trade', '买卖记录', 6, 1, '明确买卖动作（须当期性：当下/近期动作或当前仓位；历史回顾归 insight）；买卖帖只落 statement_trade 一行（一帖一表），原 blogger_trades 已并入并退役为 blogger_trades_del；判定优先级见 refine-schema §六（trade>predict>research>insight>view>chat），本 sort_order 仅看板分节顺序'),
   ('prediction_status', 'pending', '待验证', 1, 1, '尚未到验证时点'),
   ('prediction_status', 'verifying', '验证中', 2, 1, '已有部分验证证据'),
   ('prediction_status', 'verified_correct', '已验证(正确)', 3, 1, '方向正确（数值偏差进验证备注）'),
@@ -230,7 +230,7 @@ CREATE TABLE blogger (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`is_special`)
-) ENGINE=InnoDB AUTO_INCREMENT=81930 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=82884 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE blogger_recycle_file (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -289,7 +289,7 @@ CREATE TABLE todo (
   `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页待办表';
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页待办表';
 
 CREATE TABLE pending_decision (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -375,7 +375,7 @@ CREATE TABLE refine_review (
   KEY `idx_item` (`item_id`),
   KEY `idx_statement` (`statement_id`),
   KEY `idx_status` (`status_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
 
 CREATE TABLE review_record (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
