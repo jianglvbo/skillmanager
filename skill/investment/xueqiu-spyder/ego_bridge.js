@@ -1,0 +1,164 @@
+#!/usr/bin/env node
+/*
+ * ego 通道桥（2026-09-15 用户拍板：spyder 从 Chrome CDP 迁到 ego lite）。
+ *
+ * 为什么是这样一个文件：ego lite **不对外暴露 CDP 端口**（没有 `--remote-debugging-port`
+ * 这类语义），它的 CDP 能力只经 `ego-browser nodejs` 的 Node 运行时暴露
+ * （`page.cdp()` / `page.evaluate()`）。所以由 Python 侧起一个 unix socket 服务端，
+ * 本脚本经 `-e` 传入、连接回来，之后两边用 **JSON Lines over socket** 通信；
+ * 登录态与反爬特征全部由 ego 进程承载，本脚本不启动任何浏览器。
+ *
+ * 为什么不用 stdin 传协议（2026-09-15 实测，三个坑）：
+ *   ① 脚本文本走 stdin → CLI 要等 EOF 才执行；
+ *   ② 用 `-e` 传脚本但 stdin 是管道 → CLI 仍把管道当「脚本待从 stdin 读」而挂住；
+ *   ③ stdin 给伪终端 → 脚本执行完进程立刻退出（PTY 上 events 不续命）。
+ *   → 结论：stdin 一律给 /dev/null，协议另开 socket（与 Python 的父子关系无关，最稳）。
+ *
+ * 协议（每行一个 JSON 请求，回一行 JSON 响应）：
+ *   {"id":1,"cmd":"goto","page":"p1","url":"https://xueqiu.com/"}
+ *   {"id":2,"cmd":"evaluate","page":"p1","fn":"async (a) => ({...})","arg":{...}}
+ *   {"id":3,"cmd":"waitForSelector","page":"p1","selector":"div","timeoutMs":8000}
+ *   {"id":4,"cmd":"newPage"}                        // 新建 ego 标签页，回 {"label":"p2"}
+ *   {"id":5,"cmd":"url","page":"p2"}
+ *   {"id":6,"cmd":"close","page":"p2"}              // 只关该页，不关任务空间
+ *   {"id":7,"cmd":"shutdown"}                       // 桥自行退出
+ *
+ *   fn 既接受函数表达式（`async (a) => {...}` / `() => {...}`），也接受裸表达式
+ *   （`document.title`）；裸表达式会被包成 `async (a) => (expr)`，这样 Python 侧
+ *   两种 Playwright 写法都能原样传来。
+ *
+ * 配置从哪来（2026-09-15 实测）：ego 的 Node 运行时**不继承父进程环境变量**
+ * （`process.env.XUEQIU_EGO_SOCK` 是 undefined），所以配置由 Python 侧在启动时
+ * 注入到脚本头部（见 ego_browser.py 的 `_bake_config`）：本文件第二行期望一个
+ * `const __EGO_CFG = {...}`。字段：
+ *   sock       必填：Python 侧 socket 路径
+ *   space      复用已存在的任务空间 id（多轮采集沿用同一个，不新建）
+ *   spaceName  任务空间名（仅新建时用到）
+ *   url        启动时若当前页不在该域，先导航过去（默认雪球首页）
+ */
+
+const CFG = typeof __EGO_CFG !== "undefined" ? __EGO_CFG : {};
+const SOCK = CFG.sock;
+const SPACE = CFG.space;
+const SPACE_NAME = CFG.spaceName || "xueqiu-spyder";
+const HOME = CFG.url || "https://xueqiu.com/";
+
+const pages = new Map();
+let task = null;
+
+const net = require("net");
+
+function pageOf(label) {
+  const page = pages.get(label || "p1");
+  if (!page) throw new Error("unknown page label: " + label);
+  return page;
+}
+
+async function boot() {
+  task = SPACE ? await taskSpace(Number(SPACE)) : await taskSpace(SPACE_NAME);
+  const first = task.page("p1");
+  pages.set("p1", first);
+  const current = await first.url();
+  if (!/xueqiu\.com/.test(current)) {
+    await first.goto(HOME);
+    await first.waitForLoadState("domcontentloaded");
+  }
+}
+
+async function handle(req) {
+  const id = req && req.id;
+  try {
+    switch (req.cmd) {
+      case "newPage": {
+        const page = await task.newPage();
+        pages.set(page.label, page);
+        return { id, ok: true, result: { label: page.label } };
+      }
+      case "goto": {
+        const page = pageOf(req.page);
+        await page.goto(req.url);
+        await page.waitForLoadState("domcontentloaded");
+        return { id, ok: true, result: { url: await page.url() } };
+      }
+      case "evaluate": {
+        const page = pageOf(req.page);
+        const raw = String(req.fn || "").trim().replace(/;\s*$/, "");
+        const looksLikeFn = /^(async\s*)?(function\b|\()/.test(raw) || /=>/.test(raw);
+        const fn = eval("(" + (looksLikeFn ? raw : "async (a) => (" + raw + ")") + ")");
+        const result = await page.evaluate(fn, req.arg);
+        return { id, ok: true, result: result === undefined ? null : result };
+      }
+      case "waitForSelector": {
+        await pageOf(req.page).waitForSelector(req.selector, {
+          timeout: req.timeoutMs || 8000,
+        });
+        return { id, ok: true, result: true };
+      }
+      case "url": {
+        return { id, ok: true, result: await pageOf(req.page).url() };
+      }
+      case "close": {
+        const label = req.page || "p1";
+        const page = pageOf(label);
+        pages.delete(label);
+        await page.close();
+        return { id, ok: true, result: true };
+      }
+      case "shutdown": {
+        setTimeout(() => process.exit(0), 50);
+        return { id, ok: true, result: true };
+      }
+      default:
+        return { id, ok: false, error: "unknown cmd: " + (req && req.cmd) };
+    }
+  } catch (e) {
+    return { id, ok: false, error: String((e && e.message) || e).slice(0, 600) };
+  }
+}
+
+async function main() {
+  if (!SOCK) {
+    process.stderr.write("XUEQIU_EGO_SOCK 未设置\n");
+    process.exit(2);
+  }
+  await boot();
+
+  const conn = net.connect(SOCK);
+  conn.setEncoding("utf8");
+  conn.on("connect", () => {
+    conn.write(JSON.stringify({ hello: true, pid: process.pid }) + "\n");
+  });
+  conn.on("error", (e) => {
+    process.stderr.write("socket error: " + String(e).slice(0, 200) + "\n");
+    process.exit(2);
+  });
+
+  let buffer = "";
+  let queue = Promise.resolve();
+  conn.on("data", (chunk) => {
+    buffer += chunk;
+    let idx;
+    while ((idx = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, idx).trim();
+      buffer = buffer.slice(idx + 1);
+      if (!line) continue;
+      let req = null;
+      try {
+        req = JSON.parse(line);
+      } catch (e) {
+        conn.write(JSON.stringify({ id: null, ok: false, error: "bad json" }) + "\n");
+        continue;
+      }
+      // 串行执行，保证同一页上的动作不会互相插队
+      queue = queue.then(async () => {
+        const resp = await handle(req);
+        if (conn.writable) conn.write(JSON.stringify(resp) + "\n");
+      });
+    }
+  });
+}
+
+main().catch((e) => {
+  process.stderr.write("bridge fatal: " + String((e && e.message) || e).slice(0, 300) + "\n");
+  process.exit(1);
+});

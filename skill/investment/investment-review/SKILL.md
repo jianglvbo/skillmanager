@@ -122,7 +122,7 @@ compatibility: 通用
 | 审查时 | references/report-templates.md | 审查落库 schema 模板（字段规范 + status 取值 + 落库调用规范 + 扩展机制） | 读取 |
 | 结构审查预扫 | scripts/vault_review.py | 自动扫描脚本，输出 vault_review_result.json（只报告不修改） | **执行** |
 | 段落布局预扫 | investment-framework/scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留扫描（可 --fix 自动修复） | **执行** |
-| 言论追踪审计（C10） | scripts/tracks_audit.py | 言论追踪专项审计：vault「言论追踪」section 质量 + MySQL tracks 数据质量/方向码值/同步一致性（--mysql 需 DB_PASS 环境变量） | **执行** |
+| 言论追踪审计（C10） | scripts/tracks_audit.py | 言论追踪专项审计：MySQL `statement` 视图数据质量（空正文/缺链接/缺 form/码值合法/P1 关联/留档覆盖率/复核积压）为准；vault 侧只扫**未删的历史画像 md**，不代表缺口（--mysql 需 DB_PASS 环境变量） | **执行** |
 
 ---
 
@@ -138,7 +138,7 @@ compatibility: 通用
 
 ## 自检
 
-- [ ] **待复核队列是否处理**（第零步之二）？**`verdict=delete` 的项是否都真的删掉了**（言论已不存在）并把删除理由内化成低质帖判据？已答复未内化的项是否都**修了数据 + 内化成规则/案例 + 回写 `internalized`**？仍未裁决的项是否在报告里列清（未替用户决定）？报告是否写了「处理 N 条（内化 M / 忽略 K），仍待裁决 J 条」？
+- [ ] **确认没有去碰待决策队列**（2026-09-15 起归 investment-refine 第 0.7 步）？审查只处理 `statement_review_sub`（第零步）与 `refine_review`（提炼链路复核）两个来源——若本轮误清了 `pending_decision`（含 `verdict=delete` 清单），需在报告里说明并把未内化的项退回提炼侧。
 - [ ] 内容审查 C1-C10 是否全部执行？（读取参数、扫描、一致性、知行合一、我的vs博主〔仅用户要求时〕、经验验证、关联备注、关系依据复核、言论追踪审计 C10、输出报告）
 - [ ] 结构审查 S1-S8 是否全部执行？（读取参数、归类、frontmatter完整性含updateDate/**author**/**source**、**字段顺序canonical(#27)**、**无流浪date(#27)**、引号有效性、wikilink含source字段、脚注格式、标签、输出报告）；归类正确性是否覆盖「博主层条目作者是否均在博主控制台登记，未登记者误挂需迁移其他层」？
 - [ ] 审查范围是否正确排除「我的」层（规则 #15 用户自管）？是否仅覆盖 博主/其他/宏观？是否覆盖了编排者指定的所有目录？

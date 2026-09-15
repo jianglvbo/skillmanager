@@ -5,16 +5,20 @@
 ===================================================
 本脚本是 `investment-review` skill 内容审查「C10 言论追踪审计」的执行器。
 
-vault 侧检查（默认，无需凭据）：
-  1. section 缺失    → 博主画像无 `## 言论追踪` 段（模板四段要求）
-  2. section 空表    → 有段但无任何数据行（含「暂无记录」占位，但观点/信号表全空）
-  3. 标的占位        → 标的列出现 — / 持仓 / 暂无 / 空（不可映射到主题的占位）
-  4. 缺原文链接      → 外部来源（雪球/抖音/公众号等采集）言论行无链接（规则 #35）
+vault 侧检查（默认，无需凭据；**仅面向尚未删除的历史画像 md**）：
+  1. section 缺失    → 历史画像无 `## 言论追踪` 段
+  2. section 空表    → 有段但无任何数据行
+  3. 标的占位        → 标的列出现 — / 持仓 / 暂无 / 空
+  4. 缺原文链接      → 历史 md 里的言论行无链接（规则 #35）
   5. 表格列异常      → 观点/具象化表 <6 列、信号表 <5 列
+  ⚠️ 画像 md 于 2026-09-12 退役，本侧**不是数据缺口**（见 vault_scan docstring）。
 
-MySQL 侧检查（可选，--mysql + 环境变量 DB_PASS）：
-  6. tracks 数据质量 → content 空 / source_url 空 / direction 非字典码值
-  7. 同步一致性      → vault 言论条数 vs prediction_tracks 条数对比（提示同步差距）
+MySQL 侧检查（可选，--mysql + 环境变量 DB_PASS；**权威口径**）：
+  6. 言论数据质量   → `statement` 视图：空正文 / 缺原文链接 / 缺 `post_form` /
+                      `content_type`、`stance_code` 码值合法性
+  7. 关联与留档     → P1 三类（trade/predict/research）缺实体关联、
+                      `post_history_id` 回指覆盖率（按 180 天窗口判）
+  8. 复核建议积压   → `statement_review_sub` 未处理条数
 
 用法:
   python3 scripts/tracks_audit.py --vault <vault路径>            # 仅 vault 侧

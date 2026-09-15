@@ -24,6 +24,7 @@ compatibility: 通用
 ### 核心原则
 
 - **单点配置**：所有路径、模板、规则只在此定义。变更 vault 目录时只改 VAULT_ROOT 一行。
+- **触发词仲裁（2026-09-15 补，解决与执行器的同词冲突）**：`粗加工`/`提炼`/`归档`/`审查`/`review` 这些词**同时出现在本编排者与三个执行器（investment-coarse-processor / investment-refine / investment-review）的 description 里**，是有意为之。仲裁规则：**命中同义触发词时先由本编排者判路由，再交对应执行器执行**（见下方「路由表」）；执行器被单独加载时不自行串联其他环节（三者 description 均写明「由 investment-framework 编排调用，不独立触发」）。像 `investment-refine` 第 0.7 步那样跨环节的动作，也必须由编排者串起来。
 - **三层归属 + 宏观双层**：我的（用户自管）/ 博主（已登记）/ 其他（未登记投资人）。宏观分两层：顶层 `宏观/` 存通用框架，归属层下 `宏观/` 存该来源的具体分析。
 - **提炼直接执行**：提炼 skill 读取原文后直接分析、创建条目、汇报结果，不需用户逐步确认。一篇帖子可拆为多条框架条目。
 - **跨层靠标签**：同一标的在三层都有时，通过 frontmatter 标签检索，不靠文件结构。
@@ -169,7 +170,7 @@ compatibility: 通用
 | 提炼/审查 | references/footnote-taxonomy.md | 脚注类型定义、格式规范、添加阶段 | 读取 |
 | 提炼 | assets/{模板名}.md | 对应分类的模板（纯结构骨架） | 读取 |
 | 审查 | references/review-rules.md | 审查维度和检查清单 | 读取 |
-| 看板联动 | references/console-guide.md | 看板数据契约（refine/review 落库）、决策链路图 v2 思考时间线、产物展示约定、前端设计铁律 | 读取 |
+| 看板联动 | references/console-guide.md | 看板数据契约（`refine_trace`/`review_record` 落库）、提炼链路七步与逐步复核、产物展示约定、前端设计铁律（§3/§4 是已退役的 `refine_record`/决策链路图 v2，仅作历史查阅） | 读取 |
 | 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复）。**纯标准库无第三方依赖**（2026-08-14 起，原依赖 PyYAML） | **执行** |
 | 删除/回收/移动前（#25/#26） | scripts/check_inbound.py | inbound 引用反查（wikilink/脚注/source 字段），双向清理范围确认工具 | **执行** |
 

@@ -1,30 +1,30 @@
 ---
 name: xueqiu-spyder
 description: |
-  雪球抓取工具层。通过 Chrome CDP（调试端口）复用本机已登录 Chrome 会话，调用
+  雪球抓取工具层。**通过 ego lite 通道**（`ego-browser nodejs` + 本地 socket 桥，
+  见 `ego_bridge.js` / `ego_browser.py`）复用本机已登录雪球会话，调用
   雪球 timeline API + 详情页补全，抓取指定博主的帖子全文，输出对齐投资框架规范的
   帖子集 markdown（frontmatter + 三件套 + 发布行，含形态/全文标记/原文链接）。
   触发词：「xueqiu-spyder」「spyder 抓取」「雪球抓取」「抓取雪球」「采集雪球」
-  排除条件：博主控制台同步 / info_cutoff 双写 / 帖子集归档与提炼等框架动作由
-  post-fetch 编排调用本工具，不独立执行；含「提炼」「画像」「归档」关键词时交
-  post-fetch / investment-refine。
+  排除条件：博主控制台同步 / info_cutoff 回写 / 帖子集提炼等框架动作由 post-fetch
+  编排调用本工具，不独立执行；含「提炼」「分析」关键词时交 post-fetch / investment-refine。
 license: MIT
 agent_created: true
 metadata:
-  version: "2.0.0"
-  short-description: 雪球抓取工具层（CDP 复用登录态，输出帖子集标准格式）
+  version: "3.0.0"
+  short-description: 雪球抓取工具层（ego lite 通道复用登录态，输出帖子集标准格式）
   layer: tool
   orchestrated_by: post-fetch
 compatibility: macOS / Linux
 ---
 
-# 雪球抓取工具层 v2.0
+# 雪球抓取工具层 v3.0
 
 ## Default Stance
 
 ### 核心原则
-- **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 双写 / 归档提炼均不在此层）。
-- **CDP 复用登录态**：连接本机已登录 Chrome 的调试端口（默认 9222，主机名默认 `localhost`——Chrome 152 起不接受 `127.0.0.1`；端口用 `XUEQIU_DEBUG_PORT` 覆盖、主机名用 `XUEQIU_DEBUG_HOST` 覆盖），不重复登录、不依赖 browser-act。
+- **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 回写 / 帖子集提炼均不在此层）。
+- **ego lite 通道复用登录态（2026-09-15 迁移，用户拍板「以后别用 chrome 了，用 ego lite」）**：经 `ego-browser nodejs` 把浏览器动作转发给**本机已打开并已登录雪球的 ego lite**；ego lite 没有对外 CDP 端口，故走本地 socket 桥（`ego_bridge.js`）。**不再启动 Chrome、不再需要单独的调试端口/采集 profile**。通道选择由 `XUEQIU_TRANSPORT` 控制（`auto` 默认=优先 ego；`ego`=只允许 ego，禁止回落；`chrome`=旧路径，仅兼容保留）。
 - **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
 - **风控自控**：WAF/滑块检测（`滑动|安全验证|captcha|访问验证`）命中即抛错停止，不硬撞；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
 - **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
@@ -81,12 +81,30 @@ PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3
 $PY --version && $PY -c "import requests, playwright"
 ```
 
-### 第二步：确认 Chrome CDP 可达且已登录
+### 第二步：确认 ego lite 已打开且已登录雪球
 
-- Chrome 需带调试端口启动：`--remote-debugging-port=9222`（端口可被占用时用 `XUEQIU_DEBUG_PORT` 覆盖）；启动失败处理见 crawler.py docstring
-- **主机名必须用 `localhost`（2026-09-12 实测，Chrome 152）**：DevTools HTTP 端点只接受 `Host: localhost`，用 `127.0.0.1` 直连 `/json/version` 返回 404（`connect_over_cdp` 报 "Unexpected status 404"）。crawler 默认 `localhost`，可用 `XUEQIU_DEBUG_HOST` 覆盖
-- 验证：`curl -s http://localhost:{PORT}/json/version` 返回 JSON；`curl -s http://localhost:{PORT}/json/list` 里能看到「我的首页 - 雪球」页面 = 已登录
-- 未登录 → 停止，提示用户先在 Chrome 登录雪球
+- 先决条件：**ego lite 正在运行**，且其中已登录雪球（用户自己的浏览器，工具不负责拉起）
+- CLI 可用性：`ego-browser --help` 有输出（CLI 装在 `~/.local/bin/ego-browser`）
+- 自检（Python 侧一行连通性检查，等价于「登录态是否可用」）：
+
+```bash
+$PY - <<'PY'
+import sys; sys.path.insert(0, "~/.agents/skills/xueqiu-spyder")
+import ego_browser
+b = ego_browser.EgoBridge(); b.start()
+print("ego ready:", b.main_page.url)         # 期望 https://xueqiu.com/…
+print("login:", b.call("evaluate", page="p1", fn="() => document.title"))
+b.stop()
+PY
+```
+
+- 未登录（标题不含雪球 / fetch 命中 `滑动|安全验证|captcha`）→ 停止，提示用户**在 ego lite 里登录雪球**后重跑
+- 通道细节与踩坑（脚本注入、socket、ego 不继承环境变量等）见 `ego_browser.py` 模块头注释
+
+> **旧路径（仅兼容）**：`XUEQIU_TRANSPORT=chrome` 时仍可走 Chrome 调试端口
+> （`--remote-debugging-port=9222`、主机名必须 `localhost`，Chrome 152 起 `127.0.0.1` 返 404；
+> 端口/主机名分别用 `XUEQIU_DEBUG_PORT`/`XUEQIU_DEBUG_HOST` 覆盖）。用户 2026-09-15
+> 已明确不再用 Chrome，非排障不要启用。
 
 ### 第三步：执行采集
 
@@ -155,8 +173,10 @@ tags: []
 
 | 场景 | 文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
-| 运行环境/依赖 | `requirements.txt` | requests + playwright | 安装 |
-| CDP 抓取内核 | `crawler.py` | Chrome CDP 连接、翻页、截断补全、WAF 检测、时间覆盖 | 执行 |
+| 运行环境/依赖 | `requirements.txt` | requests + playwright（playwright 仅旧 chrome 通道用） | 安装 |
+| **ego lite 通道（默认）** | `ego_browser.py` | 起 unix socket、`-e` 注入配置启动桥、JSON Lines 协议、playwright 同签名适配 | 执行 |
+| **ego 通道的浏览器侧** | `ego_bridge.js` | 在 `ego-browser nodejs` 里执行：任务空间/标签页/`page.evaluate` 转发 | 执行（由 ego_browser.py 拉起） |
+| 抓取内核 | `crawler.py` | 通道选择（ego 优先）、翻页、截断补全、WAF 检测、时间覆盖 | 执行 |
 | 形态/emoji/观点分析 | `analyzer.py` | 形态判定、`//@` 保留、表情转占位、Opinion 结构 | 执行 |
 | 帖子集生成 | `report.py` | frontmatter + 三件套 + 发布行输出 | 执行 |
 | CLI 入口/时间窗 | `main.py` | 子命令分发、--from/--to 解析 | 执行 |
@@ -179,7 +199,8 @@ tags: []
 ## 自检
 
 - [ ] venv 依赖可用（requests + playwright import 通过）？
-- [ ] Chrome CDP 可达（`/json/version` 返回 JSON）且已登录雪球？
+- [ ] **ego 通道就绪**：ego lite 已打开且已登录雪球（第二步自检打印出雪球标题）？
+- [ ] 日志确认走的是 ego 通道（`已连接 ego lite`），而**不是**回落到了 Chrome？
 - [ ] 输出为帖子集格式（frontmatter 七字段 + 三件套 + 发布行）？
 - [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？
 - [ ] 置顶帖已排除、未纳入窗口统计？

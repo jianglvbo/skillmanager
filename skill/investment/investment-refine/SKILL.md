@@ -164,7 +164,8 @@ python3 investment-framework/scripts/verify-format.py --preflight /tmp/draft.md
 
 看板据此展示本次提炼的产物 + 决策链路：
 
-- **请求体 / 字段规范 / 字典英文码 / thinking v2 细则** → `references/refine-schema.md`（唯一权威 schema）
+- **当前权威规范**：言论字段/分流矩阵/信号判据/stock-mention 规则 → `references/refine-schema.md`、`references/stock-mention-rules.md`、`references/statement-batch-brief.md`；**链路落库**见本文件第四步 4.0（`refine_trace`）。
+- ⚠️ `references/refine-schema.md` 顶部标注的 `refine_record` 请求体 / `thinking` v2 细则**已于 2026-09-14 退役**（表与工具均下架），只作历史查阅，**不要再按它写入**。
 - 每条 `targets` 必填 `basis`（依据原文句）+ `thinking`（思考链路 v2：`[{kind,text,quote?,alt?}]`，真实推理步骤，**归属层／拆分／关系三个决策点必含**，禁止套话）
 - 涉及已登记博主：`targets` 含 `type:"blogger"` 条目 + `bloggerUpdated:true`
 - 自由文本里的 `.md` 路径**只写真实存在文件**或本条产物/源；假想/否决条目写《名称》不带 `.md`

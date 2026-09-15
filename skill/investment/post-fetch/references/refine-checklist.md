@@ -35,7 +35,7 @@
 
 ## 3. 言论追踪落位（2026-09-10 更新：六分法为唯一分类）
 
-> **旧「4 类落位」已退役（2026-09-10）**：`具象化 / 观点 / 信号 / 互动` 不再作为分类维度——**分类权威 = `contentType` 六分法**（research/predict/view/insight/chat/trade），落库时服务端按类型路由到物理分表（`post_*`）。旧 `kind` 字段仅保留历史值，**新数据不得再传 kind**。
+> **旧「4 类落位」已退役（2026-09-10）**：`具象化 / 观点 / 信号 / 互动` 不再作为分类维度——**分类权威 = `content_type` 六分法**（research/predict/view/insight/chat/trade，入参名 `contentType`），落库时服务端按类型路由到六张言论物理分表 `statement_research`/`statement_predict`/`statement_view`/`statement_insight`/`statement_chat`/`statement_trade`（**不是旧的 `post_*` 前缀**——2026-09-12 分层改名后：采集层叫帖子、`post_` 只属于 `post_history`）。旧 `kind` 字段仅保留历史值，**新数据不得再传 kind**。
 >
 > 旧四类语义已被覆盖：具象化 → `wikiRef` 字段（research/insight）+ wiki 条目；观点 → `view`；信号 → `trade`（结构化 `op`/`price`）或 `view` 的 signal 文本；互动 → 回复类帖的 `//@` 语境标注（见 §2）。
 

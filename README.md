@@ -108,7 +108,7 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── investment-refine/     ←   提炼执行器
 │   │   ├── investment-review/     ←   审查执行器
 │   │   ├── post-fetch/            ←   雪球帖子采集编排层
-│   │   ├── xueqiu-spyder/         ←   雪球抓取工具层（CDP 会话复用）
+│   │   ├── xueqiu-spyder/         ←   雪球抓取工具层（ego lite 通道复用登录态）
 │   │   └── prediction-console/    ←   预测控制台（录入/验证/言论跟踪，MySQL 落库）
 │   ├── frontend/                  ← 前端开发与可视化产物
 │   │   ├── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
@@ -257,8 +257,8 @@ git push origin main
 | `investment-coarse-processor` | 粗加工：格式整理 + 去广告 + metadata 补全 |
 | `investment-refine` | 提炼执行器：直接执行，原始资源/帖子集 → 框架条目（一对多，可读性优先） |
 | `investment-review` | 审查执行器：内容审查 + 结构审查 + 关联备注发现 |
-| `post-fetch` | 雪球帖子采集编排层：前置同步 + 时间窗解析 + 调用工具层执行采集 + info_cutoff 双写 |
-| `xueqiu-spyder` | 雪球抓取工具层：CDP 复用已登录 Chrome 会话 + timeline API + 详情页补全 |
+| `post-fetch` | 雪球帖子采集编排层：前置同步 + 时间窗解析 + 调用工具层执行采集 + info_cutoff 回写（看板 MySQL） |
+| `xueqiu-spyder` | 雪球抓取工具层：**ego lite 通道**复用已登录会话（`ego_browser.py` + `ego_bridge.js`，本地 socket 桥）+ timeline API + 详情页补全 |
 | `prediction-console` | 预测控制台：个股/行业/市场三类录入、状态验证、言论跟踪，MCP 落库 MySQL |
 
 ### office/ — 文档与系统工具

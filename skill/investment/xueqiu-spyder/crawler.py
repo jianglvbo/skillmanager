@@ -8,12 +8,13 @@ import urllib.parse
 from playwright.sync_api import sync_playwright
 
 import config
+import ego_browser
 
 logger = logging.getLogger(__name__)
 
 
 def _default_chrome_path():
-    """跨平台返回 Chrome/Chromium 可执行文件路径"""
+    """跨平台返回 Chrome/Chromium 可执行文件路径（仅 XUEQIU_TRANSPORT=chrome 时用）"""
     if sys.platform == "darwin":
         return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     if sys.platform.startswith("win"):
@@ -37,11 +38,16 @@ CHROME_PATH = os.environ.get("XUEQIU_CHROME_PATH") or _default_chrome_path()
 # XUEQIU_USER_DATA_DIR 覆盖；旧位置（skill 目录内）仅作迁移前的历史遗留，不再使用。
 USER_DATA_DIR = os.environ.get("XUEQIU_USER_DATA_DIR") or os.path.join(
     os.path.expanduser("~"), ".cache", "xueqiu-spyder", "chrome-profile")
+# ⚠️ 以下 Chrome 相关常量**只服务旧通道**（XUEQIU_TRANSPORT=chrome，2026-09-15 起仅排障用）。
+# 默认通道是 ego lite，见 ego_browser.py；这两个变量在新通道下完全不参与。
 # 可用环境变量 XUEQIU_DEBUG_PORT 覆盖，避免与既有 9222 调试实例冲突
 DEBUG_PORT = int(os.environ.get("XUEQIU_DEBUG_PORT", "9222"))
 # 2026-09-12：Chrome 152 起 DevTools HTTP 端点只接受 Host=localhost，
 # 用 127.0.0.1 直连会返回 404（/json/version 不可用）。故主机名可覆盖，默认 localhost。
 DEBUG_HOST = os.environ.get("XUEQIU_DEBUG_HOST", "localhost")
+# ── 浏览器通道（2026-09-15 用户拍板：「以后别用 chrome 了，用 ego lite」）────
+# 默认 auto：有 ego-browser CLI 就走 ego lite（ego_browser.EgoBridge），
+# 没有才回落 Chrome CDP；显式设 XUEQIU_TRANSPORT=ego 则**禁止**回落 Chrome。
 
 
 class CrawlerError(Exception):
@@ -49,17 +55,57 @@ class CrawlerError(Exception):
 
 
 class XueqiuCrawler:
-    """通过连接本地 Chrome 调试端口来复用真实浏览器环境，绕过 WAF"""
+    """复用真实浏览器环境绕过 WAF：默认走 ego lite（2026-09-15），可回落 Chrome CDP"""
 
     def __init__(self):
         self._pw = None
         self._browser = None
+        self._ego = None
         self._page = None
+        self._page_override = None
         # timeline 端点状态：v4 被 WAF 405 时自动降级到旧版路径（2026-09-09 固化）
         self._timeline_url = config.USER_TIMELINE_URL
         self._timeline_count = config.USER_POSTS_COUNT
         self._degraded = False
+        self._connect_browser()
+
+    @property
+    def _main_page(self):
+        """主页面句柄：ego 通道是桥的主页，chrome 通道是 playwright 的页；
+        万一某段流程要临时换页，设 _page_override 即可，其余流程一律读这里"""
+        return self._page_override or self._page
+
+    def _connect_browser(self):
+        """按 XUEQIU_TRANSPORT 选通道：auto 优先 ego lite，只有没有 ego CLI 时才回落 Chrome"""
+        mode = config.BROWSER_TRANSPORT
+        if mode in ("auto", "ego"):
+            try:
+                self._connect_ego()
+                return
+            except Exception as e:
+                if mode == "ego":
+                    raise CrawlerError(
+                        f"ego lite 通道不可用：{e}\n"
+                        f"（用户 2026-09-15 已要求只用 ego lite；请先打开 ego lite 并登录雪球，"
+                        f"并确认 `ego-browser --help` 可用）"
+                    )
+                logger.warning(f"ego lite 通道不可用（{e}）—— 回落 Chrome CDP")
         self._connect_chrome()
+
+    def _connect_ego(self):
+        """连接 ego lite：不启动任何浏览器，只把动作转发给它（见 ego_browser.py）
+
+        2026-09-15 迁移：原来这里连 Chrome 的 CDP 调试端口（并在没有调试端口时自己
+        拉起一个带调试端口的 Chrome）。ego lite 不对外暴露 CDP 端口，故改走
+        ego-browser 的 Node 运行时；登录态直接复用 ego 里已登录的雪球会话，
+        不再需要单独的采集 profile（~/.cache/xueqiu-spyder/chrome-profile 随之退役）。
+        """
+        bridge = ego_browser.EgoBridge()
+        hello = bridge.start()
+        self._ego = bridge
+        self._browser = ego_browser.Browser(bridge)
+        self._page = bridge.main_page
+        logger.info("已连接 ego lite（桥进程 pid=%s）", hello.get("pid"))
 
     def _degrade_timeline(self):
         """v4 timeline 端点被 WAF 拦截时，自动切到旧版路径并下调每页条数
@@ -105,8 +151,8 @@ class XueqiuCrawler:
             self._page = self._browser.contexts[0].new_page()
 
         # 确保在雪球域名下
-        if "xueqiu.com" not in self._page.url:
-            self._page.goto(config.XUEQIU_HOME, wait_until="domcontentloaded", timeout=15000)
+        if "xueqiu.com" not in self._main_page.url:
+            self._main_page.goto(config.XUEQIU_HOME, wait_until="domcontentloaded", timeout=15000)
 
     def _launch_chrome(self):
         """以调试模式启动 Chrome"""
@@ -127,7 +173,7 @@ class XueqiuCrawler:
         for attempt in range(config.MAX_RETRIES):
             time.sleep(config.REQUEST_DELAY)
             try:
-                result = self._page.evaluate(
+                result = self._main_page.evaluate(
                     """async (url) => {
                         try {
                             const resp = await fetch(url);
@@ -507,7 +553,11 @@ class XueqiuCrawler:
         return screen_name, all_statuses
 
     def close(self):
-        """断开浏览器连接"""
+        """断开浏览器连接
+
+        2026-09-15：ego 通道下 **只关桥进程，不关 ego 本身**——ego 是用户自己的浏览器，
+        它的标签页与登录态要留给用户（桥进程退出时会把写入流关掉，ego 里的标签页保留）。
+        """
         try:
             if self._browser:
                 self._browser.close()
@@ -515,3 +565,5 @@ class XueqiuCrawler:
                 self._pw.stop()
         except Exception:
             pass
+        finally:
+            self._ego = None

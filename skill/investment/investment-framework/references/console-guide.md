@@ -10,14 +10,21 @@
 
 | 写入方 | 端点 | 数据 | 看板呈现 |
 |:---|:---|:---|:---|
-| investment-refine 第四步 | **`MCP refine_trace`**（2026-09-14 起；原 `refine_record` 已下架） | 一个提炼单元 + 该链路 7 步判定（verdict/basis/复核状态） | 提炼记录页：单元卡 + 逐步复核（每步可确认/打回）；复核意见写 `refine_review` |
+| investment-refine 第四步 | **`MCP refine_trace`**（2026-09-14 起；原 `refine_record` 已下架） | 一个提炼单元 + 该链路 7 步判定（verdict/basis/复核状态） | 提炼记录页：单元卡 + 逐步复核（步骤卡**左滑出「复核」**；复核意见写 `refine_review`） |
 | investment-review 第四步 | `MCP review_record` | 结构化审查（checks/groups/recycle） | 审查模块（2026-08-16 起不再产出 md 审查报告） |
 | 粗制品队列 | `GET /api/coarse/list` | 直接读 vault `工作区/粗制品/`；「已加工」状态由 **`refine_item.source_rel`**（wiki 链路）推导（2026-09-14 换源；原 `coarse_records`/`refine_record` 表均已删除，评分字段不再展示） | 粗制品模块 |
 | post-fetch 第三步之二 | `scripts/import-post-history.js`（批量）/ `MCP post_history`（单条 upsert） | 采集原文落 `post_history` 表（提炼前原文留档，**唯一用途=避免重采**） | 不呈现（后端留档；`post_history action=get/check` 供提炼与补采读取） |
 
 失败处理：API 失败（看板未启动）不阻断主流程，汇报提示「看板数据未写入」。
 
-## 3. refine/record 请求体（决策链路图数据源）
+## 3. ⚠️ 已退役：refine/record 请求体（只作历史查阅，勿再写入）
+
+> **2026-09-15 醒目标注**：本节（含 §4 决策链路图规范）描述的是 `refine_record` 契约
+> —— 该 MCP 工具与 `refine_record`/`refine_target_sub` 两张表**已于 2026-09-14 下架**
+> （framework-rules #54；旧 187 条记录备份在
+> `~/Project/investment-console/backups/refine_legacy_20260913155544/`）。
+> **新提炼只调 `MCP refine_trace`（7 步判定）**，写的是 `refine_item`/`refine_step`/`refine_review`。
+> 下文里的 `targets[]`、`thinking` v2、`verify` 等字段都只用于解释历史数据，不要再按它写入。
 
 ```json
 {
@@ -31,7 +38,7 @@
     "category": "analysis_framework", // 英文码：analysis_framework/trading_system/…（同上）
     "tags": ["分析框架/估值"],     // 挂一级前缀，禁裸标签
     "basis": "原文「关键句」",      // 依据（必填，从原文哪句提炼）
-    "thinking": [                 // 标准 5 步：识别/价值/归类/关系/生成
+    "thinking": [                 // ⚠️ 已退役字段（refine_record 专用，勿再写）：标准 5 步
       "识别：…", "价值：…", "归类：…", "关系：…", "生成：…"
     ],
     "relation": "new"             // 英文码：new/append/complement/conflict_check/other
@@ -51,7 +58,7 @@
 - 旧数据 `to[]` 字符串数组自动兼容归一化
 - **路径书写语义（2026-09-01 用户确认，写入侧硬约束）**：自由文本（reason/thinking/basis/verify.detail）中 `.md` 完整路径 = 写入方承诺该文件真实存在（本次检索命中或本条产物/源），前端渲染为可点击《文件名》跳 Obsidian；假想/被否决/未创建条目一律写《名称》（不带 `.md`）渲染为纯文本。前端存在性校验（vault 索引 ∪ 本条产物）仅兜底质检，权威判定在写入侧（规则源：investment-refine/references/refine-schema.md 四）
 
-## 4. 决策链路图规范（2026-08-31 v2：用户拍板旧 10 节点太死板、信息太少，改真实思考时间线）
+## 4. ⚠️ 已退役：决策链路图规范（同上，随 refine_record 一起下架；看板现为「提炼链条七步」）
 
 **v2 = 思考时间线（`buildThinkingFlow(r)`，纯 DOM，替换 mermaid 固定流程图）**：
 
@@ -67,7 +74,7 @@
 
 > 2026-09-01 用户决定：移除 `[校验]` 收尾节点，「落为产物」即终点（verify 数据仍落库，仅不渲染）。
 
-- **数据**：thinking v2 = 自由长度对象数组 `[{kind,text,quote?,alt?}]`（真实推理步，见 investment-refine SKILL.md）；旧 5 步字符串数组/合并字符串自动降级解析（kind=识别/价值/归类/关系/生成）
+- **数据（⚠️ 随 §3/§4 一并退役，仅解释历史数据）**：thinking v2 = 自由长度对象数组 `[{kind,text,quote?,alt?}]`；旧 5 步字符串数组/合并字符串自动降级解析（kind=识别/价值/归类/关系/生成）。**现行链路数据是 `refine_step` 的 7 步判定**，见 §9。
 - **判断语义保留**：真实分叉数据（归属层/关系决策、备选否决）以"决策步红点 + alt 否决块"呈现；不再为无分叉数据画菱形
 - **关系判断职责边界（保持）**：提炼时关系判断 = 生成决策（thinking 中 kind 含"决策"的关系步）；审查 C3/C7 = 写后质检，不重复
 - **信息量要求**：每步保留完整推理文本（不截断）、原文引用、备选否决——这就是"具象化"的信息来源；禁止空话步骤（如"价值：值得提炼"）
