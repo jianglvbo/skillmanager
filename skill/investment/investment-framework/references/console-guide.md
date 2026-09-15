@@ -82,6 +82,7 @@
 
 - 思考时间线（v2，2026-08-31 起）：`buildThinkingFlow(r)` 纯 DOM 渲染（`.tk-*` 样式）；旧数据 `parseThinkingV2` 降级解析；产物卡 `.tk-product` 绑 click → `openInObsidian(path)`。~~mermaid 版 `buildFlowMermaid(r)` 已弃用~~（保留函数作历史参考，不再调用）
 - 交互：全屏覆盖层 + 滚动容器；上一篇/下一篇导航
+- **言论卡只有一张（2026-09-15 用户要求）**：博主菜单与主体菜单（个股/行业/指数/市场）共用 `stmtCard(s, { blogger: true })`——主体维度只多顶行那块「博主头像 + 博主名（★）」。用户原话：「言论菜单底下的个股、市场、指数、行业的言论卡片，样式和博主菜单底下的言论卡片一样，但是多了博主头像和博主名称」。**不要再另写第二套卡片渲染**（原来主体的 `cCard` 少了形态 chip、「回应」引用块、「已具象化」与结构化字段，同一张帖子在两处长得不一样）；服务端配套：`/api/console/subject` 的两条言论查询必须与博主维度取**同一份列清单**（`VIEW_COLS`，`statement` 视图全列），少列卡片就会缺块。
 - **博主列表排序（2026-09-13 用户要求）**：**按言论数量降序，与「特别关注」无关**，**已删除的一律排最后**。原实现第一顺位是 `special`，导致特别关注的几位总霸占前几名、言论多的博主反而被压在下面。特别关注只保留名字前的 `★` 星标，**不参与排序**。**「博主」tab 可切换关注筛选（2026-09-15 用户要求）**：已选中时再点＝循环 全部 → 关注（★）→ 非关注（☆）→ 全部，纯前端筛 `bloggerMgmt.list`，切走即复位（详见 framework-rules #51）。排序在服务端 `/api/blogger/list`（`list.sort`：`deletedAt` → `stmtCount` → `tradeCount` → `fileCount`），前端 `renderBloggerList()` **不再二次排序**；点星标走 `updateBloggerRowStar()` 就地更新那一行，不重建列表。
 
 ## 7. 设计铁律（改任何前端必须遵守）
@@ -95,7 +96,7 @@
 
 - 主题：10 主题 × 深浅 2 模式，CSS 变量实现；决策链路图颜色 getComputedStyle 动态读 + hex 校验兜底
 - 看板数据在 `data/`，**别手动改 JSON**，一律走 API（否则操作日志/索引不同步）
-- 验证：playwright + 系统 Chrome（`executable_path` 指定）；`node --check web/app.js`；jsdom 只能看逻辑不能信布局
+- 验证：**一律 ego lite**（`ego-browser nodejs`：`page.screenshot()` 截图、`page.evaluate()` 量几何/读 DOM；2026-09-15 用户拍板，Chrome 无论沙箱内外都不许再起）；`node --check web/app.js`；jsdom 只能看逻辑不能信布局
 
 ## 8.5 本地看板运维（2026-09-11 补充）
 
