@@ -142,6 +142,8 @@ class EgoBridge:
             "space": self.space or None,
             "spaceName": os.environ.get("XUEQIU_EGO_SPACE_NAME", "xueqiu-spyder"),
             "url": os.environ.get("XUEQIU_EGO_URL", "https://xueqiu.com/"),
+            # 页签保留：采集现场就是风控证据，采完不自动关（用户要盯着看）
+            "keepPages": os.environ.get("XUEQIU_EGO_KEEP_PAGES", "1") not in ("0", "false", "no"),
         }
         shebang = ""
         if script.startswith("#!"):
@@ -260,6 +262,10 @@ class Page:
 
     def wait_for_timeout(self, ms):
         time.sleep(ms / 1000.0)
+
+    def screenshot(self, path, timeout=60):
+        """把该页当前画面存成 PNG（风控留证用；ego 页面本来就是可见的）"""
+        return self._bridge.call("screenshot", timeout=timeout, page=self.label, path=path)
 
     @property
     def url(self):

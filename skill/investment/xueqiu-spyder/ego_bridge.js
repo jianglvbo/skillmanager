@@ -20,8 +20,13 @@
  *   {"id":3,"cmd":"waitForSelector","page":"p1","selector":"div","timeoutMs":8000}
  *   {"id":4,"cmd":"newPage"}                        // 新建 ego 标签页，回 {"label":"p2"}
  *   {"id":5,"cmd":"url","page":"p2"}
- *   {"id":6,"cmd":"close","page":"p2"}              // 只关该页，不关任务空间
+ *   {"id":6,"cmd":"close","page":"p2"}              // 只关该页（默认保留页签，见下）
  *   {"id":7,"cmd":"shutdown"}                       // 桥自行退出
+ *   {"id":8,"cmd":"screenshot","page":"p1","path":"/abs/out.png"}   // 落图，供用户事后核对风控
+ *
+ *   **页签保留（2026-09-16 用户要求「ego lite 的页面要在前端，我才能知道有没有触发风控」）**：
+ *   `close` 默认**只返回、不真关页签**（页签留在 ego 里给用户看采集现场）；只有显式带
+ *   `force:true`（或配置 keepPages=false）才真关。用户要盯着看，页签就是证据。
  *
  *   fn 既接受函数表达式（`async (a) => {...}` / `() => {...}`），也接受裸表达式
  *   （`document.title`）；裸表达式会被包成 `async (a) => (expr)`，这样 Python 侧
@@ -35,6 +40,7 @@
  *   space      复用已存在的任务空间 id（多轮采集沿用同一个，不新建）
  *   spaceName  任务空间名（仅新建时用到）
  *   url        启动时若当前页不在该域，先导航过去（默认雪球首页）
+ *   keepPages  是否保留采集过的页签（默认 true；false 时 close 真关）
  */
 
 const CFG = typeof __EGO_CFG !== "undefined" ? __EGO_CFG : {};
@@ -42,6 +48,7 @@ const SOCK = CFG.sock;
 const SPACE = CFG.space;
 const SPACE_NAME = CFG.spaceName || "xueqiu-spyder";
 const HOME = CFG.url || "https://xueqiu.com/";
+const KEEP_PAGES = CFG.keepPages !== false;
 
 const pages = new Map();
 let task = null;
@@ -100,9 +107,17 @@ async function handle(req) {
       case "close": {
         const label = req.page || "p1";
         const page = pageOf(label);
+        if (KEEP_PAGES && !req.force) {
+          // 页签留给用户看（采集现场即风控证据），只把它从"由桥管理"里摘出来
+          return { id, ok: true, result: { kept: true, label } };
+        }
         pages.delete(label);
         await page.close();
         return { id, ok: true, result: true };
+      }
+      case "screenshot": {
+        await pageOf(req.page).screenshot({ path: req.path });
+        return { id, ok: true, result: { path: req.path } };
       }
       case "shutdown": {
         setTimeout(() => process.exit(0), 50);

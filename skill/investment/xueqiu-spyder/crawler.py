@@ -67,6 +67,8 @@ class XueqiuCrawler:
         self._timeline_url = config.USER_TIMELINE_URL
         self._timeline_count = config.USER_POSTS_COUNT
         self._degraded = False
+        self._shot_tag = time.strftime("%Y%m%d-%H%M%S")   # 本次采集的截图批次号
+        self._detail_seen = 0
         self._connect_browser()
 
     @property
@@ -81,6 +83,7 @@ class XueqiuCrawler:
         if mode in ("auto", "ego"):
             try:
                 self._connect_ego()
+                self._wake_ego()      # 让用户能盯着采集现场（风控是否触发）
                 return
             except Exception as e:
                 if mode == "ego":
@@ -106,6 +109,49 @@ class XueqiuCrawler:
         self._browser = ego_browser.Browser(bridge)
         self._page = bridge.main_page
         logger.info("已连接 ego lite（桥进程 pid=%s）", hello.get("pid"))
+
+    # ── 现场可见性（2026-09-16 用户要求）──────────────────────────────
+    def _wake_ego(self):
+        """把 ego lite 窗口拉到前台——用户要能看着采集跑，才能第一时间发现风控。
+
+        用户原话：「采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有
+        触发风控」。页面本来就开在 ego 里（可见），这里只是保证它不在别的窗口后面。
+        关掉：`XUEQIU_EGO_WAKE=0`。
+        """
+        if not config.EGO_WAKE or sys.platform != "darwin":
+            return
+        try:
+            subprocess.run(
+                ["osascript", "-e", 'tell application "ego lite" to activate'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,
+            )
+            logger.info("已把 ego lite 窗口拉到前台（采集过程可直接观察；禁用：XUEQIU_EGO_WAKE=0）")
+        except Exception as e:
+            logger.debug("激活 ego 窗口失败（不影响采集）：%s", e)
+
+    def _shot(self, tag, page=None, force=False):
+        """落一张现场截图留证（风控/异常时自动调用，也可按间隔抽帧）。
+
+        ego 里页面是可见的，但风控提示往往一闪而过；截图让用户事后能核对
+        「当时页面上到底是什么」。落图目录 `XUEQIU_EGO_SHOT_DIR`
+        （默认 `~/.cache/xueqiu-spyder/shots`），失败只记日志、不影响采集。
+        """
+        if not config.EGO_SHOT_DIR:
+            return None
+        target = page if page is not None else self._main_page
+        if target is None:
+            return None
+        try:
+            os.makedirs(config.EGO_SHOT_DIR, exist_ok=True)
+            stamp = time.strftime("%H%M%S")
+            path = os.path.join(config.EGO_SHOT_DIR, self._shot_tag, f"{stamp}-{tag}.png")
+            target.screenshot(path)
+            logger.warning("现场截图已保存：%s", path)
+            return path
+        except Exception as e:
+            if force:
+                logger.warning("现场截图失败（不影响采集）：%s", e)
+            return None
 
     def _degrade_timeline(self):
         """v4 timeline 端点被 WAF 拦截时，自动切到旧版路径并下调每页条数
@@ -196,6 +242,7 @@ class XueqiuCrawler:
                 # WAF / 滑块 / 安全验证检测（雪球阿里云防护特征）
                 snippet = (result.get("snippet") or "") + (result.get("error") or "")
                 if re.search(r"滑动|安全验证|captcha|无感验证|请完成验证|访问验证", snippet, re.I):
+                    self._shot("waf-timeline")
                     raise CrawlerError(
                         f"疑似触发 WAF/滑块验证 ({full_url}) —— 停止采集，等待数分钟或人工在浏览器完成验证后重试"
                     )
@@ -277,6 +324,7 @@ class XueqiuCrawler:
                     if self._degrade_timeline():
                         continue
                     logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
+                    self._shot(f"timeline-fail-page{page_num}", page=user_page)
                     break
                 statuses = result.get("statuses", [])
                 if not statuses:
@@ -321,6 +369,7 @@ class XueqiuCrawler:
             # 这里改为显式抛错中止本轮，交由编排层等待冷却后重跑。
             blob = f"{result.get('title', '')} {result.get('snippet', '')}"
             if re.search(r"(?<!\d)405(?!\d)|滑动|安全验证|访问验证|请完成验证|captcha", blob, re.I):
+                self._shot(f"waf-detail-{target.strip('/').replace('/', '_')}", page=detail_page)
                 raise CrawlerError(
                     f"详情页命中 WAF/405（{target}）—— 中止本轮采集，等待冷却后重跑；"
                     f"页面特征: {blob.strip()[:80]}"
@@ -330,6 +379,7 @@ class XueqiuCrawler:
             raise
         except Exception as e:
             logger.warning(f"获取帖子详情失败 {target}: {e}")
+            self._shot(f"detail-error-{target.strip('/').replace('/', '_')}", page=detail_page)
             return "", None
         finally:
             detail_page.close()
@@ -344,6 +394,10 @@ class XueqiuCrawler:
             # text 为空，或 description 以 ... 结尾（摘要截断），说明正文可能被截断 → 详情页补全
             if target and (not text or desc.endswith("...")):
                 time.sleep(config.REQUEST_DELAY)
+                self._detail_seen += 1
+                # 抽帧留证：详情页是风控最常出现的地方，按间隔落图便于回看
+                if config.EGO_SHOT_EVERY and self._detail_seen % config.EGO_SHOT_EVERY == 0:
+                    self._shot(f"progress-{self._detail_seen}")
                 full, published = self.get_post_full_text(target)
                 if full and len(full) > len(text or ""):
                     post["text"] = full
@@ -542,6 +596,7 @@ class XueqiuCrawler:
                     if self._degrade_timeline():
                         continue
                     logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
+                    self._shot(f"timeline-fail-page{page_num}", page=user_page)
                     break
                 statuses = result.get("statuses", [])
                 if not statuses:
@@ -567,3 +622,5 @@ class XueqiuCrawler:
             pass
         finally:
             self._ego = None
+            # 采集结束再把 ego 拉回前台：页签停在最后一个现场，用户可以直接看结果/风控
+            self._wake_ego()

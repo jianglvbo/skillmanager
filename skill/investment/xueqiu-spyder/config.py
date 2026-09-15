@@ -51,3 +51,15 @@ EGO_BRIDGE_JS = os.environ.get(
 EGO_SPACE = os.environ.get("XUEQIU_EGO_SPACE", "")
 # ego 桥启动握手超时（秒）
 EGO_BOOT_TIMEOUT = float(os.environ.get("XUEQIU_EGO_BOOT_TIMEOUT", "90"))
+
+# ── 现场可见性（2026-09-16 用户要求）──────────────────────────────────
+# 用户原话：「采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控」。
+# EGO_WAKE：采集开始/结束时把 ego lite 窗口拉到前台（macOS 走 osascript activate）
+EGO_WAKE = os.environ.get("XUEQIU_EGO_WAKE", "1") not in ("0", "false", "no")
+# EGO_SHOT_DIR：命中风控/异常时自动落图留证的目录（空＝不落图）
+EGO_SHOT_DIR = os.environ.get(
+    "XUEQIU_EGO_SHOT_DIR",
+    os.path.join(os.path.expanduser("~"), ".cache", "xueqiu-spyder", "shots"),
+)
+# 详情页补全过程中每隔 N 条落一张图（0＝关；默认每 5 条，便于回看进度与风控弹窗）
+EGO_SHOT_EVERY = int(os.environ.get("XUEQIU_EGO_SHOT_EVERY", "5"))
