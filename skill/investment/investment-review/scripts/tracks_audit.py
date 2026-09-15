@@ -138,7 +138,7 @@ def mysql_scan() -> dict:
     out["form_empty"] = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM statement WHERE reply_to IS NOT NULL AND TRIM(reply_to)<>''")
     out["reply_to_filled"] = cur.fetchone()[0]
-    # ② 回指原文留档（2026-09-12 新增；留档只保 30 天，取不到属正常）
+    # ② 回指原文留档（2026-09-12 新增；留档只保 180 天〔2026-09-15 由 30 天放宽〕，取不到属正常）
     cur.execute("SELECT COUNT(*) FROM statement WHERE post_history_id IS NOT NULL")
     out["post_history_linked"] = cur.fetchone()[0]
     # ③ 分型分布与复核标记

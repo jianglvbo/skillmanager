@@ -223,7 +223,7 @@
       同日晚续清（用户：「来源批次文件路径字段是不是应该去掉了，都是直接从数据库采集的了」）：**删六张言论表的 `src_rel`**（六表 1785 行全量，121 个批次路径值已死；迁移 `scripts/migrations/20260912q-drop-statement-src-rel.js`）；`refine_record.from_rel` 的**帖子集批次值改写为数据库引用** `post_history/{博主} {采集日}`（170 条，迁移 `20260912r`；常规路径的原始资源文件不动）。**言论→原文的回指统一靠 `post_history_id`，来源标识统一靠 `from_rel` 的 DB 引用**——vault 路径不再出现在帖子/言论层。备份见 `backups/trim_dead_columns_20260912/`。
       **未删但已知未产生数据**（属既有契约、删了丢能力，留着）：`statement_*.view_date_source`/`view_date_precision`/`view_date_basis`（explicit/derived 场景）、`statement_predict.verify_date`/`verify_result`（预测验证闭环）、`statement_trade.market_cap`、`statement_*.wiki_ref`、`*_rel.role_code`、`todo.due_date`/`done_datetime`。**「这帖提炼了吗」不再靠本表标记，用 `statement.source_url` 反查**（同 URL 有言论行即已提炼）。
     - **回指方向＝言论表 → post_history（2026-09-12 用户纠正）**：由**六张言论表各带 `post_history_id` 指回留档行**（迁移 `scripts/migrations/20260912o-statement-post-history-id.js`，`statement` 视图同步带出该列），**不是** post_history 指出去。服务端在言论落库/更新时按 `source_url` 解析并写入；解析不到就写 NULL。
-    - **只保留 30 天（2026-09-12 用户拍板，硬约束）**：post_history 是**滚动窗口**，不是永久存储——清理脚本 `~/Project/investment-console/scripts/purge-post-history.js`（默认按 `posted_datetime` 保留最近 30 天，可 `--days/--by/--dry`）。**因此「言论的 `post_history_id` 查不到对应行」「按 URL 查不到留档」都是正常现象**，工具、看板、审查、提炼都不得当成异常或数据缺口；也不许据此去重采（先确认是否已逾 30 天）。
+    - **保留期 180 天（滚动窗口；2026-09-12 拍板建窗、2026-09-15 拍板由 30 天放宽到 180 天，硬约束）**：post_history 是**滚动窗口**，不是永久存储——清理脚本 `~/Project/investment-console/scripts/purge-post-history.js`（默认按 `posted_at` 保留最近 180 天，可 `--days/--by/--dry`）。**因此「言论的 `post_history_id` 查不到对应行」「按 URL 查不到留档」都是正常现象**，工具、看板、审查、提炼都不得当成异常或数据缺口；也不许据此去重采（先确认是否已逾 180 天）。
     - **用途 = 提炼原文来源 + 避免重采**（用户原话）。它不是提炼产物表、不参与归类判定：提炼结论仍落 `statement`（六表 + UNION 视图）；需要回顾或重新提炼时先查它（MCP `post_history` `action=get/check`），有原文就不必再抓。
     - **写入时机**：每次采集验收通过后立即落库（post-fetch 第三步之二 → `node ~/Project/investment-console/scripts/import-post-history.js <采集产物.md>`），以 `url_hash=md5(source_url)` 幂等；`content_hash=md5(raw_text)` 用于识别"帖被改过"。
     - **两类不入库**：① 带「摘要」标记的帖（内容残缺，故意不存，便于下次重采）② 无 `[原文]` 链接的帖（规则 #35）。
@@ -320,11 +320,11 @@
 
 49. 待复核队列：处理不了的**上报**，用户裁决后**内化成规则**（2026-09-12 用户要求）：
     - **用户原话**：「在审查按钮前面插入一个待复核按钮，作用是显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，**让我以后可以不用再审核类似的帖子**」。
-    - **三步入队**：① **agent 上报**——提炼/审查中拿不准的一律进队列（`MCP pending_decision add`），不许瞎猜、不许留空：归类边界（predict↔view、trade↔insight）、标的名解析不出、称呼歧义、时间存疑、规则没覆盖的新情况；系统也会自动上报一类（`blogger_statement` 遇到解析不出的标的名时，返回的 warnings 里带「已登记「待复核」#id」）。② **用户裁决**——看板「待复核」页（左侧菜单，在「审查」**前面**）点候选按钮或自由作答 → `status=resolved`。③ **下次审查内化**——见下条。
+    - **三步入队**：① **agent 上报**——提炼/审查中拿不准的一律进队列（`MCP pending_decision add`），不许瞎猜、不许留空：归类边界（predict↔view、trade↔insight）、标的名解析不出、称呼歧义、时间存疑、规则没覆盖的新情况；系统也会自动上报一类（`blogger_statement` 遇到解析不出的标的名时，返回的 warnings 里带「已登记「待决策」#id」）。② **用户裁决**——看板「待决策」页（左侧菜单，在「审查」**前面**）点候选按钮或自由作答 → `status=resolved`。③ **下次提炼内化**——见下条（2026-09-15 用户拍板：「已决策的，跟着下一次提炼一起提炼掉，不要跟审核」）。
     - **上报质量硬要求**：必须带**候选 `options`**（`/` 分隔，让用户点一下就完事）；`question` 一句话能独立看懂；`excerpt` 放原文片段（用户不必去翻原文）；能定位到帖子就给 `statementId` + `sourceUrl`。
-    - **内化是闭环的关键（只答不内化＝违规）**：审查时先取 `status=pending_internalize`（已答复、`internalized` 为空）→ 修数据 → 把答复**落成规则/案例**（四选一或组合）：`framework-rules.md` 新条目/修订（编号 + 用户原话）、`stock.aliases`（`stock_alias add`，称呼类）、`mention_case`（`stock_alias case-add`，误判/漏判案例）、`refine-schema.md` 判定细则 → 调 `pending_decision action=internalize` 把落点写回 `internalized`。**`internalized` 非空＝这条经验已进规则，同类帖子以后不再问用户**——这正是用户要的「以后不用再审核类似的帖子」；只把答复当一次性修正、不写回规则，等于让用户把同一类问题答第二遍。
+    - **内化是闭环的关键（只答不内化＝违规）**：**提炼时**先取 `status=pending_internalize`（已答复、`internalized` 为空）→ 修数据 → 把答复**落成规则/案例**（四选一或组合）：`framework-rules.md` 新条目/修订（编号 + 用户原话）、`stock.aliases`（`stock_alias add`，称呼类）、`mention_case`（`stock_alias case-add`，误判/漏判案例）、`refine-schema.md` 判定细则 → 调 `pending_decision action=internalize` 把落点写回 `internalized`。**`internalized` 非空＝这条经验已进规则，同类帖子以后不再问用户**——这正是用户要的「以后不用再审核类似的帖子」；只把答复当一次性修正、不写回规则，等于让用户把同一类问题答第二遍。**执行方＝`investment-refine` 第 0.7 步（2026-09-15 起从审查挪到提炼）。**
     - **不该上报的**（避免噪声）：规则里已经写明的（先查 `framework-rules.md` / `refine-schema.md` / `stock-mention-rules.md`）、能靠留档/关联表自己查出来的、纯采集缺口且用户已明确「缺口如实报不必补」的。**上报前先按 kind 搜一遍队列**，别重复问同一个问题。
-    - **审查报告要带结果**：审查记录里写明「本次处理待复核 N 条（内化 M 条 / 忽略 K 条）」，用户据此确认闭环走完了。
+    - **提炼汇报要带结果**：提炼汇报里写明「本次处理待决策 N 条（内化 M 条 / 忽略 K 条）」，用户据此确认闭环走完了。
     - **卡片样式：给「博主 + 原文 + 时间」，不给提炼结果（2026-09-13 用户纠正）**：用户原话「这个待决策设计我觉得设计的不好，**原文都看不到，原文链接也没有**……我的目标是，对于某一个帖子，你无法判断他属于什么内容、或者无法判断是否应该内化的，由我来决策，但是**卡片样式应该要包含博主、包含原文、包含时间，不包含提炼后信息，因为还没提炼**」。待复核是**提炼之前**的决策点，所以：
         - **列表行**＝博主（头像+名）+ **原文**（`post_history`.`post_text`，限 2 行）+ 时间（`posted_datetime` 优先）+ kind 标签；**问题不进列表标题**。
         - **详情页头部**＝博主 + 形态（`post_history.form`）+ 发帖时间 + **原文 ↗**（`openExternal` 走系统浏览器，绕开内嵌 webview 拦截）+ kind/状态；**正文第一张卡就是原文全文**（无留档时回落 `excerpt` 并明确标注「无留档全文，下面是 agent 摘的片段」），问题与选项放进「要你定的」卡。
@@ -338,7 +338,7 @@
     - **用户原话**：「我的复核可能会有删除的建议，但是我会附上删除的理由，这个规则你也记住，审核到删除的情况也不要意外，因为有的帖子质量不够，但是你提炼了，这种我就会在复核意见写上删除，然后你审核后要记得删除，并且内化规则，**减少这种帖子提炼成言论的情况**」。
     - **两种入口都要认**：① 看板「待复核」页的 `verdict=delete`（`answer` 形如「删除：<理由>」）；② 「言论追踪」卡片左滑写的复核建议（`statement_review_sub`）里出现「删除/删掉/不该录/不该落库」——两者都是**删除指令**，不是仅供参考的意见。
     - **必附理由**：删除类意见**没写理由一律拒收**（服务端已拦：理由 < 4 字直接报错）。理由不是形式要求——它就是要被内化的判据素材，也是日后回溯「当初为什么删」的唯一依据。
-    - **审查必须执行删除**（`blogger_statement action=delete` / `blogger_trade action=delete`）：**不许只改内容、不许跳过、不许反问用户「确定要删吗」**（理由已经给了；删除不可逆，但用户已明确授权）。删完在 `internalized` 写清「已删除言论 #id + 规则落点」——看板据此把该项标成「已删除」，用户一眼能看出删没删。
+    - **执行方必须真的删除**（`blogger_statement action=delete` / `blogger_trade action=delete`）：**待决策页的 `verdict=delete` 由提炼侧执行**（第 0.7 步，2026-09-15 起），**左滑建议里的删除由审查首步执行**。**不许只改内容、不许跳过、不许反问用户「确定要删吗」**（理由已经给了；删除不可逆，但用户已明确授权）。删完在 `internalized` 写清「已删除言论 #id + 规则落点」——看板据此把该项标成「已删除」，用户一眼能看出删没删。
     - **删除理由必须内化**（否则同类帖子会被反复提炼、被反复删）：理由落到 `refine-schema.md` 信息密度门槛下的**「用户删过的类型」判据表**（追加一行：理由原话 + 泛化判据 + 日期/言论 id），必要时同时在 `framework-rules.md` 补/修归类判据。提炼侧在落库前**逐条比对该表**——命中即不落库。**这就是用户要的「减少这种帖子提炼成言论」**；只删不内化＝下批继续犯。
     - **同类一次判净**：从理由里抽可泛化的判据（纯转述/只有情绪没有判断/与上一条重复/纯通知/无标的无方向的口号…），把**同一类的存量**一并回看处理，别等用户一条条删。
     - **边界**：删除只针对**言论/条目行**（`blogger_statement`/`blogger_trade` 删除）；涉及 vault 文件的删除仍按回收流程（R1-R5 冷静期，规则 #26/#27）走，不因一条复核意见就删文件。

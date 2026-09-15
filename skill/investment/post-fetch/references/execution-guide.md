@@ -136,11 +136,11 @@ node ~/Project/investment-console/scripts/import-post-history.js "<采集产物.
 node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js "<采集产物.md>"
 # ③ 校验通过 → 清理临时产物（--rm 一步到位，移入废纸篓可恢复）
 node ~/Project/investment-console/scripts/import-post-history.js --rm "<采集产物.md>"
-# ④ 保留期清理：post_history 只保留 30 天（滚动窗口）
+# ④ 保留期清理：post_history 只保留 180 天（滚动窗口；2026-09-15 用户拍板由 30 天放宽）
 node ~/Project/investment-console/scripts/purge-post-history.js --dry
 ```
 - 摘要帖与无 `[原文]` 链接的帖**按设计不入库**（列出但不计缺口）
-- 「言论 post_history_id 取不到」「按 URL 查不到留档」在 30 天窗口外**都是正常现象**
+- 「言论 post_history_id 取不到」「按 URL 查不到留档」在 180 天窗口外**都是正常现象**
 - 输出目录用 vault 外临时目录（默认 `~/.cache/xueqiu-spyder/out`）
 
 ---

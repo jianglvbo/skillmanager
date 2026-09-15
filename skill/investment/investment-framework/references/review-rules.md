@@ -12,7 +12,7 @@
     - 用 `blogger_statement(action=delete, id)` **真的删掉那条言论** → `console_statement_review(action=apply)`；**不要反问用户「确定要删吗」**（理由已给，删除已获授权）。
     - **必须内化**：把理由里的可泛化判据追加到 `refine-schema.md` 信息密度门槛的**「用户删过的类型」判据表**（理由原话 + 泛化判据 + 日期/言论 id），让同类帖子下次**不落库**——只删不内化＝下批继续犯（framework-rules #50）。
     - **同类一次判净**：按判据回看同批/存量里同类型的帖子，一并处理并汇报。
-2c. 「待复核」页的删除意见同理：`pending_decision list status=pending_internalize verdict=delete` 就是**本次必须执行的删除清单**，执行后 `action=internalize` 写「已删除言论 #id + 规则落点」。
+2c. **待决策页的删除意见不归本步**（2026-09-15 用户拍板：「已决策的，跟着下一次提炼一起提炼掉，不要跟审核」）：`pending_decision` 里那批（含 `verdict=delete` 删除清单）由 `investment-refine` 第 0.7 步执行；审查只处理本文件的 `statement_review_sub` 与 `refine_review` 两个来源。
 2d. **右滑删除记录**（2026-09-14 起用户在言论卡直接右滑删除）：suggestion 以 `【用户删除：无价值】` 开头，快照已入库（`类型｜日期｜正文摘要｜链接`），言论本体**已被看板删掉**（list 返回的 `post=null`）——不要再尝试 update/delete 该言论。处理＝**只内化**：从快照提炼可泛化判据（这类言论为什么留不住：闲聊无信号/纯复述/信息密度低…）→ 追加到 `investment-refine/references/refine-schema.md`「用户删过的类型」判据表（快照原话 + 泛化判据 + 日期/言论 id）→ `console_statement_review(action=apply)` 置已处理。只删不内化＝同类垃圾言论下批继续入库（#50）。
 3. 若判断建议不成立（与 dict 判据冲突），`console_statement_review(action=delete, statementId)` 并在审查报告中说明理由，不静默丢弃。
 4. **可泛化即固化**：凡某条复核暴露出通用规律，回写 `framework-rules.md #30` 的归类判据（观点/预测/研究…），让下次提炼自动遵循。典型例：`白酒处于底部（公募持仓全面退出为信号）` 属**当下判断 → 观点·看多(bullish)**，非预测（无未来时间窗/可验证目标位）——此判据已固化进 #30「易错判据（观点 vs 预测记录）」。

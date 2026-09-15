@@ -44,21 +44,14 @@ compatibility: 通用
 
 按 `investment-framework/references/review-rules.md`「复核建议处理（审查首步）」执行：`console_statement_review(action=list, status=open)` 取全部未处理建议（返回含该言论当前 `contentType/stance/target/viewText` 上下文）→ 逐条按建议用 `blogger_statement(action=update)` 修正归类 → `console_statement_review(action=apply)` 置已处理；判断建议不成立则 `action=delete` 并在报告说明理由。**本步未处理完，不得进入 C/S 维度**；修正结果并入审查报告。
 
-### 第零步之二：待复核队列处理（审查首步之二 · 必做；2026-09-12 新增）
+### 第零步之二：待决策队列 —— **已挪到提炼流程，审查不再处理**（2026-09-15 用户拍板）
 
-用户原话：「显示你无法处理的需要我复核的帖子，这种帖子在下次审查的时候可以处理，并且内化规则，让我以后可以不用再审核类似的帖子」。队列在看板「待复核」页（左侧菜单，在「审查」**前面**），agent 侧走 `MCP pending_decision`：
+用户原话：「**已决策的，跟着下一次提炼一起提炼掉，不要跟审核**」。因此「用户答复过、但还没内化成规则」的那批
+（`pending_decision` 里 `status=resolved` 且 `internalized=''`）**不在审查首步处理**——它现在是
+`investment-refine` SKILL 的「第 0.7 步：处理已裁决的待决策队列」。
 
-1. `action=list, status=pending_internalize` → **已答复但规则还没落地**的项（这批是本步的核心工作）；
-2. 逐条：按用户答复**修数据**（改归类/补标的名/改时间/补别名…）→ 把答复**内化成规则/案例**（落点四选一，见 framework-rules #49：`framework-rules.md` 条目 / `stock.aliases` / `mention_case` / `refine-schema.md` 细则）→ `action=internalize` 把落点写回 `internalized`；
-2b. **`verdict=delete`（用户写了「删除：<理由>」）＝必须真的删**（2026-09-12 用户明确：「有的帖子质量不够，但是你提炼了，这种我就会在复核意见写上删除」）：
-    - 取清单：`pending_decision(action=list, status=pending_internalize, verdict=delete)`；
-    - 逐条 `blogger_statement(action=delete, id)`（买卖帖走 `blogger_trade delete`）→ `action=internalize` 写「已删除言论 #id + 规则落点」；
-    - **必须把删除理由内化**：追加到 `refine-schema.md` 信息密度门槛的**「用户删过的类型」判据表**，并按判据回看同批/存量同类帖子一并处理；
-    - **不许反问用户「确定要删吗」**、不许只改内容、不许跳过（理由已给＝已授权；删除不可逆但这是用户明确要求）。
-3. 再看 `action=list, status=open`：**还没答的**不要替用户决定——在报告里列出「待用户裁决 N 条」即可（含每条的问题与候选）；若发现某条其实规则已覆盖，改为 `action=resolve` 并写清依据（同时把规则落点写进 `internalized`）；
-4. 报告里写明结果：**「待复核：处理 N 条（内化 M 条 / 忽略 K 条），仍待裁决 J 条」**。
-
-**只答不内化＝违规**：用户答一次是为了以后不再答同类问题，答复不进规则就等于让用户重复劳动（framework-rules #49）。
+审查只做自己的两项首步：① `statement_review_sub` 的左滑复核建议（第零步）；② `refine_review` 的提炼链路复核。
+**审查时不要去清待决策队列**——包括 `verdict=delete` 的删除清单，一并归提炼侧执行（framework-rules #49/#50）。
 
 ### 内容审查（编号 C1-C10）
 
@@ -71,7 +64,7 @@ compatibility: 通用
 **C9**：输出内容审查报告
 **C0（2026-09-12 新增）：别名与规则迭代核对**——审查时对「个股指代」做一次回看：① 言论里出现、但 `stock.aliases` 未登记的称呼 → 补登（`stock_alias`）；② 被误挂的常用词（如「好美的风景」→ 美的集团）→ 改正关联 + 若缺歧义标记则 `mark-ambiguous` + 把案例写进 `stock-mention-rules.md` 误判清单；③ 报告里单列「本次新增别名 / 新增歧义词 / **新增判定案例** / 规则修订」四项，做到**知识随审查沉淀**；案例用 `stock_alias(action=case-add)` 落 `mention_case`，不要写进 md。
 
-**C10**：言论追踪审计（执行 `scripts/tracks_audit.py --vault <vault路径> [--mysql]`，凭据用环境变量 `DB_PASS`）——**2026-09-12 重写后**核对 MySQL `statement`（六表视图）数据质量：空正文/缺原文链接/缺 `form`、`content_type` 与 `stance` 码值合法性、P1 三类（trade/predict/research）缺实体关联、复核建议积压（`statement_review_sub`）；兼看「insight 帖具象化覆盖率」（该有框架条目的心得帖要有 `wiki_ref`）。**原文留档覆盖率按 30 天窗口判**（`post_history_id` 回指，逾 30 天查不到属正常、不计缺口）。画像 md 已废弃，不再做 md↔DB 对照。**只报告不修改**，问题并入内容审查报告。
+**C10**：言论追踪审计（执行 `scripts/tracks_audit.py --vault <vault路径> [--mysql]`，凭据用环境变量 `DB_PASS`）——**2026-09-12 重写后**核对 MySQL `statement`（六表视图）数据质量：空正文/缺原文链接/缺 `form`、`content_type` 与 `stance` 码值合法性、P1 三类（trade/predict/research）缺实体关联、复核建议积压（`statement_review_sub`）；兼看「insight 帖具象化覆盖率」（该有框架条目的心得帖要有 `wiki_ref`）。**原文留档覆盖率按 180 天窗口判**（`post_history_id` 回指，逾 180 天查不到属正常、不计缺口；2026-09-15 由 30 天放宽）。画像 md 已废弃，不再做 md↔DB 对照。**只报告不修改**，问题并入内容审查报告。
 
 ### 结构审查（编号 S1-S8）——审查维度定义见 `investment-framework/references/review-rules.md`，按以下顺序执行。
 

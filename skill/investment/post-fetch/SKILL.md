@@ -106,7 +106,7 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 node ~/Project/investment-console/scripts/import-post-history.js "<采集产物.md>"   # 落库（幂等，url_hash 判重）
 node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js "<采集产物.md>"  # 入库校验（逐帖 url_hash+content_hash）
 node ~/Project/investment-console/scripts/import-post-history.js --rm "<采集产物.md>"   # 校验通过后清理临时产物
-node ~/Project/investment-console/scripts/purge-post-history.js --dry              # 保留期清理：post_history 只留 30 天
+node ~/Project/investment-console/scripts/purge-post-history.js --dry              # 保留期清理：post_history 只留 180 天
 ```
 
 | 规则 | 说明 |
@@ -114,7 +114,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 | 幂等 | `url_hash`（md5 原文链接）判重：内容没变记「无变化」、变了记「更新」 |
 | **摘要帖 / 无链接帖不入库** | 摘要帖内容残缺（故意不存，便于下次重采）；缺 `[原文]` 链接＝来源不可回溯（#35） |
 | **清理前必须过校验** | 有缺口 → 先补入库，禁止清理临时产物 |
-| **30 天滚动窗口** | 逾 30 天查不到留档、言论 `post_history_id` 悬空，**都是正常现象**（不是缺口、也不因此重采） |
+| **180 天滚动窗口** | 逾 180 天查不到留档、言论 `post_history_id` 悬空，**都是正常现象**（不是缺口、也不因此重采）。2026-09-15 用户拍板：由 30 天放宽到 180 天 |
 | 博主未建档 | 报错跳过；需先在看板 blogger 表登记（#12） |
 
 > 完整命令、节流与排错 → `references/execution-guide.md`「第五步」；采集前查重可用 MCP `post_history` `action=check`。
@@ -195,5 +195,5 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 - [ ] **采集产物已落 post_history**；清理临时产物前已过入库校验（返回 0），且**未把帖子集写进 vault 的 `工作区/粗制品/`**？
 - [ ] 时间窗口 = info_cutoff → 当前，置顶帖已排除？
 - [ ] **仅对采集完成（退出码 0/2）的博主双写 info_cutoff**；退出码 1（失败）/ 3（页数不足）者**保持原 cutoff 不动**并列入待重试清单（防漏采）？
-- [ ] post_history 保留期清理已跑（30 天滚动窗口）？
+- [ ] post_history 保留期清理已跑（180 天滚动窗口，2026-09-15 由 30 天放宽）？
 - [ ] 无浏览器自动化进程遗留？
