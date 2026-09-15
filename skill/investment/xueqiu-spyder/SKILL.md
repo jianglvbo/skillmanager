@@ -28,7 +28,7 @@ compatibility: macOS / Linux
 - **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
 - **现场可见 + 留证（2026-09-16 用户要求）**：用户原话「**采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控**」。三条落实：
   1. 采集页开在 **ego 自己的标签页**里（不藏窗口），开始与结束时自动把 ego lite 拉到前台（macOS `osascript activate`；`XUEQIU_EGO_WAKE=0` 可关）；
-  2. **采完不自动关标签页**（`XUEQIU_EGO_KEEP_PAGES=0` 才关）——现场页签就是风控证据；
+  2. **页签随用随关**（用户口径「随用随关，除非有必要才保留」）：会话内最多多占**一张**工作页并逐帖复用（ego 任务空间有 8 页上限，每帖新开必撞顶），**桥退出时关掉**——跑完不留页签；
   3. 命中风控/异常时**自动截图留证**，另外详情页补全每 5 条抽一帧（`XUEQIU_EGO_SHOT_EVERY`），落到 `~/.cache/xueqiu-spyder/shots/<批次>/`。
 - **风控自控**：WAF/滑块检测（`滑动|安全验证|captcha|访问验证`）命中即抛错停止，不硬撞；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
 - **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
@@ -117,7 +117,7 @@ PY
 | 行为 | 说明 | 关闭方式 |
 |:---|:---|:---|
 | 开始/结束时把 ego 窗口拉到前台 | macOS `osascript … activate`，非 macOS 跳过 | `XUEQIU_EGO_WAKE=0` |
-| 采集过的标签页**不自动关** | 采完页签停在现场，用户可直接看结果/风控页 | `XUEQIU_EGO_KEEP_PAGES=0` |
+| 页签随用随关 | 一次采集最多多占**一张**工作页（逐帖复用它，不每帖开新页——ego 任务空间有 8 页上限）；**桥退出时把这张关掉**，跑完不留页签 | 无需配置 |
 | 命中风控/异常自动截图 | timeline 命中滑块/验证、详情页 405、详情页异常、翻页失败 | `XUEQIU_EGO_SHOT_DIR=`（置空） |
 | 详情页每 5 条抽一帧 | 记录补全进度与偶发风控弹窗 | `XUEQIU_EGO_SHOT_EVERY=0` |
 
@@ -146,7 +146,7 @@ $PY main.py user {xq_id} --from "{cutoff_iso}" --outfile "雪球采集-{昵称}-
 | `XUEQIU_EGO_SPACE` | 空 | 复用指定 ego 任务空间 id（多轮采集沿用同一个） |
 | `XUEQIU_EGO_SPACE_NAME` | `xueqiu-spyder` | 新建任务空间时的名字 |
 | `XUEQIU_EGO_WAKE` | `1` | 开始/结束把 ego 窗口拉到前台 |
-| `XUEQIU_EGO_KEEP_PAGES` | `1` | 保留采集过的页签（现场证据） |
+| （页签策略固定） | — | 会话内最多一张工作页、退出即关；不再提供"保留页签"开关 |
 | `XUEQIU_EGO_SHOT_DIR` | `~/.cache/xueqiu-spyder/shots` | 截图目录（置空＝不落图） |
 | `XUEQIU_EGO_SHOT_EVERY` | `5` | 详情页每 N 条抽一帧（0＝关） |
 | `XUEQIU_EGO_BOOT_TIMEOUT` | `90` | 桥启动握手超时（秒） |
@@ -234,7 +234,8 @@ tags: []
 - [ ] venv 依赖可用（requests + playwright import 通过）？
 - [ ] **ego 通道就绪**：ego lite 已打开且已登录雪球（第二步自检打印出雪球标题）？
 - [ ] 日志确认走的是 ego 通道（`已连接 ego lite`），而**不是**回落到了 Chrome？
-- [ ] 采集时 ego lite 窗口保持**可见**（前台）——风控弹窗只在页面上出现；采完页签是否留在现场（`kept`）？
+- [ ] 采集时 ego lite 窗口保持**可见**（前台）——风控弹窗只在页面上出现？
+- [ ] 采集跑完后，ego 里**有没有多出来的页签**（应只剩本任务空间原有的 p1/p2；多出来说明桥没关干净）？
 - [ ] 若本轮出现过风控/异常：`~/.cache/xueqiu-spyder/shots/<批次>/` 下是否有对应截图？汇报里是否给了路径？
 - [ ] 输出为帖子集格式（frontmatter 七字段 + 三件套 + 发布行）？
 - [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？

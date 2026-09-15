@@ -160,5 +160,12 @@ def posts_to_opinions(posts):
             form=infer_form(clean_text, bool(post.get("is_column"))),
             title=(post.get("title") or "").strip(),
             post_url=f"https://xueqiu.com/{target}" if target else "",
+            # 完整性：正文仍与被截断的 API 摘要一致 → 说明详情页补全没成功，标「摘要」
+            # （2026-09-16 修：此前补全失败的截断帖也会被标成「全文」，属误标）
+            completeness=(
+                "摘要"
+                if post.get("needs_full") and clean_text == _strip_html(desc)
+                else "全文"
+            ),
         ))
     return opinions

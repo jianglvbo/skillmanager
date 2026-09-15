@@ -36,6 +36,24 @@ class BridgeError(RuntimeError):
     pass
 
 
+# 这些错误说明**任务空间已经不属于 agent**（用户接管 / 空间结束），重试无意义：
+#   "The user has taken control of this task space and ended the task…"
+#   "Task space not found."
+# 2026-09-16 实测：用户在采集途中点了一下浏览器，后续每条详情页都白撞一遍（32 条刷屏）。
+_FATAL_PATTERNS = (
+    "taken control",
+    "not assigned to the agent",
+    "Task space not found",
+    "browser commands are paused",
+    "hard stop",
+)
+
+
+def _is_fatal(message):
+    low = str(message or "").lower()
+    return any(p.lower() in low for p in _FATAL_PATTERNS)
+
+
 def _readline_sock(sock, buf, timeout):
     """从 socket 读一行（带超时，自己按 \\n 切）；返回 (line, 新缓冲)"""
     end = time.time() + timeout
@@ -142,8 +160,7 @@ class EgoBridge:
             "space": self.space or None,
             "spaceName": os.environ.get("XUEQIU_EGO_SPACE_NAME", "xueqiu-spyder"),
             "url": os.environ.get("XUEQIU_EGO_URL", "https://xueqiu.com/"),
-            # 页签保留：采集现场就是风控证据，采完不自动关（用户要盯着看）
-            "keepPages": os.environ.get("XUEQIU_EGO_KEEP_PAGES", "1") not in ("0", "false", "no"),
+            # 会话内只维护一张工作页（用完放回、下次复用），退出时由桥统一关
         }
         shebang = ""
         if script.startswith("#!"):
@@ -235,7 +252,12 @@ class EgoBridge:
                 continue  # 迟到的旧响应：丢弃
             if resp.get("ok"):
                 return resp.get("result")
-            raise BridgeError(resp.get("error") or f"{cmd} 失败")
+            err = resp.get("error") or f"{cmd} 失败"
+            if _is_fatal(err):
+                raise BridgeError(
+                    f"任务空间已不属于 agent（用户接管或空间已结束），{cmd} 停止：{err[:200]}"
+                )
+            raise BridgeError(err)
 
 
 class Page:

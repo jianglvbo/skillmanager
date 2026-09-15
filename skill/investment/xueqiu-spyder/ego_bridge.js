@@ -24,9 +24,13 @@
  *   {"id":7,"cmd":"shutdown"}                       // 桥自行退出
  *   {"id":8,"cmd":"screenshot","page":"p1","path":"/abs/out.png"}   // 落图，供用户事后核对风控
  *
- *   **页签保留（2026-09-16 用户要求「ego lite 的页面要在前端，我才能知道有没有触发风控」）**：
- *   `close` 默认**只返回、不真关页签**（页签留在 ego 里给用户看采集现场）；只有显式带
- *   `force:true`（或配置 keepPages=false）才真关。用户要盯着看，页签就是证据。
+ *   **页签策略（2026-09-16 用户口径：随用随关，除非有必要才保留）**：
+ *   ① 页面确实开在 ego 里且可见（用户要盯风控）；
+ *   ② 桥在整个会话里**只维护一张工作页**：临时页用完即"放回"，下一次调用直接复用，
+ *      全程不新开第二张——ego 任务空间有 8 个标签页上限（实测
+ *      `Page budget reached (8/8)`），"用完就关、下次再开"在逐帖循环里必然撞顶；
+ *   ③ 桥退出（shutdown / 进程被杀，含父进程异常退出时注册的 exit 钩子）时，
+ *      把桥自己开的页签**全部真关**——用完不留痕，也不占用户浏览器。
  *
  *   fn 既接受函数表达式（`async (a) => {...}` / `() => {...}`），也接受裸表达式
  *   （`document.title`）；裸表达式会被包成 `async (a) => (expr)`，这样 Python 侧
@@ -40,7 +44,7 @@
  *   space      复用已存在的任务空间 id（多轮采集沿用同一个，不新建）
  *   spaceName  任务空间名（仅新建时用到）
  *   url        启动时若当前页不在该域，先导航过去（默认雪球首页）
- *   keepPages  是否保留采集过的页签（默认 true；false 时 close 真关）
+ *   （无其它可调项：会话内固定一张工作页，退出时统一关）
  */
 
 const CFG = typeof __EGO_CFG !== "undefined" ? __EGO_CFG : {};
@@ -48,10 +52,10 @@ const SOCK = CFG.sock;
 const SPACE = CFG.space;
 const SPACE_NAME = CFG.spaceName || "xueqiu-spyder";
 const HOME = CFG.url || "https://xueqiu.com/";
-const KEEP_PAGES = CFG.keepPages !== false;
 
 const pages = new Map();
 let task = null;
+let workPage = null;                    // 会话内唯一的工作页（用完放回，下次复用）
 
 const net = require("net");
 
@@ -63,6 +67,10 @@ function pageOf(label) {
 
 async function boot() {
   task = SPACE ? await taskSpace(Number(SPACE)) : await taskSpace(SPACE_NAME);
+  // 注册表只装本会话真正在用的页签：ego 的页签编号是**整个浏览器单调递增**的
+  // （本次实测跨进程递增到 p15），跨会话残留的旧条目会让 pageOf() 指到别的 space 的页。
+  pages.clear();
+  workPage = null;
   const first = task.page("p1");
   pages.set("p1", first);
   const current = await first.url();
@@ -70,6 +78,31 @@ async function boot() {
     await first.goto(HOME);
     await first.waitForLoadState("domcontentloaded");
   }
+  // 用完收尾：桥退出（正常 shutdown / 被杀）时把桥自己开的页签全关
+  process.on("exit", () => { cleanupOwnPages(); });
+  process.on("SIGTERM", () => { cleanupOwnPages(); process.exit(0); });
+  process.on("SIGINT", () => { cleanupOwnPages(); process.exit(0); });
+}
+
+/* 关掉桥自己开的页签（主页面 p1 是用户的，不动）。
+   注意：必须 **await**，因为 process.exit 不等异步——2026-09-16 实测用 exit 钩子
+   调它会残留页签。 */
+async function cleanupOwnPages() {
+  workPage = null;
+  for (const [label, p] of Array.from(pages.entries())) {
+    if (label === "p1") continue;
+    try {
+      await p.close();
+      pages.delete(label);
+    } catch (e) { /* 已关或连接已断，忽略 */ }
+  }
+}
+
+function forgetAndClose(page) {
+  for (const [label, p] of Array.from(pages.entries())) {
+    if (p === page) pages.delete(label);
+  }
+  try { page.close(); } catch (e) { /* 已关或连接已断，忽略 */ }
 }
 
 async function handle(req) {
@@ -77,9 +110,12 @@ async function handle(req) {
   try {
     switch (req.cmd) {
       case "newPage": {
-        const page = await task.newPage();
-        pages.set(page.label, page);
-        return { id, ok: true, result: { label: page.label } };
+        if (!workPage) {
+          // 整个会话只开一张工作页：用完放回，下次直接复用（避开 8 页上限）
+          workPage = await task.newPage();
+          pages.set(workPage.label, workPage);
+        }
+        return { id, ok: true, result: { label: workPage.label, reused: true } };
       }
       case "goto": {
         const page = pageOf(req.page);
@@ -107,26 +143,32 @@ async function handle(req) {
       case "close": {
         const label = req.page || "p1";
         const page = pageOf(label);
-        if (KEEP_PAGES && !req.force) {
-          // 页签留给用户看（采集现场即风控证据），只把它从"由桥管理"里摘出来
-          return { id, ok: true, result: { kept: true, label } };
+        if (label === "p1" || req.force) {
+          // 主页面是用户的页面，桥不关；显式 force 才真关
+          if (label === "p1") return { id, ok: true, result: { kept: true, label } };
+          pages.delete(label);
+          await page.close();
+          return { id, ok: true, result: { closed: true, label } };
         }
-        pages.delete(label);
-        await page.close();
-        return { id, ok: true, result: true };
+        // 用完放回：页签由桥在退出时统一关（会话内复用同一张，不再新开）
+        return { id, ok: true, result: { released: true, label } };
       }
       case "screenshot": {
         await pageOf(req.page).screenshot({ path: req.path });
         return { id, ok: true, result: { path: req.path } };
       }
       case "shutdown": {
+        // 先把桥自己开的页签真关掉再退出（exit 钩子里 await 不住，会残留）
+        await cleanupOwnPages();
         setTimeout(() => process.exit(0), 50);
-        return { id, ok: true, result: true };
+        return { id, ok: true, result: { cleaned: true } };
       }
       default:
         return { id, ok: false, error: "unknown cmd: " + (req && req.cmd) };
     }
   } catch (e) {
+    const detail = String((e && e.stack) || (e && e.message) || e).slice(0, 900);
+    process.stderr.write("[bridge] " + req.cmd + " failed: " + detail + "\n");
     return { id, ok: false, error: String((e && e.message) || e).slice(0, 600) };
   }
 }
@@ -141,7 +183,7 @@ async function main() {
   const conn = net.connect(SOCK);
   conn.setEncoding("utf8");
   conn.on("connect", () => {
-    conn.write(JSON.stringify({ hello: true, pid: process.pid }) + "\n");
+    conn.write(JSON.stringify({ hello: true, pid: process.pid, space: task.spaceId }) + "\n");
   });
   conn.on("error", (e) => {
     process.stderr.write("socket error: " + String(e).slice(0, 200) + "\n");

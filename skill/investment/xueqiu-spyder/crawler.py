@@ -54,8 +54,20 @@ class CrawlerError(Exception):
     pass
 
 
+class TaskSpaceLost(CrawlerError):
+    """ego 任务空间已不属于 agent（用户接管 / 空间结束）。
+
+    2026-09-16 实测：用户碰了一下浏览器，ego 就把空间交还给用户，之后每条请求都返回
+    "The user has taken control of this task space…"。这种错误**重试没有意义**，
+    必须立刻停手、如实汇报，等用户明确说继续再 claim 空间（ego 的硬约束）。
+    """
+
+
 class XueqiuCrawler:
     """复用真实浏览器环境绕过 WAF：默认走 ego lite（2026-09-15），可回落 Chrome CDP"""
+
+    # 详情页补全连续失败多少条就停（多半是任务空间被接管/结束，继续硬撞只是刷日志）
+    _ENRICH_FAIL_LIMIT = 3
 
     def __init__(self):
         self._pw = None
@@ -239,6 +251,16 @@ class XueqiuCrawler:
                 if result.get("ok"):
                     return result["data"]
 
+                # 任务空间被接管/结束：立刻停手，不重试（重试只会刷屏）
+                blob_early = f"{result.get('error') or ''} {result.get('snippet') or ''}"
+                if re.search(r"taken control|not assigned to the agent|Task space not found|commands are paused",
+                             blob_early, re.I):
+                    self._shot("space-lost", force=False)
+                    raise TaskSpaceLost(
+                        "ego 任务空间已被接管或结束——采集停止。"
+                        "（要接着跑：在 ego 里把任务空间交回 agent，或让用户明确说「继续」后重新 claim）"
+                    )
+
                 # WAF / 滑块 / 安全验证检测（雪球阿里云防护特征）
                 snippet = (result.get("snippet") or "") + (result.get("error") or "")
                 if re.search(r"滑动|安全验证|captcha|无感验证|请完成验证|访问验证", snippet, re.I):
@@ -378,7 +400,13 @@ class XueqiuCrawler:
         except CrawlerError:
             raise
         except Exception as e:
-            logger.warning(f"获取帖子详情失败 {target}: {e}")
+            if "任务空间已不属于 agent" in str(e):
+                logger.error(
+                    "获取帖子详情失败 %s：ego 任务空间已被接管/结束——停止补全，"
+                    "剩余帖子按 API 摘要处理", target,
+                )
+            else:
+                logger.warning(f"获取帖子详情失败 {target}: {e}")
             self._shot(f"detail-error-{target.strip('/').replace('/', '_')}", page=detail_page)
             return "", None
         finally:
@@ -387,21 +415,44 @@ class XueqiuCrawler:
     def enrich_posts_full_text(self, posts):
         """对 description 被截断的帖子，访问详情页补全内容；并用详情页精确时间覆盖 API created_at"""
         import datetime as _dt
+        failed = 0
         for post in posts:
             desc = post.get("description", "") or ""
             text = post.get("text", "") or ""
             target = post.get("target", "")
             # text 为空，或 description 以 ... 结尾（摘要截断），说明正文可能被截断 → 详情页补全
-            if target and (not text or desc.endswith("...")):
+            # 需要补全的判据：详情页目标存在，且正文缺失/明显是 API 摘要
+            #   ① 没有正文；② 描述被截断（...）；③ 正文短于截断描述（半截内容）
+            # 只按 desc.endswith("...") 判断会漏掉"text 本身就不完整但不带省略号"的帖
+            # （2026-09-16 实测：description 截断、text 半截，两者都不长 → 旧判据直接跳过）
+            looks_truncated = not text or desc.endswith("...") or len(text) < len(desc)
+            if target and looks_truncated:
                 time.sleep(config.REQUEST_DELAY)
                 self._detail_seen += 1
                 # 抽帧留证：详情页是风控最常出现的地方，按间隔落图便于回看
                 if config.EGO_SHOT_EVERY and self._detail_seen % config.EGO_SHOT_EVERY == 0:
                     self._shot(f"progress-{self._detail_seen}")
+                post["needs_full"] = True     # 待补全：失败时据此标「摘要」而不是「全文」
                 full, published = self.get_post_full_text(target)
-                if full and len(full) > len(text or ""):
+                if full:
+                    # 详情页是权威来源：**只要抓到就采用**，不再要求"比 API 的 text 长"
+                    # （2026-09-16 修：此前把"长度相当但内容更全"的帖误判为失败，
+                    #   连撞三次触发熔断，导致后面几十条全部跳过）
+                    changed = len(full) != len(text or "")
                     post["text"] = full
-                    logger.info(f"  补全帖子 {target} ({len(full)} 字)")
+                    post["needs_full"] = False
+                    logger.info(
+                        f"  详情页正文{'覆盖' if changed else '确认'} {target} ({len(full)} 字)"
+                    )
+                else:
+                    failed += 1
+                    if failed >= self._ENRICH_FAIL_LIMIT:
+                        logger.error(
+                            "详情页补全连续失败 %d 条（常见原因：用户接管了任务空间 / 任务空间已结束）"
+                            "——停止补全；剩余帖子按 API 摘要处理并标「摘要」，不会误标「全文」",
+                            failed,
+                        )
+                        break
                 # 详情页精确时间覆盖 API 时间（详情页为权威来源）
                 if published:
                     try:
