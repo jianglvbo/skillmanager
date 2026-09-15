@@ -3,11 +3,12 @@ name: post-fetch
 description: |
   雪球博主帖子采集编排层。负责：前置同步（雪球关注列表 → 看板博主控制台）、
   xq_id/时间窗解析（info_cutoff 增量）、调用 xueqiu-spyder 工具层执行采集、
-  帖子集格式验收、info_cutoff 双写（画像 + 看板）、交接提炼流水线。
+  帖子集格式验收、info_cutoff 回写（只写看板 MySQL）、交接提炼流水线。
   触发词：「抓取雪球」「雪球帖子」「采集雪球」「xq fetch」「雪球动态」「采集帖子」
   排除条件：含「分析」「提炼」「画像」等关键词时交给 investment-refine；
   纯抓取执行（不经编排）可直接调 xueqiu-spyder。
-  依赖条件：xueqiu-spyder（venv + Chrome CDP 调试端口，雪球已登录）。
+  依赖条件：xueqiu-spyder（venv + **ego lite 已打开且已登录雪球**；2026-09-15 起
+  采集通道由 Chrome CDP 迁到 ego lite，不再需要调试端口）。
   区别于 xueqiu-spyder：post-fetch 是知识框架集成编排者，spyder 是纯抓取工具层。
 license: MIT
 agent_created: true
@@ -22,7 +23,7 @@ compatibility: 通用
 ## Default Stance
 
 ### 核心原则
-- **编排-工具分层（2026-09-09 重构定案）**：采集执行委托 `xueqiu-spyder`（CDP 复用已登录 Chrome）；post-fetch 只做框架集成（控制台同步 / 参数解析 / 格式验收 / info_cutoff 双写 / 提炼交接），**不直接操作浏览器**。
+- **编排-工具分层（2026-09-09 定案，2026-09-15 更新通道）**：采集执行委托 `xueqiu-spyder`（经 **ego lite 通道**复用已登录雪球会话，见该 skill 的 `ego_browser.py` / `ego_bridge.js`）；post-fetch 只做框架集成（控制台同步 / 参数解析 / 格式验收 / info_cutoff 回写 / 提炼交接），**不直接操作浏览器**。
 - **用户页方案 + 详情页补全（2026-08-15 定案，由 spyder 承载）**：完整采集走「timeline 翻页 + 详情页补全」，工具层内建 WAF/滑块检测，命中即停不硬撞。
 - **全文优先**：每条帖子必须经完整性验证，未经详情页确认不得标注「全文」（spyder 已实现，验收复核）。
 - **容错优先**：单帖失败不影响整批；置顶帖排除、不纳入时间窗口统计。
@@ -59,7 +60,7 @@ compatibility: 通用
 
 每次采集会话开始**必须**先执行（无论单博主还是批量）。完整规则见 `references/execution-guide.md`「前置步骤」——获取用户 ID、分页拉取关注列表、与看板对比（新增→确认后登记 / 取关→报告由用户看板删除 / 无变动）、更新 `updateDate`。
 
-**两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——本次变更的博主，画像 frontmatter 与看板 `blogger.info_cutoff_datetime` 同值（规则 #36；画像 md 已废弃时只核对看板）。
+**两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——**只核对看板 `blogger.info_cutoff_datetime`**（规则 #36；画像 md 已于 2026-09-12 退役，不再有画像侧可对）。
 
 ### 第零步：解析雪球 ID
 
@@ -72,11 +73,14 @@ compatibility: 通用
 ```bash
 SPYDER=~/.agents/skills/xueqiu-spyder          # 工具层权威位置（部署目录）
 PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # venv 路径存本机 0600 配置，不入仓库
-$PY -c "import requests, playwright" && curl -s http://localhost:9222/json/version
+$PY -c "import requests, playwright"
+ego-browser --help >/dev/null && echo "ego CLI OK"     # 采集通道（2026-09-15 起用 ego lite）
 ```
 - 依赖缺失 → `$PY -m pip install -r "$SPYDER/requirements.txt"`
-- **CDP 预检必须 `localhost`**（Chrome 152 起 `127.0.0.1` 返 404，会被误判不可达）；端口占用用 `XUEQIU_DEBUG_PORT` 覆盖
-- CDP 不可达 → 提示启动调试 Chrome 并登录雪球；工具层细节见 `xueqiu-spyder` SKILL.md
+- **ego 通道预检**：ego lite 已在运行且已登录雪球（工具层第二步的自检脚本会打印当前页 URL/标题）；
+  CLI 缺失 → 提示用户在 ego lite 里安装命令行工具
+- 未登录 → 提示用户**先在 ego lite 里登录雪球**再重跑（不再提示启动 Chrome）
+- 工具层细节见 `xueqiu-spyder` SKILL.md；旧 `XUEQIU_TRANSPORT=chrome` 路径仅排障时用
 
 ### 第二步：执行采集（委托 xueqiu-spyder）
 
@@ -123,7 +127,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 
 采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文，输出文件路径。
 
-### 第五步：更新 info_cutoff（画像 + 看板双写）
+### 第五步：更新 info_cutoff（只写看板 MySQL；「双写」为旧称，画像 md 已退役）
 
 > **前置条件（2026-09-09 用户硬约束：保证不漏采）**：**只有该博主本次采集真正完成，才能更新其 info_cutoff**。判定依 spyder 退出码：
 >
@@ -140,7 +144,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 
 将「信息截止」更新为**本次采集实际完成时间**（ISO `YYYY-MM-DDTHH:mm:ss`，无精确时间默认 `17:50:00`）——**只写看板 MySQL `blogger.info_cutoff_datetime`**（`scripts/xq_update_cutoff.py` 回写；脚本里的画像 md 分支已废弃，2026-09-12 起不创建、不更新任何画像文件）。
 
-**批量采集收尾核对（硬约束）**：批量结束后必须逐位核对「本次是否采集完成」，只对退出码 0/2 的博主执行双写；退出码 1/3 的博主列入「待重试清单」报告用户，**其 cutoff 保持原值不动**。
+**批量采集收尾核对（硬约束）**：批量结束后必须逐位核对「本次是否采集完成」，只对退出码 0/2 的博主回写 cutoff；退出码 1/3 的博主列入「待重试清单」报告用户，**其 cutoff 保持原值不动**。
 
 ### 采集完成即结束
 
@@ -164,7 +168,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 | 格式验收/输出规范 | `references/output-format.md` | 帖子集 frontmatter/三件套/字段表/status/原文链接铁律 | 读取 |
 | 采集后提炼帖子集 | `references/refine-checklist.md` | 精华去糟粕价值流水线、灰区裁决、言论追踪落位（framework-rules #29 例外，investment-refine 加载） | 读取 |
 | **关注列表同步** | `scripts/xq_sync_console.py` | 同步 + 看板对比（dry-run/--apply；依赖 browser-act + 已登录 session） | **执行** |
-| **info_cutoff 双写** | `scripts/xq_update_cutoff.py` | 画像 + 看板 MySQL 双写（参数：nickname/ISO时间） | **执行** |
+| **info_cutoff 回写** | `scripts/xq_update_cutoff.py` | 只写看板 MySQL `blogger.info_cutoff_datetime`（参数：nickname/ISO时间；画像 md 分支 2026-09-12 起已废弃） | **执行** |
 | 存量批次净化 | `scripts/clean_legacy_batches.py` | 旧批次帖子集清洗到纯文本基线（--dry-run/--dir） | **执行** |
 | **清临时产物前操作门** | `scripts/check-post-history-covered.js` | 逐帖校验原文已落 post_history（url_hash + content_hash），清理临时采集产物前强制跑 | **执行** |
 | 摘要帖二次补全 | `scripts/xq_refetch_summary.py` | 标「摘要」帖导航详情页补全（依赖 browser-act；--dir/--date） | **执行** |
@@ -194,6 +198,6 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 - [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter / 三件套 / 发布行 / 纯文本 / 每帖带 `[原文]` / 摘要与全文标记一致）？
 - [ ] **采集产物已落 post_history**；清理临时产物前已过入库校验（返回 0），且**未把帖子集写进 vault 的 `工作区/粗制品/`**？
 - [ ] 时间窗口 = info_cutoff → 当前，置顶帖已排除？
-- [ ] **仅对采集完成（退出码 0/2）的博主双写 info_cutoff**；退出码 1（失败）/ 3（页数不足）者**保持原 cutoff 不动**并列入待重试清单（防漏采）？
+- [ ] **仅对采集完成（退出码 0/2）的博主回写 info_cutoff（看板 MySQL）**；退出码 1（失败）/ 3（页数不足）者**保持原 cutoff 不动**并列入待重试清单（防漏采）？
 - [ ] post_history 保留期清理已跑（180 天滚动窗口，2026-09-15 由 30 天放宽）？
 - [ ] 无浏览器自动化进程遗留？

@@ -35,7 +35,7 @@ python3 {post-fetch}/scripts/xq_sync_console.py --apply    # 确认后落地：�
 4. **博主层残留**（看板无登记但 `博主/<名>/` 存在文件夹）→ 报告，询问迁移/删除/保留（2026-08-10 曾遗留 APEC蓝天/douhun/james_nj/景风长赢，8/14 审查才暴露）
 5. 更新看板 `updateDate` 为当天
 
-**info_cutoff 一致性（2026-08-14 新增）**：本次「信息截止」发生变更的博主，检查画像 `博主/<名>/<名>.md` frontmatter `info_cutoff_datetime` 是否已同步同值；不一致 → 更新画像（ISO 裸写无引号，规则 #36）。画像不存在 → 跳过（新博主待采集后第五步创建）。
+**info_cutoff 一致性（2026-08-14 新增；2026-09-15 收口到单一权威）**：本次「信息截止」发生变更的博主，核对**看板 MySQL `blogger.info_cutoff_datetime`**（ISO 裸写无引号，规则 #36）。**画像 md 已于 2026-09-12 退役**，不再有画像侧需要同步——旧版本此处要求「画像与看板同值」，现在只认看板。
 
 > 此步取代原规则 #12 中「Agent 不得自行新增博主」的限制——用户明确授权从雪球关注列表同步。但 Agent 仍不得凭空捏造博主（必须有雪球关注关系作为来源）。
 
@@ -64,7 +64,8 @@ $PY "$SPYDER/main.py" user {xq_id} \
 
 **环境检查**（调用前）：
 - venv 依赖：`$PY -c "import requests, playwright"`
-- Chrome CDP：`curl -s http://localhost:9222/json/version` 返回 JSON（**必须 localhost**：Chrome 152 起 `127.0.0.1` 返回 404）；端口占用时 `XUEQIU_DEBUG_PORT` 覆盖
+- **ego lite 通道（默认，2026-09-15 起）**：确认 ego lite 已打开且已登录雪球；`SPYDER/ego_browser.py` 的自检打印当前页 URL/标题即可
+- ~~Chrome CDP：`curl -s http://localhost:9222/json/version`~~ —— 旧通道（`XUEQIU_TRANSPORT=chrome`）才需要，仅排障时用；主机名必须 `localhost`（Chrome 152 起 `127.0.0.1` 返 404），端口用 `XUEQIU_DEBUG_PORT` 覆盖
 - 登录态：用户页标题含昵称 = 已登录
 
 **翻页数与节流（2026-09-09 实测固化，硬约束）**：
@@ -93,7 +94,7 @@ spyder 输出后逐项核对：
 2. 每帖三件套：`## N. 标题` + 正文 + 摘要行（发布行含 `形态`、`全文/摘要`、`[原文]` 链接）
 3. 纯文本净化：无 `![[`、`![](url)`、`<img>`、`[表情]` 占位残留（Unicode emoji 属正文保留）
 4. `author` 值合法：不含 `发布于|来自|关注|：|:`，判不出置 `Unknown` 并标待复核
-5. 不合格项 → 修复后落 vault；合格 → 汇报 + info_cutoff 双写
+5. 不合格项 → 修复后落 vault；合格 → 汇报 + info_cutoff 回写（看板）
 
 ---
 
@@ -112,7 +113,7 @@ spyder 输出后逐项核对：
 $PY main.py user {xq_id} --from "{cutoff}" --max-pages {N} ...
 code=$?
 case $code in
-  0|2) # 采集完成 → 双写 info_cutoff
+  0|2) # 采集完成 → 回写 info_cutoff（看板）
        python3 post-fetch/scripts/xq_update_cutoff.py "{nickname}" "$(date '+%Y-%m-%dT%H:%M:%S')" ;;
   1|3) # 采集失败 / 页数不足 → 保持原 cutoff，列入待重试清单报告用户
        echo "⚠️ {nickname} 采集未完成（退出码 $code），cutoff 保持当前值，待重试" ;;
@@ -121,7 +122,7 @@ esac
 
 **失败时绝不更新**：否则下次从新 cutoff 起算，本次未采到的帖子永久遗漏。原则是**宁可重复采，不可漏采**（重复内容可在提炼阶段去重）。
 
-**批量收尾核对**：逐一核对退出码 → 仅对 0/2 双写 → 退出码 1/3 的博主列「待重试清单」报给用户，其 cutoff 原值不动。
+**批量收尾核对**：逐一核对退出码 → 仅对 0/2 回写 cutoff → 退出码 1/3 的博主列「待重试清单」报给用户，其 cutoff 原值不动。
 
 ---
 
