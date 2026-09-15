@@ -176,9 +176,8 @@ skill-name/
 - **远程仓库**：[github.com/jianglvbo/Ai](https://github.com/jianglvbo/Ai)（主分支：`main`）
 - **本地路径**：`~/Ai/`
 - 使用 Git 追踪所有变更（Conventional Commits，历史见 `git log --oneline`）
-- Skill 更新后，提交到仓库（满 5 次 commit 自动 push 一次）
+- **提交/推送规范统一见 `git-ops` skill**——本 README 只指向、不重复定义规则（避免两份真相源）
 - 合并时如遇冲突，自行处理的由 Agent 解决；无法自动处理的需提交给用户确认
-- **仅在用户明确要求时更新或推送仓库内容**
 
 ### 首次推送到 GitHub
 
