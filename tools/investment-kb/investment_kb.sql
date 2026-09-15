@@ -9,7 +9,7 @@
 --          保留建表期继承的物理外键（纯记录用，不参与业务写入）。
 --       ③ 每表每字段均带 COMMENT；
 --       ④ **一条帖子只落一张表**：statement_trade/predict/research/view/insight/chat
---          六张之一（唯一例外 post_history 原文表），不得落在第二张表；博主/个股/行业/市场四维度全靠 _rel 关联表；
+--          六张之一（唯一例外 post_history 原文表），不得落在第二张表；博主/个股/行业/指数/市场五个维度全靠 _rel 关联表；
 --       ⑤ **命名**：表名一律**单数**；布尔 is_/has_ 前缀、时间名跟类型（date → _date、datetime → _datetime）、
 --          枚举 _code 后缀、子表 _sub 后缀、关联表 _rel 后缀；
 --       ⑥ **可枚举的值表进 dict**（标签、方向、状态等一律 dict，字段注释里写 dict.type 名）；
@@ -56,7 +56,7 @@ CREATE TABLE dict (
   PRIMARY KEY (`type`,`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典表';
 
--- dict 内容快照（148 行；type 分组）
+-- dict 内容快照（150 行；type 分组）
 INSERT INTO dict (type, code, name, sort_order, is_enabled, remark) VALUES
   ('ambiguous_word', '小米', '小米', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
   ('ambiguous_word', '美的', '美的', 0, 1, '与常用词同形的个股别名：命中后须过上下文判定'),
@@ -74,12 +74,14 @@ INSERT INTO dict (type, code, name, sort_order, is_enabled, remark) VALUES
   ('console_type', 'stock', '个股', 1, 1, '具体股票+代码'),
   ('console_type', 'industry', '行业', 2, 1, '申万最下级/自定义板块'),
   ('console_type', 'market', '市场', 3, 1, 'A股/港股/美股大盘'),
+  ('console_type', 'index', '指数', 4, 1, NULL),
   ('del_flag', '0', '未删除', 0, 1, NULL),
   ('del_flag', '1', '已删除', 1, 1, NULL),
   ('entity_type', 'blogger', '博主', 1, 1, NULL),
   ('entity_type', 'stock', '个股', 2, 1, NULL),
   ('entity_type', 'industry', '行业', 3, 1, NULL),
   ('entity_type', 'market', '市场', 4, 1, NULL),
+  ('entity_type', 'market_index', '指数', 4, 1, NULL),
   ('food_homonym', '小米', '小米', 0, 1, '与食物/日用品同名的股名：需证券语境词或产品词才判 link，仅动作词判 doubt'),
   ('food_homonym', '苹果', '苹果', 0, 1, '与食物/日用品同名的股名：需证券语境词或产品词才判 link，仅动作词判 doubt'),
   ('hk_connect_source', 'eastmoney_dlmk0146', '东方财富·港股通板块（沪深港通口径）', 1, 1, NULL),
@@ -230,7 +232,7 @@ CREATE TABLE blogger (
   UNIQUE KEY `uk_name` (`name`),
   KEY `idx_platform` (`platform_code`),
   KEY `idx_special` (`is_special`)
-) ENGINE=InnoDB AUTO_INCREMENT=82884 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
+) ENGINE=InnoDB AUTO_INCREMENT=86440 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博主表';
 
 CREATE TABLE blogger_recycle_file (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -289,7 +291,7 @@ CREATE TABLE todo (
   `created_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页待办表';
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页待办表';
 
 CREATE TABLE pending_decision (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -312,7 +314,7 @@ CREATE TABLE pending_decision (
   KEY `idx_kind` (`kind_code`),
   KEY `idx_stmt` (`statement_id`),
   KEY `idx_created` (`created_datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='待决策队列：agent 处理不了或用户打回的问题，裁决后内化成规则';
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='待决策队列：agent 处理不了或用户打回的问题，裁决后内化成规则';
 
 -- ============ 三、流水与流程记录 ============
 CREATE TABLE refine_chain_step (
@@ -375,7 +377,7 @@ CREATE TABLE refine_review (
   KEY `idx_item` (`item_id`),
   KEY `idx_statement` (`statement_id`),
   KEY `idx_status` (`status_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='提炼复核表：用户对某一步或整帖的复核意见';
 
 CREATE TABLE review_record (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -640,7 +642,7 @@ CREATE TABLE statement_chat (
   KEY `idx_is_read` (`is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='闲聊帖子表';
 
--- ============ 五、实体三表（个股 / 行业 / 市场）+ 港股通名单 ============
+-- ============ 五、实体四表（个股 / 行业 / 指数 / 市场）+ 名单与目录表 ============
 CREATE TABLE stock (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '个股名称',
@@ -662,9 +664,27 @@ CREATE TABLE industry (
   `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '行业名称',
   `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `sw_code` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '对应申万行业代码，指向 industry_sw.code；NULL=非申万标准名',
+  `sw_level` tinyint DEFAULT NULL COMMENT '申万层级：1=一级 2=二级 3=三级；NULL=未匹配',
+  `source` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'legacy' COMMENT '来源：sw=申万标准名，legacy=历史自由文本（已冻结，禁止再新增）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=283 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='行业表';
+) ENGINE=InnoDB AUTO_INCREMENT=284 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='行业表';
+
+CREATE TABLE market_index (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '指数名称，如 创业板/沪深300/恒生科技',
+  `code` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '指数代码，如 399006；待补时留空',
+  `aliases` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '别名，逗号分隔，如 创业板指,创指',
+  `keywords` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '补充关键词，逗号分隔（提及判定的同句共现用）',
+  `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `catalog_id` bigint unsigned DEFAULT NULL COMMENT '对应指数目录 id，指向 index_catalog.id；NULL=未匹配',
+  `source` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'legacy' COMMENT '来源：catalog=指数目录，legacy=历史自由文本（已冻结，禁止再新增）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_name` (`name`),
+  KEY `idx_code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='指数表';
 
 CREATE TABLE market (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -677,6 +697,46 @@ CREATE TABLE market (
   UNIQUE KEY `uq_code` (`code`),
   UNIQUE KEY `uq_name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='市场表';
+
+CREATE TABLE index_catalog (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `code` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '指数代码（如 000300/930713/HSI），待补时为 NULL',
+  `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '指数名称（标准名，如 沪深300/中证人工智能主题指数）',
+  `category` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '类别：宽基/行业/主题/策略/风格/属性/债券/跨境',
+  `issuer` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '编制/发布机构，如 中证指数公司/国证指数公司/恒生指数公司',
+  `publish_date` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '发布日期（源表原文，含「—（2023 年发布）」这类说明）',
+  `sample_count` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '成分数量（源表原文，如 300/全部沪市上市证券）',
+  `aliases` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '别名，逗号分隔（用于名称匹配，如 创业板指,创指）',
+  `remark` varchar(1000) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '说明/关键信息（源表备注原文）',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序（源表出现顺序）',
+  `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_name` (`name`),
+  KEY `idx_code` (`code`),
+  KEY `idx_category` (`category`)
+) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='指数目录表：指数实体必须命中本表（名称/别名/代码），禁止自由文本新增';
+
+CREATE TABLE industry_sw (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `code` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '申万行业代码；社交/本地生活服务/其他银行 为 NULL（官方未发布对应指数）',
+  `name` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '行业名称（保留 Ⅱ/Ⅲ 后缀，与官方口径一致）',
+  `short_name` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '规范名：去掉 Ⅱ/Ⅲ 后缀，用于名称匹配与展示',
+  `level` tinyint NOT NULL COMMENT '层级：1=一级 2=二级 3=三级',
+  `parent_code` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '上级行业代码，指向本表 code；一级为 NULL',
+  `parent_name` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '上级行业名称；一级为 NULL',
+  `l1_name` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '所属一级行业名；一级行=自身名',
+  `l2_name` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '所属二级行业名；仅三级行填写',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序（标准表原始顺序，自上而下）',
+  `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_name_level` (`short_name`,`level`),
+  KEY `idx_code` (`code`),
+  KEY `idx_parent` (`parent_code`),
+  KEY `idx_l1` (`l1_name`),
+  KEY `idx_l2` (`l2_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=1501 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='申万行业分类标准表（2021版）：行业实体必须命中本表，禁止自由文本新增';
 
 CREATE TABLE hk_connect_snapshot (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
@@ -726,6 +786,15 @@ CREATE TABLE statement_industry_rel (
   PRIMARY KEY (`statement_id`,`industry_id`),
   KEY `idx_industry` (`industry_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论行业关联表';
+
+CREATE TABLE statement_market_index_rel (
+  `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
+  `market_index_id` bigint unsigned NOT NULL COMMENT '指数 id，指向指数表',
+  `role_code` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'subject' COMMENT '角色，字典项 dict.type=rel_role：subject 主体，mention 文中提及',
+  `created_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`statement_id`,`market_index_id`),
+  KEY `idx_market_index` (`market_index_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='言论指数关联表';
 
 CREATE TABLE statement_market_rel (
   `statement_id` bigint unsigned NOT NULL COMMENT '言论 id，指向六张言论表之一',
@@ -779,7 +848,7 @@ CREATE TABLE statement_review_sub (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_stmt` (`statement_id`),
   KEY `idx_status` (`status_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子复核建议子表';
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子复核建议子表';
 
 -- ============ 七、只读视图（言论六表 UNION ALL，38 列） ============
 -- 分类权威 = content_type 六分法；非本类型列补 NULL；预测/交易专属列直取本表（帖子唯一落点，无需关联表）

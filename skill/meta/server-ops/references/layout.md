@@ -25,7 +25,7 @@
 
 ## 数据库连接
 - host: 106.55.14.116:3306（**建议**改回 127.0.0.1 + 本机 SSH 隧道：`ssh -L 3306:127.0.0.1:3306 jianglb@106.55.14.116`）
-- **业务库 investment_kb**：**29 表 + 1 只读视图**（表名一律单数；单 dict 表存全部码值；2026-08-31 dict 14→1 整合，2026-09-13 表名/列名规范化），DDL 权威在 `~/Ai/tools/investment-kb/investment_kb.sql`（由 `~/Project/investment-console/scripts/export-schema.js` 从实库生成，可跑 `verify-schema-replay.js` 校验一致性）
+- **业务库 investment_kb**：**38 表 + 1 只读视图**（表名一律单数；单 dict 表存全部码值；2026-08-31 dict 14→1 整合，2026-09-13 表名/列名规范化），DDL 权威在 `~/Ai/tools/investment-kb/investment_kb.sql`（由 `~/Project/investment-console/scripts/export-schema.js` 从实库生成，可跑 `verify-schema-replay.js` 校验一致性）
 - **数据链路（2026-09-03 起，服务器版已下线）**：本地看板（vault=iCloud 绝对基准）→ buildIndex → 批量同步到本服务器 MySQL investment_kb（远端唯一共享库；vault→MySQL 同步已批量化 ~20 查询，串行队列防并发）；`vault_sync.sh` 已随服务器版退役
 - user: jianglb（@'%' 远程 + @localhost 本机），密码见 credentials/server.md
 - root: 仅 localhost，auth_socket 免密（sudo mysql）

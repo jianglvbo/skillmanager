@@ -85,7 +85,7 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/fitness-data-$(date +%Y%
 - **vault 不再推送服务器**（`vault_sync.sh` 已随服务器版退役 2026-09-03；本机 `migrate_to_mysql.py` 2026-08-31 已退役）——MySQL 的 blogger 表由本地实例维护（files/tags 已退役，改为内存索引）
 - 同步范围：只动 blogger 表（files/tags 已退役，改为内存索引）；运营表（refine/review/coarse/trash/prediction 域）一律不碰
 - 强制重建本地索引缓存：`POST http://127.0.0.1:8698/api/index/rebuild`
-- 库表 DDL 权威：`~/Ai/tools/investment-kb/investment_kb.sql`（**实况 29 表 + 1 只读视图**：六张 `statement_*` 类型表 + `statement` UNION 视图 + 关联表 + `post_history` 等；单 `dict` 表承载全部码值。2026-09-13 表名/列名规范化后由 `scripts/export-schema.js` 从实库生成）
+- 库表 DDL 权威：`~/Ai/tools/investment-kb/investment_kb.sql`（**实况 38 表 + 1 只读视图**：六张 `statement_*` 类型表 + `statement` UNION 视图 + 关联表 + `post_history` 等；单 `dict` 表承载全部码值。2026-09-13 表名/列名规范化后由 `scripts/export-schema.js` 从实库生成）
 - **本地服务管理**：launchd 单元 `com.investment-console`（`launchctl kickstart -k gui/501/com.investment-console` 重启）；启动前置：config.json + vault 可达 + node_modules 含 mysql2
 - 本地 MCP 端点：`http://127.0.0.1:8698/mcp`（token = config.json `mcpToken`；MCP 客户端配置里指向本地端点即可）
 

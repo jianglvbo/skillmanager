@@ -145,7 +145,7 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 > 15s 心跳保活、`epoch` 键被 LRU 淘汰时生成随机 epoch 而**不回落固定值**（否则会读到本该失效的老键）。
 > 安装/配置/安全细节与查看命令见 server-ops skill。
 
-> **结构约定速查**：帖子一律 `post`（六张分表 `statement_trade`/`statement_predict`/`statement_research`/`statement_view`/`statement_insight`/`statement_chat` + 视图 `statement`），一条帖子只落一张表｜四维度走 `实体关联表`｜子表 `_sub`、关联表 `_rel`｜**弃用表删前备份后直接 DROP**（不留 `_del`）｜可枚举值进 `dict`、字段注释标注 `dict.type`｜vault 文件索引/标签**不落库**（服务端内存扫描 `buildIndex()`）｜`wiki_ref` 存 vault 相对路径、前端生成 `obsidian://` 本地打开链接。详见 framework-rules #44。
+> **结构约定速查**：帖子一律 `post`（六张分表 `statement_trade`/`statement_predict`/`statement_research`/`statement_view`/`statement_insight`/`statement_chat` + 视图 `statement`），一条帖子只落一张表｜五个维度（博主/个股/行业/指数/市场）走 `实体关联表`｜子表 `_sub`、关联表 `_rel`｜**弃用表删前备份后直接 DROP**（不留 `_del`）｜可枚举值进 `dict`、字段注释标注 `dict.type`｜vault 文件索引/标签**不落库**（服务端内存扫描 `buildIndex()`）｜`wiki_ref` 存 vault 相对路径、前端生成 `obsidian://` 本地打开链接。详见 framework-rules #44。
 
 > 另一坑：旧实例若成为孤儿进程（PPID=1）会与新实例抢状态；`launchctl kickstart -k` 之前先 `pgrep -fl "node server.js"` 确认没有残留。
 
@@ -163,9 +163,9 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
   页面随之显示「言论已删除」）；删除理由要追加到 `refine-schema.md` 的「用户删过的类型」判据表，让同类帖子下次不落库（framework-rules #50）。`blogger_statement` 遇到解析不出的标的名会**自动上报**一类（warnings 里带编号）。
 - **原文留档**（2026-09-11 新增）→ `post_history` 表：采集验收后由 post-fetch 调 `scripts/import-post-history.js` 落库（摘要帖/无链接帖不入库）；提炼侧第 0.5 步与补采场景用 `MCP post_history`（`check` 查窗口内已留档、`get` 取原文）——**目的是避免重采**，不参与提炼判定。规则见 framework-rules #41
 - **待读/已读**（2026-09-12 用户要求）→ 言论「阅读状态」：`statement_*` 六表的 `is_read`（默认 1=已读），
-  看板四层徽标＝菜单角标（总待读）/ 四维度 tab 角标 / 列表卡右上角待读数 / 言论卡**左侧红条**（不写文字，用户 2026-09-12 要求）；
+  看板四层徽标＝菜单角标（总待读）/ 五维度 tab 角标 / 列表卡右上角待读数 / 言论卡**左侧红条**（不写文字，用户 2026-09-12 要求）；
   用户把言论卡**向上滑出可视区**（首屏就在屏上的不算）由前端 `POST /api/statement/read` 置已读（**只写库、界面不自动刷新**——
-  切菜单/换维度重读数据时标识才消失），四个维度 tab 角标与菜单角标**同款同位置**（`.nav-badge`），agent 侧维护用 `MCP statement_read`；
+  切菜单/换维度重读数据时标识才消失），五个维度 tab 角标与菜单角标**同款同位置**（`.nav-badge`），agent 侧维护用 `MCP statement_read`；
   **言论列表排序＝未读优先 + 时间倒序**（服务端 SQL 与前端混排同一口径）
   （stats/read/unread/all-read）。**agent 不主动标待读**（见 framework-rules #51）
 - **决策链路图 v2（思考时间线，2026-08-31 起替代旧 10 节点流程图）**：源→拆分决策→每条产物一条思考轨道（kind 徽章 + 推理文本，决策步红点、quote 原文引用、alt 否决块）→产物卡即终点；判断只留给有真实分叉处（归属层/关系），关系判断落在 thinking 的「决策」步，审查 C3/C7=写后质检不重复。详见 console-guide §4
