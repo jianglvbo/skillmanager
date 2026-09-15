@@ -110,8 +110,9 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── post-fetch/            ←   雪球帖子采集编排层
 │   │   ├── xueqiu-spyder/         ←   雪球抓取工具层（CDP 会话复用）
 │   │   └── prediction-console/    ←   预测控制台（录入/验证/言论跟踪，MySQL 落库）
-│   ├── frontend/                  ← 前端开发（console-style 风格）
-│   │   └── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
+│   ├── frontend/                  ← 前端开发与可视化产物
+│   │   ├── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
+│   │   └── archify/               ←   架构图即代码（架构/流程/时序/数据流/生命周期图 → 可交互 HTML）
 │   └── office/                    ← 文档与系统工具
 │       ├── mac-cleaner/           ←   macOS 磁盘空间分析与安全清理
 │       └── qmd/                   ←   本地文档全文/语义索引与搜索（含 MCP 模式）
@@ -241,11 +242,12 @@ git push origin main
 | `wechat-article` | 微信公众号文章提取与转 Markdown |
 | `full-text-organizer` | 语音转录稿（视频/播客/口述）→ 结构化书面文章 |
 
-### frontend/ — 前端开发（console-style 风格）
+### frontend/ — 前端开发与可视化产物
 
 | Skill | 说明 |
 |:---|:---|
 | `console-style-fitness` | 控制台风格健身应用：玻璃拟态 + 极光渐变 + 10 主题 token 体系、单文件架构与数据模型、AI 生成链路、校验脚本（validate.py） |
+| `archify` | 架构图即代码 Agent Skill（第三方，MIT，github.com/tt-a1i/archify）：把代码库或系统描述编译为可交互的架构/工作流/时序/数据流/生命周期图，输出自包含 HTML，支持 PNG/SVG/WebM 导出与 Mermaid 转换；需 Node ≥18，运行时自包含 |
 
 ### investment/ — 投资知识框架
 
