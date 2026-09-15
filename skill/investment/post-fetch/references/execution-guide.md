@@ -3,7 +3,8 @@
 > 本文件承载 post-fetch Workflow 的完整执行细节（前置同步、工具层调用、时间窗、格式验收、风控知识）。
 > SKILL.md 仅保留步骤摘要骨架，细节一律以本文件为准；采集执行由 xueqiu-spyder 承载，本层不持有页面解析规则（2026-09-09 重构，page-structure.md 已退役）。
 > 权威规则：`framework-rules.md` #12（博主补登/移除例外）、#29（帖子集例外流程）、#35（原文链接必填）。
-> 2026-09-09 重构：编排-工具分层（post-fetch 编排 → xueqiu-spyder 抓取），替代 browser-act 直采路径。
+> 2026-09-09 重构：编排-工具分层（post-fetch 编排 → xueqiu-spyder 抓取）。
+> 2026-09-16 收口：**全部浏览器动作统一走 ego lite**（采集走 xueqiu-spyder 的桥；同步/摘要补全走 `scripts/xq_ego.py`），**browser-act 依赖已移除**，不要再起 Chrome。
 
 ---
 
@@ -28,7 +29,7 @@ python3 {post-fetch}/scripts/xq_sync_console.py            # dry-run（默认）
 python3 {post-fetch}/scripts/xq_sync_console.py --apply    # 确认后落地：新增登记；取关须看板手工删
 ```
 
-脚本输出（依赖 browser-act CLI + 已登录雪球 session + 看板服务 127.0.0.1:8698）：
+脚本输出（依赖 **ego lite 已打开且已登录雪球** + 看板服务 127.0.0.1:8698；脚本内部走 `xq_ego.py`）：
 1. **新增**（关注中但看板未登记）→ 向用户报告，`--apply` 后走 `POST /api/bloggers` 登记（编号递增，雪球ID填入，平台=雪球，「信息截止」=半年前今天 17:50:00 ISO）
 2. **取关**（看板登记但已不关注，且平台=雪球）→ 向用户报告，**须用户到看板手工删除**（涉及目录回收，脚本不自动执行，保留画像文件夹与 wiki 条目）
 3. **ID 不一致**（看板 ID 与关注列表不符）→ 报告，人工核对

@@ -4,7 +4,7 @@
 对帖子集中标「摘要」的帖子导航详情页补全全文。
 
 用法:
-  python3 xq_refetch_summary.py [--session NAME] [--dir OUTDIR] [--date "YYYY年M月D日"] [文件...]
+  python3 xq_refetch_summary.py [--dir OUTDIR] [--date "YYYY年M月D日"] [文件...]
 
 安全设计（2026-09-08 事故后加固）：
   1. 正文替换仅改写正文区间 b[start(2):end(2)]，绝不吞掉摘要行与块间换行
@@ -14,11 +14,17 @@
   3. 写回前自动备份 .bak（保留最近一次）
   4. 滑块：检测到验证页 → 激活浏览器窗口置前，等待用户手动过（默认 120s），过后继续
 
-依赖：browser-act CLI + 已登录雪球 session
-"""
-import re, sys, os, glob, time, shutil, subprocess, argparse
+依赖：**ego lite**（已打开且已登录雪球）
 
-BA = os.path.expanduser('~/.local/bin/browser-act')
+2026-09-16 迁移：浏览器层从 browser-act 换成 ego lite（用户口径「以后别用 chrome 了，
+用 ego lite」）。正文改从 ego 页面的 `.article__bd__detail` 取 DOM 文本；
+滑块检测沿用，命中时把 **ego lite** 窗口置前让用户手动过。
+"""
+import re, sys, os, glob, time, shutil, argparse
+
+# 统一接入层（ego lite；不再依赖 browser-act / Chrome）
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from xq_ego import bring_to_front, ego_session   # noqa: E402
 VAULT = '/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库'
 DEFAULT_DIR = os.path.join(VAULT, '工作区', '粗制品')
 # 备份目录在 vault 外（2026-09-09：.bak 不得污染 vault）
@@ -40,20 +46,17 @@ def sync_status(text):
     return re.sub(r'^status: .*$', f'status: "{target}"', text, count=1, flags=re.M)
 
 
-def run(cmd, session, timeout=60):
-    r = subprocess.run([BA, '--session', session] + cmd, capture_output=True, text=True, timeout=timeout)
-    return r.stdout
+def read_detail(page):
+    """读详情页正文＋页面文本（ego：DOM 直取，不再依赖 browser-act 的 markdown）"""
+    body = page.evaluate(
+        "() => { const el = document.querySelector('.article__bd__detail');"
+        " return el ? el.textContent.trim() : ''; }") or ''
+    page_text = page.text()
+    return body, page_text
 
 
-def bring_to_front():
-    subprocess.run(['osascript', '-e', 'tell application "Google Chrome" to activate'], capture_output=True)
-    subprocess.run(['osascript', '-e',
-                    'tell application "System Events" to tell process "Google Chrome" to set frontmost to true'],
-                   capture_output=True)
-
-
-def is_slider(md):
-    return ('滑动验证' in md) or ('访问验证' in md) or ('按住滑块' in md)
+def is_slider(text):
+    return ('滑动验证' in text) or ('访问验证' in text) or ('按住滑块' in text) or ('安全验证' in text)
 
 
 def detect_form(body):
@@ -68,30 +71,30 @@ def clean_emoji(body):
     return re.sub(r'!\[([^\]]*)\]\([^)]*"\[([^\]]*)\]"[^)]*\)', r'[\2]', body)
 
 
-def fetch_detail(xid, pid, session, wait_slider=120):
-    """详情页取正文。滑块时置前窗口等用户处理。返回 (body, ok)"""
+def fetch_detail(xid, pid, page, wait_slider=120):
+    """详情页取正文（ego 通道）。滑块时把 ego lite 置前，等用户手动过。返回 (body, ok)"""
     url = f'https://xueqiu.com/{xid}/{pid}'
-    run(['navigate', url], session)
-    time.sleep(2.5)
-    md = run(['get', 'markdown'], session)
-    if is_slider(md):
-        print(f'  🧩 {pid}: 滑块验证！已置前窗口，请手动拖动滑块（最多等 {wait_slider}s）', file=sys.stderr, flush=True)
+    page.goto(url)
+    time.sleep(1.5)
+    body, page_text = read_detail(page)
+    if is_slider(page_text) or is_slider(body):
+        print(f'  🧩 {pid}: 滑块验证！已把 ego lite 置前，请手动过验证（最多等 {wait_slider}s）',
+              file=sys.stderr, flush=True)
         bring_to_front()
         deadline = time.time() + wait_slider
         while time.time() < deadline:
             time.sleep(4)
-            run(['navigate', url], session)
-            time.sleep(2)
-            md = run(['get', 'markdown'], session)
-            if not is_slider(md):
+            page.goto(url)
+            time.sleep(1.5)
+            body, page_text = read_detail(page)
+            if not (is_slider(page_text) or is_slider(body)):
                 print(f'  ✅ {pid}: 滑块已通过', file=sys.stderr, flush=True)
                 break
         else:
             print(f'  ⏭️ {pid}: 等待超时，保留摘要', file=sys.stderr, flush=True)
             return '', False
-    m = re.search(r'来源：雪球App.*?\n(.*?)\n风险提示', md, re.S)
-    if m:
-        return clean_emoji(m.group(1).strip()), True
+    if body:
+        return clean_emoji(body), True
     return '', False
 
 
@@ -110,7 +113,7 @@ def validate(text):
     return True, ''
 
 
-def process_file(path, session, wait_slider, dry_run=False):
+def process_file(path, page, wait_slider, dry_run=False):
     content = open(path).read()
     blocks = re.split(r'(?m)^(?=## \d+\. )', content)
     summary = done = fail = 0
@@ -122,7 +125,7 @@ def process_file(path, session, wait_slider, dry_run=False):
             continue
         summary += 1
         xid, pid = m.group(1), m.group(2)
-        body, ok = fetch_detail(xid, pid, session, wait_slider)
+        body, ok = fetch_detail(xid, pid, page, wait_slider)
         if not ok:
             fail += 1
             new_blocks.append(b)
@@ -158,7 +161,6 @@ def process_file(path, session, wait_slider, dry_run=False):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--session', default='xq_fix', help='browser-act session 名（需已打开浏览器）')
     ap.add_argument('--dir', default=DEFAULT_DIR, help='帖子集目录')
     ap.add_argument('--date', default=None, help='批次日期，如 "2026年09月08日"（默认全部）')
     ap.add_argument('--wait-slider', type=int, default=120, help='滑块等待秒数')
@@ -169,14 +171,15 @@ def main():
     files = args.files or sorted(glob.glob(os.path.join(
         args.dir, f'雪球采集-*{args.date}.md' if args.date else '雪球采集-*.md')))
     tot = {'s': 0, 'd': 0, 'f': 0}
-    for f in files:
-        if not os.path.exists(f):
-            continue
-        s, d, fa, ok = process_file(f, args.session, args.wait_slider, args.dry_run)
-        tot['s'] += s; tot['d'] += d; tot['f'] += fa
-        if s:
-            print(f'{os.path.basename(f)}: 摘要{s} 补全{d} 跳过{fa}{"" if ok else " [自检失败]"}',
-                  file=sys.stderr, flush=True)
+    with ego_session() as page:            # 一个会话跑完全部文件，退出时关桥（不留页签）
+        for f in files:
+            if not os.path.exists(f):
+                continue
+            s, d, fa, ok = process_file(f, page, args.wait_slider, args.dry_run)
+            tot['s'] += s; tot['d'] += d; tot['f'] += fa
+            if s:
+                print(f'{os.path.basename(f)}: 摘要{s} 补全{d} 跳过{fa}{"" if ok else " [自检失败]"}',
+                      file=sys.stderr, flush=True)
     print(f"\n===== 汇总: 摘要{tot['s']} 补全{tot['d']} 待重试{tot['f']} =====", file=sys.stderr)
 
 

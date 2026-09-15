@@ -62,7 +62,9 @@ compatibility: 通用
 
 **两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——**只核对看板 `blogger.info_cutoff_datetime`**（规则 #36；画像 md 已于 2026-09-12 退役，不再有画像侧可对）。
 
-> **采集期间请让 ego lite 留在可见位置（2026-09-16 用户要求）**：用户原话「采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控」。工具层会自动把 ego 拉到前台、采完保留页签、并在风控/异常时截图留证（`~/.cache/xueqiu-spyder/shots/<批次>/`）；编排层汇报时要：① 提醒用户采集期间盯一眼现场；② 若本轮出过风控，把截图路径一并报出来。
+> **采集期间请让 ego lite 留在可见位置（2026-09-16 用户要求）**：用户原话「采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控」。工具层会自动把 ego 拉到前台、**页签随用随关（桥退出即关）**、并在风控/异常时截图留证（`~/.cache/xueqiu-spyder/shots/<批次>/`）；编排层汇报时要：① 提醒用户采集期间盯一眼现场；② 若本轮出过风控，把截图路径一并报出来。
+>
+> **浏览器一律用 ego lite（2026-09-16 用户口径）**：本编排层**全部浏览器动作**都走 ego 通道——采集（xueqiu-spyder）、关注列表同步（`scripts/xq_sync_console.py`）、摘要帖补全（`scripts/xq_refetch_summary.py`）三者共用 `scripts/xq_ego.py` 接入层。**不再使用 browser-act / Chrome**（原 browser-act 依赖已于 2026-09-16 移除），也不要另起任何浏览器。
 
 ### 第零步：解析雪球 ID
 
@@ -166,14 +168,15 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 
 | 场景 | 加载文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
-| **编排执行细节/前置同步/风控背景** | `references/execution-guide.md` | 关注列表同步（browser-act 脚本）、工具层调用模板、时间窗、验收规则、风控知识 | 读取 |
+| **编排执行细节/前置同步/风控背景** | `references/execution-guide.md` | 关注列表同步（ego 通道脚本）、工具层调用模板、时间窗、验收规则、风控知识 | 读取 |
 | 格式验收/输出规范 | `references/output-format.md` | 帖子集 frontmatter/三件套/字段表/status/原文链接铁律 | 读取 |
 | 采集后提炼帖子集 | `references/refine-checklist.md` | 精华去糟粕价值流水线、灰区裁决、言论追踪落位（framework-rules #29 例外，investment-refine 加载） | 读取 |
-| **关注列表同步** | `scripts/xq_sync_console.py` | 同步 + 看板对比（dry-run/--apply；依赖 browser-act + 已登录 session） | **执行** |
+| **关注列表同步** | `scripts/xq_sync_console.py` | 同步 + 看板对比（dry-run/--apply；**ego lite 通道**，前置＝ego 已打开且已登录雪球） | **执行** |
 | **info_cutoff 回写** | `scripts/xq_update_cutoff.py` | 只写看板 MySQL `blogger.info_cutoff_datetime`（参数：nickname/ISO时间；画像 md 分支 2026-09-12 起已废弃） | **执行** |
 | 存量批次净化 | `scripts/clean_legacy_batches.py` | 旧批次帖子集清洗到纯文本基线（--dry-run/--dir） | **执行** |
 | **清临时产物前操作门** | `scripts/check-post-history-covered.js` | 逐帖校验原文已落 post_history（url_hash + content_hash），清理临时采集产物前强制跑 | **执行** |
-| 摘要帖二次补全 | `scripts/xq_refetch_summary.py` | 标「摘要」帖导航详情页补全（依赖 browser-act；--dir/--date） | **执行** |
+| 摘要帖二次补全 | `scripts/xq_refetch_summary.py` | 标「摘要」帖导航详情页补全（**ego lite 通道**；--dir/--date） | **执行** |
+| **ego 通道接入层** | `scripts/xq_ego.py` | 上面两个脚本共用的 ego 会话（复用 xueqiu-spyder 的桥；退出即关桥不留页签） | 读取/执行 |
 | **采集执行（工具层）** | xueqiu-spyder SKILL.md + main.py | 抓取 CLI、参数、输出格式（编排时加载） | 读取/执行 |
 
 ---
@@ -194,7 +197,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 
 - [ ] 前置同步已执行（关注列表 ↔ 看板对比，含残留 / info_cutoff 一致性检测）？
 - [ ] xq_id 已解析（直接传入 / 按 blogger_name 查看板 / 全部博主模式）且为数字？
-- [ ] 工具层环境就绪（venv 依赖 + CDP 可达 + 雪球已登录），且已加载 xueqiu-spyder SKILL.md？
+- [ ] 工具层环境就绪（venv 依赖 + **ego lite 已打开且已登录雪球**），且已加载 xueqiu-spyder SKILL.md？
 - [ ] 采集委托 spyder 执行（`main.py user --from {cutoff} --to {now}`），未绕过工具层直接操作浏览器？
 - [ ] **`--max-pages` 按窗口长度取值**（≤24h→3、≤7 天→5、>7 天→10），**批量每 10 位暂停 60 秒**？
 - [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter / 三件套 / 发布行 / 纯文本 / 每帖带 `[原文]` / 摘要与全文标记一致）？

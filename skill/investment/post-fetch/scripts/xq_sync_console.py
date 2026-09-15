@@ -13,9 +13,17 @@
   --apply 实际落地变更：新增 → POST /api/bloggers 登记；取关 → 仅报告（须用户到看板确认后手工删除，涉及目录回收不自动执行）
   --half-year 新博主的「信息截止」基准（默认：半年前今天 17:50:00）
 
-依赖：browser-act CLI + 已登录雪球 session + 看板服务（127.0.0.1:8698）
+依赖：**ego lite**（已打开且已登录雪球；走 xueqiu-spyder 的 ego 通道）+ 看板服务（127.0.0.1:8698）
+
+2026-09-16 迁移：浏览器层从 browser-act 换成 ego lite（用户口径「以后别用 chrome 了，用 ego lite」）。
+ego lite 不暴露 CDP 端口，所以复用 xueqiu-spyder 的 ego 桥（ego_browser.EgoBridge）：
+`page.goto(接口 URL)` → `page.evaluate(fetch)` → 解析 JSON。桥退出时自动关掉自己开的页签。
 """
-import re, sys, os, json, subprocess, datetime, argparse, urllib.request
+import re, sys, os, json, datetime, argparse, urllib.request
+
+# 复用统一接入层（ego lite；不再依赖 browser-act / Chrome）
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from xq_ego import ego_session   # noqa: E402
 
 VAULT = '/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库'
 BLOGGER_DIR = os.path.join(VAULT, '博主')
@@ -30,58 +38,41 @@ def api(path, payload=None):
     with urllib.request.urlopen(req, timeout=15) as r:
         return json.load(r)
 
-def find_ba():
-    cands = [os.path.expanduser('~/.local/bin/browser-act'), 'browser-act']
-    for c in cands:
-        if '/' in c and os.path.exists(c):
-            return c
-        r = subprocess.run(['which', c], capture_output=True, text=True)
-        if r.returncode == 0:
-            return r.stdout.strip()
-    sys.exit('❌ browser-act CLI 未找到')
-
-BA = find_ba()
-SESSION = f'xq_sync_{os.getpid()}'
-
-import atexit
-def _close_session():
-    """脚本结束自动关闭本 session（2026-09-09 修复 session 泄漏）"""
-    try:
-        subprocess.run([BA, 'session', 'close', SESSION], capture_output=True, text=True, timeout=20)
-    except Exception:
-        pass
-atexit.register(_close_session)
-
-def run(cmd):
-    r = subprocess.run([BA, '--session', SESSION] + cmd, capture_output=True, text=True, timeout=45)
-    return r.stdout
-
 def fetch_following():
-    """分页拉取关注列表，返回 {screen_name: id}"""
-    following = {}
-    page = 1
-    while True:
-        run(['navigate', f'https://xueqiu.com/friendships/groups/members.json?gid=0&page={page}&count=50'])
-        import time; time.sleep(1.5)
-        md = run(['get', 'markdown'])
-        if '用户未登录' in md:
-            sys.exit('❌ 雪球未登录，无法同步关注列表')
-        m = re.search(r'```\n?(\{.*\})\n?```', md, re.S) or re.search(r'(\{.*\})', md, re.S)
-        if not m:
-            break
-        try:
-            data = json.loads(m.group(1))
-        except json.JSONDecodeError:
-            break
-        users = data.get('users', [])
-        if not users:
-            break
-        for u in users:
-            following[u['screen_name']] = u['id']
-        if page >= data.get('maxPage', 1):
-            break
-        page += 1
-    return following
+    """分页拉取关注列表，返回 {screen_name: id}（走 ego 通道）
+
+    与旧 browser-act 版的差别：不再 `navigate + get markdown` 再正则抠 JSON，
+    而是直接在 ego 页面里 fetch 接口、拿原始 JSON 文本（同一登录态）。
+    桥在脚本结束时统一退出，ego 里不留页签。
+    """
+    import time
+
+    following, p = {}, 1
+    with ego_session() as page:
+        while True:
+            url = (f"https://xueqiu.com/friendships/groups/members.json"
+                   f"?gid=0&page={p}&count=50")
+            page.goto(url)
+            time.sleep(1.0)                       # 与旧实现同等的节流
+            txt = page.text()
+            if re.search(r"用户未登录|请先登录|访问验证|安全验证", txt):
+                sys.exit("❌ 雪球未登录（或命中风控），无法同步关注列表——请先在 ego lite 里登录雪球")
+            m = re.search(r"(\{.*\})", txt, re.S)
+            if not m:
+                break
+            try:
+                data = json.loads(m.group(1))
+            except json.JSONDecodeError:
+                break
+            users = data.get("users", [])
+            if not users:
+                break
+            for u in users:
+                following[u["screen_name"]] = u["id"]
+            if p >= data.get("maxPage", 1):
+                break
+            p += 1
+        return following
 
 def parse_console():
     """读看板博主控制台（MySQL bloggers 表），返回 {name: {id, is_xq, special, cutoff}} 与最大编号"""
@@ -102,14 +93,8 @@ def main():
     ap.add_argument('--half-year', default=None, help='新博主信息截止基准（默认半年前今天 17:50:00）')
     args = ap.parse_args()
 
-    # 登录 + 拉取关注列表
-    browsers = run(['browser', 'list'])
-    m = re.search(r'id=(\S+?)\s+name="([^"]+)"\s+type=(\S+)', browsers)
-    if not m:
-        sys.exit('❌ 无可用浏览器')
-    run(['browser', 'open', m.group(1), 'https://xueqiu.com/'])
-    import time; time.sleep(3)
-    print('拉取关注列表...', file=sys.stderr)
+    # 拉取关注列表（ego 通道；前置条件＝ego lite 已打开且已登录雪球）
+    print('拉取关注列表（ego lite 通道）...', file=sys.stderr)
     following = fetch_following()
 
     console, max_no = parse_console()

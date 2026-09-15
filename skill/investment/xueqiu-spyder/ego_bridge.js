@@ -23,6 +23,8 @@
  *   {"id":6,"cmd":"close","page":"p2"}              // 只关该页（默认保留页签，见下）
  *   {"id":7,"cmd":"shutdown"}                       // 桥自行退出
  *   {"id":8,"cmd":"screenshot","page":"p1","path":"/abs/out.png"}   // 落图，供用户事后核对风控
+ *   {"id":9,"cmd":"text","page":"p1"}               // 读页面可见文本（`document.body.innerText`）
+ *   {"id":10,"cmd":"cookies"}                       // 读该会话 Cookie 串（给 requests 复用同一登录态）
  *
  *   **页签策略（2026-09-16 用户口径：随用随关，除非有必要才保留）**：
  *   ① 页面确实开在 ego 里且可见（用户要盯风控）；
@@ -154,8 +156,20 @@ async function handle(req) {
         return { id, ok: true, result: { released: true, label } };
       }
       case "screenshot": {
-        await pageOf(req.page).screenshot({ path: req.path });
-        return { id, ok: true, result: { path: req.path } };
+        // 未指定页时拍**工作页**（正在被驱动的页），而不是主页面——2026-09-16 实测：
+        // 主页面停在某个不动的 URL 上，进度截图拍它会拍到"上一次的样子"。
+        const target = pageOf(req.page || (workPage ? workPage.label : "p1"));
+        await target.screenshot({ path: req.path });
+        return { id, ok: true, result: { path: req.path, page: req.page || (workPage ? workPage.label : "p1") } };
+      }
+      case "text": {
+        // 页面可见文本：脚本侧要"看"页面内容时用（如关注列表接口页的 JSON 文本）
+        const text = await pageOf(req.page).evaluate(() => document.body.innerText || "");
+        return { id, ok: true, result: text };
+      }
+      case "cookies": {
+        const jar = await pageOf(req.page).evaluate(() => document.cookie || "");
+        return { id, ok: true, result: jar };
       }
       case "shutdown": {
         // 先把桥自己开的页签真关掉再退出（exit 钩子里 await 不住，会残留）

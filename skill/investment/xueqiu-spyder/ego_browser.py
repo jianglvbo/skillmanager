@@ -289,6 +289,14 @@ class Page:
         """把该页当前画面存成 PNG（风控留证用；ego 页面本来就是可见的）"""
         return self._bridge.call("screenshot", timeout=timeout, page=self.label, path=path)
 
+    def text(self):
+        """页面可见文本（`document.body.innerText`）"""
+        return self._bridge.call("text", timeout=60, page=self.label) or ""
+
+    def cookies(self):
+        """该会话的 Cookie 串（供 requests 复用同一登录态；拿不到就返回空串）"""
+        return self._bridge.call("cookies", timeout=30, page=self.label) or ""
+
     @property
     def url(self):
         return self._bridge.call("url", timeout=30, page=self.label) or ""
