@@ -82,7 +82,7 @@
 
 - 思考时间线（v2，2026-08-31 起）：`buildThinkingFlow(r)` 纯 DOM 渲染（`.tk-*` 样式）；旧数据 `parseThinkingV2` 降级解析；产物卡 `.tk-product` 绑 click → `openInObsidian(path)`。~~mermaid 版 `buildFlowMermaid(r)` 已弃用~~（保留函数作历史参考，不再调用）
 - 交互：全屏覆盖层 + 滚动容器；上一篇/下一篇导航
-- **博主列表排序（2026-09-13 用户要求）**：**按言论数量降序，与「特别关注」无关**，**已删除的一律排最后**。原实现第一顺位是 `special`，导致特别关注的几位总霸占前几名、言论多的博主反而被压在下面。特别关注只保留名字前的 `★` 星标，**不参与排序**。排序在服务端 `/api/blogger/list`（`list.sort`：`deletedAt` → `stmtCount` → `tradeCount` → `fileCount`），前端 `renderBloggerList()` **不再二次排序**；点星标走 `updateBloggerRowStar()` 就地更新那一行，不重建列表。
+- **博主列表排序（2026-09-13 用户要求）**：**按言论数量降序，与「特别关注」无关**，**已删除的一律排最后**。原实现第一顺位是 `special`，导致特别关注的几位总霸占前几名、言论多的博主反而被压在下面。特别关注只保留名字前的 `★` 星标，**不参与排序**。**「博主」tab 可切换关注筛选（2026-09-15 用户要求）**：已选中时再点＝循环 全部 → 关注（★）→ 非关注（☆）→ 全部，纯前端筛 `bloggerMgmt.list`，切走即复位（详见 framework-rules #51）。排序在服务端 `/api/blogger/list`（`list.sort`：`deletedAt` → `stmtCount` → `tradeCount` → `fileCount`），前端 `renderBloggerList()` **不再二次排序**；点星标走 `updateBloggerRowStar()` 就地更新那一行，不重建列表。
 
 ## 7. 设计铁律（改任何前端必须遵守）
 
