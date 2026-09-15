@@ -109,13 +109,10 @@ cat ~/.agent/skills/skill名称/SKILL.md
 │   │   ├── investment-review/     ←   审查执行器
 │   │   ├── post-fetch/            ←   雪球帖子采集编排层
 │   │   ├── xueqiu-spyder/         ←   雪球抓取工具层（CDP 会话复用）
-│   │   ├── prediction-console/    ←   预测控制台（录入/验证/言论跟踪，MySQL 落库）
-│   │   └── tradingagents-deploy/  ←   TradingAgents 多智能体投研框架国内部署与运行
+│   │   └── prediction-console/    ←   预测控制台（录入/验证/言论跟踪，MySQL 落库）
 │   ├── frontend/                  ← 前端开发（console-style 风格）
 │   │   └── console-style-fitness/ ←   控制台风格健身应用（玻璃拟态规范 + 维护）
 │   └── office/                    ← 文档与系统工具
-│       ├── docx-from-markdown/    ←   Markdown → 排版 Word（.docx）
-│       ├── docx-template-fill/    ←   按既有 Word 模板填充（保留原格式）
 │       ├── mac-cleaner/           ←   macOS 磁盘空间分析与安全清理
 │       └── qmd/                   ←   本地文档全文/语义索引与搜索（含 MCP 模式）
 └── tools/
@@ -145,6 +142,16 @@ skill-name/
 ---
 
 ## 准入规则
+
+### ★ 冻结清单（2026-09-15 用户硬约束）
+
+**仓库只维护「现在这批」skill——除非用户明确要求，任何人/agent 都不得往里新增 skill。**
+
+用户原话：「仓库就只有管理仓库内的现在这些 skill，除非我要求，不然不要新增 skill 进去」。
+
+- 采集/整理过程中发现的本地 skill、商店下载的 skill、别的仓库的 skill，**一律不要顺手同步进本仓库**；
+- 需要新增时，先在对话里向用户确认「要把 X 加进 Ai 仓库吗」，得到明确同意再动手；
+- 这条优先于本文件下面所有「应该放在这里的」条目（下面那些是**用户要求时**的判断依据，不是自动收纳的许可）。
 
 ### ✅ 应该放在这里的
 
@@ -252,14 +259,11 @@ git push origin main
 | `post-fetch` | 雪球帖子采集编排层：前置同步 + 时间窗解析 + 调用工具层执行采集 + info_cutoff 双写 |
 | `xueqiu-spyder` | 雪球抓取工具层：CDP 复用已登录 Chrome 会话 + timeline API + 详情页补全 |
 | `prediction-console` | 预测控制台：个股/行业/市场三类录入、状态验证、言论跟踪，MCP 落库 MySQL |
-| `tradingagents-deploy` | TradingAgents 多智能体投研框架国内部署与运行：colima/Docker 踩坑、CN 版 compose（清华源+重试+build-arg 代理）、DeepSeek/Tushare 配置、一键分析脚本 |
 
 ### office/ — 文档与系统工具
 
 | Skill | 说明 |
 |:---|:---|
-| `docx-from-markdown` | 从 Markdown 生成规范排版的本地 Word（.docx） |
-| `docx-template-fill` | 按既有 Word 模板填充内容并保留模板原格式 |
 | `mac-cleaner` | macOS 磁盘空间分析与垃圾清理（先扫描报告、确认后再清理） |
 | `qmd` | 本地文档全文索引与语义搜索：BM25 + 向量 + 混合查询（LLM 重排序），支持 MCP Server 模式 |
 
@@ -271,4 +275,4 @@ MIT
 
 ---
 
-*最后更新：2026-09-14*
+*最后更新：2026-09-15*
