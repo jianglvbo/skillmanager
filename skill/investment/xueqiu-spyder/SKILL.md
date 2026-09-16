@@ -83,9 +83,10 @@ compatibility: macOS / Linux
 ### 第一步：确认运行环境
 
 ```bash
-# venv 解释器（依赖已装：requests + playwright）
+# venv 解释器（依赖：requests；ego 桥用系统 ego-browser，无需 playwright）
 PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # 本机 venv 路径存 ~/.config/xueqiu-spyder/python（0600，不进仓库）
-$PY --version && $PY -c "import requests, playwright"
+$PY --version && $PY -c "import requests"
+ego-browser --help >/dev/null && echo "ego CLI OK"
 ```
 
 ### 第二步：确认 ego lite 已打开且已登录雪球
@@ -134,7 +135,7 @@ $PY main.py user {xq_id} --from "{cutoff_iso}" --outfile "雪球采集-{昵称}-
 ```
 
 - 流程：翻页拉列表 → 置顶排除 + 时间窗过滤 → 截断帖详情页补全（含精确时间覆盖）→ 帖子集输出
-- 登录 Chrome 内页面自身发出的带签名请求可成功翻页；裸 API 翻页被 WAF 拦截时工具抛 `CrawlerError`，按报错提示处理
+- 在 ego lite 页面里发出的带签名请求可成功翻页；裸 API 翻页被 WAF 拦截时工具抛 `CrawlerError`，按报错提示处理
 
 ### 第四步：校验输出
 
@@ -210,8 +211,8 @@ tags: []
 
 | 场景 | 文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
-| 运行环境/依赖 | `requirements.txt` | requests + playwright（playwright 仅旧 chrome 通道用） | 安装 |
-| **ego lite 通道（默认）** | `ego_browser.py` | 起 unix socket、`-e` 注入配置启动桥、JSON Lines 协议、playwright 同签名适配 | 执行 |
+| 运行环境/依赖 | `requirements.txt` | requests（playwright 已于 2026-09-16 移除） | 安装 |
+| **ego lite 通道（默认）** | `ego_browser.py` | 起 unix socket、`-e` 注入配置启动桥、JSON Lines 协议、对 crawler 暴露 Page 接口（历史遗留的同名适配，无 playwright 依赖） | 执行 |
 | **ego 通道的浏览器侧** | `ego_bridge.js` | 在 `ego-browser nodejs` 里执行：任务空间/标签页/`page.evaluate` 转发 | 执行（由 ego_browser.py 拉起） |
 | 抓取内核 | `crawler.py` | 通道选择（ego 优先）、翻页、截断补全、WAF 检测、时间覆盖 | 执行 |
 | 形态/emoji/观点分析 | `analyzer.py` | 形态判定、`//@` 保留、表情转占位、Opinion 结构 | 执行 |
@@ -235,12 +236,13 @@ tags: []
 
 ## 自检
 
-- [ ] venv 依赖可用（requests + playwright import 通过）？
+- [ ] venv 依赖可用（`import requests` 通过；playwright 已移除）？
 - [ ] **ego 通道就绪**：ego lite 已打开且已登录雪球（第二步自检打印出雪球标题）？
 - [ ] 日志确认走的是 ego 通道（`已连接 ego lite`）？（Chrome 回落路径 2026-09-16 已删除，日志里不该再出现任何 Chrome 字样）
 - [ ] 采集时 ego lite 窗口保持**可见**（前台）——风控弹窗只在页面上出现？
 - [ ] 若本轮命中滑块：是否已交接给用户（`handOff`）并在其过完验证后自动重试本页？汇报里是否说明「哪一步被滑块拦过、谁处理的」？
-- [ ] 采集跑完后，ego 里**有没有多出来的页签**（应只剩本任务空间原有的 p1/p2；多出来说明桥没关干净）？
+- [ ] 采集跑完后，ego 里**没有多出来的页签、也没有残留空间**（桥退出会 `finish({keep:[]})` 一并回收；有残留说明回收没生效）？
+- [ ] 全程**没有抢焦点**（除了命中滑块那一次激活）？日志里不该出现"已把 ego lite 窗口拉到前台"（除非 `XUEQIU_EGO_WAKE=1` 或滑块交接）？
 - [ ] 若本轮出现过风控/异常：`~/.cache/xueqiu-spyder/shots/<批次>/` 下是否有对应截图？汇报里是否给了路径？
 - [ ] 输出为帖子集格式（frontmatter 七字段 + 三件套 + 发布行）？
 - [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？

@@ -12,7 +12,7 @@ stdin 的三种形态都不好用——① 脚本文本走 stdin：CLI 要等 EO
 ③ stdin 给伪终端：脚本执行完进程立即退出。只有 stdin=/dev/null 时脚本立刻执行，
 但那也意味着不能用 stdin 传协议 —— 所以协议另开 socket。
 
-对外暴露的接口与 crawl 代码原来的 playwright 用法一一对应：
+对外暴露的接口与 crawler 现有调用一一对应（历史上 crawler 用的是 playwright，接口形状沿用）：
     Browser.contexts[0].new_page() -> Page
     Page.goto(url, wait_until=..., timeout=...)
     Page.evaluate(fn_or_expr, arg=None)
@@ -412,7 +412,7 @@ class Page:
 
 
 class Context:
-    """模仿 playwright 的 context（crawl 代码用 contexts[0].new_page()）"""
+    """context 适配（crawler 用 contexts[0].new_page()）"""
 
     def __init__(self, bridge):
         self._bridge = bridge
@@ -427,7 +427,7 @@ class Context:
 
 
 class Browser:
-    """模仿 playwright 的 browser：只暴露 contexts / close"""
+    """browser 适配：只暴露 contexts / close"""
 
     def __init__(self, bridge):
         self._bridge = bridge

@@ -77,14 +77,14 @@ compatibility: 通用
 ```bash
 SPYDER=~/.agents/skills/xueqiu-spyder          # 工具层权威位置（部署目录）
 PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # venv 路径存本机 0600 配置，不入仓库
-$PY -c "import requests, playwright"
+$PY -c "import requests" && ego-browser --help >/dev/null && echo "ego CLI OK"
 ego-browser --help >/dev/null && echo "ego CLI OK"     # 采集通道（2026-09-15 起用 ego lite）
 ```
 - 依赖缺失 → `$PY -m pip install -r "$SPYDER/requirements.txt"`
 - **ego 通道预检**：ego lite 已在运行且已登录雪球（工具层第二步的自检脚本会打印当前页 URL/标题）；
   CLI 缺失 → 提示用户在 ego lite 里安装命令行工具
 - 未登录 → 提示用户**先在 ego lite 里登录雪球**再重跑（不再提示启动 Chrome）
-- 工具层细节见 `xueqiu-spyder` SKILL.md；旧 `XUEQIU_TRANSPORT=chrome` 路径仅排障时用
+- 工具层细节见 `xueqiu-spyder` SKILL.md；`XUEQIU_TRANSPORT` 只认 `ego`（Chrome 路径已从代码删除）
 
 ### 第二步：执行采集（委托 xueqiu-spyder）
 

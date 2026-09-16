@@ -64,7 +64,7 @@ $PY "$SPYDER/main.py" user {xq_id} \
 - 输出文件命名与 vault 路径由本层控制（spyder `--outfile/--output`）
 
 **环境检查**（调用前）：
-- venv 依赖：`$PY -c "import requests, playwright"`
+- venv 依赖：`$PY -c "import requests"`（playwright 已于 2026-09-16 移除）
 - **ego lite 通道（默认，2026-09-15 起）**：确认 ego lite 已打开且已登录雪球；`SPYDER/ego_browser.py` 的自检打印当前页 URL/标题即可
 - **无需任何 CDP 预检**：Chrome 通道（含 `XUEQIU_DEBUG_PORT` 等）已于 2026-09-16 从工具层整段删除，采集只走 ego lite。
 - 登录态：用户页标题含昵称 = 已登录

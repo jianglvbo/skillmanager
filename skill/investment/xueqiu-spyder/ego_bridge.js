@@ -27,11 +27,11 @@
  *   {"id":10,"cmd":"cookies"}                       // 读该会话 Cookie 串（给 requests 复用同一登录态）
  *   {"id":11,"cmd":"handoff","waitMs":900000}       // 把任务空间交给用户（过滑块），等用户交还后回执
  *
- *   **页签策略（2026-09-16 用户口径：随用随关，除非有必要才保留）**：
- *   ① 页面确实开在 ego 里且可见（用户要盯风控）；
- *   ② 桥在整个会话里**只维护一张工作页**：临时页用完即"放回"，下一次调用直接复用，
- *      全程不新开第二张——ego 任务空间有 8 个标签页上限（实测
- *      `Page budget reached (8/8)`），"用完就关、下次再开"在逐帖循环里必然撞顶；
+ *   **页签策略（2026-09-16 用户口径：随用随关）**：
+ *   ① 页面确实开在 ego 里且可见（用户要盯风控），但**不抢焦点**；
+ *   ② **工作页一进一出**：临时页用完立刻真关（`close` 直接 `page.close()`），
+ *      下一次 `newPage` 再开一张——ego 任务空间有 8 个标签页上限（实测
+ *      `Page budget reached (8/8)`），同一时刻只留一张工作页就不会撞顶；
  *   ③ 桥退出（shutdown / SIGTERM / SIGINT）时调 **`task.finish({keep: []})`**：
  *      agent 页签全关、**空间被释放**（回执 `closedSpace: true`）——"用完回收"的正解；
  *      只关页签会留下空空间，越攒越多（2026-09-16 用户指出）。
@@ -143,7 +143,7 @@ async function handle(req) {
     switch (req.cmd) {
       case "newPage": {
         if (!workPage) {
-          // 整个会话只开一张工作页：用完放回，下次直接复用（避开 8 页上限）
+          // 随用随关：这里只负责"要用时开一张"，用完由 close 立刻关（避开 8 页上限）
           workPage = await task.newPage();
           pages.set(workPage.label, workPage);
         }
