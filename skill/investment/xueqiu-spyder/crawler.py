@@ -38,8 +38,6 @@ class XueqiuCrawler:
     _ENRICH_FAIL_LIMIT = 3
 
     def __init__(self):
-        self._pw = None
-        self._browser = None
         self._ego = None
         self._page = None
         self._page_override = None
@@ -88,8 +86,7 @@ class XueqiuCrawler:
         """
         bridge = ego_browser.EgoBridge()
         hello = bridge.start()
-        self._ego = bridge
-        self._browser = ego_browser.Browser(bridge)
+        self._ego = bridge                 # 桥即"浏览器"：new_page() / stop() 都在它身上
         self._page = bridge.main_page
         logger.info("已连接 ego lite（桥进程 pid=%s）", hello.get("pid"))
 
@@ -276,7 +273,7 @@ class XueqiuCrawler:
 
     def get_user_all_posts(self, user_id, max_pages=10):
         """通过导航到用户主页来获取其帖子（绕过登录限制）"""
-        user_page = self._browser.contexts[0].new_page()
+        user_page = self._ego.new_page()
         all_statuses = []
         try:
             user_page.goto(
@@ -327,7 +324,7 @@ class XueqiuCrawler:
         """访问帖子详情页获取完整内容 + 精确发布时间（优先 article:published_time，次选页面文本）
         返回 (full_text, published_ms or None)；target 如 /5243796549/376934652
         `_slider_retried`：滑块交接后只重试一次，防"验证页反复出现"死循环"""
-        detail_page = self._browser.contexts[0].new_page()
+        detail_page = self._ego.new_page()
         try:
             detail_page.goto(
                 f"https://xueqiu.com{target}",
@@ -438,7 +435,7 @@ class XueqiuCrawler:
 
     def get_user_info(self, user_id):
         """获取用户基本信息"""
-        user_page = self._browser.contexts[0].new_page()
+        user_page = self._ego.new_page()
         try:
             user_page.goto(
                 f"https://xueqiu.com/u/{user_id}",
@@ -465,7 +462,7 @@ class XueqiuCrawler:
         """搜索用户，返回 [{name, href, uid}] 列表"""
         encoded = urllib.parse.quote(keyword)
         url = f"https://xueqiu.com/k?q={encoded}&forceRedirect=1&page=1&type=user"
-        search_page = self._browser.contexts[0].new_page()
+        search_page = self._ego.new_page()
         try:
             search_page.goto(url, wait_until="domcontentloaded", timeout=15000)
             try:
@@ -516,7 +513,7 @@ class XueqiuCrawler:
 
     def resolve_user_id(self, vanity_path):
         """将虚荣路径（如 /zzyandsnow）解析为数字 user_id"""
-        resolve_page = self._browser.contexts[0].new_page()
+        resolve_page = self._ego.new_page()
         try:
             resolve_page.goto(
                 f"https://xueqiu.com{vanity_path}",
@@ -568,7 +565,7 @@ class XueqiuCrawler:
 
     def get_user_all_posts_with_info(self, user_id, max_pages=10):
         """在同一个页面中获取用户信息和所有帖子，避免重复导航"""
-        user_page = self._browser.contexts[0].new_page()
+        user_page = self._ego.new_page()
         all_statuses = []
         screen_name = str(user_id)
         try:
@@ -634,10 +631,8 @@ class XueqiuCrawler:
         它的标签页与登录态要留给用户（桥进程退出时会把写入流关掉，ego 里的标签页保留）。
         """
         try:
-            if self._browser:
-                self._browser.close()
-            if self._pw:
-                self._pw.stop()
+            if self._ego:
+                self._ego.stop()           # 关桥＝关标签 + 释放空间（finish({keep:[]})）
         except Exception:
             pass
         finally:

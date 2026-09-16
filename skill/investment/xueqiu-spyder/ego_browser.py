@@ -12,12 +12,12 @@ stdin 的三种形态都不好用——① 脚本文本走 stdin：CLI 要等 EO
 ③ stdin 给伪终端：脚本执行完进程立即退出。只有 stdin=/dev/null 时脚本立刻执行，
 但那也意味着不能用 stdin 传协议 —— 所以协议另开 socket。
 
-对外暴露的接口与 crawler 现有调用一一对应（历史上 crawler 用的是 playwright，接口形状沿用）：
-    Browser.contexts[0].new_page() -> Page
-    Page.goto(url, wait_until=..., timeout=...)
-    Page.evaluate(fn_or_expr, arg=None)
-    Page.wait_for_selector(selector, timeout=...)
-    Page.wait_for_timeout(ms) / Page.url / Page.close()
+对外只暴露两个东西（2026-09-16 清理掉历史遗留的 playwright 形状适配层）：
+    EgoBridge            —— 桥本身：start() / stop() / call(cmd, ...) / new_page() / main_page
+    Page                 —— 一张 ego 标签页：goto() / evaluate() / wait_for_selector() /
+                            wait_for_timeout() / text() / cookies() / screenshot() / url / close()
+方法名沿用 early crawler 的旧称（goto/evaluate/...），但**与 playwright 无关**——
+它们只是对 ego 桥协议（JSON Lines）的封装。
 """
 
 import json
@@ -313,6 +313,11 @@ class EgoBridge:
                 pass
             self._log_fh = None
 
+    def new_page(self):
+        """新开一张 ego 标签页（用完记得 close——用户口径：标签随用随关）"""
+        res = self.call("newPage", timeout=60)
+        return Page(self, (res or {}).get("label") or "p1")
+
     # ── 请求 ──────────────────────────────────────────────────
     def handoff(self, wait_ms=900000):
         """把任务空间交给用户（滑块/验证要人工过），阻塞等待用户交还控制权。
@@ -364,7 +369,7 @@ class EgoBridge:
 
 
 class Page:
-    """一张 ego 标签页；label 由桥分配（p1 = 主页面，p2+ = 临时页）"""
+    """一张 ego 标签页（ego 里真实的 tab；label 由桥分配，p1 = 主页面）"""
 
     def __init__(self, bridge, label):
         self._bridge = bridge
@@ -409,33 +414,3 @@ class Page:
             self._bridge.call("close", timeout=30, page=self.label)
         except BridgeError:
             pass
-
-
-class Context:
-    """context 适配（crawler 用 contexts[0].new_page()）"""
-
-    def __init__(self, bridge):
-        self._bridge = bridge
-
-    def new_page(self):
-        res = self._bridge.call("newPage", timeout=60)
-        return Page(self._bridge, (res or {}).get("label") or "p1")
-
-    @property
-    def pages(self):
-        return [self._bridge.main_page] if self._bridge.main_page else []
-
-
-class Browser:
-    """browser 适配：只暴露 contexts / close"""
-
-    def __init__(self, bridge):
-        self._bridge = bridge
-        self._ctx = Context(bridge)
-
-    @property
-    def contexts(self):
-        return [self._ctx]
-
-    def close(self):
-        self._bridge.stop()

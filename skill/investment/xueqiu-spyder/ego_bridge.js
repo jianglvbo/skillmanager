@@ -142,14 +142,22 @@ async function handle(req) {
   try {
     switch (req.cmd) {
       case "newPage": {
+        // 工作页可能已被上一轮 close 关掉（workPage 仍指向它）——探针验活，死了就重开。
+        // 2026-09-16 踩坑：close 后没清 workPage，下一次复用了已关闭的 p2 →
+        // 运行时报 "unknown page label: p2"，整批详情页补全失败。
+        if (workPage) {
+          try {
+            await workPage.url();          // 死引用在这里会抛
+          } catch (e) {
+            pages.delete(workPage.label);
+            workPage = null;
+          }
+        }
         if (!workPage) {
           // 随用随关：这里只负责"要用时开一张"，用完由 close 立刻关（避开 8 页上限）
           workPage = await task.newPage();
           pages.set(workPage.label, workPage);
         }
-        // 用户口径（2026-09-16）：执行时要能看到"正在用的那张"，所以工作页一到手就置前
-        // （切到它所在的标签，视觉上就是最右边那张）——否则 ego 里停留的可能是主页面。
-        try { await workPage.bringToFront(); } catch (e) { /* 部分运行时无此方法，忽略 */ }
         return { id, ok: true, result: { label: workPage.label, reused: true } };
       }
       case "goto": {
@@ -193,6 +201,7 @@ async function handle(req) {
         if (label !== "p1") {
           try { await page.close(); } catch (e) {}
           pages.delete(label);
+          if (workPage && workPage.label === label) workPage = null;   // 关掉的是工作页 → 清引用
           return { id, ok: true, result: { closed: true, label } };
         }
         return { id, ok: true, result: { released: true, label } };

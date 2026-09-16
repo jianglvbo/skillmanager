@@ -212,7 +212,7 @@ tags: []
 | 场景 | 文件 | 内容 | 方式 |
 |:---|:---|:---|:---|
 | 运行环境/依赖 | `requirements.txt` | requests（playwright 已于 2026-09-16 移除） | 安装 |
-| **ego lite 通道（默认）** | `ego_browser.py` | 起 unix socket、`-e` 注入配置启动桥、JSON Lines 协议、对 crawler 暴露 Page 接口（历史遗留的同名适配，无 playwright 依赖） | 执行 |
+| **ego lite 通道（默认）** | `ego_browser.py` | 起 unix socket、`-e` 注入配置启动桥、JSON Lines 协议；对外只有两个东西：`EgoBridge`（start/stop/call/new_page/main_page/handoff）与 `Page`（goto/evaluate/wait_for_selector/text/cookies/screenshot/url/close） | 执行 |
 | **ego 通道的浏览器侧** | `ego_bridge.js` | 在 `ego-browser nodejs` 里执行：任务空间/标签页/`page.evaluate` 转发 | 执行（由 ego_browser.py 拉起） |
 | 抓取内核 | `crawler.py` | 通道选择（ego 优先）、翻页、截断补全、WAF 检测、时间覆盖 | 执行 |
 | 形态/emoji/观点分析 | `analyzer.py` | 形态判定、`//@` 保留、表情转占位、Opinion 结构 | 执行 |
