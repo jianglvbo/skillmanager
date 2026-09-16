@@ -124,6 +124,9 @@ def main():
         # （2026-09-16 实锤：`auto` 曾在 ego 桥超时时静默拉起 Google Chrome）。
         env = dict(os.environ)
         env["XUEQIU_TRANSPORT"] = "ego"
+        # 批量采集**不抢焦点**（2026-09-16 用户反馈：ego 窗口一直被拉到最前面，干扰用电脑）。
+        # 单博主手动采集时仍会激活（方便盯风控），批量则安静跑。
+        env["XUEQIU_EGO_WAKE"] = "0"
         r = subprocess.run(cmd, cwd=SPYDER_DIR, capture_output=True, text=True,
                            timeout=1800, env=env)
         dt = time.time() - t0

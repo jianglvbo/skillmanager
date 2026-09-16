@@ -136,7 +136,7 @@ class XueqiuCrawler:
                 ["osascript", "-e", 'tell application "ego lite" to activate'],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,
             )
-            logger.info("已把 ego lite 窗口拉到前台（采集过程可直接观察；禁用：XUEQIU_EGO_WAKE=0）")
+            logger.info("已把 ego lite 窗口拉到前台一次（要看风控可盯着；批量/不想被打断：XUEQIU_EGO_WAKE=0）")
         except Exception as e:
             logger.debug("激活 ego 窗口失败（不影响采集）：%s", e)
 
@@ -640,5 +640,5 @@ class XueqiuCrawler:
             pass
         finally:
             self._ego = None
-            # 采集结束再把 ego 拉回前台：页签停在最后一个现场，用户可以直接看结果/风控
-            self._wake_ego()
+            # 结束**不再**激活窗口：2026-09-16 用户反馈批量采集时 ego 一直被拉到最前，
+            # 干扰正常用电脑。要看现场让用户自己切（或单跑时看开头那次激活）。
