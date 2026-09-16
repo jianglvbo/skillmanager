@@ -5,7 +5,6 @@ import logging
 import subprocess
 import os
 import urllib.parse
-from playwright.sync_api import sync_playwright
 
 import config
 import ego_browser
@@ -13,41 +12,10 @@ import ego_browser
 logger = logging.getLogger(__name__)
 
 
-def _default_chrome_path():
-    """跨平台返回 Chrome/Chromium 可执行文件路径（仅 XUEQIU_TRANSPORT=chrome 时用）"""
-    if sys.platform == "darwin":
-        return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    if sys.platform.startswith("win"):
-        return os.path.expandvars(
-            r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
-        )
-    for candidate in (
-        "/usr/bin/google-chrome",
-        "/usr/bin/google-chrome-stable",
-        "/usr/bin/chromium",
-        "/usr/bin/chromium-browser",
-    ):
-        if os.path.exists(candidate):
-            return candidate
-    return "google-chrome"
 
-
-CHROME_PATH = os.environ.get("XUEQIU_CHROME_PATH") or _default_chrome_path()
-# 2026-09-12：CDP profile 从 skill 目录挪到用户缓存目录——它含 Cookies/Login Data/History，
-# 放在 skill 目录里会被 git add 进公共仓库（当天实测已误入 1.1 万个文件）。可用
-# XUEQIU_USER_DATA_DIR 覆盖；旧位置（skill 目录内）仅作迁移前的历史遗留，不再使用。
-USER_DATA_DIR = os.environ.get("XUEQIU_USER_DATA_DIR") or os.path.join(
-    os.path.expanduser("~"), ".cache", "xueqiu-spyder", "chrome-profile")
-# ⚠️ 以下 Chrome 相关常量**只服务旧通道**（XUEQIU_TRANSPORT=chrome，2026-09-15 起仅排障用）。
-# 默认通道是 ego lite，见 ego_browser.py；这两个变量在新通道下完全不参与。
-# 可用环境变量 XUEQIU_DEBUG_PORT 覆盖，避免与既有 9222 调试实例冲突
-DEBUG_PORT = int(os.environ.get("XUEQIU_DEBUG_PORT", "9222"))
-# 2026-09-12：Chrome 152 起 DevTools HTTP 端点只接受 Host=localhost，
-# 用 127.0.0.1 直连会返回 404（/json/version 不可用）。故主机名可覆盖，默认 localhost。
-DEBUG_HOST = os.environ.get("XUEQIU_DEBUG_HOST", "localhost")
-# ── 浏览器通道（2026-09-15 用户拍板：「以后别用 chrome 了，用 ego lite」）────
-# 默认 auto：有 ego-browser CLI 就走 ego lite（ego_browser.EgoBridge），
-# 没有才回落 Chrome CDP；显式设 XUEQIU_TRANSPORT=ego 则**禁止**回落 Chrome。
+# ── 浏览器通道（2026-09-15 拍板「以后别用 chrome 了，用 ego lite」；2026-09-16 收口）
+# 只认 ego lite（ego_browser.EgoBridge）。曾经存在的 Chrome CDP 回落路径已整段删除：
+# `auto` 在 ego 桥超时时静默拉起过 Google Chrome，被用户当场抓到。
 
 
 class CrawlerError(Exception):
@@ -64,7 +32,7 @@ class TaskSpaceLost(CrawlerError):
 
 
 class XueqiuCrawler:
-    """复用真实浏览器环境绕过 WAF：默认走 ego lite（2026-09-15），可回落 Chrome CDP"""
+    """复用真实浏览器环境绕过 WAF：**只走 ego lite**（2026-09-16 起 Chrome 路径已删除）"""
 
     # 详情页补全连续失败多少条就停（多半是任务空间被接管/结束，继续硬撞只是刷日志）
     _ENRICH_FAIL_LIMIT = 3
@@ -85,27 +53,30 @@ class XueqiuCrawler:
 
     @property
     def _main_page(self):
-        """主页面句柄：ego 通道是桥的主页，chrome 通道是 playwright 的页；
-        万一某段流程要临时换页，设 _page_override 即可，其余流程一律读这里"""
+        """主页面句柄（ego 桥的主页）；需要临时换页时设 _page_override，其余流程一律读这里"""
         return self._page_override or self._page
 
     def _connect_browser(self):
-        """按 XUEQIU_TRANSPORT 选通道：auto 优先 ego lite，只有没有 ego CLI 时才回落 Chrome"""
+        """连接浏览器：**只允许 ego lite**。
+
+        2026-09-16 用户实锤：`auto` 模式在 ego 桥启动超时（任务空间被交接卡住）时
+        静默回落，真的拉起了 Google Chrome（`--remote-debugging-port=9222
+        --user-data-dir=…/xueqiu-spyder/chrome-profile`）。用户口径是"别用 Chrome"，
+        所以自动回落路径整段删除：ego 不可用就直接失败并说清怎么修。
+        """
         mode = config.BROWSER_TRANSPORT
-        if mode in ("auto", "ego"):
-            try:
-                self._connect_ego()
-                self._wake_ego()      # 让用户能盯着采集现场（风控是否触发）
-                return
-            except Exception as e:
-                if mode == "ego":
-                    raise CrawlerError(
-                        f"ego lite 通道不可用：{e}\n"
-                        f"（用户 2026-09-15 已要求只用 ego lite；请先打开 ego lite 并登录雪球，"
-                        f"并确认 `ego-browser --help` 可用）"
-                    )
-                logger.warning(f"ego lite 通道不可用（{e}）—— 回落 Chrome CDP")
-        self._connect_chrome()
+        if mode != "ego":
+            raise CrawlerError(
+                f"XUEQIU_TRANSPORT={mode!r} 已停用：本工具只走 ego lite"
+                f"（用户 2026-09-15/16 拍板）。去掉该环境变量即可（默认 ego）。")
+        try:
+            self._connect_ego()
+            self._wake_ego()          # 让用户能盯着采集现场（风控是否触发）
+        except Exception as e:
+            raise CrawlerError(
+                f"ego lite 通道不可用：{e}\n"
+                f"（请先打开 ego lite 并登录雪球，确认 `ego-browser --help` 可用；"
+                f"本工具不会回落到 Chrome）")
 
     def _connect_ego(self):
         """连接 ego lite：不启动任何浏览器，只把动作转发给它（见 ego_browser.py）
@@ -123,6 +94,34 @@ class XueqiuCrawler:
         logger.info("已连接 ego lite（桥进程 pid=%s）", hello.get("pid"))
 
     # ── 现场可见性（2026-09-16 用户要求）──────────────────────────────
+    def _handle_slider(self, where=""):
+        """命中滑块/安全验证 → **把 ego lite 交给用户接管**，等其过完再继续。
+
+        2026-09-16 用户要求：「如果遇到了滑块，记得把 ego lite 让我接管」。
+        这不是可选的等待：ego 的硬约束是用户一旦接管，agent 侧命令全部暂停，
+        所以正确姿势是 handOff → 等控制权回来 → 重试本页。
+        返回 True=已过验证（重试）；False=超时或交接失败（按 WAF 处理）。
+        """
+        wait_min = int(config.EGO_SLIDER_WAIT_MS / 60000)
+        logger.warning(
+            "🧩 命中滑块/安全验证（%s）→ 已把 ego lite 交给你接管："
+            "请在浏览器里完成验证，完成后自动继续（最多等 %d 分钟）",
+            where or "未标注位置", wait_min,
+        )
+        self._shot("slider", page=self._ego.main_page if self._ego else None)
+        if not self._ego:
+            return False
+        ego_browser.activate_ego()
+        try:
+            if self._ego.handoff(wait_ms=config.EGO_SLIDER_WAIT_MS):
+                logger.warning("✅ 已拿回控制权（%s），重试本页", where or "")
+                self._shot("slider-cleared", page=self._ego.main_page)
+                return True
+            logger.error("⏳ 等待超时（%s）：滑块仍未处理，按 WAF 中止本轮", where or "")
+        except Exception as e:
+            logger.error("滑块交接失败（%s）：%s", where or "", e)
+        return False
+
     def _wake_ego(self):
         """把 ego lite 窗口拉到前台——用户要能看着采集跑，才能第一时间发现风控。
 
@@ -183,51 +182,12 @@ class XueqiuCrawler:
         )
         return True
 
-    def _connect_chrome(self):
-        """启动带调试端口的 Chrome 并连接"""
-        # 先尝试连接已有的调试端口
-        self._pw = sync_playwright().start()
-        try:
-            self._browser = self._pw.chromium.connect_over_cdp(
-                f"http://{DEBUG_HOST}:{DEBUG_PORT}"
-            )
-            logger.info("已连接到运行中的 Chrome")
-        except Exception:
-            logger.info("未检测到调试端口，正在启动 Chrome...")
-            self._launch_chrome()
-            time.sleep(3)
-            self._browser = self._pw.chromium.connect_over_cdp(
-                f"http://{DEBUG_HOST}:{DEBUG_PORT}"
-            )
-            logger.info("Chrome 启动并连接成功")
-
-        # 获取或创建页面
-        contexts = self._browser.contexts
-        if contexts and contexts[0].pages:
-            self._page = contexts[0].pages[0]
-        else:
-            self._page = self._browser.contexts[0].new_page()
-
-        # 确保在雪球域名下
-        if "xueqiu.com" not in self._main_page.url:
-            self._main_page.goto(config.XUEQIU_HOME, wait_until="domcontentloaded", timeout=15000)
-
-    def _launch_chrome(self):
-        """以调试模式启动 Chrome"""
-        cmd = [
-            CHROME_PATH,
-            f"--remote-debugging-port={DEBUG_PORT}",
-            f"--user-data-dir={USER_DATA_DIR}",
-            "--no-first-run",
-            "https://xueqiu.com/",
-        ]
-        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
     def _fetch_json(self, url, params=None):
         """在浏览器内 fetch API，返回 JSON；检测 WAF/滑块验证页"""
         query = "&".join(f"{k}={v}" for k, v in (params or {}).items())
         full_url = f"{url}?{query}" if query else url
 
+        slider_retry_left = 1          # 滑块交接后允许重试本页 1 次（防死循环）
         for attempt in range(config.MAX_RETRIES):
             time.sleep(config.REQUEST_DELAY)
             try:
@@ -264,6 +224,10 @@ class XueqiuCrawler:
                 # WAF / 滑块 / 安全验证检测（雪球阿里云防护特征）
                 snippet = (result.get("snippet") or "") + (result.get("error") or "")
                 if re.search(r"滑动|安全验证|captcha|无感验证|请完成验证|访问验证", snippet, re.I):
+                    if slider_retry_left > 0 and self._handle_slider("timeline 接口"):
+                        slider_retry_left -= 1
+                        logger.warning("已由用户完成验证 → 重试本页")
+                        continue
                     self._shot("waf-timeline")
                     raise CrawlerError(
                         f"疑似触发 WAF/滑块验证 ({full_url}) —— 停止采集，等待数分钟或人工在浏览器完成验证后重试"
@@ -357,9 +321,10 @@ class XueqiuCrawler:
             user_page.close()
         return all_statuses
 
-    def get_post_full_text(self, target):
+    def get_post_full_text(self, target, _slider_retried=False):
         """访问帖子详情页获取完整内容 + 精确发布时间（优先 article:published_time，次选页面文本）
-        返回 (full_text, published_ms or None)；target 如 /5243796549/376934652"""
+        返回 (full_text, published_ms or None)；target 如 /5243796549/376934652
+        `_slider_retried`：滑块交接后只重试一次，防"验证页反复出现"死循环"""
         detail_page = self._browser.contexts[0].new_page()
         try:
             detail_page.goto(
@@ -391,6 +356,8 @@ class XueqiuCrawler:
             # 这里改为显式抛错中止本轮，交由编排层等待冷却后重跑。
             blob = f"{result.get('title', '')} {result.get('snippet', '')}"
             if re.search(r"(?<!\d)405(?!\d)|滑动|安全验证|访问验证|请完成验证|captcha", blob, re.I):
+                if not _slider_retried and self._handle_slider(f"详情页 {target}"):
+                    return self.get_post_full_text(target, _slider_retried=True)
                 self._shot(f"waf-detail-{target.strip('/').replace('/', '_')}", page=detail_page)
                 raise CrawlerError(
                     f"详情页命中 WAF/405（{target}）—— 中止本轮采集，等待冷却后重跑；"

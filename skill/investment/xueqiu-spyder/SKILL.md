@@ -24,13 +24,14 @@ compatibility: macOS / Linux
 
 ### 核心原则
 - **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 回写 / 帖子集提炼均不在此层）。
-- **ego lite 通道复用登录态（2026-09-15 迁移，用户拍板「以后别用 chrome 了，用 ego lite」）**：经 `ego-browser nodejs` 把浏览器动作转发给**本机已打开并已登录雪球的 ego lite**；ego lite 没有对外 CDP 端口，故走本地 socket 桥（`ego_bridge.js`）。**不再启动 Chrome、不再需要单独的调试端口/采集 profile**。通道选择由 `XUEQIU_TRANSPORT` 控制（`auto` 默认=优先 ego；`ego`=只允许 ego，禁止回落；`chrome`=旧路径，仅兼容保留）。
+- **ego lite 通道复用登录态（2026-09-15 迁移；2026-09-16 收口为唯一通道）**：经 `ego-browser nodejs` 把浏览器动作转发给**本机已打开并已登录雪球的 ego lite**；ego lite 没有对外 CDP 端口，故走本地 socket 桥（`ego_bridge.js`）。**Chrome 相关代码已于 2026-09-16 整段删除**（`_launch_chrome`/`_connect_chrome`/playwright 依赖/9222 端口常量全没了）——起因是 `auto` 模式在 ego 桥超时时**静默拉起过 Google Chrome**（用户当场抓到窗口与 `--remote-debugging-port=9222 --user-data-dir=…/xueqiu-spyder/chrome-profile` 进程）。
+  - **默认值 `XUEQIU_TRANSPORT=ego`**；设成别的值会直接报错并告诉你"本工具只走 ego lite"，不再有任何自动回落。
 - **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
 - **现场可见 + 留证（2026-09-16 用户要求）**：用户原话「**采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控**」。三条落实：
   1. 采集页开在 **ego 自己的标签页**里（不藏窗口），开始与结束时自动把 ego lite 拉到前台（macOS `osascript activate`；`XUEQIU_EGO_WAKE=0` 可关）；
   2. **页签随用随关**（用户口径「随用随关，除非有必要才保留」）：会话内最多多占**一张**工作页并逐帖复用（ego 任务空间有 8 页上限，每帖新开必撞顶），**桥退出时关掉**——跑完不留页签；
   3. 命中风控/异常时**自动截图留证**，另外详情页补全每 5 条抽一帧（`XUEQIU_EGO_SHOT_EVERY`），落到 `~/.cache/xueqiu-spyder/shots/<批次>/`。
-- **风控自控**：WAF/滑块检测（`滑动|安全验证|captcha|访问验证`）命中即抛错停止，不硬撞；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
+- **风控自控**：命中滑块/安全验证（`滑动|安全验证|captcha|访问验证`）时**不硬撞**——把 ego 交给用户接管、等其过完验证再自动重试本页（超时才按 WAF 中止）；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
 - **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
 - **输出对齐帖子集规范**：frontmatter 七字段 + 每帖三件套（标题/正文/发布行），供 post-fetch 直接交接提炼。
 
@@ -105,10 +106,9 @@ PY
 - 未登录（标题不含雪球 / fetch 命中 `滑动|安全验证|captcha`）→ 停止，提示用户**在 ego lite 里登录雪球**后重跑
 - 通道细节与踩坑（脚本注入、socket、ego 不继承环境变量等）见 `ego_browser.py` 模块头注释
 
-> **旧路径（仅兼容）**：`XUEQIU_TRANSPORT=chrome` 时仍可走 Chrome 调试端口
-> （`--remote-debugging-port=9222`、主机名必须 `localhost`，Chrome 152 起 `127.0.0.1` 返 404；
-> 端口/主机名分别用 `XUEQIU_DEBUG_PORT`/`XUEQIU_DEBUG_HOST` 覆盖）。用户 2026-09-15
-> 已明确不再用 Chrome，非排障不要启用。
+> **Chrome 通道已删除（2026-09-16）**：`XUEQIU_TRANSPORT` 只认 `ego`；
+> 旧 `chrome`/`auto` 取值一律直接报错。历史上 `auto` 曾在 ego 桥超时时静默拉起 Chrome
+> （用户当场抓到进程），所以这不是"改默认值"，是把相关代码整段删掉了。
 
 ### 第二步之二：看一眼现场（采集全程保持可见）· 2026-09-16 新增
 
@@ -118,6 +118,7 @@ PY
 |:---|:---|:---|
 | 开始/结束时把 ego 窗口拉到前台 | macOS `osascript … activate`，非 macOS 跳过 | `XUEQIU_EGO_WAKE=0` |
 | 页签随用随关 | 一次采集最多多占**一张**工作页（逐帖复用它，不每帖开新页——ego 任务空间有 8 页上限）；**桥退出时把这张关掉**，跑完不留页签 | 无需配置 |
+| **命中滑块 → 交给你接管** | timeline/详情页命中滑块或安全验证时，ego 置前 + 自动 `handOff()`，等你过完验证、控制权交还后**自动重试本页**（默认最长等 15 分钟） | `XUEQIU_EGO_SLIDER_WAIT_MS` 调等待时长；`0` 可关 |
 | 命中风控/异常自动截图 | timeline 命中滑块/验证、详情页 405、详情页异常、翻页失败 | `XUEQIU_EGO_SHOT_DIR=`（置空） |
 | 详情页每 5 条抽一帧 | 记录补全进度与偶发风控弹窗 | `XUEQIU_EGO_SHOT_EVERY=0` |
 
@@ -142,13 +143,14 @@ $PY main.py user {xq_id} --from "{cutoff_iso}" --outfile "雪球采集-{昵称}-
 
 | 变量 | 默认 | 作用 |
 |:---|:---|:---|
-| `XUEQIU_TRANSPORT` | `auto` | `auto` 优先 ego、`ego` 只允许 ego（禁止回落 Chrome）、`chrome` 旧通道仅排障 |
+| `XUEQIU_TRANSPORT` | **`ego`** | 只允许 ego lite（唯一通道）；任何其它取值都会直接报错 |
 | `XUEQIU_EGO_SPACE` | 空 | 复用指定 ego 任务空间 id（多轮采集沿用同一个） |
 | `XUEQIU_EGO_SPACE_NAME` | `xueqiu-spyder` | 新建任务空间时的名字 |
 | `XUEQIU_EGO_WAKE` | `1` | 开始/结束把 ego 窗口拉到前台 |
 | （页签策略固定） | — | 会话内最多一张工作页、退出即关；不再提供"保留页签"开关 |
 | `XUEQIU_EGO_SHOT_DIR` | `~/.cache/xueqiu-spyder/shots` | 截图目录（置空＝不落图） |
 | `XUEQIU_EGO_SHOT_EVERY` | `5` | 详情页每 N 条抽一帧（0＝关） |
+| `XUEQIU_EGO_SLIDER_WAIT_MS` | `900000`（15 分钟） | 滑块交接后等用户过验证的时长；超时按 WAF 中止本轮 |
 | `XUEQIU_EGO_BOOT_TIMEOUT` | `90` | 桥启动握手超时（秒） |
 | `XUEQIU_EGO_LOG` | 空 | 把桥 stderr 另存一份日志（排障用） |
 | `XUEQIU_DEBUG_PORT` / `XUEQIU_DEBUG_HOST` / `XUEQIU_CHROME_PATH` | 9222 / localhost / 系统 Chrome | **仅**旧 `chrome` 通道 |
@@ -233,8 +235,9 @@ tags: []
 
 - [ ] venv 依赖可用（requests + playwright import 通过）？
 - [ ] **ego 通道就绪**：ego lite 已打开且已登录雪球（第二步自检打印出雪球标题）？
-- [ ] 日志确认走的是 ego 通道（`已连接 ego lite`），而**不是**回落到了 Chrome？
+- [ ] 日志确认走的是 ego 通道（`已连接 ego lite`）？（Chrome 回落路径 2026-09-16 已删除，日志里不该再出现任何 Chrome 字样）
 - [ ] 采集时 ego lite 窗口保持**可见**（前台）——风控弹窗只在页面上出现？
+- [ ] 若本轮命中滑块：是否已交接给用户（`handOff`）并在其过完验证后自动重试本页？汇报里是否说明「哪一步被滑块拦过、谁处理的」？
 - [ ] 采集跑完后，ego 里**有没有多出来的页签**（应只剩本任务空间原有的 p1/p2；多出来说明桥没关干净）？
 - [ ] 若本轮出现过风控/异常：`~/.cache/xueqiu-spyder/shots/<批次>/` 下是否有对应截图？汇报里是否给了路径？
 - [ ] 输出为帖子集格式（frontmatter 七字段 + 三件套 + 发布行）？

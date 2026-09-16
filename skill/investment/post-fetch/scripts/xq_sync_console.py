@@ -83,6 +83,7 @@ def parse_console():
         try: max_no = max(max_no, int(b.get('name') and 0 or 0) or 0)
         except Exception: pass
         console[b['name']] = {'id': b.get('xueqiuId') or '', 'is_xq': (b.get('platform') or '') == '雪球',
+                              'platform': b.get('platform') or '',
                               'special': bool(b.get('special')), 'cutoff': b.get('infoCutoff') or '',
                               'registered': bool(b.get('registered'))}
     return console, max_no
@@ -98,7 +99,9 @@ def main():
     following = fetch_following()
 
     console, max_no = parse_console()
-    xq_console = {n: v for n, v in console.items() if v['id']}
+    # 待采集 = 有雪球ID；「雪球已销户」只保留历史、不再采集（2026-09-16 用户拍板）
+    xq_console = {n: v for n, v in console.items()
+                  if v['id'] and v.get('platform') != '雪球已销户'}
 
     new = {n: i for n, i in following.items() if n not in console}
     unfollow = {n: v for n, v in xq_console.items() if n not in following}

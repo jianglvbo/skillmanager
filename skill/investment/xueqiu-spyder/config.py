@@ -38,10 +38,12 @@ DEFAULT_OUTPUT_DIR = "./output"
 
 # ── 浏览器通道（2026-09-15 用户拍板：默认走 ego lite）──────────────────────
 #   ego   : 经 ego_bridge.js 把浏览器动作转发给 **ego lite**（复用其登录态，不启动 Chrome）
-#   chrome: 旧路径，Chromium CDP 调试端口（仅作兼容保留；用户已要求不再用 Chrome）
-#   auto  : 默认——装了 ego-browser CLI 就用 ego，否则回落 chrome 并告警
+#   auto  : 优先 ego，ego 不可用时**回落 Chrome**——2026-09-16 用户抓到一次实锤：
+#           桥启动超时（任务空间被交接卡住）后 auto 静默拉起了 Google Chrome。
+#   chrome: 旧路径，Chromium CDP 调试端口（仅排障）
 # 用户原话（2026-09-15）：「以后别用 chrome 了，用 ego lite」。
-BROWSER_TRANSPORT = os.environ.get("XUEQIU_TRANSPORT", "auto").strip().lower()
+# **2026-09-16 拍板：默认值由 auto 改为 ego**——宁可直接失败，也不许偷偷起 Chrome。
+BROWSER_TRANSPORT = os.environ.get("XUEQIU_TRANSPORT", "ego").strip().lower()
 # 桥接脚本：同目录的 ego_bridge.js，可用环境变量指到别处
 EGO_BRIDGE_JS = os.environ.get(
     "XUEQIU_EGO_BRIDGE",
@@ -63,3 +65,6 @@ EGO_SHOT_DIR = os.environ.get(
 )
 # 详情页补全过程中每隔 N 条落一张图（0＝关；默认每 5 条，便于回看进度与风控弹窗）
 EGO_SHOT_EVERY = int(os.environ.get("XUEQIU_EGO_SHOT_EVERY", "5"))
+# 命中滑块后把 ego 交给用户接管、等用户过完验证的最长时间（毫秒；默认 15 分钟）
+# 用户要求：「如果遇到了滑块，记得把 ego lite 让我接管」
+EGO_SLIDER_WAIT_MS = int(os.environ.get("XUEQIU_EGO_SLIDER_WAIT_MS", str(15 * 60 * 1000)))

@@ -25,14 +25,17 @@
  *   {"id":8,"cmd":"screenshot","page":"p1","path":"/abs/out.png"}   // 落图，供用户事后核对风控
  *   {"id":9,"cmd":"text","page":"p1"}               // 读页面可见文本（`document.body.innerText`）
  *   {"id":10,"cmd":"cookies"}                       // 读该会话 Cookie 串（给 requests 复用同一登录态）
+ *   {"id":11,"cmd":"handoff","waitMs":900000}       // 把任务空间交给用户（过滑块），等用户交还后回执
  *
  *   **页签策略（2026-09-16 用户口径：随用随关，除非有必要才保留）**：
  *   ① 页面确实开在 ego 里且可见（用户要盯风控）；
  *   ② 桥在整个会话里**只维护一张工作页**：临时页用完即"放回"，下一次调用直接复用，
  *      全程不新开第二张——ego 任务空间有 8 个标签页上限（实测
  *      `Page budget reached (8/8)`），"用完就关、下次再开"在逐帖循环里必然撞顶；
- *   ③ 桥退出（shutdown / 进程被杀，含父进程异常退出时注册的 exit 钩子）时，
- *      把桥自己开的页签**全部真关**——用完不留痕，也不占用户浏览器。
+ *   ③ 桥退出（shutdown / SIGTERM / SIGINT）时调 **`task.finish({keep: []})`**：
+ *      agent 页签全关、**空间被释放**（回执 `closedSpace: true`）——"用完回收"的正解；
+ *      只关页签会留下空空间，越攒越多（2026-09-16 用户指出）。
+ *      例外：因「交给用户接管」而中断时不 finish（ego 要求：用户控制中不要 finish）。
  *
  *   fn 既接受函数表达式（`async (a) => {...}` / `() => {...}`），也接受裸表达式
  *   （`document.title`）；裸表达式会被包成 `async (a) => (expr)`，这样 Python 侧
@@ -56,6 +59,7 @@ const SPACE_NAME = CFG.spaceName || "xueqiu-spyder";
 const HOME = CFG.url || "https://xueqiu.com/";
 
 const pages = new Map();
+let handedOff = false;      // 是否正处于「交给用户接管」状态（决定退出时要不要回收）
 let task = null;
 let workPage = null;                    // 会话内唯一的工作页（用完放回，下次复用）
 
@@ -68,12 +72,29 @@ function pageOf(label) {
 }
 
 async function boot() {
-  task = SPACE ? await taskSpace(Number(SPACE)) : await taskSpace(SPACE_NAME);
+  // SPACE 既可能是数字 id（复用某空间），也可能是名字（新建/按名找）。
+  // 2026-09-16 踩坑：一律 Number() 会把名字转成 NaN → "task space not found: NaN"。
+  const spaceArg = SPACE == null || SPACE === ""
+    ? SPACE_NAME
+    : (String(SPACE).trim() !== "" && !isNaN(Number(SPACE)) ? Number(SPACE) : String(SPACE));
+  task = await taskSpace(spaceArg);
   // 注册表只装本会话真正在用的页签：ego 的页签编号是**整个浏览器单调递增**的
   // （本次实测跨进程递增到 p15），跨会话残留的旧条目会让 pageOf() 指到别的 space 的页。
   pages.clear();
   workPage = null;
-  const first = task.page("p1");
+  // 取主页面：**不能假定 p1 一定存在或可用**——2026-09-16 踩坑：`task.page("p1")` 对
+  // 一个已被关掉的页**不抛错**，只返回死引用，直到后面 `.url()` 才炸
+  //（现象：桥崩在 "page p1 was closed"，Python 侧只看到"启动超时"）。
+  // 所以这里用一次轻量探针验活，坏了就新开一张。
+  let first = null;
+  try {
+    const candidate = task.page("p1");
+    await candidate.url();            // 探针：死引用在这里就会抛
+    first = candidate;
+  } catch (e) {
+    first = await task.newPage();     // 没有可用 p1 → 自己开一张
+    process.stderr.write("[bridge] 空间内没有可用 p1，已新建标签页 " + first.label + "\n");
+  }
   pages.set("p1", first);
   const current = await first.url();
   if (!/xueqiu\.com/.test(current)) {
@@ -86,18 +107,27 @@ async function boot() {
   process.on("SIGINT", () => { cleanupOwnPages(); process.exit(0); });
 }
 
-/* 关掉桥自己开的页签（主页面 p1 是用户的，不动）。
-   注意：必须 **await**，因为 process.exit 不等异步——2026-09-16 实测用 exit 钩子
-   调它会残留页签。 */
+/* 用完回收：**关页签 + 释放空间**。
+   用户口径（2026-09-16）：「标签、空间都是的，用完要回收」。
+   正确姿势是 ego 的 `task.finish({ keep: [] })`——实测回执
+   `{closedSpace: true, closedManagedLabels: [...]}`：agent 页签全关、空间被释放。
+   只逐个 close 页签会留下空空间，越攒越多（这正是用户指出来的问题）。
+   注意：必须 await（process.exit 不等异步）；交接给用户的途中不回收。 */
 async function cleanupOwnPages() {
-  workPage = null;
-  for (const [label, p] of Array.from(pages.entries())) {
-    if (label === "p1") continue;
-    try {
-      await p.close();
-      pages.delete(label);
-    } catch (e) { /* 已关或连接已断，忽略 */ }
+  if (handedOff) {
+    process.stderr.write("[bridge] 处于用户接管中，跳过回收（空间留给用户收尾）\n");
+    return;
   }
+  try {
+    const receipt = await task.finish({ keep: [] });
+    process.stderr.write("[bridge] 回收完成: " + JSON.stringify(receipt) + "\n");
+  } catch (e) {
+    process.stderr.write("[bridge] finish 失败（" + String(e).slice(0, 80) + "），退回逐个关页签\n");
+    for (const [label, p] of Array.from(pages.entries())) {
+      try { await p.close(); pages.delete(label); } catch (e2) {}
+    }
+  }
+  workPage = null;
 }
 
 function forgetAndClose(page) {
@@ -117,10 +147,15 @@ async function handle(req) {
           workPage = await task.newPage();
           pages.set(workPage.label, workPage);
         }
+        // 用户口径（2026-09-16）：执行时要能看到"正在用的那张"，所以工作页一到手就置前
+        // （切到它所在的标签，视觉上就是最右边那张）——否则 ego 里停留的可能是主页面。
+        try { await workPage.bringToFront(); } catch (e) { /* 部分运行时无此方法，忽略 */ }
         return { id, ok: true, result: { label: workPage.label, reused: true } };
       }
       case "goto": {
         const page = pageOf(req.page);
+        // 主页面被驱动时也置前（例如同步脚本让主页面跑接口页）
+        if (req.page && req.page !== "p1") { try { await page.bringToFront(); } catch (e) {} }
         await page.goto(req.url);
         await page.waitForLoadState("domcontentloaded");
         return { id, ok: true, result: { url: await page.url() } };
@@ -171,8 +206,38 @@ async function handle(req) {
         const jar = await pageOf(req.page).evaluate(() => document.cookie || "");
         return { id, ok: true, result: jar };
       }
+      case "handoff": {
+        // 把任务空间交给用户（滑块/验证要人工过），然后**盯着控制权**：
+        // 用户过完验证、控制权回到 agent → 回执 ok，采集方据此重试本页。
+        const waitMs = Number(req.waitMs || 900000);
+        handedOff = true;
+        await task.handOff();
+        const deadline = Date.now() + waitMs;
+        while (Date.now() < deadline) {
+          try {
+            await task.waitForControl({ timeout: 5000, interval: 1000 });
+            // 控制权回来了：显式认领一次，避免"控制权已回但 space 仍标记为用户所有"
+            let reclaimed = false;
+            try {
+              const again = await claimTaskSpace(task.spaceId);
+              reclaimed = true;
+              task = again;
+            } catch (e) { /* 已经在 agent 名下时 claim 会失败，属正常 */ }
+            handedOff = false;      // 控制权已收回，恢复正常回收行为
+            return {
+              id, ok: true,
+              result: { regained: true, reclaimed,
+                        waitedMs: waitMs - (deadline - Date.now()) },
+            };
+          } catch (e) {
+            // waitForControl 超时（用户还没好，或**仍由用户持有**）：继续等
+          }
+        }
+        return { id, ok: false,
+                 error: "handoff 超时：用户未在 " + Math.round(waitMs / 1000) + " 秒内交还控制权" };
+      }
       case "shutdown": {
-        // 先把桥自己开的页签真关掉再退出（exit 钩子里 await 不住，会残留）
+        // 用完回收：关页签 + 释放空间（用户 2026-09-16 要求）
         await cleanupOwnPages();
         setTimeout(() => process.exit(0), 50);
         return { id, ok: true, result: { cleaned: true } };

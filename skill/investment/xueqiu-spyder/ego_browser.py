@@ -36,6 +36,36 @@ class BridgeError(RuntimeError):
     pass
 
 
+def ego_focused(app_name="ego lite"):
+    """ego lite 现在是不是前台应用（macOS 走 System Events；非 macOS / 无权限返回 None）"""
+    import subprocess
+    import sys as _sys
+    if _sys.platform != "darwin":
+        return None
+    try:
+        r = subprocess.run(
+            ["osascript", "-e",
+             'tell application "System Events" to get name of first process whose frontmost is true'],
+            capture_output=True, text=True, timeout=5)
+        front = (r.stdout or "").strip()
+        return front == app_name if front else None
+    except Exception:
+        return None
+
+
+def activate_ego(app_name="ego lite"):
+    """把 ego lite 拉到前台（滑块交接时用；失败静默）"""
+    import subprocess
+    import sys as _sys
+    if _sys.platform != "darwin":
+        return
+    try:
+        subprocess.run(["osascript", "-e", f'tell application "{app_name}" to activate'],
+                       capture_output=True, timeout=5)
+    except Exception:
+        pass
+
+
 # 这些错误说明**任务空间已经不属于 agent**（用户接管 / 空间结束），重试无意义：
 #   "The user has taken control of this task space and ended the task…"
 #   "Task space not found."
@@ -72,6 +102,20 @@ def _readline_sock(sock, buf, timeout):
     return line, rest
 
 
+def _kill_process_group(proc):
+    """杀掉子进程及其整个进程组（ego CLI 是包装进程，普通 kill 杀不干净）"""
+    import signal
+    if not proc or proc.poll() is not None:
+        return
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
 class EgoBridge:
     """一个进程 = 一个 ego 任务空间 = 一次采集会话"""
 
@@ -80,6 +124,9 @@ class EgoBridge:
         self.space = space if space is not None else config.EGO_SPACE
         self.boot_timeout = boot_timeout or config.EGO_BOOT_TIMEOUT
         self._seq = 0
+        self.space = self.space or None
+        self._is_first_attempt = True
+        self._space = self.space
         self._srv = None
         self._conn = None
         self._buf = ""
@@ -90,6 +137,21 @@ class EgoBridge:
 
     # ── 生命周期 ──────────────────────────────────────────────
     def start(self):
+        """启动桥。**两段式**：先试原任务空间，若它已被交接成"用户所有"（连接会一直
+        挂在等控制权），超时后用新空间重试——避免整轮采集被一个失效空间卡死。
+        2026-09-16 实测：滑块交接后用户没交还，该空间对新连接变成"永远等"，90s 超时。"""
+        try:
+            return self._start_once(self.space)
+        except BridgeError as e:
+            if "超时" not in str(e):
+                raise
+            fresh = "xueqiu-spyder-" + time.strftime("%H%M%S")
+            self._is_first_attempt = False
+            self._teardown()
+            print(f"⚠️ 原任务空间不可用（{e}）—— 换用新空间 {fresh} 重试", flush=True)
+            return self._start_once(fresh)
+
+    def _start_once(self, space):
         if not self.cli:
             raise BridgeError(
                 "未找到 ego-browser CLI —— 请先装好 ego lite 的命令行工具"
@@ -101,12 +163,16 @@ class EgoBridge:
         with open(config.EGO_BRIDGE_JS, "r", encoding="utf-8") as fh:
             script = fh.read()
 
+        self._space = space
         self._sock_path = os.path.join(
             tempfile.mkdtemp(prefix="xueqiu-ego-"), "bridge.sock")
         self._srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._srv.bind(self._sock_path)
         self._srv.listen(1)
-        self._srv.settimeout(self.boot_timeout)
+        # 第一段等待给短一点（20s）：空间被用户持有时，连接会一直挂着，
+        # 早失败早换空间；第二段（新空间）用完整 boot_timeout。
+        wait_budget = 20 if self._is_first_attempt else self.boot_timeout
+        self._srv.settimeout(wait_budget)
 
         # 注意顺序：先定 socket 路径，再注入配置（配置里带 socket 路径）
         script = self._bake_config(script)
@@ -121,16 +187,18 @@ class EgoBridge:
             stderr=subprocess.PIPE,
             text=True,
             env=env,
+            start_new_session=True,     # 独立进程组：超时时能整组杀掉，不留残留
         )
         self._spawn_stderr_drain()
 
         try:
             conn, _ = self._srv.accept()
         except socket.timeout:
-            self.stop()
+            self._teardown()
             raise BridgeError(
-                f"ego 桥启动超时（{self.boot_timeout:g}s）—— "
-                f"确认 ego lite 已打开并已登录雪球")
+                f"ego 桥启动超时（{wait_budget:g}s）—— "
+                f"确认 ego lite 已打开并已登录雪球"
+                + (f"；若是因为任务空间被交接给用户，会自动改用新空间" if self._is_first_attempt else ""))
         conn.settimeout(None)
         self._conn = conn
         self._buf = ""
@@ -157,7 +225,7 @@ class EgoBridge:
         注意：shebang 必须留在**第 1 行**（否则 VM 报 SyntaxError），故先摘后拼。"""
         cfg = {
             "sock": self._sock_path,
-            "space": self.space or None,
+            "space": (self._space or "").strip() or None,
             "spaceName": os.environ.get("XUEQIU_EGO_SPACE_NAME", "xueqiu-spyder"),
             "url": os.environ.get("XUEQIU_EGO_URL", "https://xueqiu.com/"),
             # 会话内只维护一张工作页（用完放回、下次复用），退出时由桥统一关
@@ -203,7 +271,26 @@ class EgoBridge:
             try:
                 self.proc.wait(timeout=5)
             except Exception:
-                self.proc.kill()
+                _kill_process_group(self.proc)
+        self.proc = None
+        for closeable in (self._conn, self._srv):
+            try:
+                if closeable:
+                    closeable.close()
+            except Exception:
+                pass
+        self._conn = self._srv = None
+        self._buf = ""
+        if self._log_fh:
+            try:
+                self._log_fh.close()
+            except Exception:
+                pass
+            self._log_fh = None
+
+    def _teardown(self):
+        """强制清理一个失败的尝试（进程组 + socket + 状态位），供两段式启动复用"""
+        _kill_process_group(self.proc)
         self.proc = None
         for closeable in (self._conn, self._srv):
             try:
@@ -221,6 +308,16 @@ class EgoBridge:
             self._log_fh = None
 
     # ── 请求 ──────────────────────────────────────────────────
+    def handoff(self, wait_ms=900000):
+        """把任务空间交给用户（滑块/验证要人工过），阻塞等待用户交还控制权。
+
+        ego 的硬约束：用户一旦接管，agent 侧所有命令都会被暂停——所以这里不是
+        可选项，是**唯一正确的姿势**：交接 → 等 → 拿回控制权 → 采集方重试本页。
+        返回 True=控制权已拿回；False/异常=超时或失败（调用方按 WAF 处理）。
+        """
+        res = self.call("handoff", timeout=wait_ms / 1000 + 30, waitMs=wait_ms)
+        return bool(res and res.get("regained"))
+
     def call(self, cmd, timeout=90, **payload):
         if not self._conn:
             raise BridgeError("ego 桥未运行")
