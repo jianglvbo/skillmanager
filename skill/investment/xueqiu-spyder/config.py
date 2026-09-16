@@ -1,7 +1,6 @@
 import os
 
 # API endpoints
-XUEQIU_HOME = "https://xueqiu.com/"
 SEARCH_STATUS_URL = "https://xueqiu.com/query/v1/symbol/search/status.json"
 # v4 路径被 WAF 405 封禁时，可经 XUEQIU_TIMELINE_URL 切到旧版路径
 # （旧版数据结构一致 {"count":N,"statuses":[...]}，但 count 上限 20）
@@ -25,15 +24,7 @@ USER_POSTS_COUNT = int(os.environ.get("XUEQIU_POSTS_COUNT", "20"))
 # Rate limiting
 REQUEST_DELAY = 1.0
 MAX_RETRIES = 3
-REQUEST_TIMEOUT = 10
 
-# Headers
-# 说明：这是发给雪球的普通 HTTP 头（个别接口会看），与"用哪个浏览器"无关——
-# 采集实际走 **ego lite** 通道（见 ego_browser.py / ego_bridge.js）。
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Safari/537.36"
-)
 
 # Output
 DEFAULT_OUTPUT_DIR = "./output"
@@ -49,8 +40,9 @@ EGO_BRIDGE_JS = os.environ.get(
     "XUEQIU_EGO_BRIDGE",
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "ego_bridge.js"),
 )
-# 复用的 ego 任务空间 id（同一批采集沿用，跨进程不新建）
+# 复用的 ego 任务空间 id（同一批采集沿用；空=让桥按名字找/新建）
 EGO_SPACE = os.environ.get("XUEQIU_EGO_SPACE", "")
+# 注：空间名由 ego_browser._bake_config 直接读 XUEQIU_EGO_SPACE_NAME，不在此定义
 # ego 桥启动握手超时（秒）
 EGO_BOOT_TIMEOUT = float(os.environ.get("XUEQIU_EGO_BOOT_TIMEOUT", "90"))
 

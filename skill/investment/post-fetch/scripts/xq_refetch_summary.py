@@ -25,8 +25,12 @@ import re, sys, os, glob, time, shutil, argparse
 # 统一接入层（ego lite；不再依赖 browser-act / Chrome）
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from xq_ego import bring_to_front, ego_session   # noqa: E402
+# 仅当要补全 vault 里的历史批次时才需要它（默认输入目录见下）
 VAULT = '/Users/jianglb/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库'
-DEFAULT_DIR = os.path.join(VAULT, '工作区', '粗制品')
+# ⚠️ 2026-09-16 修正：采集产物**不再进 vault**（落 post_history 后即清理），
+# 所以默认目录改成工具层的临时输出目录。要在已入库的帖子上补全，需先把帖子集
+# 从 post_history 导出成 md（本脚本只吃 md 文件）。
+DEFAULT_DIR = os.path.expanduser("~/.cache/xueqiu-spyder/out")
 # 备份目录在 vault 外（2026-09-09：.bak 不得污染 vault）
 BACKUP_DIR = os.path.expanduser('~/.cache/post-fetch/backups')
 

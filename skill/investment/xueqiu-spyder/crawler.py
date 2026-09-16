@@ -255,71 +255,6 @@ class XueqiuCrawler:
         data = self._fetch_json(config.SEARCH_STATUS_URL, params)
         return data.get("list", [])
 
-    def get_user_posts(self, user_id, page=1, count=None):
-        """获取用户的动态帖子"""
-        if count is None:
-            count = config.USER_POSTS_COUNT
-        params = {
-            "user_id": user_id,
-            "page": page,
-            "count": count,
-        }
-        data = self._fetch_json(config.USER_TIMELINE_URL, params)
-        if data.get("error_code"):
-            logger.warning(f"用户 {user_id} API 错误: {data.get('error_description', data.get('error_code'))}")
-            return []
-        statuses = data.get("statuses", [])
-        return statuses if statuses else data.get("list", [])
-
-    def get_user_all_posts(self, user_id, max_pages=10):
-        """通过导航到用户主页来获取其帖子（绕过登录限制）"""
-        user_page = self._ego.new_page()
-        all_statuses = []
-        try:
-            user_page.goto(
-                f"https://xueqiu.com/u/{user_id}",
-                wait_until="domcontentloaded",
-                timeout=15000,
-            )
-            try:
-                user_page.wait_for_selector(".user-name", timeout=5000)
-            except Exception:
-                user_page.wait_for_timeout(1000)
-
-            for page_num in range(1, max_pages + 1):
-                time.sleep(config.REQUEST_DELAY)
-                result = user_page.evaluate(
-                    """async (args) => {
-                        try {
-                            const resp = await fetch(
-                                `${args.url}?user_id=${args.uid}&page=${args.page}&count=${args.count}`
-                            );
-                            const ct = resp.headers.get('content-type') || '';
-                            if (!ct.includes('json')) return {ok: false, error: 'not json'};
-                            const data = await resp.json();
-                            if (data.error_code) return {ok: false, error: data.error_description};
-                            return {ok: true, statuses: data.statuses || [], count: data.count};
-                        } catch(e) { return {ok: false, error: e.message}; }
-                    }""",
-                    {"uid": user_id, "page": page_num,
-                     "url": self._timeline_url, "count": self._timeline_count},
-                )
-                if not result.get("ok"):
-                    # 首次失败 → 尝试自动降级端点后重试本页（只降级一次）
-                    if self._degrade_timeline():
-                        continue
-                    logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
-                    self._shot(f"timeline-fail-page{page_num}", page=user_page)
-                    break
-                statuses = result.get("statuses", [])
-                if not statuses:
-                    break
-                all_statuses.extend(statuses)
-                logger.info(f"  第 {page_num} 页获取 {len(statuses)} 条 (共 {len(all_statuses)})")
-        finally:
-            user_page.close()
-        return all_statuses
-
     def get_post_full_text(self, target, _slider_retried=False):
         """访问帖子详情页获取完整内容 + 精确发布时间（优先 article:published_time，次选页面文本）
         返回 (full_text, published_ms or None)；target 如 /5243796549/376934652
@@ -432,31 +367,6 @@ class XueqiuCrawler:
                     except ValueError:
                         pass
         return posts
-
-    def get_user_info(self, user_id):
-        """获取用户基本信息"""
-        user_page = self._ego.new_page()
-        try:
-            user_page.goto(
-                f"https://xueqiu.com/u/{user_id}",
-                wait_until="domcontentloaded",
-                timeout=15000,
-            )
-            try:
-                user_page.wait_for_selector(".user-name", timeout=5000)
-            except Exception:
-                pass
-            info = user_page.evaluate("""() => {
-                let name = document.querySelector('.user-name')?.textContent?.trim() || '';
-                if (!name) {
-                    const title = document.title || '';
-                    if (title.includes(' - 雪球')) name = title.replace(' - 雪球', '').trim();
-                }
-                return {screen_name: name};
-            }""")
-            return info
-        finally:
-            user_page.close()
 
     def search_user(self, keyword):
         """搜索用户，返回 [{name, href, uid}] 列表"""
