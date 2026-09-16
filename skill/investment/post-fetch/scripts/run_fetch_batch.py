@@ -53,10 +53,26 @@ def pages_for(hours):
 
 
 def cutoff_iso(blogger):
-    """看板存的是本地时间字符串（形如 2026-09-10T14:23:52.000Z，实为本地），
-    直接用前 19 位传给 --from（spyder 按本地时间解析）。"""
-    raw = blogger.get("infoCutoff") or ""
-    return raw[:19] if raw else None
+    """把看板返回的 infoCutoff 转成 spyder 的 `--from`（**本地时间**字符串）。
+
+    ⚠️ 时区语义（2026-09-16 审计实测，两轮才对）：
+      · 库里 `info_cutoff_datetime` 列存的是**本地时间**（如 20:41）；
+      · mysql2 读出来是 Date，再由看板 API 序列化成 **UTC ISO**（→ `12:41:00.000Z`）；
+      · 所以从 API 拿到之后要 **按 UTC 解析、再转成本地**（+8h），才能还原库里的 20:41。
+      · 直接截前 19 位当本地时间用会**少算 8 小时** → 每次都多采 8 小时（重复记录 + 多余请求）。
+    实测对照：晚舟夕照 库里 20:41 / API 12:41Z / +8h=20:41 ✅
+    """
+    raw = (blogger.get("infoCutoff") or "").strip()
+    if not raw:
+        return None
+    try:
+        dt = datetime.datetime.strptime(raw[:19], "%Y-%m-%dT%H:%M:%S")
+        if raw.endswith("Z"):
+            # 带 Z = UTC（看板 API 的序列化口径）→ 按本机时区偏移转本地
+            dt = dt + (datetime.datetime.now().astimezone().utcoffset() or datetime.timedelta(0))
+        return dt.strftime("%Y-%m-%dT%H:%M:%S")
+    except ValueError:
+        return raw[:19].replace(" ", "T")
 
 
 def main():
