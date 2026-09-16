@@ -27,10 +27,12 @@ compatibility: macOS / Linux
 - **ego lite 通道复用登录态（2026-09-15 迁移；2026-09-16 收口为唯一通道）**：经 `ego-browser nodejs` 把浏览器动作转发给**本机已打开并已登录雪球的 ego lite**；ego lite 没有对外 CDP 端口，故走本地 socket 桥（`ego_bridge.js`）。**Chrome 相关代码已于 2026-09-16 整段删除**（`_launch_chrome`/`_connect_chrome`/playwright 依赖/9222 端口常量全没了）——起因是 `auto` 模式在 ego 桥超时时**静默拉起过 Google Chrome**（用户当场抓到窗口与 `--remote-debugging-port=9222 --user-data-dir=…/xueqiu-spyder/chrome-profile` 进程）。
   - **默认值 `XUEQIU_TRANSPORT=ego`**；设成别的值会直接报错并告诉你"本工具只走 ego lite"，不再有任何自动回落。
 - **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
-- **现场可见 + 留证（2026-09-16 用户要求）**：用户原话「**采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控**」。三条落实：
-  1. 采集页开在 **ego 自己的标签页**里（不藏窗口），开始与结束时自动把 ego lite 拉到前台（macOS `osascript activate`；`XUEQIU_EGO_WAKE=0` 可关）；
-  2. **页签随用随关**（用户口径「随用随关，除非有必要才保留」）：会话内最多多占**一张**工作页并逐帖复用（ego 任务空间有 8 页上限，每帖新开必撞顶），**桥退出时关掉**——跑完不留页签；
-  3. 命中风控/异常时**自动截图留证**，另外详情页补全每 5 条抽一帧（`XUEQIU_EGO_SHOT_EVERY`），落到 `~/.cache/xueqiu-spyder/shots/<批次>/`。
+- **可见性与打扰的边界（2026-09-16 两轮口径合并）**：
+  1. 采集页开在 **ego 自己的标签页**里（看得见，但不抢焦点）——用户原话「**不要让 ego lite 一直跳到我前面，但是如果遇到滑块请激活 ego lite，让我注意到**」→ **默认不激活**（`XUEQIU_EGO_WAKE=1` 才会在采集时置前）；
+  2. **命中滑块/安全验证时强制激活** ego lite（App 没开就 `open -a` 拉起），并把控制权交给用户；过完验证自动重试本页；
+  3. **页签随用随关**：工作页一进一出（用完立刻真关，下次要用再开），主页面随空间回收关闭——**跑完不留标签**；
+  4. **空间用完即回收**：桥退出（一轮采集结束）时 `finish({keep:[]})` 关标签 + **释放空间**（实测 `closedSpace:true`）；批量每采完一位就释放，不堆空间；
+  5. 命中风控/异常仍**自动截图留证**（`~/.cache/xueqiu-spyder/shots/<批次>/`），详情页每 5 条抽一帧（`XUEQIU_EGO_SHOT_EVERY`）。
 - **风控自控**：命中滑块/安全验证（`滑动|安全验证|captcha|访问验证`）时**不硬撞**——把 ego 交给用户接管、等其过完验证再自动重试本页（超时才按 WAF 中止）；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
 - **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
 - **输出对齐帖子集规范**：frontmatter 七字段 + 每帖三件套（标题/正文/发布行），供 post-fetch 直接交接提炼。
@@ -116,9 +118,9 @@ PY
 
 | 行为 | 说明 | 关闭方式 |
 |:---|:---|:---|
-| 开始/结束时把 ego 窗口拉到前台 | macOS `osascript … activate`，非 macOS 跳过 | `XUEQIU_EGO_WAKE=0` |
-| 页签随用随关 | 一次采集最多多占**一张**工作页（逐帖复用它，不每帖开新页——ego 任务空间有 8 页上限）；**桥退出时把这张关掉**，跑完不留页签 | 无需配置 |
-| **命中滑块 → 交给你接管** | timeline/详情页命中滑块或安全验证时，ego 置前 + 自动 `handOff()`，等你过完验证、控制权交还后**自动重试本页**（默认最长等 15 分钟） | `XUEQIU_EGO_SLIDER_WAIT_MS` 调等待时长；`0` 可关 |
+| 窗口激活 | **默认不激活**（用户口径：「不要让 ego lite 一直跳到我前面」）；想让采集时置前设 `XUEQIU_EGO_WAKE=1` | 默认已是关 |
+| 页签随用随关 | 工作页一进一出：用完**立刻真关**，下次要用再开（ego 任务空间 8 页上限，靠这个不撞顶）；主页面随空间回收一并关闭。**跑完不留标签** | 无需配置 |
+| **命中滑块 → 激活 ego 并交给你接管** | timeline/详情页命中滑块或安全验证时，**强制激活 ego lite**（ego 没开会用 `open -a` 拉起）+ 自动 `handOff()`，等你过完验证、控制权交还后**自动重试本页**（默认最长等 15 分钟） | `XUEQIU_EGO_SLIDER_WAIT_MS` 调等待时长 |
 | 命中风控/异常自动截图 | timeline 命中滑块/验证、详情页 405、详情页异常、翻页失败 | `XUEQIU_EGO_SHOT_DIR=`（置空） |
 | 详情页每 5 条抽一帧 | 记录补全进度与偶发风控弹窗 | `XUEQIU_EGO_SHOT_EVERY=0` |
 
@@ -146,14 +148,14 @@ $PY main.py user {xq_id} --from "{cutoff_iso}" --outfile "雪球采集-{昵称}-
 | `XUEQIU_TRANSPORT` | **`ego`** | 只允许 ego lite（唯一通道）；任何其它取值都会直接报错 |
 | `XUEQIU_EGO_SPACE` | 空 | 复用指定 ego 任务空间 id（多轮采集沿用同一个） |
 | `XUEQIU_EGO_SPACE_NAME` | `xueqiu-spyder` | 新建任务空间时的名字 |
-| `XUEQIU_EGO_WAKE` | `1` | 开始/结束把 ego 窗口拉到前台 |
-| （页签策略固定） | — | 会话内最多一张工作页、退出即关；不再提供"保留页签"开关 |
+| `XUEQIU_EGO_WAKE` | **`0`** | 采集时是否把 ego 窗口拉到前台；**默认不抢焦点**。滑块交接时的激活**不受**此开关影响（那条一定会激活，让用户注意到） |
+| （页签/空间策略固定） | — | 工作页随用随关；桥退出（一轮采集结束）时 `finish({keep:[]})` 关标签**并释放空间**——没有"保留"开关 |
 | `XUEQIU_EGO_SHOT_DIR` | `~/.cache/xueqiu-spyder/shots` | 截图目录（置空＝不落图） |
 | `XUEQIU_EGO_SHOT_EVERY` | `5` | 详情页每 N 条抽一帧（0＝关） |
 | `XUEQIU_EGO_SLIDER_WAIT_MS` | `900000`（15 分钟） | 滑块交接后等用户过验证的时长；超时按 WAF 中止本轮 |
 | `XUEQIU_EGO_BOOT_TIMEOUT` | `90` | 桥启动握手超时（秒） |
 | `XUEQIU_EGO_LOG` | 空 | 把桥 stderr 另存一份日志（排障用） |
-| `XUEQIU_DEBUG_PORT` / `XUEQIU_DEBUG_HOST` / `XUEQIU_CHROME_PATH` | 9222 / localhost / 系统 Chrome | **仅**旧 `chrome` 通道 |
+| ~~`XUEQIU_DEBUG_PORT` / `XUEQIU_DEBUG_HOST` / `XUEQIU_CHROME_PATH`~~ | — | **已删除**（Chrome 通道 2026-09-16 从代码移除） |
 
 **退出码约定（2026-09-09 固化，编排层据此决定是否更新 info_cutoff）**：
 

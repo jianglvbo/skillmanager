@@ -54,16 +54,22 @@ def ego_focused(app_name="ego lite"):
 
 
 def activate_ego(app_name="ego lite"):
-    """把 ego lite 拉到前台（滑块交接时用；失败静默）"""
+    """把 ego lite 拉到前台（**只在滑块交接时调用**——用户要求：平时别抢焦点）。
+
+    ego 没开着时 `activate` 无效，退回用 `open -a` 把 App 拉起来（滑块必须让用户看见）。
+    """
     import subprocess
     import sys as _sys
     if _sys.platform != "darwin":
         return
-    try:
-        subprocess.run(["osascript", "-e", f'tell application "{app_name}" to activate'],
-                       capture_output=True, timeout=5)
-    except Exception:
-        pass
+    for cmd in (
+        ["osascript", "-e", f'tell application "{app_name}" to activate'],
+        ["open", "-a", app_name],          # App 没在跑时拉起它
+    ):
+        try:
+            subprocess.run(cmd, capture_output=True, timeout=8)
+        except Exception:
+            continue
 
 
 # 这些错误说明**任务空间已经不属于 agent**（用户接管 / 空间结束），重试无意义：

@@ -43,13 +43,6 @@ def py_bin():
     return sys.executable or "python3"
 
 
-def _chrome_procs():
-    """当前有多少个 Google Chrome 主进程（0 才是正常；由本脚本监控，不主动杀）"""
-    r = subprocess.run(["pgrep", "-f", "Google Chrome.app/Contents/MacOS/Google Chrome"],
-                       capture_output=True, text=True)
-    return len([x for x in (r.stdout or "").split() if x.strip()])
-
-
 def pages_for(hours):
     """post-fetch 硬约束：≤24h→3、≤7 天→5、>7 天→10"""
     if hours <= 24:
@@ -118,14 +111,11 @@ def main():
         cmd = [py, "main.py", "user", xq, "--from", cut, "--to", now,
                "--max-pages", str(pages), "--outfile", outfile, "--output", OUT_DIR]
         t0 = time.time()
-        chrome_before = _chrome_procs()
         print(f"[{i}/{len(targets)}] {name} 窗口 {cut} → {now}（{hrs:.0f}h，{pages} 页）", flush=True)
-        # 用户口径：浏览器一律 ego lite。工具层默认已是 ego，这里再钉一次双保险
-        # （2026-09-16 实锤：`auto` 曾在 ego 桥超时时静默拉起 Google Chrome）。
+        # 浏览器一律 ego lite（2026-09-16 用户拍板，Chrome 路径已从工具层删除）。
         env = dict(os.environ)
         env["XUEQIU_TRANSPORT"] = "ego"
-        # 批量采集**不抢焦点**（2026-09-16 用户反馈：ego 窗口一直被拉到最前面，干扰用电脑）。
-        # 单博主手动采集时仍会激活（方便盯风控），批量则安静跑。
+        # 不抢焦点（用户口径：「不要让 ego lite 一直跳到我前面」，滑块时才激活）。
         env["XUEQIU_EGO_WAKE"] = "0"
         r = subprocess.run(cmd, cwd=SPYDER_DIR, capture_output=True, text=True,
                            timeout=1800, env=env)
@@ -136,10 +126,6 @@ def main():
         rec = {"name": name, "xq": xq, "cutoff": cut, "pages": pages,
                "exit": code, "file": path if code == 0 and os.path.exists(path) else None,
                "seconds": round(dt, 1)}
-        chrome_after = _chrome_procs()
-        if chrome_after > chrome_before:
-            print(f"    ⚠️ 检测到新增 Chrome 进程（{chrome_before}→{chrome_after}）："
-                  f"有东西在起 Chrome，请查！", flush=True)
         if code == 0:
             manifest.append(rec)
             print(f"    ✅ 采集完成 {dt:.0f}s → {os.path.basename(path)}", flush=True)

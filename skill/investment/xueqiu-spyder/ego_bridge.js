@@ -188,6 +188,13 @@ async function handle(req) {
           return { id, ok: true, result: { closed: true, label } };
         }
         // 用完放回：页签由桥在退出时统一关（会话内复用同一张，不再新开）
+        // 2026-09-16 用户口径：「标签最好是随用随关」——所以放回时**立刻真关**，
+        // 下次要用再开一张（工作页一进一出，ego 里不留悬挂标签）。
+        if (label !== "p1") {
+          try { await page.close(); } catch (e) {}
+          pages.delete(label);
+          return { id, ok: true, result: { closed: true, label } };
+        }
         return { id, ok: true, result: { released: true, label } };
       }
       case "screenshot": {

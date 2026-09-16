@@ -4,7 +4,7 @@
 > SKILL.md 仅保留步骤摘要骨架，细节一律以本文件为准；采集执行由 xueqiu-spyder 承载，本层不持有页面解析规则（2026-09-09 重构，page-structure.md 已退役）。
 > 权威规则：`framework-rules.md` #12（博主补登/移除例外）、#29（帖子集例外流程）、#35（原文链接必填）。
 > 2026-09-09 重构：编排-工具分层（post-fetch 编排 → xueqiu-spyder 抓取）。
-> 2026-09-16 收口：**全部浏览器动作统一走 ego lite**（采集走 xueqiu-spyder 的桥；同步/摘要补全走 `scripts/xq_ego.py`），**browser-act 依赖已移除**，不要再起 Chrome。
+> 2026-09-16 收口：**全部浏览器动作统一走 ego lite**（采集走 xueqiu-spyder 的桥；同步/摘要补全走 `scripts/xq_ego.py`）；browser-act 与 Chrome 通道都已从代码删除，不会再起任何别的浏览器。
 
 ---
 
@@ -12,9 +12,9 @@
 
 雪球对采集有**两层反爬**，xueqiu-spyder 工具层内建 WAF/滑块检测（命中即抛 `CrawlerError` 停止），编排层遇到报错时按此背景判断处置：
 
-- **第一层 WAF URL 拦截**：分页裸 URL（`page>=2`）被拦截返回「很抱歉…访问被阻断」。规避：spyder 通过已登录 Chrome 会话请求（带签名参数），正常可翻页。
+- **第一层 WAF URL 拦截**：分页裸 URL（`page>=2`）被拦截返回「很抱歉…访问被阻断」。规避：spyder 通过 **ego lite 里已登录的雪球会话**请求（带签名参数），正常可翻页。
 - **第二层 阿里云滑块验证**：连续请求触发「访问验证：请按住滑块」。规避：人工过验证 / 稍后重试，绝不硬撞。
-- spyder 翻页若持续失败：检查 Chrome 登录态是否过期（标题含昵称=已登录），必要时用户重新登录雪球。
+- spyder 翻页若持续失败：检查 **ego lite 里**的雪球登录态是否过期（标题含昵称=已登录），必要时用户重新登录雪球。
 
 > timeline API 仍可用于**快速预扫**（page=1 判断博主是否有新帖），但完整采集以 spyder 工具层为准。
 
@@ -66,7 +66,7 @@ $PY "$SPYDER/main.py" user {xq_id} \
 **环境检查**（调用前）：
 - venv 依赖：`$PY -c "import requests, playwright"`
 - **ego lite 通道（默认，2026-09-15 起）**：确认 ego lite 已打开且已登录雪球；`SPYDER/ego_browser.py` 的自检打印当前页 URL/标题即可
-- ~~Chrome CDP：`curl -s http://localhost:9222/json/version`~~ —— 旧通道（`XUEQIU_TRANSPORT=chrome`）才需要，仅排障时用；主机名必须 `localhost`（Chrome 152 起 `127.0.0.1` 返 404），端口用 `XUEQIU_DEBUG_PORT` 覆盖
+- **无需任何 CDP 预检**：Chrome 通道（含 `XUEQIU_DEBUG_PORT` 等）已于 2026-09-16 从工具层整段删除，采集只走 ego lite。
 - 登录态：用户页标题含昵称 = 已登录
 
 **翻页数与节流（2026-09-09 实测固化，硬约束）**：

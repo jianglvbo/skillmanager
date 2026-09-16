@@ -71,7 +71,7 @@ class XueqiuCrawler:
                 f"（用户 2026-09-15/16 拍板）。去掉该环境变量即可（默认 ego）。")
         try:
             self._connect_ego()
-            self._wake_ego()          # 让用户能盯着采集现场（风控是否触发）
+            self._wake_ego()          # 默认不抢焦点（EGO_WAKE=0）；滑块时另有激活
         except Exception as e:
             raise CrawlerError(
                 f"ego lite 通道不可用：{e}\n"
@@ -123,11 +123,13 @@ class XueqiuCrawler:
         return False
 
     def _wake_ego(self):
-        """把 ego lite 窗口拉到前台——用户要能看着采集跑，才能第一时间发现风控。
+        """把 ego lite 窗口拉到前台（**默认不做**）。
 
-        用户原话：「采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有
-        触发风控」。页面本来就开在 ego 里（可见），这里只是保证它不在别的窗口后面。
-        关掉：`XUEQIU_EGO_WAKE=0`。
+        2026-09-16 用户口径：「不要让 ego lite 一直跳到我前面，但是如果遇到滑块请激活
+        ego lite，让我注意到」。所以：
+          · 默认 `EGO_WAKE=0`，采集开始/结束都**不**抢焦点；
+          · 只有命中滑块时由 `_handle_slider()` 激活一次（那条独立于本开关）。
+        想让采集时也置前：设 `XUEQIU_EGO_WAKE=1`。
         """
         if not config.EGO_WAKE or sys.platform != "darwin":
             return
@@ -136,7 +138,7 @@ class XueqiuCrawler:
                 ["osascript", "-e", 'tell application "ego lite" to activate'],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,
             )
-            logger.info("已把 ego lite 窗口拉到前台一次（要看风控可盯着；批量/不想被打断：XUEQIU_EGO_WAKE=0）")
+            logger.info("已把 ego lite 窗口拉到前台一次（XUEQIU_EGO_WAKE=1 才会这样）")
         except Exception as e:
             logger.debug("激活 ego 窗口失败（不影响采集）：%s", e)
 

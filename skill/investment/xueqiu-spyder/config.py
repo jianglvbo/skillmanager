@@ -28,21 +28,21 @@ MAX_RETRIES = 3
 REQUEST_TIMEOUT = 10
 
 # Headers
+# 说明：这是发给雪球的普通 HTTP 头（个别接口会看），与"用哪个浏览器"无关——
+# 采集实际走 **ego lite** 通道（见 ego_browser.py / ego_bridge.js）。
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "(KHTML, like Gecko) Safari/537.36"
 )
 
 # Output
 DEFAULT_OUTPUT_DIR = "./output"
 
-# ── 浏览器通道（2026-09-15 用户拍板：默认走 ego lite）──────────────────────
-#   ego   : 经 ego_bridge.js 把浏览器动作转发给 **ego lite**（复用其登录态，不启动 Chrome）
-#   auto  : 优先 ego，ego 不可用时**回落 Chrome**——2026-09-16 用户抓到一次实锤：
-#           桥启动超时（任务空间被交接卡住）后 auto 静默拉起了 Google Chrome。
-#   chrome: 旧路径，Chromium CDP 调试端口（仅排障）
-# 用户原话（2026-09-15）：「以后别用 chrome 了，用 ego lite」。
-# **2026-09-16 拍板：默认值由 auto 改为 ego**——宁可直接失败，也不许偷偷起 Chrome。
+# ── 浏览器通道：**只有 ego lite**（2026-09-16 用户拍板）────────────────────
+# 用户原话：「采集帖子不要用 chrome 浏览器，记得把有关的都去掉，全部改用 ego lite」。
+# 曾经存在的 Chrome CDP 通道（含 auto 回落）已于 2026-09-16 从代码里整段删除：
+# 它曾在 ego 桥超时时静默拉起过 Google Chrome。现在只有 ego 一条路——
+# `XUEQIU_TRANSPORT` 留作显式开关，取值不是 `ego` 直接报错。
 BROWSER_TRANSPORT = os.environ.get("XUEQIU_TRANSPORT", "ego").strip().lower()
 # 桥接脚本：同目录的 ego_bridge.js，可用环境变量指到别处
 EGO_BRIDGE_JS = os.environ.get(
@@ -56,8 +56,10 @@ EGO_BOOT_TIMEOUT = float(os.environ.get("XUEQIU_EGO_BOOT_TIMEOUT", "90"))
 
 # ── 现场可见性（2026-09-16 用户要求）──────────────────────────────────
 # 用户原话：「采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控」。
-# EGO_WAKE：采集开始/结束时把 ego lite 窗口拉到前台（macOS 走 osascript activate）
-EGO_WAKE = os.environ.get("XUEQIU_EGO_WAKE", "1") not in ("0", "false", "no")
+# EGO_WAKE：是否在采集开始/结束时把 ego lite 窗口拉到前台。
+# **2026-09-16 用户口径：默认不抢焦点**（「不要让 ego lite 一直跳到我前面」）；
+# 只有命中滑块需要用户处理时才激活（见 crawler._handle_slider，那条不受此开关控制）。
+EGO_WAKE = os.environ.get("XUEQIU_EGO_WAKE", "0") not in ("0", "false", "no")
 # EGO_SHOT_DIR：命中风控/异常时自动落图留证的目录（空＝不落图）
 EGO_SHOT_DIR = os.environ.get(
     "XUEQIU_EGO_SHOT_DIR",
