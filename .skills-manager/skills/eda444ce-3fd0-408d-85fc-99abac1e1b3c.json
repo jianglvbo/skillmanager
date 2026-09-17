@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "eda444ce-3fd0-408d-85fc-99abac1e1b3c",
+  "path": "skill/content/full-text-organizer",
+  "path_key": "skill/content/full-text-organizer",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

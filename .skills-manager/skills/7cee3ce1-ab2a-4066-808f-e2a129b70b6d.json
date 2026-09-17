@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "7cee3ce1-ab2a-4066-808f-e2a129b70b6d",
+  "path": "skill/investment/investment-review",
+  "path_key": "skill/investment/investment-review",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

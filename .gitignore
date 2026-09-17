@@ -43,3 +43,6 @@ credentials.*
 
 # 校验脚本运行时产物
 vault_review_result.json
+Thumbs.db
+.skills-manager.lock
+*.pyc

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "a68b15bc-dbf1-4b25-bca6-46ca9bb9e917",
+  "path": "skill/meta/git-ops",
+  "path_key": "skill/meta/git-ops",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
