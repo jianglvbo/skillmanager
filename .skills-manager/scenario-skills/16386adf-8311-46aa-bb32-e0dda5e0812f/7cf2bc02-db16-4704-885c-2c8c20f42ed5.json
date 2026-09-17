@@ -6,7 +6,7 @@
   "tools": {
     "agent": false,
     "codex": true,
-    "deepseek_harness": true,
+    "deepseek_harness": false,
     "workbuddy": true
   }
 }
