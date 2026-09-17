@@ -425,3 +425,9 @@
     - **无价值判据要内化**：判 `no_value=1` 的理由若属可复用的低质类型，追加到 `refine-schema.md`「用户删过的类型」判据表（与 #49/#50 内化闭环一致），让同类帖以后直接判无价值、不再逐条纠结。
     - **写入路径**：产出言论时由 `blogger_statement` 落 `post_history_id`（server.js 钩子接好后自动置 `refine_status=1`）；**判无价值**是提炼侧的判断、无言论可挂，需**显式**更新 `post_history`（钩子落地前由提炼流程用 SQL 维护 `refine_status=1,no_value=1`；钩子落地后应提供等价的 MCP 动作）。
     - **批次判定**：以后"提炼帖子"的待办 = `SELECT ... FROM post_history WHERE refine_status=0`，不再靠反查六张言论表的 `post_history_id` 做差集。
+
+59. 信号必须挂在具体标的上 + 固定显示格式（2026-09-17 用户拍板）：
+    - **规则 A（耦合铁律）**：`stance`（看多/看空/中性）是对**某个个股/行业/市场**的方向性判断——**言论没挂上这三类中任何一类，就不得给 stance/signal**。纯宏观/情绪/方法论而无具体标的的观点，一律留空信号（0 关联 + 无 stance 是合法终态，见 #52）。落库前自检：有 stance 必先确认至少一条 `statement_stock_rel/industry_rel/market_rel`。
+    - **规则 B（显示格式）**：信号行固定渲染为 `信号：{方向} ｜ #{个股…} ｜ #{行业…} ｜ #{市场…}`——方向取 stance（看多/看空/中性），后接该言论关联的实体，**实体一律带 `#` 前缀、组内多个用空格分隔、组间用 `｜` 分隔、顺序恒为 个股→行业→市场**，没有的组不出现。例：`信号： 看多 ｜ #贵州茅台 #五粮液 ｜ #白酒 ｜ #A股`。
+    - **判断文本归位**：原 `signal_text` 里那句具体判断（如"去库存时该下注"）**不再塞进信号行**，它属于正文 `view`；信号行只承载"方向 + 标的"。前端 `sigLine` 由 `stance + subjects` 渲染，无 subjects 则整行不渲染（从结构上强制规则 A）。
+    - **落库副作用**：`blogger_statement` 传 `subjectId` 时**必须同时传 `consoleType`**（stock/industry/market），否则实体不挂（2026-09-17 踩坑：只传 subjectId 导致 CSCK 泡泡玛特关联丢失，改用 `target` 名字解析补挂）。
