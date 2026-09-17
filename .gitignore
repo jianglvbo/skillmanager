@@ -48,6 +48,8 @@ Thumbs.db
 *.pyc
 
 # skills-manager: oversized skills excluded from backup (auto-managed)
+/douyin-video-summary/
+/.skills-manager/skills/65c59c65-0614-40e0-8eaa-7e3704bf1e61.json
 /xueqiu-spyder/
 /.skills-manager/skills/e659ad90-e96f-4c13-878e-904c93809522.json
 # skills-manager: end oversized skills
