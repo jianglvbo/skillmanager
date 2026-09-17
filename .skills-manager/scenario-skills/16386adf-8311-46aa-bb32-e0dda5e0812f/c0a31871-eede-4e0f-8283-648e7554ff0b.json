@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "scenario_id": "16386adf-8311-46aa-bb32-e0dda5e0812f",
-  "skill_id": "7cf2bc02-db16-4704-885c-2c8c20f42ed5",
-  "sort_order": 0,
+  "skill_id": "c0a31871-eede-4e0f-8283-648e7554ff0b",
+  "sort_order": 12,
   "tools": {
-    "agent": false,
+    "agent": true,
     "codex": true,
     "deepseek_harness": true,
     "workbuddy": true
