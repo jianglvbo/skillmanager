@@ -40,7 +40,7 @@ agent_created: true
 - **README 是强制产物**：变更影响目录结构/Skill 列表/仓库规范/工具/安装方式时，必须更新 README 对应章节
 - **变更历史由 git log 承担**：commit 用 Conventional Commits，无 CHANGELOG.md
 - **执行方式由 agent 判断**：提交/推送怎么做，由当前 agent 按场景选择合适工具（如 git-ops skill 或直接 git 命令），本 skill 不指定、不绑定；**提交/推送的规则一律以 `git-ops` 为唯一真相源，本 skill 不重复定义。**
-- **同步必须识别合并，禁止硬性覆盖（2026-09-09 用户硬约束）**：本地 `~/.agents/skills/<name>` 与仓库 `~/Ai/skill/<分类>/<name>` 双向同步时，**必须先逐文件识别差异并语义合并**；**绝不允许**用 `cp -r` / `rsync -a` 无条件覆盖任一侧。两边都有独有改动（真冲突）→ **停下来让用户决策**，不得自行取舍。
+- **同步必须识别合并，禁止硬性覆盖（2026-09-09 用户硬约束）**：本地 `~/.skills-manager/skills/skill/<分类>/<name>` 与仓库 `~/Ai/skill/<分类>/<name>` 双向同步时，**必须先逐文件识别差异并语义合并**；**绝不允许**用 `cp -r` / `rsync -a` 无条件覆盖任一侧。两边都有独有改动（真冲突）→ **停下来让用户决策**，不得自行取舍。
 - **重构前必须对齐仓库最新基线（2026-09-09 固化）**：对已有 skill 文件做结构性重构/整体重写前，先 `git fetch` + 检查近期提交 + 对比本机与仓库 HEAD 该文件——仓库 HEAD 更新时禁止基于旧副本改写后整体替换（03e9d8d 误删先例），先同步基线再改。细节见下方同步规则第 0 步。
 
 ### 同步规则（识别合并流程）
@@ -49,12 +49,12 @@ agent_created: true
 
 0. **改文件前先对齐基线（2026-09-09 固化 · 03e9d8d 误删教训）**：任何 agent 要对某个已有 skill 文件做**结构性重构/大改**（改段落结构、整体重写、批量编辑，非单行小修）前，必须：
    1. `cd ~/Ai && git fetch` 拉取远程最新，`git log --oneline -5 -- <目标文件>` 检查近期是否有其他 agent 动过该文件；
-   2. 对比**本机 `~/.agents/skills/<name>` 与仓库 HEAD 同文件**（`git show HEAD:skill/<分类>/<name>/<file>`）：若仓库 HEAD 比本机新（本机落后），**禁止基于旧副本改写后整体替换**——先同步到 HEAD 基线（走本流程第 1-4 步）再改；
+   2. 对比**本机 `~/.skills-manager/skills/skill/<分类>/<name>` 与仓库 HEAD 同文件**（`git show HEAD:skill/<分类>/<name>/<file>`）：若仓库 HEAD 比本机新（本机落后），**禁止基于旧副本改写后整体替换**——先同步到 HEAD 基线（走本流程第 1-4 步）再改；
    3. 本次先例（2026-09-09 发现）：03e9d8d 基于不含 34e807b 改动的旧副本重构 `framework-rules.md` 后整体替换，把 #11/#12 两条审查固化规则静默删除——正是跳过本步的后果。
 1. **逐文件内容级对比**（排除 `.DS_Store` / `__pycache__` / `*.pyc` 噪音）：
    ```bash
    diff -rq -x '.DS_Store' -x '__pycache__' -x '*.pyc' \
-     ~/.agents/skills/<name> ~/Ai/skill/<分类>/<name>
+     ~/.skills-manager/skills/skill/<分类>/<name> ~/Ai/skill/<分类>/<name>
    ```
 2. **对每个差异文件判定归属**（`diff` 逐行看，不看 mtime）：
    - **单边独有**（一侧是另一侧的超集）→ 取超集版本，属无冲突合并
