@@ -4,9 +4,9 @@
   "skill_id": "2c343ac4-f897-4f8e-9ac1-93496a945a0f",
   "sort_order": 11,
   "tools": {
-    "agent": false,
-    "codex": false,
-    "deepseek_harness": false,
+    "agent": true,
+    "codex": true,
+    "deepseek_harness": true,
     "workbuddy": true
   }
 }
