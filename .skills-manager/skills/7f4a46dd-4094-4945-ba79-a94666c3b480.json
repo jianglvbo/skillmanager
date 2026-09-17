@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "7f4a46dd-4094-4945-ba79-a94666c3b480",
+  "path": "dingtalk-event",
+  "path_key": "dingtalk-event",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

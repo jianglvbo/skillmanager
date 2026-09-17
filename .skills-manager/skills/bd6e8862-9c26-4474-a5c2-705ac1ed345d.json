@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "bd6e8862-9c26-4474-a5c2-705ac1ed345d",
+  "path": "console-style-fitness",
+  "path_key": "console-style-fitness",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

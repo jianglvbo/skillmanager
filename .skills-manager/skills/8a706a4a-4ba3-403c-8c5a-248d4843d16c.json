@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "8a706a4a-4ba3-403c-8c5a-248d4843d16c",
+  "path": "autocli",
+  "path_key": "autocli",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

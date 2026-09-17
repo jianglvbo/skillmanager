@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "f805d8e4-d27e-4c7e-b65e-887f8bf3e675",
+  "path": "skill-seekers",
+  "path_key": "skill-seekers",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

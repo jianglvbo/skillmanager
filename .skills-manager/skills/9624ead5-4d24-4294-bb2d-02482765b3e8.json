@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "9624ead5-4d24-4294-bb2d-02482765b3e8",
+  "path": "行业研究",
+  "path_key": "行业研究",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

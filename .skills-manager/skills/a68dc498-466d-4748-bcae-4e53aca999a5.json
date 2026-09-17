@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "a68dc498-466d-4748-bcae-4e53aca999a5",
+  "path": "业绩快评",
+  "path_key": "业绩快评",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

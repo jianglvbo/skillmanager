@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "8bc1dac7-5a7e-4c2d-b34e-7520913ee40e",
+  "path": "browser-act",
+  "path_key": "browser-act",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

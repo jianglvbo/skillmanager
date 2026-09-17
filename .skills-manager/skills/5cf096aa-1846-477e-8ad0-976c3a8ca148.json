@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "5cf096aa-1846-477e-8ad0-976c3a8ca148",
+  "path": "local-image-ocr-aipc",
+  "path_key": "local-image-ocr-aipc",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

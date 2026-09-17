@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "340d28b5-f74a-4651-ac46-eb7030726483",
+  "path": "dingtalk-wiki",
+  "path_key": "dingtalk-wiki",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

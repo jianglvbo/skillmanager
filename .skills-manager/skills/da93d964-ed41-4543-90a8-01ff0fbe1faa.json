@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "da93d964-ed41-4543-90a8-01ff0fbe1faa",
+  "path": "qw-pages",
+  "path_key": "qw-pages",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "518985ae-eab6-4faf-9805-257928f7a832",
+  "path": "读年报",
+  "path_key": "读年报",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

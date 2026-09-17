@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "89bf39ba-3dcb-43a9-80b4-85f18ae18176",
+  "path": "ego-browser",
+  "path_key": "ego-browser",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

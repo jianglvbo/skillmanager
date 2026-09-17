@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "b4f45b6b-f6c2-4f81-a059-f943ba71e1f0",
+  "path": "media-generation",
+  "path_key": "media-generation",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

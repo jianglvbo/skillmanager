@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "43623a60-e8a8-46f3-98ad-de6973a3754c",
+  "path": "getnote",
+  "path_key": "getnote",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

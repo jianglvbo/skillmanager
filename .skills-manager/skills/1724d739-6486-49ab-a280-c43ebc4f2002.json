@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "1724d739-6486-49ab-a280-c43ebc4f2002",
+  "path": "finance-skills",
+  "path_key": "finance-skills",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

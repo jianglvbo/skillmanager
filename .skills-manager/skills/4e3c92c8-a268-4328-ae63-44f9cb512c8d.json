@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "4e3c92c8-a268-4328-ae63-44f9cb512c8d",
+  "path": "qw-pages-supabase",
+  "path_key": "qw-pages-supabase",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

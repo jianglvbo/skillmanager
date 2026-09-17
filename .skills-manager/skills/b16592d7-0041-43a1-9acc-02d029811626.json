@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "b16592d7-0041-43a1-9acc-02d029811626",
+  "path": "qwenwork-guidance",
+  "path_key": "qwenwork-guidance",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

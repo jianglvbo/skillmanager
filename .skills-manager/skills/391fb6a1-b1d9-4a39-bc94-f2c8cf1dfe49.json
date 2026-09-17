@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "391fb6a1-b1d9-4a39-bc94-f2c8cf1dfe49",
+  "path": "apple-design",
+  "path_key": "apple-design",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

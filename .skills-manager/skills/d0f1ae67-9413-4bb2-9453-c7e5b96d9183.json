@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "d0f1ae67-9413-4bb2-9453-c7e5b96d9183",
+  "path": "document-converter-suite",
+  "path_key": "document-converter-suite",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

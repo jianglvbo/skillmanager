@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "c2647ade-ff83-4475-90d8-9c8f7d35ef75",
+  "path": "ai-repo-manager",
+  "path_key": "ai-repo-manager",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

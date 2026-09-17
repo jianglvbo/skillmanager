@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "a3308bde-4a54-4fd9-96a1-e32c288af46b",
+  "path": "crawl4ai-skill",
+  "path_key": "crawl4ai-skill",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

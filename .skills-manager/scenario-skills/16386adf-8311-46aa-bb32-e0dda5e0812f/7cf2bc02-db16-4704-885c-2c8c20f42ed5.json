@@ -5,8 +5,8 @@
   "sort_order": 0,
   "tools": {
     "agent": false,
-    "codex": true,
-    "deepseek_harness": false,
+    "codex": false,
+    "deepseek_harness": true,
     "workbuddy": true
   }
 }

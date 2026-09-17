@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "e0a0a63d-3326-4709-b1bf-87f8688c3ebc",
+  "path": "可比公司分析",
+  "path_key": "可比公司分析",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

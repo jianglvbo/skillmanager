@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "3552a6f2-dc0e-4816-8be1-1a6890ed85d7",
+  "path": "natural-writing",
+  "path_key": "natural-writing",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "65fb565e-10fa-4d5d-aaed-bbb403ca3503",
+  "path": "drafter",
+  "path_key": "drafter",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
