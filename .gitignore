@@ -46,8 +46,3 @@ vault_review_result.json
 Thumbs.db
 .skills-manager.lock
 *.pyc
-
-# skills-manager: oversized skills excluded from backup (auto-managed)
-/xueqiu-spyder/
-/.skills-manager/skills/e659ad90-e96f-4c13-878e-904c93809522.json
-# skills-manager: end oversized skills
