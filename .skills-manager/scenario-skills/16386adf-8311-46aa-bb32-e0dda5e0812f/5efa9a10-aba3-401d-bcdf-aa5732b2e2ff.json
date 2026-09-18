@@ -7,6 +7,6 @@
     "agent": true,
     "codex": true,
     "deepseek_harness": true,
-    "workbuddy": false
+    "workbuddy": true
   }
 }
