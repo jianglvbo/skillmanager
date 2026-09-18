@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "1bb01cfd-2a3e-40f4-9258-7c9f2789fc16",
+  "path": "byted-web-search",
+  "path_key": "byted-web-search",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
