@@ -381,6 +381,8 @@
 > 旧写法 `statement_date` 已不存在（`framework-rules` #42 与「时间字段名字跟类型」条目均已声明）。
 > MCP 入参名仍是 `statementDate`（接口契约不随列名变）。
 
+**「X 年前就预判」内容时间 = derived 正确（用户判例 #11，2026-09-14 答复）**：i知否「我三四年前对两个牙科材料公司的预测都兑现了」→ 内容时间按「三四年前」derived 折算**是对的**，用户确认无需改帖子时间。**同款相对表述照此办理，不必再问**。同判例另一规则：**正文提到具体行业赛道时要挂行业关联**——即使主标的讲的是个股/个人操作，口语赛道名也要映射到最精确的申万标准名落 `statement_industry_rel`（牙科材料 → 医疗耗材 851533.SI，经 `industry_sw_list` 查证后 `console_ensure_subject` 即时建档）。
+
 **能成 wiki 的一刀切判据**：内容是否提供**可脱离发帖语境复用的判断逻辑／框架／数据关系**？是 → wiki；否 → 只留言论（不硬造条目）。
 
 **铁律（2026-09-08 画像单轨化 + 言论分表）**：言论/买卖/画像一律只落 MySQL（`blogger_statement`/`blogger_trade`/`update_blogger`；言论按类型物理分表 statement_research/statement_predict/statement_view/statement_insight/statement_chat/statement_trade，工具自动路由，见 framework-rules #39）。画像 md 已退役——不再镜像回写，vault 内残留画像文件仅为待删除的比对副本。**手改画像 md 表格、为画像文件写内容均为违规**。
