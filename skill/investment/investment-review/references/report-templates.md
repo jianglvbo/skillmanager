@@ -161,18 +161,18 @@
 | 英文键 | 中文 | 英文键 | 中文 |
 |:---|:---|:---|:---|
 | `no_fm / fm_error` | frontmatter 缺失/格式错误 | `recycle_invalid` | 回收标记无效 |
-| `missing_fields` | frontmatter 字段缺失 | `info_cutoff_mismatch` | info_cutoff 失同步 |
-| `field_order` | frontmatter 字段顺序 | `quoting` | 引号规范 |
-| `missing_core_sections` | 模板核心段落缺失 | `footnote_links_workspace` | 脚注链接指向工作区 |
-| `wikilink_issues` | wikilink 失效 | `legacy_footnote_heading` | 旧式脚注标题 |
-| `tag_issues` | 标签不匹配 | `forbidden_source_section` | 禁用 ## 来源 段 |
-| `blogger_not_registered` | 博主未登记 | `source_as_invalid` | source 形态非法 |
-| `stock_code_missing` | 股票代码缺失 | `stray_date` | 游离日期字段 |
-| `recycle_pending` | 待回收条目 | `unclassified` | 未归类文件 |
-| `recycle_expired` | 回收过期条目 | `junk_files` | 空壳文件 |
-| `macro_template_mismatch` | 宏观模板不匹配 | `blogger_has_source` | 画像比对副本误含 source |
-| `blogger_has_platform_id` | 画像副本误含 platform_id | `blogger_empty_link_row` | 画像副本空原文链接行 |
-| `blogger_table_no_link_col` | 画像副本缺原文链接列 | `verify-format 段落布局` | 段落布局 |
+| `missing_fields` | frontmatter 字段缺失 | `quoting` | 引号规范 |
+| `field_order` | frontmatter 字段顺序 | `footnote_links_workspace` | 脚注链接指向工作区 |
+| `missing_core_sections` | 模板核心段落缺失 | `legacy_footnote_heading` | 旧式脚注标题 |
+| `wikilink_issues` | wikilink 失效 | `forbidden_source_section` | 禁用 ## 来源 段 |
+| `tag_issues` | 标签不匹配 | `source_as_invalid` | source 形态非法 |
+| `blogger_not_registered` | 博主未登记 | `stray_date` | 游离日期字段 |
+| `stock_code_missing` | 股票代码缺失 | `unclassified` | 未归类文件 |
+| `recycle_pending` | 待回收条目 | `junk_files` | 空壳文件 |
+| `recycle_expired` | 回收过期条目 | `macro_template_mismatch` | 宏观模板不匹配 |
+| `verify-format 段落布局` | 段落布局 | | |
+
+> 画像 md 已废弃（#36），原 `blogger_has_source`/`blogger_has_platform_id`/`blogger_empty_link_row`/`blogger_table_no_link_col`/`info_cutoff_mismatch` 五项画像副本检查已随 `vault_review.py` 下线。
 
 ### 总结与主要问题（结构化，便于看板直观展示）
 
