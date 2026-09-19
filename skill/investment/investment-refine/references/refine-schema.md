@@ -1,10 +1,8 @@
-# 提炼落库模板（POST /api/refine/record · schema）
+# 提炼落库判据（§六分流矩阵 / §七八问 / §八写入硬约束＝现行必用）＋ 旧 refine_record 契约（§一~§五＝历史）
 
-> ⚠️ **本模板已于 2026-09-14 退役**：`refine_record` 工具与 `refine_record`/`refine_target_sub` 两张表都已下架（用户拍板 A2 + 下架）。
-> **新提炼只调 MCP `refine_trace`**（7 步判定，见 framework-rules #54），落库模板见 SKILL.md 第四步 4.0。
-> 本文件保留**仅供查阅 2026-09-14 之前的历史数据契约**（旧记录已备份在 `~/Project/investment-console/backups/refine_legacy_20260913155544/`），**不要再按本文件写入**。
-
-> 由 investment-refine SKILL.md 第四步引用。**提炼完成后按本模板规定字段，`MCP 工具 `refine_record`（REST POST /api/refine/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）` 写入投资看板**，看板完整展示产物 + 决策链路。
+> ✅ **§六 / §七 / §八 是现行规则，提炼时必须照做**（investment-refine SKILL 第四步、第 1.4/1.5 步直接引用）：分流决策矩阵、落库前置八问、写入硬约束与低质帖判据都在下面这三节。
+>
+> ⚠️ **§一~§五（`refine_record` 请求体结构）已于 2026-09-14 退役**：`refine_record` 工具与 `refine_record`/`refine_target_sub` 两张表已下架，**仅供查阅历史数据**（旧记录备份 `~/Project/investment-console/backups/refine_legacy_20260913155544/`）。**新提炼的链路一律调 MCP `refine_trace`（7 步判定，见 framework-rules #54），不要再按 §一~§五 写入。**
 
 ---
 
