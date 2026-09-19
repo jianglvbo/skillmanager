@@ -53,8 +53,8 @@ version: 2.3.0
 
 | 参数 | 规则 |
 |:---|:---|
-| `consoleType` | stock/industry/market（必填） |
-| `subjectName` | 主题名：个股=名称（如 贵州茅台）、行业=最下级（白酒）、市场=A股 |
+| `consoleType` | stock/industry/index/market（必填，见第 17 行四控制台） |
+| `subjectName` | 主题名：个股=名称（如 贵州茅台）、行业=申万最细准确级（framework-rules #61，能三级不二级，先 `industry_sw_list` 查）、指数=index_catalog 目录名、市场=A股 |
 | `subjectCode` | 个股代码（600519/MU/01104），行业市场可省；**个股必填** |
 | `subjectMarket` | 个股市场：`sh`沪/`sz`深/`hk`港/`kr`韩/`us`美（**个股必填**，看板据此渲染市场徽；A+H 双上市默认 A 股即 `sh`/`sz`，除非文章明确讨论港股） |
 | `subjectHkConnect` | 是否港股通（布尔，**仅 `subjectMarket=hk` 时适用**，看板加绿「通」徽；非港股省略不填） |

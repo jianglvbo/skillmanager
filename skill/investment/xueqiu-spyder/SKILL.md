@@ -228,7 +228,7 @@ tags: []
 | 优先级 | 来源 |
 |:---|:---|
 | 1 | 用户显式参数 / post-fetch 编排传入参数（user_id、--from/--to、--outfile） |
-| 2 | 环境变量 `XUEQIU_DEBUG_PORT` / `XUEQIU_DEBUG_HOST` / `XUEQIU_CHROME_PATH`（本机覆盖默认） |
+| 2 | 环境变量 `XUEQIU_TRANSPORT` / `XUEQIU_EGO_WAKE` / `XUEQIU_EGO_SLIDER_WAIT_MS`（ego 桥配置，本机覆盖默认；旧 `XUEQIU_DEBUG_PORT`/`XUEQIU_CHROME_PATH` 等 Chrome 通道变量已于 2026-09-16 删除，见上表） |
 | 3 | `config.py` 默认值 |
 | 4 | 雪球页面/API 实际结构 |
 
