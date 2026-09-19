@@ -20,6 +20,11 @@
 
 ## 全局规则
 
+> **总纲·事前优先（2026-09-19 用户拍板：「踩坑应尽可能在 skill 事前避免，而不是事后自检」）**：
+> 1. **能机器拦的一律做成写入前门禁/判据**（服务端强校验、`verify-format --preflight`、字段必填、`industry_sw`/`index_catalog`/封闭市场清单命中校验），不靠"事后跑审计脚本补救"、更不靠"人读清单自查"。新增一条踩坑教训时，先问"能不能落成写入门禁/事前判据"，能就不写成自检项。
+> 2. **自检清单只保留"无法自动化"的语义判断**（归类取舍、是否够信息密度、忠实度这类），且指向已建好的门禁；不得把机器已拦的项再抄一遍当人工清单。
+> 3. **沿革与复盘不进正文**：日期旁注、"当年删了多少行/备份在哪个 path/本会话中了 N 次"这类事后复盘，最多留一行 `> 沿革：…`，正文只写"现行判据 + 怎么事前避免"。判据错在别处时，改门禁/改脚本，而不是加一条"记得检查 X"。
+
 1. 日期格式：原始资源用 `date`（帖子发布日期），框架条目用 `createDate`/`updateDate`（条目创建/更新日期），**均用 `yyyy-MM-dd` 裸写无引号**（Obsidian 才能识别为 Date 类型，可排序 / 做时间线 / Dataview 算间隔）；tags 中的日期同样用 `yyyy-MM-dd`。注：日期字段是唯一例外——即便其他值加双引号包裹，日期也必须裸写，否则退化为 Text 类型
 2. 文件命名：中文，不带日期前缀
 3. wikilink：完整路径 `[[目录/文件名]]`，不加 emoji
@@ -198,9 +203,8 @@
     - **禁止嵌套 wikilink**：文件名/路径内不得再包 `[[…]]`（如 `[[A/期望收益与机会成本测算：[[乐观悲观情景账]]]]`）。嵌套会让内层先被渲染成 span、外层再把这段 HTML 塞进 `data-path`，属性引号提前闭合 → `… title="…">` 泄漏成正文（2026-09-03 庶人哑士 实测）。指针行一律写成**单层完整路径** `[[A/期望收益与机会成本测算：乐观悲观情景账]]`。渲染端已做双保险：`flattenWiki()` 压平 + `safeAtom()` 清洗路径与显示名（去尖括号/引号/方括号/实体）。
     - **唯一实现含芯片样式**：`.tk-file` 一律由 `tkLink()` 产出，**不加"点击在 Obsidian 打开"这类多余 title**（可点性由 `cursor:pointer` + hover 下划线表达），仅"文件不存在"保留提示 title；提炼决策链路曾有第二套 `.tk-file` 硬写模板，已收编回 `tkLink()`。
     - **预测主题归类守卫**：新建主题（`console_add_prediction` 的 `subjectName`）必须与控制台维度一致——**`market` 是封闭清单**（2026-09-12 用户拍板：「市场只有 A股、港股、美股、汇率、虚拟货币、美债、国债、日债这种」）：只收 `A股 / 港股 / 美股 / 韩股 / 汇率 / 虚拟货币 / 美债 / 国债 / 日债`，**`大盘`、`××股市`、`××市场`、`通胀`、`市场结构` 一律不是市场**；常见写法可直接传，服务端归一到清单内标准名（A股市场/沪深→A股、加密货币/数字货币→虚拟货币、人民币汇率/外汇→汇率、美国国债→美债、日本国债→日债、韩国股市→韩股；**`A股市场` 现在是 `A股` 的别名**——2026-09-12 用户要求把实体名从「A股市场」改成「A股」），返回体里 `name` 是**实际落点**、`requestedName` 是你传的原名。`industry` 不得收市场维度名；认知/方法论类内容（含 心态/理念/认知/体系/市赚率/方法论/哲学）不得作为任何控制台的预测主题，应落「我的/其他」层 wiki；博主名不得成为主题（见 2026-09-03 `isBloggerName` 守卫）。守卫**只拦新建、不拦存量**（已有主题仍可正常维护），避免历史数据无法更新。
-    - **市场封闭清单的由来与纠偏（2026-09-12 用户报错）**：用户发现市场维度里混着「投资认知(466 条关联)/市场结构(118)/投资理念(90)/交易体系(59)/投资心态(23)/市赚率(9)」等**心得方法论主题**与「大盘/通胀/韩国股市」。根因两条：① 旧 `prediction_subjects` 迁移时凡 `console_type_code='market'` 一律搬成市场（认不出 A股/港/美的还生成了 `x28` 这类兜底码）；② 旧守卫是**宽松正则**（`…|股市$|市场$`），放过 `韩国股市`、`××市场`。纠偏动作：`~/Project/investment-console/scripts/fix-markets-taxonomy.js`（韩国股市→韩股、大盘→A股、6 个心得主题+通胀解绑删除、按清单重建、修 `stock_market_rel`）；同日用户又把实体名「A股市场」改成 **A股**（旧名降为别名，历史笔记/旧调用照样解析得到）；守卫改为 `MARKET_CANON`/`MARKET_ALIAS` 封闭清单 + `CANON` 同步维护。
-    - **顺带修掉的真 bug（同批排查发现）**：① 迁移时 market 码复用——`us` 本属美股，但「美债」也命中 `contains('美')` 拿到 `us`，`ON DUPLICATE KEY UPDATE name=VALUES(name)` 把**美股改名成了美债**（库里长期没有美股，另有 8 只美股被挂到「美债」名下）；② `subjectOf` 建市场用的是通用 `INSERT INTO market (name)`，而 `market.code` 是 NOT NULL 无默认值 → **市场建档从建表起一直是坏的**（报 `Field 'code' doesn't have a default value`），现已按清单给 code/sort_order。**教训**：迁移脚本里"按名字猜码"必须防撞码；NOT NULL 无默认值的列不能靠通用 INSERT 兜。
-    - **行业主题按需创建（2026-09-06 用户规则：看板只显示有数据的行业）**：行业主题**不预建、不留空壳**——词汇权威源 = `tag-taxonomy.md` 第五节（申万2021版 31 一级 + 4 自定义一级 + 各二级）。涉行业的言论/预测，**选最精确的标准名**（一级，或「一级/二级」二级名）；该主题在看板不存在时，**即时按标准名创建**（`subjectOf`/console 工具已支持按需建，创建即启用、与言论共生），**禁止自创非标准行业名**。无数据的空主题定期清理（2026-09-06 曾全量预建 160 个空主题，当日纠偏删除，快照 `outputs/industry_empty_deleted.json`；存量并转快照 `outputs/industry_fix_snapshot.json`）。
+    > 沿革：市场曾混入「投资认知/市场结构/大盘/通胀/韩国股市」等非标名，根因＝旧迁移按 `console_type='market'` 一律搬 + 旧守卫用宽松正则 + 通用 INSERT 撞上 `market.code NOT NULL`。教训固化：迁移"按名字猜码"必须防撞码，NOT NULL 无默认值的列不能靠通用 INSERT 兜；现行守卫＝`MARKET_CANON`/`MARKET_ALIAS` 封闭清单（见上一条），纠偏脚本 `scripts/fix-markets-taxonomy.js`。
+    - **行业主题按需创建**：行业主题**不预建、不留空壳**——词汇权威源＝MySQL `industry_sw`（申万 2021，见 #61），**不是** tag-taxonomy 的自定义标签词。涉行业的言论/预测，先 `industry_sw_list` 查、**选最细的准确标准名**（能三级不二级）；该主题在 `industry` 表不存在时即时按标准名创建（`linkStockIndustry`/`subjectOf` 命中 `industry_sw` 才建，非标名被 `industryGate` 拒）；**禁止自创非标准行业名**（"AI与算力"等自定义一级只能当标签，不能建实体）。无数据的空主题定期清理，不预建。
 
 
 39. 言论分表存储（2026-09-08 用户决策：各类型字段可独立演进）：言论按 contentType 拆六张物理表——`statement_research` / `statement_predict` / `statement_view` / `statement_insight` / `statement_chat` / `statement_trade`；`statement` 是只读 UNION 视图，承接全部查询与统计。**Agent 侧契约不变**：读写一律走 MCP `blogger_statement`（服务端按 contentType 自动路由），禁止直连 SQL 写物理表。id 由全局序列 `statement_id_seq` 发号、跨表唯一——复核建议（`statement_review_sub`）、验证留痕（`statement_verify_sub`）、预测原生字段（`statement_predict.ref_price`/`status_code` 等，预测即言论行）、买卖原生字段（`statement_trade.op`/`price`/`trade_note`）等松散引用不受分表影响。**改类型 = 跨表搬行且 id 不变**（审查第零步的 contentType 修正照常走 `blogger_statement(action=update)`，关联自动跟随）。将来某类型需要专属字段时只 ALTER 对应 `post_*` 表，不波及其他类型。原单表曾保留为 `blogger_statements_legacy` 作比对副本，**2026-09-11 校验后已删除**：分表 1749 行为 legacy 1236 行的超集（+517 为拆分后新增），legacy 独有 4 行（263/321/542/917）均为清理时有意删除的空正文行（纯转述 2 行 + 被覆盖重复 1 行 + 原文仅「—」占位 1 行）；删除前整表备份 `~/Project/investment-console/backups/blogger_statements_legacy_final_20260911.json`。迁移脚本 `split_statements_by_type.js` 已加「勿再运行」护栏。
@@ -277,12 +281,8 @@
         - **⚠ 接口名 ≠ 列名**：MCP 参数名保持 camelCase 或原词（`blogger`/`form`/`stance`/`source`/`statementDate`/`viewDate`/`fetchedAt`/`wikiRef`…），**不要跟着列名改**——API 契约稳定，改列名只动服务端 SQL 与 DB。改列名时先 `grep` 分清「SQL 字符串里的列名」与「JS 变量/参数名/URL 路径」，盲替会同时改坏接口。
         - **改完必须清一次缓存再冒烟**：旧缓存会把坏 SQL 盖住（2026-09-13 实测：4 个接口 SQL 已错但全返回 200，`POST /api/cache/clear` 后才暴露）。
         - **改列名后必须**同时**冒写路径，且读路径全绿不代表改名完成**（2026-09-13 实测踩坑）：改名当轮只把 28 个 GET 接口跑通就以为收工，结果**写入路径全线报 `Unknown column`**——言论六表的新建/更新/买卖/预测、待决策的 add/resolve/dismiss、复核建议、审查记录、提炼记录、待办、`dict`/`mention_case`/`post_history` 全部挂着旧列名；其中 `pending_decision resolve` 甚至引用了被误改名的 JS 变量 `verdict_code`（ReferenceError）。**收口口径**：改名后跑一遍端到端自检（增/改/删各表 + 读回校验 + 清测试数据），并确认日志零错误；只测 GET 不算数。
-        - **⚠ 改库列名后必须跑审计脚本：JS 读旧属性名不会报错，只会静默变空**（2026-09-14 用户要求「自己脑子记住」，升为**强制步骤**）：
-            - **症状**：改的是数据库列名，但 JS 里 `r.special` / `rows[idx].text` 这类**属性读取**照样能跑——读不存在的属性＝`undefined`，**不抛异常、不写日志**，只是悄悄变成 `0` / 空串 / `false`。用户看到的是「星标全丢了」「统计都变 0 了」「那句话怎么不展示了」，而不是报错。
-            - **本会话已中 6 次**（全是同一根因）：`b.special`→星标全丢 · `s.market`→主体市场恒空 · `r.blogger`→博主言论数全 0 且排序失效 · `r.content`/`r.done`→待办正文消失、勾选永远 false · `post_history` 两处 `r.blogger` · `rows[idx].seq/.text`→首页每日激励语空白。**每一次都是「改列名只改了 SQL 和 DDL，忘了改读属性侧」**。
-            - **强制动作（改完列名，紧挨着做，别等用户报）**：`node ~/Project/investment-console/scripts/audit-row-reads.js`。它扫 `server.js` 里「同一段 SQL 里出现了新列名、代码却读旧名」的可疑点并逐行列出。**判据已做过反向验证**：对修复前的版本能精确命中真 bug，对修好的版本报 0；报出来的逐条人工确认（读 JS 局部对象时是合法误报）。
-            - **脚本自身的坑**：变量名模式要含**下标访问**（`rows[idx]` / `st[0]`）——2026-09-14 就因为它只认 `r.` / `rows[0].` 而漏掉了 `rows[idx].text`，首页激励语的 bug 藏了一整天才被发现。改动该脚本时别把它改窄。
-            - **配套**：改列名必须**读写路径一起冒烟**（见上一条），只测 GET 不算数；前端 `web/app.js` 若也直接读接口字段，同样要按新字段名核对一遍。
+        - **改列名＝读写一起改（事前门禁）**：改 DB 列名后，除 SQL/DDL 外**必须同步改读属性侧**（`r.xxx`/`rows[i].xxx`），并**读写路径一起端到端冒烟**（增/改/删+读回，只测 GET 不算数；前端读接口字段处同样核对）。改完紧挨着跑 `node ~/Project/investment-console/scripts/audit-row-reads.js`——它静态列出"同段 SQL 出现新列名、代码仍读旧名"的可疑点（读 JS 局部对象时的合法误报逐条确认）。
+        > 沿革：JS 读不存在的属性不报错、只静默变空（星标丢/统计变 0），此坑历史上反复踩，故升为强制步骤并配 `audit-row-reads.js`（脚本变量名模式须含下标访问 `rows[idx]`/`st[0]`，勿改窄）。
         - **枚举列现已全部合规**：`statement_review_sub.status` 是本轮最后一条漏网的枚举列（`review_check_sub` 用的是 `status_code`），2026-09-13 经用户拍板已改为 **`status_code`**（连带 `server.js` 的 `CREATE TABLE`/增删改查四处与 `ensureStatementReviews()` 幂等建表语句；MCP 工具名 `console_statement_review` 不变）。**注意 MySQL 里 `status` 是保留词**，写在 SQL 里要反引号——改名顺带消掉这个坑。
 
 45. 方法论「产物优先」——不设「可迁移方法论」标签（2026-09-12 用户拍板）：
