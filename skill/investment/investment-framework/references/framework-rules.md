@@ -280,11 +280,7 @@
         - **枚举**：`_code` 后缀（`form` 按帖子形态语义记为 **`post_form`**），取值必须挂 `dict` 表：`stance_code`/`verdict_code`/`kind_code`/`status_code`/`verify_result_code`/`source_code`/`raised_by_code`。
         - **泛化名加语义前缀**：`post_title`/`post_text`/`post_text_length`/`review_title`/`review_method`/`review_meta`/`review_groups`/`review_summary`/`review_actions`/`review_recycle`/`review_main_problems`/`refine_reason`/`refine_steps`/`case_sentence`/`case_alias`/`case_reason`/`quote_text`/`todo_content`。长度用 `_length` 全拼。
         - **⚠ 接口名 ≠ 列名**：MCP 参数名保持 camelCase 或原词（`blogger`/`form`/`stance`/`source`/`statementDate`/`viewDate`/`fetchedAt`/`wikiRef`…），**不要跟着列名改**——API 契约稳定，改列名只动服务端 SQL 与 DB。改列名时先 `grep` 分清「SQL 字符串里的列名」与「JS 变量/参数名/URL 路径」，盲替会同时改坏接口。
-        - **改完必须清一次缓存再冒烟**：旧缓存会把坏 SQL 盖住（2026-09-13 实测：4 个接口 SQL 已错但全返回 200，`POST /api/cache/clear` 后才暴露）。
-        - **改列名后必须**同时**冒写路径，且读路径全绿不代表改名完成**（2026-09-13 实测踩坑）：改名当轮只把 28 个 GET 接口跑通就以为收工，结果**写入路径全线报 `Unknown column`**——言论六表的新建/更新/买卖/预测、待决策的 add/resolve/dismiss、复核建议、审查记录、提炼记录、待办、`dict`/`mention_case`/`post_history` 全部挂着旧列名；其中 `pending_decision resolve` 甚至引用了被误改名的 JS 变量 `verdict_code`（ReferenceError）。**收口口径**：改名后跑一遍端到端自检（增/改/删各表 + 读回校验 + 清测试数据），并确认日志零错误；只测 GET 不算数。
-        - **改列名＝读写一起改（事前门禁）**：改 DB 列名后，除 SQL/DDL 外**必须同步改读属性侧**（`r.xxx`/`rows[i].xxx`），并**读写路径一起端到端冒烟**（增/改/删+读回，只测 GET 不算数；前端读接口字段处同样核对）。改完紧挨着跑 `node ~/Project/investment-console/scripts/audit-row-reads.js`——它静态列出"同段 SQL 出现新列名、代码仍读旧名"的可疑点（读 JS 局部对象时的合法误报逐条确认）。
-        > 沿革：JS 读不存在的属性不报错、只静默变空（星标丢/统计变 0），此坑历史上反复踩，故升为强制步骤并配 `audit-row-reads.js`（脚本变量名模式须含下标访问 `rows[idx]`/`st[0]`，勿改窄）。
-        - **枚举列现已全部合规**：`statement_review_sub.status` 是本轮最后一条漏网的枚举列（`review_check_sub` 用的是 `status_code`），2026-09-13 经用户拍板已改为 **`status_code`**（连带 `server.js` 的 `CREATE TABLE`/增删改查四处与 `ensureStatementReviews()` 幂等建表语句；MCP 工具名 `console_statement_review` 不变）。**注意 MySQL 里 `status` 是保留词**，写在 SQL 里要反引号——改名顺带消掉这个坑。
+    - **改列名/改结构的操作纪律**（改库后清缓存、读写路径一起改 + 端到端冒烟、`audit-row-reads.js` 查残留旧属性读取）：属服务端维护，统一见项目 `AGENTS.md`「改库后必须清缓存」段，本规则不重述。
 
 45. 方法论「产物优先」——不设「可迁移方法论」标签（2026-09-12 用户拍板）：
     - **判定与展示分离**：「这条心得可不可以迁移到别的标的/时间上用」是**提炼时的判断**；页面上**只显示产物**——有产物 → 「已具象化：<框架条目文件>」（可点击本地打开，见 #44 的 wiki_ref），没有产物 → 什么都不显示。
