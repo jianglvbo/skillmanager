@@ -13,8 +13,6 @@ Obsidian 投资知识库 · 结构审查自动扫描器
   - 脚注格式        → legacy_footnote_heading（遗留 ## 脚注 标题，新格式脚注定义放文末无标题，规则 #20）
   - 标签匹配        → tag_issues（博主禁行业标签、标签禁 emoji）
   - 扩展检查        → 禁用 `## 来源` 段（规则 #23）、source 为 URL（应转 wikilink 数组）、空壳 junk 检测
-  - 博主画像三表    → blogger_table_no_link_col（言论追踪/个股买卖/预测 三表是否都含「原文链接」列）、
-                     blogger_empty_link_row（三表是否存在空原文链接行 `-`/空，规则 #35）
   - 个股代码        → stock_code_missing（规则 #28：个股文件名须含 (代码)）
   - 博主层登记校验  → blogger_not_registered（规则 #12：博主文件夹名须在博主控制台登记）
 
@@ -37,7 +35,7 @@ Obsidian 投资知识库 · 结构审查自动扫描器
 
 依赖：Python 3.8+，仅标准库（os/re/json/argparse）。
 """
-import os, re, json, argparse, datetime, tempfile
+import os, re, json, argparse, datetime, tempfile, sys
 
 DEFAULT_VAULT = os.path.expanduser(
     "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/投资知识库"
@@ -175,16 +173,16 @@ def template_for(rel,fm):
             "行业":"行业","个股":"个股","宏观":"宏观"}.get(seg)
         if tp: return tp
     # 3) 分析框架 直接兜底（博主/*/分析框架/{方法论/分析档案/...}.md 或 归属层/分析框架/...）：
-    #    无 方法论/分析档案 子目录时按 frontmatter 判别，避免误判为博主画像
+    #    无 方法论/分析档案 子目录时按 frontmatter 判别
     if "分析框架" in sub:
         return "分析档案" if "标的" in fm else "方法论"
-    if parts[0]=="博主": return "博主画像"
+    # 博主画像 md 已废弃（framework-rules #36）：不再识别「博主画像」，
+    # 落在 博主/{name}/ 根、非分类子目录的文件 → "未知" → unclassified（暴露流浪画像文件，不校验它）
     return "未知"
 
 # 必填字段（镜像模板 frontmatter 硬约束；改模板时同步）
-# 注意：博主画像自身即博主，无 author 字段；star 为内容型通用字段（缺省 false，模板含之）
+# star 为内容型通用字段（缺省 false，模板含之）；博主画像 md 已废弃，不再纳入模板
 REQUIRED={
- "博主画像":["title","platform","special_following","createDate","updateDate"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","star","tags","source"],
  "分析档案":["title","标的","createDate","updateDate","author","star","status","tags","source"],
 }
@@ -205,14 +203,10 @@ CANON={
  "分析档案":["title","标的","createDate","updateDate","author","star","delete","status","tags","source"],
  "宏观":["title","event","时效状态","时间范围","createDate","updateDate","author","star","delete","tags","source"],
  "宏观通用":["title","createDate","updateDate","author","star","delete","tags","source"],
- "博主画像":["title","platform","special_following","summary","info_cutoff","createDate","updateDate"],  # 笔记属性 7 字段 canonical 顺序（无 platform_id——统一存博主控制台「雪球ID」列，见规则 #36；无 star/delete——画像是人物档案非文章）
 }
 
 # 期望段落（镜像模板 body 最小必要结构；改模板时同步）
-# 注意：博主画像的核心段落检查走上方硬编码分支（blogger_core，容忍无 emoji 旧写法），
-# 通用 EXPECTED_SECTIONS 检查通过 tpl!="博主画像" 排除博主画像
 EXPECTED_SECTIONS={
- "博主画像":["擅长与局限","言论追踪","个股买卖记录","预测记录"],
  "方法论":["适用场景","方法步骤","关键指标","案例"],
  "分析档案":["使用的方法论","核心结论","分析过程","估值判断","决策","结果跟踪"],
  "交易体系":["规则","适用条件"],
@@ -233,57 +227,13 @@ def check_quoting(raw):
         if m2 and re.search(r"(?<!\\)'",m2.group(2)): issues.append((m2.group(1),line.strip()))
     return issues
 
-# 博主画像三表「原文链接」检查（framework-rules #35）
-# 解析 markdown 表格，按最近 ## 标题归类（言论追踪 / 个股买卖记录 / 预测记录）
-def parse_blogger_tables(text):
-    tables=[]  # (category, header, rows)
-    lines=text.split("\n")
-    last_h2=None
-    i=0
-    while i<len(lines):
-        line=lines[i]
-        m2=re.match(r'^##\s+(.*)',line)
-        if m2: last_h2=m2.group(1).strip()
-        if line.strip().startswith("|") and i+1<len(lines) and re.match(r'^\s*\|[\s:|-]+\|\s*$',lines[i+1]):
-            hdr=[c.strip() for c in line.strip().strip("|").split("|")]
-            cat=None
-            if last_h2 and "言论追踪" in last_h2: cat="言论追踪"
-            elif last_h2 and "个股买卖记录" in last_h2: cat="个股买卖记录"
-            elif last_h2 and "预测记录" in last_h2: cat="预测记录"
-            rows=[]
-            j=i+2
-            while j<len(lines) and lines[j].strip().startswith("|"):
-                rows.append([c.strip() for c in lines[j].strip().strip("|").split("|")])
-                j+=1
-            if cat: tables.append((cat,hdr,rows))
-            i=j
-            continue
-        i+=1
-    return tables
-
-EMPTY_LINK={"","—","-","无"}
-def check_blogger_tables(text,rel):
-    no_col=[]; empty_row=[]
-    for cat,hdr,rows in parse_blogger_tables(text):
-        if "原文链接" not in hdr:
-            no_col.append((rel,cat)); continue
-        li=hdr.index("原文链接")
-        for r in rows:
-            if li<len(r) and r[li] in EMPTY_LINK:
-                ctx=r[0] if r else ""
-                empty_row.append((rel,cat,ctx))
-    return no_col,empty_row
-
 # ---------- 扫描 ----------
 F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
-   "legacy_footnote_heading":[],"forbidden_source_section":[],"blogger_has_source":[],
-   "blogger_has_platform_id":[],
+   "legacy_footnote_heading":[],"forbidden_source_section":[],
    "missing_core_sections":[],"wikilink_issues":[],"unclassified":[],"macro_template_mismatch":[],
    "source_as_invalid":[],"stray_date":[],"field_order":[],"junk_files":[],
    "stock_code_missing":[],"blogger_not_registered":[],
    "other_author_registered":[],
-   "blogger_table_no_link_col":[],"blogger_empty_link_row":[],
-   "info_cutoff_mismatch":[],
    "recycle_expired":[],"recycle_pending":[],"recycle_invalid":[],
    "footnote_links_workspace":[]}
 summary={"total":0,"by_template":{}}
@@ -326,7 +276,7 @@ for rel in sorted(files):
     if tpl=="未知":
         F["unclassified"].append(rel); continue
 
-    # 未归类（不在六大分类文件夹内，且非博主画像）
+    # 未归类（不在六大分类文件夹内）
     parts=rel.split("/")
     if (rel.startswith("我的/") or rel.startswith("其他/")) and len(parts)<=2:
         F["unclassified"].append(rel)
@@ -378,11 +328,8 @@ for rel in sorted(files):
     # 标签
     tags=fm.get("tags",[])
     if isinstance(tags,list):
-        if len(tags)==0 and tpl!="博主画像":
+        if len(tags)==0:
             F["tag_issues"].append((rel,"tags 为空"))
-        if tpl=="博主画像":
-            bad=[tg for tg in tags if str(tg).startswith("行业/")]
-            if bad: F["tag_issues"].append((rel,"博主带行业标签(违规): "+", ".join(map(str,bad))))
         # 方法论/内容性质标签违规（framework-rules #17 · 2026-08-08 用户纠正）
         METHOD_BANNED = {"基本面","价值投资","教训复盘","投资理念","交易系统","心态","仓位管理",
                           "交易策略","投资策略","投资框架","风控","止损","止盈","复盘","抄作业",
@@ -407,22 +354,9 @@ for rel in sorted(files):
     # 禁止 ## 来源（精确匹配标题，避免误伤"## 数据来源"等合法标题）
     if re.search(r"^##\s+来源\s*$", text, re.MULTILINE):
         F["forbidden_source_section"].append((rel,h2))
-    # 博主画像
-    if tpl=="博主画像":
-        if "source" in fm: F["blogger_has_source"].append((rel,"博主画像不应含 source"))
-        if "platform_id" in fm: F["blogger_has_platform_id"].append((rel,f"platform_id 已统一存博主控制台「雪球ID」列，画像不应含此字段（规则 #36）"))
-        # 核心段落检查（新模板段落：擅长与局限/言论追踪/个股买卖记录/预测记录；
-        # 用 startswith 容忍无 emoji 的旧写法如「言论追踪」）
-        blogger_core = ["擅长与局限","言论追踪","个股买卖记录","预测记录"]
-        missing_blog = [s for s in blogger_core if not any(h.startswith(s) for h in h2)]
-        if missing_blog: F["missing_core_sections"].append((rel,"博主画像",missing_blog))
-        # 三表「原文链接」检查（framework-rules #35）
-        nc,er=check_blogger_tables(text,rel)
-        F["blogger_table_no_link_col"].extend(nc)
-        F["blogger_empty_link_row"].extend(er)
-    # 缺核心段（非脚注）
+    # 缺核心段
     miss_sec=[s for s in EXPECTED_SECTIONS.get(tpl,[]) if s not in h2]
-    if miss_sec and tpl!="博主画像":
+    if miss_sec:
         F["missing_core_sections"].append((rel,tpl,miss_sec))
 
     # source 形态校验（framework-rules #23：内部→wikilink，外部→[标题](URL)，二选一）
@@ -504,40 +438,6 @@ for rel in sorted(files):
 for rel,tpl,miss in F["missing_fields"][:]:
     if set(miss)=={"title","event","时效状态","时间范围","createDate","updateDate","tags","source"}:
         F["junk_files"].append(rel)
-
-# 信息截止一致性校验：看板 bloggers.info_cutoff vs 画像 info_cutoff（权威在 bloggers 表）
-def load_console_cutoffs():
-    cutoffs = {}
-    try:
-        import json as _json, urllib.request
-        with urllib.request.urlopen("http://127.0.0.1:8698/api/bloggers/live", timeout=10) as r:
-            data = _json.load(r)
-        for b in data["data"]["bloggers"]:
-            cutoff = b.get("infoCutoff") or ""
-            if b.get("name") and cutoff and re.match(r"\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?", cutoff):
-                cutoffs[b["name"]] = cutoff
-    except Exception as e:
-        print(f"[vault_review] 看板不可读（{e}），信息截止一致性校验跳过", file=sys.stderr)
-    return cutoffs
-
-CONSOLE_CUTOFFS = load_console_cutoffs()
-if CONSOLE_CUTOFFS:
-    for rel in sorted(files):
-        if not rel.startswith("博主/"):
-            continue
-        parts_r = rel.split("/")
-        if len(parts_r) < 3 or parts_r[2] != parts_r[1] + ".md":
-            continue  # 只看 博主/{name}/{name}.md
-        bname = parts_r[1]
-        if bname not in CONSOLE_CUTOFFS:
-            continue
-        full = os.path.join(VAULT, rel)
-        text = open(full, encoding="utf-8").read()
-        m = re.search(r"info_cutoff:\s*(\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?)", text)
-        profile_cutoff = m.group(1) if m else ""
-        console_cutoff = CONSOLE_CUTOFFS[bname]
-        if profile_cutoff and console_cutoff and profile_cutoff != console_cutoff:
-            F["info_cutoff_mismatch"].append((rel, f"画像={profile_cutoff} vs 控制台={console_cutoff}"))
 
 out_path=os.path.join(OUT,"vault_review_result.json")
 json.dump({"summary":summary,"findings":F},open(out_path,"w",encoding="utf-8"),ensure_ascii=False,indent=2)
