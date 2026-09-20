@@ -171,7 +171,7 @@ def mysql_scan() -> dict:
         miss += cur.fetchone()[0]
     out["key_types_without_subject"] = miss
     # ⑥ 复核建议积压（审查首步数据源）
-    cur.execute("SELECT status, COUNT(*) FROM statement_review_sub GROUP BY status")
+    cur.execute("SELECT status_code, COUNT(*) FROM statement_review_sub GROUP BY status_code")
     out["statement_review_sub"] = {r[0]: r[1] for r in cur.fetchall()}
     # ⑦ 退役表残留检查（存在才读数；均已退役为 _del 或删除，此处仅提示）
     for legacy in ("predictions", "prediction_tracks", "blogger_statements", "statement_reviews"):
