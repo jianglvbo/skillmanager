@@ -42,7 +42,7 @@ python3 {post-fetch}/scripts/xq_sync_console.py --apply    # 确认后落地：�
 
 ---
 
-## 第二步：工具层调用（委托 xueqiu-spyder 采集）
+## 第三步：工具层调用（委托 xueqiu-spyder 采集）
 
 执行模板：
 
@@ -59,6 +59,8 @@ $PY "$SPYDER/main.py" user {xq_id} \
 - `{xueqiu-spyder 目录}`：**`~/.agents/skills/xueqiu-spyder/`**（部署目录＝权威；`~/.workbuddy/skills/investment/xueqiu-spyder/` 是历史镜像，勿用）
 
 - `{info_cutoff}` 取看板 `blogger.info_cutoff_datetime`（ISO `YYYY-MM-DDTHH:mm:ss`）；新增博主默认半年前 17:50:00
+
+> **⚠️ 时区陷阱（2026-09-16 审计实测，踩过一次）**：库里那一列存的是**本地时间**（如 20:41），但看板 API 把它序列化成 **UTC ISO**（`12:41:00.000Z`）。所以**从 API 取值做 `--from` 时必须 +8h 还原本地**——直接截前 19 位当本地用会少算 8 小时，导致每次重复采 8 小时（重复记录 + 多余请求）。实测对照：晚舟夕照 库里 20:41 ／ API `12:41:00.000Z` ／ +8h = 20:41 ✅。批处理脚本已内置这个换算（`run_fetch_batch.cutoff_iso`）；手写命令时记得自己转。
 - spyder 内部完成：翻页拉取 → 置顶排除 + 时间窗过滤 → 截断帖详情页补全（含精确时间覆盖）→ 帖子集输出
 - spyder 用户名传参：可直接传数字 ID；传昵称时自动搜索解析
 - 输出文件命名与 vault 路径由本层控制（spyder `--outfile/--output`）
@@ -87,7 +89,7 @@ $PY "$SPYDER/main.py" user {xq_id} \
 
 ---
 
-## 第三步：格式验收（对照 output-format.md）
+## 第四步：格式验收（对照 output-format.md）
 
 spyder 输出后逐项核对：
 
@@ -99,7 +101,7 @@ spyder 输出后逐项核对：
 
 ---
 
-## 第四步：info_cutoff 更新前置条件（2026-09-09 用户硬约束：保证不漏采）
+## 第七步：info_cutoff 更新前置条件（防漏采硬约束）
 
 **只有该博主本次采集真正完成，才能更新其 info_cutoff**。判定依 spyder 退出码：
 
@@ -127,7 +129,7 @@ esac
 
 ---
 
-## 第五步：原文落库 post_history + 入库校验 + 清理临时产物（2026-09-12 新增，强制）
+## 第五步：原文落库 post_history + 入库校验 + 清理临时产物（强制）
 
 采集产物 md **不再落 vault 粗制品**，它是临时文件；原文落 `post_history`，提炼也从库里读：
 

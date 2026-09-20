@@ -1,17 +1,17 @@
 ---
 name: investment-coarse-processor
 description: >
-  投资框架粗加工执行器。读取粗制品 → 整理格式、去广告 → 补全 metadata → 移入原始资源。
+  投资框架粗加工执行器（非雪球来源）。读取粗制品 → 整理格式、去广告 → 补全 metadata → 移入原始资源。
   不生成提炼预览表，拆分决策由提炼环节负责。
   触发词：「粗加工」「归档」「整理帖子」。
-  由 investment-framework 编排调用，不独立触发。
+  由 investment-framework 编排调用，不独立触发；雪球帖子集不走本 skill（#29 原文直取 post_history）；
+  区别于 investment-refine（提炼）与 investment-review（审查）。
 license: MIT
 agent_created: true
 metadata:
-  version: "2.4.0"
-  short-description: 投资框架粗加工执行器
+  version: "2.5.0"
+  short-description: 投资框架粗加工执行器（非雪球来源）
 compatibility: 通用
-  排除条件：提炼/审查不归本 skill（由 investment-refine / investment-review 执行）；雪球帖子集不走粗加工（#29 直接从 post_history 提炼）。
 
 ---
 

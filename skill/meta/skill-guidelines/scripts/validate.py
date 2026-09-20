@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Skill 结构机械校验器（skill-guidelines 的执行层）
 
-把「6 段结构 / 主文件行数 / 引用完整性 / 公共化红线 / 目录卫生」这些**能机器判定的项**
+把「6 段结构 / 主文件行数 / name+description 规范 / 引用完整性 / 公共化红线 / 目录卫生」这些**能机器判定的项**
 从『靠模型自检』变成『跑脚本看输出』——这正是本 skill 的「执行优于模拟」原则。
 
 用法：
@@ -65,11 +65,22 @@ def check_skill(skill_dir, third_party=False):
     else:
         body = fm.group(1)
         desc = (re.search(r'^description:\s*(.*?)(?=^\w+:|\Z)', body, re.S | re.M) or [None, ''])[1]
-        if not re.search(r'^name:', body, re.M):
+        nm = re.search(r'^name:\s*["\']?([^\s"\']+)', body, re.M)
+        if not nm:
             fails.append('frontmatter 缺 name')
+        else:
+            nm_val = nm.group(1)
+            if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', nm_val):
+                fails.append(f'name 不合规范（小写字母/数字/连字符，无首尾或连续连字符）: {nm_val}')
+            if len(nm_val) > 64:
+                fails.append(f'name 超长（>64 字符）')
+            if nm_val != name:
+                fails.append(f'name 与目录名不一致: name={nm_val} 目录={name}')
         if not desc:
             fails.append('frontmatter 缺 description（AI 选择 skill 的唯一依据）')
         else:
+            if len(desc) > 1024:
+                fails.append(f'description 超长（{len(desc)} > 1024 字符）')
             if '触发词' not in desc and 'Triggers on' not in desc:
                 fails.append('description 无「触发词」')
             if not any(k in desc for k in ('排除', 'Exclusions', '区别于')):

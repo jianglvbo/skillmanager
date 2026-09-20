@@ -4,14 +4,14 @@ description: >
   投资框架审查执行器。执行内容审查（框架一致性、知行合一、我的vs博主冲突、经验验证、跨条目关联备注发现）
   和结构审查（归类正确性、frontmatter完整性、wikilink有效性、标签匹配）。
   触发词：「审查」「review」「健康度」「框架检查」。
-  由 investment-framework 编排调用，不独立触发。
+  由 investment-framework 编排调用，不独立触发；区别于 investment-refine（提炼）与
+  investment-coarse-processor（粗加工）；框架路径/模板/规则以 investment-framework 为准，本 skill 只做审查并落库。
 license: MIT
 agent_created: true
 metadata:
-  version: "2.15.0"
+  version: "2.16.0"
   short-description: 投资框架审查执行器（含关联备注发现、言论追踪审计 C10）
 compatibility: 通用
-  排除条件：提炼与粗加工不归本 skill；框架路径/模板/规则以 investment-framework 为准，本 skill 只做审查并落库。
 
 ---
 
@@ -44,14 +44,7 @@ compatibility: 通用
 
 按 `investment-framework/references/review-rules.md`「复核建议处理（审查首步）」执行：`console_statement_review(action=list, status=open)` 取全部未处理建议（返回含该言论当前 `contentType/stance/target/viewText` 上下文）→ 逐条按建议用 `blogger_statement(action=update)` 修正归类 → `console_statement_review(action=apply)` 置已处理；判断建议不成立则 `action=delete` 并在报告说明理由。**本步未处理完，不得进入 C/S 维度**；修正结果并入审查报告。
 
-### 第零步之二：待决策队列 —— **已挪到提炼流程，审查不再处理**（2026-09-15 用户拍板）
-
-用户原话：「**已决策的，跟着下一次提炼一起提炼掉，不要跟审核**」。因此「用户答复过、但还没内化成规则」的那批
-（`pending_decision` 里 `status=resolved` 且 `internalized=''`）**不在审查首步处理**——它现在是
-`investment-refine` SKILL 的「第 0.7 步：处理已裁决的待决策队列」。
-
-审查只做自己的两项首步：① `statement_review_sub` 的左滑复核建议（第零步）；② `refine_review` 的提炼链路复核。
-**审查时不要去清待决策队列**——包括 `verdict=delete` 的删除清单，一并归提炼侧执行（framework-rules #49/#50）。
+**边界（审查只管两个首步来源）**：① `statement_review_sub` 的左滑复核建议（第零步）；② `refine_review` 的提炼链路复核（见 review-rules.md）。`pending_decision` 待决策队列——含 `verdict=delete` 删除清单——**归 `investment-refine` 第一步「1.1 清待决策队列」，审查不碰**（用户拍板：已决策的跟着提炼走，不跟审核；framework-rules #49/#50）。
 
 ### 内容审查（编号 C1-C10）
 
@@ -100,8 +93,6 @@ compatibility: 通用
 
 > **2026-08-16 起：审查不再产出 md 报告文件，直接落库投资看板**。审查完成后按 `references/report-templates.md`（落库 schema 模板）组装结构化 record，`MCP 工具 `review_record`（REST POST /api/review/record 兼容，连接见 Ai/tools/investment-console-mcp/README.md）` 写入投资看板（幂等：同 date 覆盖）。落库失败不阻断主流程，但汇报中明确提示「审查数据未落入看板，需补录」。
 
-> **2026-08-16 起不产出 md 报告**：审查完成后按 `references/report-templates.md` 组装结构化 record，`MCP 工具 `review_record`（REST POST /api/review/record 兼容）` 写入投资看板（同 date 幂等覆盖）。落库失败不阻断主流程，但须提示「审查数据未落入看板，需补录」。
-
 ### 落库字段（完整明细见 `references/report-templates.md` §八）
 
 | 字段 | 说明 |
@@ -140,6 +131,6 @@ compatibility: 通用
 
 > **只列"无法自动化"的语义红线**。C1-C10 / S1-S8 / R1-R5 各步骤按上文流程执行即可，不必在此重述；frontmatter 字段/顺序/引号/wikilink/脚注格式/标签白名单/空原文链接等由 `investment-review/scripts/vault_review.py` 与 `investment-framework/scripts/verify-format.py` 作为门禁自动判定（改格式规则改脚本，不加人工清单）。
 
-- [ ] **没误碰待决策队列**：审查只处理 `statement_review_sub`（第零步）与 `refine_review`（链路复核）；`pending_decision` 归 investment-refine 第 0.7 步——若误清了（含 `verdict=delete` 清单），需在报告说明并把未内化项退回提炼侧。
+- [ ] **没误碰待决策队列**：审查只处理 `statement_review_sub`（第零步）与 `refine_review`（链路复核）；`pending_decision` 归 investment-refine 第一步「1.1 清待决策队列」——若误清了（含 `verdict=delete` 清单），需在报告说明并把未内化项退回提炼侧。
 - [ ] **只出报告、不改文件**；关联备注提案每条都有**内容层面的依据**（非编撰关系，承材料收集师"不造假"）。
 - [ ] 归类正确性覆盖"博主层条目作者是否均在博主控制台登记、未登记者误挂需迁其他层"（#12/#38 反向校验，机器判之外的人工确认）。

@@ -13,7 +13,7 @@ description: |
 license: MIT
 agent_created: true
 metadata:
-  version: "5.0.0"
+  version: "5.1.0"
   short-description: 雪球博主帖子采集编排层（编排 xueqiu-spyder + 框架集成）
 compatibility: 通用
 ---
@@ -50,15 +50,11 @@ compatibility: 通用
 | xq_id | int | 否 | — | 雪球用户 ID（与 blogger_name 二选一；均不传则默认采集全部博主） |
 | blogger_name | string | 否 | — | 博主名称，从看板博主控制台（MySQL blogger 表 `xueqiu_id` 字段）解析（与 xq_id 二选一；均不传则默认全部） |
 | max_posts | int | 否 | 50 | 最大采集条数 |
-| output_dir | path | 否 | `~/.cache/xueqiu-spyder/out`（vault 外临时目录） | 采集产物输出目录。**2026-09-12 起不再写 vault 的 `工作区/粗制品`**：采集产物是临时文件，落库 post_history + 入库校验通过后即清理（见第三步之二/之三与规则 #41） |
+| output_dir | path | 否 | `~/.cache/xueqiu-spyder/out`（vault 外临时目录） | 采集产物输出目录。不写 vault 的 `工作区/粗制品`：采集产物是临时文件，落库 post_history + 入库校验通过后即清理（见第五步与规则 #41） |
 
 **时间窗口**：采集范围 = 看板博主控制台「信息截止」（MySQL blogger 表 `info_cutoff_datetime`；API /api/bloggers/live 可读）→ 当前时间；精确到时间支持同日多次采集去重。新增博主默认半年前 17:50:00。
 
-> ⚠️ **时区陷阱（2026-09-16 审计实测，踩过一次）**：库里那一列存的是**本地时间**（如 20:41），
-> 但看板 API 把它序列化成 **UTC ISO**（`12:41:00.000Z`）。所以**从 API 取值做 `--from` 时必须 +8h
-> 还原成本地**——直接截前 19 位当本地用会少算 8 小时，导致每次重复采 8 小时（重复记录 + 多余请求）。
-> 实测对照：晚舟夕照 库里 20:41 ／ API `12:41:00.000Z` ／ +8h = 20:41 ✅。
-> 批处理脚本已内置这个换算（`run_fetch_batch.cutoff_iso`）；手写命令时记得自己转。
+> ⚠️ **时区陷阱**：库里该列存**本地时间**，但看板 API 把它序列化成 **UTC ISO**（`12:41:00.000Z`）——从 API 取值做 `--from` 必须 **+8h 还原本地**，否则每次重复采 8 小时。批处理脚本已内置换算（`run_fetch_batch.cutoff_iso`）；手写命令时记得自己转（实测案例见 `references/execution-guide.md`）。
 
 > 两参均不传 → 逐博主执行看板中所有「雪球ID」非空博主。同时传入 → 以 xq_id 为准。
 
@@ -72,13 +68,13 @@ compatibility: 通用
 >
 > **浏览器一律用 ego lite（2026-09-16 用户口径）**：本编排层**全部浏览器动作**都走 ego 通道——采集（xueqiu-spyder）、关注列表同步（`scripts/xq_sync_console.py`）、摘要帖补全（`scripts/xq_refetch_summary.py`）三者共用 `scripts/xq_ego.py` 接入层。**不再使用 browser-act / Chrome**（原 browser-act 依赖已于 2026-09-16 移除），也不要另起任何浏览器。
 
-### 第零步：解析雪球 ID
+### 第一步：解析雪球 ID
 
 - 传入 `xq_id` → 直接使用
 - 传入 `blogger_name` → 从看板博主控制台（`GET /api/bloggers/live`，匹配 name/alias 取 `xueqiuId`）；匹配不到或 ID 为空 → 报错停止
 - 均未传 → 「全部博主」模式：取看板所有「雪球ID」非空博主，逐博主执行
 
-### 第一步：检查工具层环境
+### 第二步：检查工具层环境
 
 ```bash
 SPYDER=~/.agents/skills/xueqiu-spyder          # 工具层权威位置（部署目录）
@@ -92,7 +88,7 @@ ego-browser --help >/dev/null && echo "ego CLI OK"     # 采集通道（2026-09-
 - 未登录 → 提示用户**先在 ego lite 里登录雪球**再重跑（不再提示启动 Chrome）
 - 工具层细节见 `xueqiu-spyder` SKILL.md；`XUEQIU_TRANSPORT` 只认 `ego`（Chrome 路径已从代码删除）
 
-### 第二步：执行采集（委托 xueqiu-spyder）
+### 第三步：执行采集（委托 xueqiu-spyder）
 
 ```bash
 $PY {xueqiu-spyder}/main.py user {xq_id} \
@@ -104,7 +100,7 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 - **批量节流**：每处理 10 位博主暂停 60 秒再继续
 - 逐帖：截断补全（详情页）→ 形态判定 → 置顶排除 → 时间窗过滤 → 帖子集输出（spyder 内部完成）；v4 timeline 被 WAF 405 时自动降级旧端点，降级后仍失败才报错（稍后重试 / 人工过验证），不硬撞
 
-### 第三步：格式验收（强制，不可跳过）
+### 第四步：格式验收（强制，不可跳过）
 
 打开 spyder 输出文件，对照 `references/output-format.md` 复核：
 - frontmatter 七字段完整、type=`帖子集`、status=`待提炼`（含摘要帖则 `待提炼-含摘要`）
@@ -112,9 +108,9 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 - 纯文本净化已生效（无 `![[`、`![](url)`、`<img>`、`[表情]` 占位残留；Unicode emoji 正文保留）
 - 不合格 → 修复后落 vault；合格 → 进入第四步
 
-### 第三步之二：原文落库 post_history + 入库校验 + 清理临时产物（强制）
+### 第五步：原文落库 post_history + 入库校验 + 清理临时产物（强制）
 
-**这一步就是采集的落点**（2026-09-12 用户拍板）：帖子直接落 `post_history`，**提炼也从库里读原文**；采集产物 md 只是临时载体、**不再存进 vault 的 `工作区/粗制品/`**。意义有两条：① 提炼的唯一原文来源；② 避免重采（原文没留档就只能重抓，曾为此回采 210 条并触发 WAF 405）。
+**这一步就是采集的落点**：帖子直接落 `post_history`，**提炼也从库里读原文**；采集产物 md 只是临时载体、**不存进 vault 的 `工作区/粗制品/`**。意义有两条：① 提炼的唯一原文来源；② 避免重采（原文没留档就只能重抓，曾为此回采 210 条并触发 WAF 405）。
 
 ```bash
 node ~/Project/investment-console/scripts/import-post-history.js "<采集产物.md>"   # 落库（幂等，url_hash 判重）
@@ -133,32 +129,19 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 
 > 完整命令、节流与排错 → `references/execution-guide.md`「第五步」；采集前查重可用 MCP `post_history` `action=check`。
 
-### 第四步：向用户报告摘要
+### 第六步：向用户报告摘要
 
 采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文，输出文件路径。
 
-### 第五步：更新 info_cutoff（只写看板 MySQL；「双写」为旧称，画像 md 已退役）
+### 第七步：更新 info_cutoff（只写看板 MySQL）
 
-> **前置条件（2026-09-09 用户硬约束：保证不漏采）**：**只有该博主本次采集真正完成，才能更新其 info_cutoff**。判定依 spyder 退出码：
->
-> | spyder 退出码 | 含义 | 是否更新 cutoff |
-> |:---|:---|:---|
-> | `0` | 采集成功、已产出帖子集 | ✅ 更新 |
-> | `2` | 采集成功、**窗口内无新帖**（已确认无内容） | ✅ 更新 |
-> | `3` | **窗口起点没翻到**（`--max-pages` 不足，最旧帖仍比窗口起点新） | ❌ **禁止更新**，加大页数重跑 |
-> | `1` | **采集失败**（WAF 封禁 / 登录失效 / 异常中断，未产出） | ❌ **禁止更新** |
->
-> **失败时绝不更新**——否则下次采集从新 cutoff 起算，会永久漏掉本次未采到的帖子。失败博主须报告用户，待重试成功后再更新；重试前其 cutoff 保持原值（宁可重复采，不可漏采）。
->
-> **退出码 3（2026-09-12 实战教训）**：低 `--max-pages` 时时间线翻不到窗口起点，过滤后 0 条会被**误报成「无新帖」(2)**，按 2 推进 cutoff 即永久漏采（实测雪月霜 09-08 窗口 4 页判"无帖"，加到 15 页抓到 19 条）。页数按 `窗口天数 × 日均条数 ÷ 20 + 2` 估算。
+**只有该博主本次采集真正完成，才能更新其 info_cutoff**（防漏采硬约束）：仅 spyder 退出码 `0`（成功产出）/ `2`（成功、窗口内无新帖）可回写；`1`（失败）/ `3`（窗口起点没翻到，`--max-pages` 不足）**保持原 cutoff 不动**、列入待重试清单报告用户——否则下次从新 cutoff 起算，会永久漏掉本次未采到的帖子（宁可重复采，不可漏采）。退出码 3 会被低页数误报成 2（实测教训），页数按 `窗口天数 × 日均条数 ÷ 20 + 2` 估算。**完整判定表、批量收尾核对与回写命令 → `references/execution-guide.md`「第七步」**。
 
-将「信息截止」更新为**本次采集实际完成时间**（ISO `YYYY-MM-DDTHH:mm:ss`，无精确时间默认 `17:50:00`）——**只写看板 MySQL `blogger.info_cutoff_datetime`**（`scripts/xq_update_cutoff.py` 回写；脚本里的画像 md 分支已废弃，2026-09-12 起不创建、不更新任何画像文件）。
-
-**批量采集收尾核对（硬约束）**：批量结束后必须逐位核对「本次是否采集完成」，只对退出码 0/2 的博主回写 cutoff；退出码 1/3 的博主列入「待重试清单」报告用户，**其 cutoff 保持原值不动**。
+将「信息截止」更新为**本次采集实际完成时间**（ISO `YYYY-MM-DDTHH:mm:ss`，无精确时间默认 `17:50:00`）——**只写看板 MySQL `blogger.info_cutoff_datetime`**（`scripts/xq_update_cutoff.py` 回写；画像 md 已废弃，不创建、不更新任何画像文件）。
 
 ### 采集完成即结束
 
-本 skill 仅负责采集编排。采集产物落 `post_history` 后（第三步之二/之三），按 `framework-rules.md` #29 例外流程由 investment-refine **从库内原文直接执行**提炼（不进原始资源、不读 vault 文件、不需确认），精华去糟粕清单见 `references/refine-checklist.md`。采集阶段不分析内容。
+本 skill 仅负责采集编排。采集产物落 `post_history` 后（第五步），按 `framework-rules.md` #29 例外流程由 investment-refine **从库内原文直接执行**提炼（不进原始资源、不读 vault 文件、不需确认），精华去糟粕清单见 `investment-refine/references/refine-checklist.md`。采集阶段不分析内容。
 
 > **`[原文]` 链接是画像表原文链接的唯一权威来源**：每帖输出均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})`，采集阶段须确保**每帖都带、不得丢弃**——后续提炼填充博主画像三表「原文链接」列（framework-rules #35）一律取自此链接，禁止填采集批次名、禁止留空。
 
@@ -176,7 +159,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 |:---|:---|:---|:---|
 | **编排执行细节/前置同步/风控背景** | `references/execution-guide.md` | 关注列表同步（ego 通道脚本）、工具层调用模板、时间窗、验收规则、风控知识 | 读取 |
 | 格式验收/输出规范 | `references/output-format.md` | 帖子集 frontmatter/三件套/字段表/status/原文链接铁律 | 读取 |
-| 采集后提炼帖子集 | `references/refine-checklist.md` | 精华去糟粕价值流水线、灰区裁决、言论追踪落位（framework-rules #29 例外，investment-refine 加载） | 读取 |
+| 采集后提炼帖子集 | `investment-refine/references/refine-checklist.md` | 精华去糟粕价值流水线、灰区裁决、言论追踪落位（framework-rules #29 例外，investment-refine 加载） | 读取 |
 | **关注列表同步** | `scripts/xq_sync_console.py` | 同步 + 看板对比（dry-run/--apply；**ego lite 通道**，前置＝ego 已打开且已登录雪球） | **执行** |
 | **info_cutoff 回写** | `scripts/xq_update_cutoff.py` | 只写看板 MySQL `blogger.info_cutoff_datetime`（参数：nickname/ISO时间；画像 md 分支 2026-09-12 起已废弃） | **执行** |
 | 存量批次净化 | `scripts/clean_legacy_batches.py` | 旧批次帖子集清洗到纯文本基线（--dry-run/--dir） | **执行** |
@@ -208,7 +191,7 @@ node ~/Project/investment-console/scripts/purge-post-history.js --dry           
 - [ ] **`--max-pages` 按窗口长度取值**（≤24h→3、≤7 天→5、>7 天→10），**批量每 10 位暂停 60 秒**？
 - [ ] spyder 输出已对照 output-format.md 完成格式验收（frontmatter / 三件套 / 发布行 / 纯文本 / 每帖带 `[原文]` / 摘要与全文标记一致）？
 - [ ] **采集产物已落 post_history**；清理临时产物前已过入库校验（返回 0），且**未把帖子集写进 vault 的 `工作区/粗制品/`**？
-- [ ] 时间窗口 = info_cutoff → 当前，置顶帖已排除？
+- [ ] 时间窗口 = info_cutoff → 当前（API 取值已 +8h 还原本地），置顶帖已排除？
 - [ ] **仅对采集完成（退出码 0/2）的博主回写 info_cutoff（看板 MySQL）**；退出码 1（失败）/ 3（页数不足）者**保持原 cutoff 不动**并列入待重试清单（防漏采）？
-- [ ] post_history 保留期清理已跑（180 天滚动窗口，2026-09-15 由 30 天放宽）？
+- [ ] post_history 保留期清理已跑（180 天滚动窗口）？
 - [ ] 无浏览器自动化进程遗留？

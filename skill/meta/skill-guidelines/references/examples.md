@@ -48,6 +48,6 @@ description:
 # ❌ 错误：348 行
 所有设计原则、工程规律、模板、示例全堆在主文件
 
-# ✅ 正确：<100 行
+# ✅ 正确：≤200 行（越短越好）
 核心流程在主文件，原则→references/principles.md，规律→references/rules.md
 ```

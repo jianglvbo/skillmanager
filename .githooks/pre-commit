@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# skills 仓库 pre-commit：skill / 规则文档编辑纪律的机械执法层
+#
+# 规则来源（权威源，勿在此重复定义语义）：
+#   - 全局 AGENTS.md「skill / 规则文档编辑纪律」
+#   - skill-guidelines SKILL.md（主文件行数预算从此解析，不写死）
+#
+# 检查范围：本次暂存的 **/SKILL.md
+# 拦截（exit 1）：
+#   A3 新增行含版本痕迹（补充：/注意：/重要：/（更新/原为/旧：）
+#   A2 单次净增 > max(20, 原行数×25%)（重构规模须拆提交）
+#   B1 棘轮：文件已超预算且本次仍净增（存量超限只警告）
+#   B2 frontmatter 缺 name 或非空 description
+#   B3 description > 1024 字符（官方上限）
+#   C2 内容骤减：新行数 < 原行数 20%（整文件重写兜底）
+# 警告（放行）：
+#   A1 纯追加（新增>0 且 删除==0）   B3 description 800–1024
+#   B4 description 无触发条件        C3 删除 SKILL.md 须通知
+# 逃生舱：SKIP_SKILL_LINT=1 git commit ...
+set -uo pipefail
+export LC_ALL=en_US.UTF-8
+
+[ "${SKIP_SKILL_LINT:-0}" = "1" ] && exit 0
+
+REPO=$(git rev-parse --show-toplevel) || exit 0
+
+# 行数预算：从 skill-guidelines 解析「主文件 ≤ N 行」，解析不到回落 200
+BUDGET=200
+GUIDE=$(find "$REPO" -path '*skill-guidelines/SKILL.md' -not -path '*/.git/*' 2>/dev/null | head -1)
+if [ -n "$GUIDE" ]; then
+  b=$(grep -oE '主文件 ?≤ ?[0-9]+ ?行' "$GUIDE" 2>/dev/null | head -1 | grep -oE '[0-9]+' | head -1)
+  [ -n "${b:-}" ] && BUDGET=$b
+fi
+
+fail=0; warn=0
+notice() { printf '  ✗ %s\n' "$1"; fail=$((fail+1)); }
+caution() { printf '  ⚠ %s\n' "$1"; warn=$((warn+1)); }
+
+# 遍历暂存的 SKILL.md（含删除）
+git diff --cached --name-status -z -- ':(glob)**/SKILL.md' 2>/dev/null |
+while IFS= read -r -d '' status; do
+  IFS= read -r -d '' path || true
+  base=$(basename "$path")
+  case "$status" in
+    D)
+      caution "C3 [$base] 删除 SKILL.md——删除产物须通知用户"
+      continue ;;
+    R*|M|A) ;;
+    *) continue ;;
+  esac
+
+  new=$(git show ":$path" 2>/dev/null) || new=""
+  old=$(git show "HEAD:$path" 2>/dev/null) || old=""
+  [ -z "$new" ] && continue
+
+  n_new=$(printf '%s\n' "$new" | wc -l | tr -d ' ')
+  n_old=0; [ -n "$old" ] && n_old=$(printf '%s\n' "$old" | wc -l | tr -d ' ')
+  added=$(git diff --cached --numstat -- "$path" | awk '{print $1}')
+  removed=$(git diff --cached --numstat -- "$path" | awk '{print $2}')
+  net=$(( ${added:-0} - ${removed:-0} ))
+
+  # A3 版本痕迹（只看新增行）
+  bad=$(git diff --cached -U0 -- "$path" | grep -E '^\+' | grep -nE '补充[:：]|补充说明|注意[:：]|重要[:：]|（更新|\(更新|原为|旧[:：]' | head -3)
+  [ -n "$bad" ] && notice "A3 [$base] 新增行含版本痕迹，应改写原文而非叠加：$(printf '%s' "$bad" | head -1 | cut -c1-60)…"
+
+  # A2 膨胀比（仅修改既有文件）
+  if [ "$n_old" -gt 0 ] && [ "$net" -gt 0 ]; then
+    limit=$(( n_old / 4 )); [ "$limit" -lt 20 ] && limit=20
+    [ "$net" -gt "$limit" ] && notice "A2 [$base] 单次净增 $net 行 > 阈值 $limit（原 $n_old 行），重构规模须拆分提交"
+  fi
+
+  # B1 棘轮：超预算且仍在长大才拦
+  if [ "$n_new" -gt "$BUDGET" ]; then
+    if [ "$n_old" -gt 0 ] && [ "$net" -gt 0 ]; then
+      notice "B1 [$base] ${n_new} 行已超预算 ${BUDGET} 且本次净增 ${net} 行，应下沉 references/"
+    else
+      caution "B1 [$base] ${n_new} 行超预算 ${BUDGET}（本次未增，存量提醒）"
+    fi
+  fi
+
+  # B2 frontmatter 必填
+  head1=$(printf '%s\n' "$new" | head -1)
+  name=$(printf '%s\n' "$new" | awk '/^---$/{c++;next} c==1 && /^name:/{sub(/^name:[ ]*/,"");print;exit}')
+  desc=$(printf '%s\n' "$new" | awk '/^---$/{c++;next} c==1 && /^description:/{sub(/^description:[ ]*/,"");print;exit}')
+  { [ "$head1" != "---" ] || [ -z "$name" ] || [ -z "$desc" ]; } && \
+    notice "B2 [$base] frontmatter 缺 name 或非空 description"
+
+  # B3 description 长度
+  dlen=$(printf '%s' "$desc" | wc -m | tr -d ' ')
+  if [ "$dlen" -gt 1024 ]; then
+    notice "B3 [$base] description ${dlen} 字符 > 上限 1024"
+  elif [ "$dlen" -gt 800 ]; then
+    caution "B3 [$base] description ${dlen} 字符接近上限 1024"
+  fi
+
+  # B4 触发条件
+  printf '%s' "$desc" | grep -qiE 'use when|触发词|当用户|适用于' || \
+    caution "B4 [$base] description 未写触发条件（Use when / 当用户 / 适用于）"
+
+  # C2 整文件重写兜底
+  if [ "$n_old" -gt 0 ] && [ $(( n_new * 5 )) -lt "$n_old" ]; then
+    notice "C2 [$base] 行数 ${n_old}→${n_new}（骤减超 80%），疑似整文件重写，须人工确认"
+  fi
+
+  # A1 纯追加
+  [ "${added:-0}" -gt 0 ] && [ "${removed:-0}" -eq 0 ] && [ "$n_old" -gt 0 ] && \
+    caution "A1 [$base] 本次为纯追加（+${added}/-0），请确认为何不能改写既有条目"
+done
+
+if [ "$fail" -gt 0 ]; then
+  printf '\nskill-lint：拦截 %d 项（预算 %d 行，来源 skill-guidelines）\n' "$fail" "$BUDGET"
+  printf '改写既有条目后重新提交；确需绕过：SKIP_SKILL_LINT=1 git commit ...\n'
+  exit 1
+fi
+[ "$warn" -gt 0 ] && printf 'skill-lint：%d 项警告已放行\n' "$warn"
+exit 0

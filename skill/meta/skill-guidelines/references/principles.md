@@ -9,7 +9,16 @@
 
 ## 原则二：精准描述
 
-`description` 是 Agent 选择 Skill 的唯一依据。含触发词 + 排除条件 + 与相邻 Skill 的区别。
+`description` 是 Agent 选择 Skill 的唯一依据，触发也只看它。写法细则（2026-09-20 调研对齐 agentskills.io / Codex / 官方 skill-creator）：
+
+- **祈使句写意图，不写实现**：写「用户做什么时该用」，不写执行步骤——Agent 匹配的是用户请求，且 Agent 可能只看 description 就照做，步骤写进去会喧宾夺主
+- **宁 pushy 防 under-trigger**：模型普遍欠触发。显式列出适用场景，包括用户没点名领域时的说法（「即使没提 XX 也适用」）
+- **显式写负触发**：不适用什么、与相邻 Skill 的边界，压掉误触发
+- **触发词前置**：部分客户端对技能列表有上下文预算（如 Codex 2%），超了先截 description——关键词放句首
+- **长度 ≤1024 字符**（规范硬上限），两三句为宜
+
+❌ `帮助处理 PDF。`
+✅ `提取 PDF 文本与表格、填表单、合并 PDF。处理 PDF 文档、表单或提到「抽取/合并文档」时使用；纯阅读 PDF 不用。`
 
 ## 原则三：确定性优先
 
@@ -25,6 +34,8 @@ scripts/: 按需执行（不读代码，只看输出，极省 Token）
 ```
 
 核心：AI 平时只带轻量级"索引"工作，细节按需加载。这是认知卸载（Cognitive Offloading）的实现。
+
+> 行业预算：正文 <500 行 / 5000 tokens。本库从紧执行 ≤200 行，超出部分下沉 references/（预算对照见 `spec-alignment.md`）。
 
 ## 原则五：分层执行（Hierarchical Execution）
 
