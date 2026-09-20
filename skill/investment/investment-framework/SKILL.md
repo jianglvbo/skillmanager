@@ -95,6 +95,7 @@ compatibility: 通用
 | 提炼后（refine 第三步收尾） | 段落布局/模板段落完整 0 问题 | scripts/verify-format.py |
 | **删除/回收/移动前**（#25/#26） | inbound 引用反查，清理完才允许删 | scripts/check_inbound.py |
 | 任意批量操作后 / 提交前 | 增量扫描 git 变更文件（秒级） | investment-review/scripts/vault_review.py --incremental |
+| **改 framework-rules 条目号 / 删改全局规则后** | 全家 `framework-rules #N` 引用有效性（悬空即拦） | scripts/check-rule-refs.py |
 
 每周审查仍保留：内容层（C3 一致性 / C4 知行合一 / C6 经验验证 / C7 关联备注）+ 待回收处置，是操作门覆盖不到的兜底网。
 
@@ -170,6 +171,7 @@ compatibility: 通用
 | 看板联动 | references/console-guide.md | 看板数据契约（`refine_trace`/`review_record` 落库）、提炼链路七步与逐步复核、产物展示约定、前端设计铁律（§3/§4 是已退役的 `refine_record`/决策链路图 v2，仅作历史查阅） | 读取 |
 | 审查（段落布局） | scripts/verify-format.py | 段落布局/脚注内联/模板废话/模板成分残留（空表格行/来源blockquote/frontmatter注释/花括号占位）扫描（可 --fix 自动修复）。**纯标准库无第三方依赖** | **执行** |
 | 删除/回收/移动前（#25/#26） | scripts/check_inbound.py | inbound 引用反查（wikilink/脚注/source 字段），双向清理范围确认工具 | **执行** |
+| 改 framework-rules 编号后 | scripts/check-rule-refs.py | 全家 SKILL.md/references 的 `framework-rules #N` 引用校验（悬空即报错，退出码 1） | **执行** |
 
 ---
 
