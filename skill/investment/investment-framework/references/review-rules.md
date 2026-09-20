@@ -57,7 +57,7 @@
 
 | 审查维度 | 检查什么 |
 |:---|:---|
-| 归类正确性 | 文件是否放在正确的归属层（博主/其他）和分类下（「我的」层不审查，规则 #15 用户自管） |
+| 归类正确性 | 文件是否放在正确的归属层（博主/其他）和分类下（「我的」层不审查，规则 #15 用户自管）。**迁移前必须反查入链**（check_inbound.py / grep）：入链落在「我的」层等不可修改层时**跳过迁移**并在报告说明，交用户处理（2026-09-21 例：`仓位安全感三原则` 被 我的/交易体系/买卖纪律.md 脚注指向，迁移会造成用户文件悬空，故保留原位上报） |
 | frontmatter 完整性 | 通用必填字段（title/createDate/updateDate/**author**/tags/**source**）+ 模板特定字段是否齐全；**updateDate 与 author、source 为必填**，缺失即标记；**字段顺序须按所属分类模板 canonical 排列（framework-rules #27，标准 8 字段 `title→createDate→updateDate→author→star→delete→tags→source`，分析档案/宏观另有额外字段）**；**框架条目 frontmatter 禁止出现 `date` 字段（层间边界，framework-rules #27）** |
 | 引号有效性 | frontmatter 中双引号包裹的值内部是否含未转义双引号（违反全局规则 #21） |
 | wikilink 有效性 | **正文与 frontmatter `source` 字段**中的 wikilink 目标是否存在、双向互链是否完整 |
