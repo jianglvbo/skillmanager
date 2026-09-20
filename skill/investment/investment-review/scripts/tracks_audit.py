@@ -135,7 +135,14 @@ def mysql_scan() -> dict:
     cur.execute("SELECT COUNT(*) FROM statement")
     out["statements_total"] = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM statement WHERE view_text IS NULL OR TRIM(view_text)=''")
-    out["view_text_empty"] = cur.fetchone()[0]
+    raw_view_empty = cur.fetchone()[0]
+    # trade-only 行（view 空、内容在 trade_note）属合法形态（2026-09-21 审查确认），不算缺正文
+    cur.execute("""SELECT COUNT(*) FROM statement_trade
+                   WHERE (view_text IS NULL OR TRIM(view_text)='')
+                     AND trade_note IS NOT NULL AND TRIM(trade_note)<>''""")
+    trade_note_only = cur.fetchone()[0]
+    out["view_text_empty"] = raw_view_empty - trade_note_only
+    out["trade_note_only_rows"] = trade_note_only
     cur.execute("SELECT COUNT(*) FROM statement WHERE source_url IS NULL OR TRIM(source_url)=''")
     out["source_url_empty"] = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM statement WHERE post_form IS NULL OR TRIM(post_form)=''")
@@ -160,16 +167,20 @@ def mysql_scan() -> dict:
                    WHERE s.stance_code IS NOT NULL AND d.code IS NULL GROUP BY s.stance_code""")
     out["bad_stance"] = [list(r) for r in cur.fetchall()]
     # ⑤ 实体关联覆盖率（个股/行业主题靠关联表承载，target 列已删）
-    # 注：statements 视图的 content_type 由各分支字面量 UNION 而来，直接与字面量比较会报
-    # 「Illegal mix of collations」——故按物理表分别统计（P1 三类：trade/predict/research）
+    # 注：按物理表分别统计（P1 三类：trade/predict/research）；市场级言论挂 statement_market_rel，
+    # 只查个股+行业会把「美股/A股大盘」类误判为缺关联（2026-09-21 审查修正，含市场口径）
     miss = 0
+    per_tbl = {}
     for tbl in ("statement_trade", "statement_predict", "statement_research"):
         cur.execute(f"""SELECT COUNT(*) FROM {tbl} t
-                        LEFT JOIN statement_stock_rel k ON k.statement_id=t.id
-                        LEFT JOIN statement_industry_rel i ON i.statement_id=t.id
-                        WHERE k.statement_id IS NULL AND i.statement_id IS NULL""")
-        miss += cur.fetchone()[0]
+                        WHERE NOT EXISTS (SELECT 1 FROM statement_stock_rel k WHERE k.statement_id=t.id)
+                          AND NOT EXISTS (SELECT 1 FROM statement_industry_rel i WHERE i.statement_id=t.id)
+                          AND NOT EXISTS (SELECT 1 FROM statement_market_rel m WHERE m.statement_id=t.id)""")
+        n = cur.fetchone()[0]
+        per_tbl[tbl] = n
+        miss += n
     out["key_types_without_subject"] = miss
+    out["key_types_without_subject_by_table"] = per_tbl
     # ⑥ 复核建议积压（审查首步数据源）
     cur.execute("SELECT status_code, COUNT(*) FROM statement_review_sub GROUP BY status_code")
     out["statement_review_sub"] = {r[0]: r[1] for r in cur.fetchall()}
