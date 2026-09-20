@@ -30,7 +30,7 @@
 ## 3. 主题（subjectId）
 
 - 涉个股/行业/市场言论**必须** subjectId，否则不进言论追踪控制台
-- 缺主题先 `console_ensure_subject`：行业按申万标准名（禁自创）；个股带 code+market(+hkConnect 港股通)
+- 缺主题先 `console_ensure_subject`：**只能命中标准表已收录的名**（行业命中 `industry_sw` short_name、指数命中 `index_catalog`）；标准表里没有 ≠ 自造名——要新增标准行业走 `data/industry_sw.json` + 重跑 `scripts/seed_industry_index.js`（幂等），不在控制台硬建（AGENTS.md 2026-09-20 重申）。行业按申万标准名（禁自创）；个股带 code+market(+hkConnect 港股通)
 - 标的使用代称时还原（寒王→寒武纪），原词存 targetAlias
 - **主题只在该言论确认落库的当刻 ensure——禁止为原文里提到的标的批量预建空壳主题**（教训：2026-09-06 六博主批一次性 ensure 了原文出现的所有股票，被舍弃的帖留下 10 个零引用空壳，已删）。流程：先判定某帖言论够格落库 → ensure 其主题 → 落该言论；被舍弃的帖不得 ensure
 
@@ -48,10 +48,12 @@ console_add_prediction  // predict 言论落库后调用，回填 origin（参�
 ## 5. 铁律
 
 - **原文链接**：无 sourceUrl 不建行——高价值言论列入「缺URL挂起」汇报（附原文前 80 字），禁编造 URL
+- **收尾状态（#29）**：落言论成功 → 服务端自动按 sourceUrl 置 `post_history.refine_status=1`，无需手工处理；**只有判无价值的帖**才调 `post_history {action:'mark', id, refineStatus:1, noValue:1}`；`fetchedAt` 从 `post_history.fetched_datetime` 带出（导出批次时 SELECT 一起取），勿默认今日
+- **signal 硬上限 25 字（含标点）**：服务端拒写（26 字都过不了）；写完先数一遍，超了用 `/` 合并并列要素或删修饰词
 - **内容精炼**：落库 view 用一句话摘要含关键数字，**不存整篇原文**
 - **能成 wiki**：内容提供可脱离语境复用的判断逻辑/框架 → 才建（博主层模板 + verify-format）；不硬造
 - **⚠待确认**：分类不明/价值高去向不明 → 不写不丢，汇报「原文+原因+候选」
-- **#29 收尾**：批次处理完 `mv 工作区/粗制品/{批次}.md ~/.Trash/{批次}.20260906.md`（不可写则 rm 注明）
+- **#29 收尾**：帖子集路径无源文件（原文在 post_history 库内），不存在批次 md 移废纸篓的动作
 - 博主画像 md 已废弃（2026-09-12 用户决定）：内容只在看板（`blogger` 表 + `statement` 视图），**不写、不同步、不手改画像 md**
 
 ## 6. 汇报格式（极简，一次性）

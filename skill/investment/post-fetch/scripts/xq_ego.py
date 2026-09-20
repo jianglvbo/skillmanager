@@ -23,9 +23,14 @@ import sys
 from contextlib import contextmanager
 
 # 复用工具层的 ego 通道（唯一实现，别再各写一份）
-SPYDER_DIR = os.path.expanduser("~/.agents/skills/xueqiu-spyder")
-if SPYDER_DIR not in sys.path:
-    sys.path.insert(0, SPYDER_DIR)
+_SPYDER_CANDIDATES = ["~/.agents/skills/xueqiu-spyder", "~/.zcode/skills/xueqiu-spyder"]
+for _c in _SPYDER_CANDIDATES:
+    _d = os.path.expanduser(_c)
+    if os.path.isdir(_d):
+        SPYDER_DIR = _d
+        if SPYDER_DIR not in sys.path:
+            sys.path.insert(0, SPYDER_DIR)
+        break
 
 from ego_browser import BridgeError, EgoBridge   # noqa: E402  （路径注入后才能导入）
 

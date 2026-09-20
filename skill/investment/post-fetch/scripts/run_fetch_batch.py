@@ -23,7 +23,9 @@ import time
 import urllib.request
 
 API = "http://127.0.0.1:8698"
-SPYDER_DIR = os.path.expanduser("~/.agents/skills/xueqiu-spyder")
+_SPYDER_CANDS = ["~/.agents/skills/xueqiu-spyder", "~/.zcode/skills/xueqiu-spyder"]
+SPYDER_DIR = next((os.path.expanduser(c) for c in _SPYDER_CANDS if os.path.isdir(os.path.expanduser(c))),
+                  os.path.expanduser(_SPYDER_CANDS[0]))
 OUT_DIR = os.path.expanduser("~/.cache/xueqiu-spyder/out")
 LIST_PATH = os.path.expanduser("~/.cache/xueqiu-spyder/batch_list.json")
 
