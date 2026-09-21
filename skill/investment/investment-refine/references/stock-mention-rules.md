@@ -173,6 +173,7 @@
 | 触发时机 | 谁执行 | 必须落库 / 更新 |
 |---|---|---|
 | 提炼时遇到未登记的称呼（如 寒王=寒武纪、讯狗=科大讯飞、小米=小米集团） | 提炼环节 | 调 `stock_alias(action=add, stockName, value)` 写入 `stock.aliases`；顺手 `set-keywords` 补该股主营/产品词 |
+| 新增个股建档 / 获悉公司改名 / 曾用名缺口（2026-09-21 新增） | 提炼环节或人工 | 跑 `node scripts/fetch-stock-former-names.js`（幂等可重跑：A股东财 + 美股 EDGAR 自动导入；**港股/韩股暂无免费结构化源**，只能 `stock_former_name(action=add)` 人工补）——曾用名与别名分工见 §七 |
 | 提炼时判断该称呼**同时也是常用词**（美的/小米/平安/长江/中免） | 提炼环节 | 调 `stock_alias(action=mark-ambiguous, value=该词)` → 落 `dict(type='ambiguous_word')`，此后该词命中必须过上下文 |
 | 审查发现误判（如「好美的风景」被挂成美的集团） | 审查环节 | ① 修正言论关联（`blogger_statement(action=update)` 改 target/或删除错误 rel）② 查因：缺歧义标记就 `mark-ambiguous` ③ 把案例写进本文第三节误判清单 |
 | 用户复核（看板左滑「这条应是…」）确认了某个称呼的归属 | 复核处理流程（`console_statement_review`） | 落实修正后**必须**回填别名（同上第一/二行），并把结论写进本文档；不允许只改那一条言论就结束 |
