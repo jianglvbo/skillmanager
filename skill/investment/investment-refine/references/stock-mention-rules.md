@@ -173,7 +173,7 @@
 | 触发时机 | 谁执行 | 必须落库 / 更新 |
 |---|---|---|
 | 提炼时遇到未登记的称呼（如 寒王=寒武纪、讯狗=科大讯飞、小米=小米集团） | 提炼环节 | 调 `stock_alias(action=add, stockName, value)` 写入 `stock.aliases`；顺手 `set-keywords` 补该股主营/产品词 |
-| 新增个股建档 / 获悉公司改名 / 曾用名缺口（2026-09-21 新增） | 提炼环节或人工 | 跑 `node scripts/fetch-stock-former-names.js`（幂等可重跑：A股东财 + 美股 EDGAR 自动导入；**港股/韩股暂无免费结构化源**，只能 `stock_former_name(action=add)` 人工补）——曾用名与别名分工见 §七 |
+| 新增个股建档 / 获悉公司改名 / 曾用名缺口（2026-09-21 新增） | 提炼环节或人工 | 跑 `node scripts/fetch-stock-former-names.js`（幂等可重跑：A股东财 + 美股 EDGAR 自动导入；**港股/韩股暂无免费结构化源**，只能 `stock_former_name(action=add)` 人工补）。公司真改名：改 `stock.name` 正名 + **旧名必须同时 add 进曾用名表** + 清缓存 + `POST /api/stats/rebuild`（正名一处改，页面全跟；统计表冗余主体名需重算矫正）——曾用名与别名分工见 §七 |
 | 提炼时判断该称呼**同时也是常用词**（美的/小米/平安/长江/中免） | 提炼环节 | 调 `stock_alias(action=mark-ambiguous, value=该词)` → 落 `dict(type='ambiguous_word')`，此后该词命中必须过上下文 |
 | 审查发现误判（如「好美的风景」被挂成美的集团） | 审查环节 | ① 修正言论关联（`blogger_statement(action=update)` 改 target/或删除错误 rel）② 查因：缺歧义标记就 `mark-ambiguous` ③ 把案例写进本文第三节误判清单 |
 | 用户复核（看板左滑「这条应是…」）确认了某个称呼的归属 | 复核处理流程（`console_statement_review`） | 落实修正后**必须**回填别名（同上第一/二行），并把结论写进本文档；不允许只改那一条言论就结束 |
@@ -190,7 +190,7 @@
 |---|---|---|
 | 别名（称呼：寒王/讯狗/美的/小米） | `stock.aliases`（**每股一行**，逗号分隔） | 天然按股分片；500 股 × 5 个别名也才 2500 条，工具一条查询全取回；与个股生命周期绑定 |
 | 主营业务/产品词（空调/思元/SU7） | `stock.keywords` | 同上，且 F7 判定只按句内共现取用 |
-| 曾用名（官方历史简称：G茅台/西安民生/深发展A） | `stock_name_history` 表（2026-09-21 新增） | **官方改过名 ≠ 俗称**，不进 `aliases`；A股由 `scripts/fetch-stock-former-names.js` 自东财批量导入，港/美/韩经 MCP `stock_former_name(add)` 人工补录 |
+| 曾用名（官方历史简称：G茅台/西安民生/深发展A/Pinduoduo Inc.） | `stock_name_history` 表（2026-09-21 新增） | **官方改过名 ≠ 俗称**，不进 `aliases`；导入用 `scripts/fetch-stock-former-names.js`（A股东财 + 美股 EDGAR 自动；**港/韩无免费结构化源，人工 `stock_former_name(add)` 补**） |
 | 歧义词（本身是常用词） | `dict(type='ambiguous_word')` | 「与常用词同形」是**词的属性**，不是某只股的属性；登记一次全局生效 |
 | **判定案例（会一直长）** | **`mention_case` 表** | 每修一个误判就多一条；进库后可用 `stock_alias(case-list)` 查询、可做回归测试；避免文档无限膨胀 |
 | **判定算法**（分句/分级/否决/阈值） | **本文件** | 几乎不变的「程序」，给人读也给 agent 读 |
