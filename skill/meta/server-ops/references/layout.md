@@ -4,24 +4,24 @@
 - 系统: Ubuntu 22.04.5 LTS（4C4G 40G，上海）
 - SSH: `jianglb@106.55.14.116:22`（免密 sudo；ubuntu 备用；root 仅本地）
 - 防火墙: ufw inactive（仅云安全组控制公网入口）
-- 公网开放端口: 22 / 8699 / 8700 / 3306（3306 为历史遗留，建议改隧道；8698 安全组虽仍放行但服务端已删）
+- 公网开放端口: 22 / 8700 / 3306（3306 为历史遗留，建议改隧道）；**80/443 = Nginx HTTPS（2026-09-21 部署，安全组待用户放行）**；8699/8698 已无服务，安全组规则可关
 
 ## 服务与端口
 | 服务 | 端口 | systemd unit | 目录 |
 |:---|:---|:---|:---|
-| 减脂塑形控制台 | 8699 | fitness-console.service | /home/jianglb/fitness-console |
+| Nginx HTTPS 入口（www.jianglvbo.site） | 80/443 | nginx.service | 配置 /etc/nginx/sites-available/jianglvbo.site；证书 /etc/nginx/ssl（**2026-12-20 到期**） |
 | MySQL | 3306 | mysql.service | 数据 /home/jianglb/mysql |
 | 另一半问答（问） | 8700 | qa.service | /home/jianglb/qa |
 | ~~投资控制台~~ | ~~8698~~ | （unit 已删 2026-09-03） | **仅本地运行**：本机 launchd `com.investment-console` + `~/Project/investment-console`（vault=iCloud 绝对基准，数据批量同步到本服务器 MySQL investment_kb） |
+| ~~减脂塑形控制台~~ | ~~8699~~ | fitness-console 退役全删（2026-09-21 用户拍板：unit/目录/fitness 库无残留） | — |
 
 ## 数据与目录
 | 路径 | 内容 |
 |:---|:---|
-| /home/jianglb/fitness-console/data | 健身 JSON（fitness-data/jlb/whx） |
+| /etc/nginx/ssl | jianglvbo.site_bundle.pem（644）+ .key（600）；TrustAsia DV，SAN=裸域+www，2026-12-20 到期 |
 | /home/jianglb/mysql | MySQL 数据目录（jianglb 用户运行） |
 | /home/jianglb/qa | 问答网页「问」静态站（index.html + server.js，纯静态 node 托管，无数据库；本地源 ~/WorkBuddy/2026-08-26-23-11-26/另一半问答.html） |
-| /home/jianglb/backup/investment-console-data-20260903.tgz | 投资看板服务器版遗留备份（config+data，2026-09-03 下线删除前留存） |
-| /etc/systemd/system/*.service | node 站 systemd unit（User=jianglb, Restart=always） |
+| /home/jianglb/backup | 备份目录（mysqldump/tgz，按日期命名） |
 
 ## 数据库连接
 - host: 106.55.14.116:3306（**建议**改回 127.0.0.1 + 本机 SSH 隧道：`ssh -L 3306:127.0.0.1:3306 jianglb@106.55.14.116`）
@@ -29,7 +29,8 @@
 - **数据链路（2026-09-03 起，服务器版已下线）**：本地看板（vault=iCloud 绝对基准）→ buildIndex → 批量同步到本服务器 MySQL investment_kb（远端唯一共享库；vault→MySQL 同步已批量化 ~20 查询，串行队列防并发）；`vault_sync.sh` 已随服务器版退役
 - user: jianglb（@'%' 远程 + @localhost 本机），密码见 credentials/server.md
 - root: 仅 localhost，auth_socket 免密（sudo mysql）
-- 注意：investment-console **重度使用 MySQL**（博主表 blogger + 运营表 refine/review/coarse/prediction 等）；fitness-console 亦用 MySQL
+- 现役库：investment_kb（投资看板）+ fitness_plan（中文健身动作数据集，属本地 ~/Project/fitness-plan 仓库 db/schema.sql；`fitness`/`fitness_dev` 已随 fitness-console 退役删除）
+- 注意：investment-console **重度使用 MySQL**（博主表 blogger + 运营表 refine/review/coarse/prediction 等）
 
 ## MCP 端点（investment-console，本地化 2026-09-03）
 - 端点：`http://127.0.0.1:8698/mcp`（本机 server.js 内置 handleMcpHttp/handleMcpMessage；POST，JSON 单响应，无 SSE）
@@ -52,7 +53,13 @@
 3. **vault→MySQL 同步已批量化**（2026-09-03）：多行 upsert ~20 查询（原逐行 ~1500 次串行往返曾占满连接池导致全站接口 3-7 分钟超时）；若日后改回逐行逻辑务必重新评估连接池压力
 4. 服务器 web/ 为子目录布局（与本地一致）；rsync 多源时源写 `web/`（带斜杠）= 拷贝目录**内容**到目标根
 
+## 已知坑（2026-09-21 Nginx 实测）
+1. **Nginx 1.18 不支持 `http2 on;` 独立指令**（1.25+ 语法，nginx -t 报 unknown directive）→ 用 `listen 443 ssl http2;`
+2. `systemctl reload nginx` 偶现旧 worker 未退（配置已新、行为仍旧）→ 疑似不生效时 `sudo systemctl restart nginx` 兜底
+
 ## 待办
+- [ ] 用户在云控制台安全组放行 80/443（HTTPS 公网生效前置）；顺手关 8699/8698 规则
+- [ ] 2026-12-20 证书到期前续期（腾讯云重申请 → 覆盖 /etc/nginx/ssl → nginx -t + reload）
 - [ ] SSH 密钥登录（禁密码）
 - [ ] MySQL 3306 改回本机 + 隧道（或独立强密码）
 - [ ] 密码分离（SSH/MySQL）

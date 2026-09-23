@@ -163,6 +163,29 @@ class XueqiuCrawler:
                 logger.warning("现场截图失败（不影响采集）：%s", e)
             return None
 
+    def _fetch_timeline_page(self, user_page, user_id, page_num):
+        """timeline 单页抓取。fetch 一律用 **相对路径**：2026-09-21 起雪球把 apex 域
+        (xueqiu.com) 302 到 www.xueqiu.com，页内绝对 URL fetch 会跨域跳转，
+        带 cookie 的跨源重定向被浏览器直接掐掉（Failed to fetch，连状态码都没有）；
+        相对路径随页面 origin（www）同源请求则正常返回。"""
+        return user_page.evaluate(
+            """async (args) => {
+                try {
+                    const path = new URL(args.url).pathname;
+                    const resp = await fetch(
+                        `${path}?user_id=${args.uid}&page=${args.page}&count=${args.count}`
+                    );
+                    const ct = resp.headers.get('content-type') || '';
+                    if (!ct.includes('json')) return {ok: false, error: 'not json'};
+                    const data = await resp.json();
+                    if (data.error_code) return {ok: false, error: data.error_description};
+                    return {ok: true, statuses: data.statuses || [], count: data.count};
+                } catch(e) { return {ok: false, error: e.message}; }
+            }""",
+            {"uid": user_id, "page": page_num,
+             "url": self._timeline_url, "count": self._timeline_count},
+        )
+
     def _degrade_timeline(self):
         """v4 timeline 端点被 WAF 拦截时，自动切到旧版路径并下调每页条数
 
@@ -490,38 +513,27 @@ class XueqiuCrawler:
                 pass
 
             # 在同一页面获取用户名
+            # 2026-09-21：个人页头部已无 .user-name（该 class 只在时间轴帖子作者与
+            # 侧栏「用户推荐」上）——先取 .user-name 会抢在时间轴渲染前命中侧栏
+            # 推荐位（曾把 author 写成「大道无形我有型」）。document.title 恒为
+            # 「{昵称} - 雪球」，用它优先，.user-name 只作无 title 后备。
             screen_name = user_page.evaluate("""() => {
-                let name = document.querySelector('.user-name')?.textContent?.trim() || '';
-                if (!name) {
-                    const title = document.title || '';
-                    if (title.includes(' - 雪球')) name = title.replace(' - 雪球', '').trim();
-                }
-                return name;
+                const title = document.title || '';
+                if (title.includes(' - 雪球')) return title.replace(' - 雪球', '').trim();
+                return document.querySelector('.user-name')?.textContent?.trim() || '';
             }""") or str(user_id)
 
             # 在同一页面分页获取帖子
             for page_num in range(1, max_pages + 1):
                 time.sleep(config.REQUEST_DELAY)
-                result = user_page.evaluate(
-                    """async (args) => {
-                        try {
-                            const resp = await fetch(
-                                `${args.url}?user_id=${args.uid}&page=${args.page}&count=${args.count}`
-                            );
-                            const ct = resp.headers.get('content-type') || '';
-                            if (!ct.includes('json')) return {ok: false, error: 'not json'};
-                            const data = await resp.json();
-                            if (data.error_code) return {ok: false, error: data.error_description};
-                            return {ok: true, statuses: data.statuses || [], count: data.count};
-                        } catch(e) { return {ok: false, error: e.message}; }
-                    }""",
-                    {"uid": user_id, "page": page_num,
-                     "url": self._timeline_url, "count": self._timeline_count},
-                )
+                result = self._fetch_timeline_page(
+                    user_page, user_id, page_num)
+                if not result.get("ok") and self._degrade_timeline():
+                    # 首次失败 → 自动降级端点后**同页重试**（只降级一次）；
+                    # 不能 continue 跳下一页——降级后该页数据还没拿到，跳过=漏采最新一页
+                    result = self._fetch_timeline_page(
+                        user_page, user_id, page_num)
                 if not result.get("ok"):
-                    # 首次失败 → 尝试自动降级端点后重试本页（只降级一次）
-                    if self._degrade_timeline():
-                        continue
                     logger.warning(f"用户 {user_id} 第 {page_num} 页失败: {result.get('error')}")
                     self._shot(f"timeline-fail-page{page_num}", page=user_page)
                     break

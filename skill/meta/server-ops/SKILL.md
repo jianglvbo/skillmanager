@@ -1,16 +1,16 @@
 ---
 name: server-ops
-description: 云服务器（106.55.14.116）运维执行器。管理减脂塑形控制台（8699）、问答网页「问」（8700）的部署/状态/重启，MySQL（investment_kb + fitness）管理与备份。投资看板（investment-console）**仅本地运行**（本机 launchd 8698 + ~/Project/investment-console，vault=iCloud 绝对基准，2026-09-03 用户拍板服务器版已删），本 skill 不再负责其服务器部署。触发词：「服务器」「部署到服务器」「服务器状态」「重启服务」「备份 MySQL」「106.55.14.116」「server-ops」。排除：本地 Obsidian 操作（走 investment-framework）、本地投资看板运维。
+description: 云服务器（106.55.14.116）运维执行器。管理 Nginx HTTPS 入口（www.jianglvbo.site，80/443 反代）、问答网页「问」（8700）的部署/状态/重启，MySQL（investment_kb + fitness_plan）管理与备份。投资看板（investment-console）**仅本地运行**（本机 launchd 8698 + ~/Project/investment-console，vault=iCloud 绝对基准，2026-09-03 用户拍板服务器版已删）。fitness-console（8699）已退役全删（2026-09-21 用户拍板，服务器无残留）。触发词：「服务器」「部署到服务器」「服务器状态」「重启服务」「备份 MySQL」「HTTPS 证书」「106.55.14.116」「server-ops」。排除：本地 Obsidian 操作（走 investment-framework）、本地投资看板运维。
 license: MIT
 agent_created: true
 metadata:
-  version: "2.2.0"
-  short-description: 云服务器运维（fitness 8699 + 问答 8700 + MySQL）
+  version: "2.3.0"
+  short-description: 云服务器运维（Nginx HTTPS + 问答 8700 + MySQL + Redis）
 ---
 
 # 服务器运维（server-ops）
 
-> **2026-09-02/09-03 架构变更**：投资知识库看板 investment-console 不再部署在本服务器——服务器版已删（2026-09-03 用户拍板），改本地运行（`~/Project/investment-console`，launchd `com.investment-console`，端口 8698，读本地 iCloud vault、数据批量同步到本服务器 MySQL investment_kb）。服务器现承载 **fitness-console(8699) + 问答「问」(8700) + MySQL（investment_kb / fitness）**。原「vault 同步」「investment-console 服务器部署/重启」流程作废（相关段已标注/退役）。
+> **现状（2026-09-21）**：服务器承载 **Nginx HTTPS（www.jianglvbo.site，80 跳转 + 443 反代 8700）+ 问答「问」(8700) + MySQL（investment_kb / fitness_plan）+ Redis 缓存**。fitness-console（8699）已退役，unit/目录/`fitness` 库全部删除（2026-09-21 用户拍板，服务器无残留）。investment-console 仅本地运行（2026-09-03 拍板），数据批量同步到本服务器 MySQL，本 skill 不负责其部署。
 
 ## Default stance
 
@@ -89,34 +89,26 @@ ssh jianglb@106.55.14.116 "tar czf /home/jianglb/backup/fitness-data-$(date +%Y%
 - **本地服务管理**：launchd 单元 `com.investment-console`（`launchctl kickstart -k gui/501/com.investment-console` 重启）；启动前置：config.json + vault 可达 + node_modules 含 mysql2
 - 本地 MCP 端点：`http://127.0.0.1:8698/mcp`（token = config.json `mcpToken`；MCP 客户端配置里指向本地端点即可）
 
-### 第五步：fitness-console 部署执行（开发规范见 `console-style-fitness` skill —— 2026-09-12 修正：原写的 `console-style-fitness` 这个 skill 不存在）
-- **职责边界**：本 skill 只负责服务器侧运维与**部署执行**；开发规范（环境边界/双库隔离/本地工作流/git/配置双轨/部署触发规则）→ 调用 **console-style-fitness** skill，两 skill 由 agent 按任务自判断调用
-- **双库双用户（生产侧）**：服务器 config.json 指向 `fitness` 库 / `jianglb` 用户（host=127.0.0.1 本机）；开发库 fitness_dev/jianglb_dev 只供本地开发，服务器生产进程不碰开发库
-- **rsync 部署命令（2026-09-07 用户指示：代码改完默认直接部署，无需等「部署」指令；变更前仍须说明影响，部署后要做线上验收）**：
-```bash
-rsync -az --exclude ".DS_Store" --exclude "config.json" --exclude "keys.json" --exclude "data" --exclude "node_modules" --exclude "web/exercise-media" -e "ssh -p 22" ~/Project/fitness-console/ jianglb@106.55.14.116:/home/jianglb/fitness-console/
-ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
-```
-- **决策点**：改的是 server.js 或 config.json → 必须重启；只改 web/ 静态文件 → 不需重启
-- **生产库 DDL/DML**：需先在 fitness_dev 验证 → 说明影响 → 执行（或随部署告知）
-- **SSH 密码**：凭据文件 `$HOME/.config/server-ops/credentials.md`（注意该文件可能有多行「密码」，SSH 密码取第 7 行；expect heredoc 必须用引号 `<< 'EOF'`，否则 `\r` 被 shell 吃掉致密码错误）
+### 第五步：Nginx HTTPS 入口（www.jianglvbo.site，2026-09-21 上线）
+- **架构**：Nginx 监听 80/443（default_server）——443 按 SNI 反代本机 `127.0.0.1:8700`（问答「问」），80 一律 `301` → `https://www.jianglvbo.site`；default 站点已删，全站唯一 server 配置在 `/etc/nginx/sites-available/jianglvbo.site`（软链 sites-enabled）
+- **证书**：`/etc/nginx/ssl/jianglvbo.site_bundle.pem`（644）+ `.key`（600），腾讯云 TrustAsia DV，SAN = jianglvbo.site + www.jianglvbo.site，**2026-12-20 到期**；续期 = 腾讯云控制台重新申请 → 下载 Nginx 版 → 覆盖 ssl 目录两个文件 → `sudo nginx -t && sudo systemctl reload nginx`
+- **坑：服务器 Nginx 1.18 不支持 `http2 on;` 独立指令**（1.25+ 语法），必须写 `listen 443 ssl http2;`
+- **公网访问 80/443 须腾讯云安全组放行**（只能用户在控制台点；服务器 ufw/firewalld 均 inactive）
+- 改配置流程：`sudo cp x x.bak-日期` → 改 → `sudo nginx -t` → `sudo systemctl reload nginx`
 
 ### 第六步：MySQL 管理
-- **双库双用户（2026-08-30 起）**：
-  - `fitness_dev` = 开发库（用户 `jianglb_dev`，仅 fitness_dev 权限）——本地开发/验证用，**操作随便改**
-  - `fitness` = 生产库（用户 `jianglb`）——生产数据，**DDL/DML 需先在 fitness_dev 验证 → 说明影响 → 执行**（或随部署告知）
+- **现役库**：`investment_kb`（投资看板远端唯一共享库）+ `fitness_plan`（中文健身动作数据集，属本地 `~/Project/fitness-plan` 仓库 db/schema.sql）；`fitness`/`fitness_dev` 已随 fitness-console 退役删除（2026-09-21 确认不存在）
 - 本机远程连：先建隧道 `ssh -L 3306:127.0.0.1:3306 jianglb@106.55.14.116`（另开终端），再连 `127.0.0.1:3306`；或直连公网 3306（pymysql/mysql 客户端）
 - 或服务器本机：`sudo mysql`（root 免密）/ `mysql -u jianglb -p`
 - 建库：`CREATE DATABASE IF NOT EXISTS xxx DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
-- 开发库从生产同步：`SHOW CREATE TABLE fitness.x` 建表 + `INSERT INTO fitness_dev.x SELECT * FROM fitness.x`
 
 ## Output format
 
 | 字段 | 类型 | 说明 |
 |:---|:---|:---|
-| 服务 | string | fitness-console / qa / mysql（investment-console 服务器版已删，本地管理不在本 skill 范围） |
+| 服务 | string | nginx / qa / mysql / redis-investment（investment-console 服务器版已删，本地管理不在本 skill 范围） |
 | 状态 | string | active / failed / inactive |
-| HTTP 码 | int | 8699/8700 本地 curl 验证（服务器侧）；8698 仅本地验证 |
+| HTTP 码 | int | 8700 本地 curl；443 用本机 SNI curl（--resolve）验证（服务器侧）；8698 仅本地验证 |
 | 数据校验 | string | investment_kb 行数快检 / overview API 与预期对比 |
 | 影响说明 | string | 变更操作前必须给出 |
 
@@ -141,9 +133,8 @@ ssh jianglb@106.55.14.116 "sudo systemctl restart fitness-console"
 ## 自检
 
 - [ ] 连接是否用 jianglb 且无明文密码出现在命令/输出？
-- [ ] 数据库操作是否区分 dev/生产库？生产库 DDL/DML 是否先经 fitness_dev 验证并说明影响？
-- [ ] 代码改动后是否已默认部署并做线上验收（2026-09-07 起无需等「部署」指令；变更前仍说明影响，重启只在 server.js/config 变更时做）？
+- [ ] 变更操作（重启/改配置/删数据）前是否备份并说明影响？
 - [ ] investment-console 是否按「仅本地」处理（不做服务器部署/同步，误触服务器残留引用能识别为已退役）？
-- [ ] 变更操作（重启/改配置/rsync --delete）前是否说明了影响？
-- [ ] 数据库查询是否走隧道/本机 sudo mysql，端口未直连公网？
-- [ ] 踩坑规则（AppArmor、bind-address、安全组放行）是否遵守？
+- [ ] fitness-console 相关引用能识别为已退役（2026-09-21 全删），不尝试重启/部署？
+- [ ] 新端口公网访问是否提醒安全组放行（服务器防火墙不挡端口）？
+- [ ] 改 Nginx 后是否 `nginx -t` 再 reload？证书是否在有效期内（到期 2026-12-20）？

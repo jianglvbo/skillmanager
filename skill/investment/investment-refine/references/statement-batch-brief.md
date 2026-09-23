@@ -38,10 +38,12 @@
 
 ```json
 console_ensure_subject { "consoleType":"stock|industry|market", "name":"", "code":"", "market":"A股|港股|美股", "hkConnect":true }
-blogger_statement { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "statementDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", }
+blogger_statement { "action":"add", "blogger":"", "contentType":"research|predict|view|insight|chat", "stance":"bullish|bearish|neutral"(predict/view 必填), "target":"", "view":"精炼摘要(含关键数据/判断，不存整篇原文)", "viewDate":"YYYY-MM-DD", "statementDate":"YYYY-MM-DD", "subjectId":N, "source":"雪球", "sourceUrl":"https://xueqiu.com/...", "form":"回复|短文|长文|专栏"(必填), "replyTo":"被回应者原话" }
 blogger_trade   { "action":"add", "blogger":"", "targetName":"", "targetAlias":"", "price":"", "stance":"", "tradeDate":"", "statementDate":"", "subjectId":N, "industryName":"", "sourceUrl":"", }
 console_add_prediction  // predict 言论落库后调用，回填 origin（参数见工具，勿臆造）
 ```
+
+**回复帖切分（refine-schema §七⑦的浓缩，每条回复帖都过）**：原文 `第一个 //@` 之前＝博主的话 → `view`；之后＝被回应者原话 → `replyTo`（剥掉 `//@昵称：` 与嵌套 `回复@昵称:` 包装，只留对方说的话，一字不改；**`//@` 段常在长文末尾，先扫到再切，别拿前半句就收工**；原文无 `//@` 段则不传）。
 
 **写前查重**：同博主同段文字已存在 → update 合并，不新增第二份。
 
