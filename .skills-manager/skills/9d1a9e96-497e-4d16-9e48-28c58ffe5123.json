@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "9d1a9e96-497e-4d16-9e48-28c58ffe5123",
-  "path": "skill/investment/investment-framework",
-  "path_key": "skill/investment/investment-framework",
+  "path": "investment-framework",
+  "path_key": "investment-framework",
   "enabled": true,
   "tags": [],
   "source": {

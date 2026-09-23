@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "2dda191a-a6e2-4ccd-8d8d-1a3e5238b73c",
-  "path": "skill/office/qmd",
-  "path_key": "skill/office/qmd",
+  "path": "qmd",
+  "path_key": "qmd",
   "enabled": true,
   "tags": [],
   "source": {

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "206991ec-2115-493d-a0c4-7c69c6efeb5b",
-  "path": "skill/investment/prediction-console",
-  "path_key": "skill/investment/prediction-console",
+  "path": "prediction-console",
+  "path_key": "prediction-console",
   "enabled": true,
   "tags": [],
   "source": {

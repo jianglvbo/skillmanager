@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "3dc6e593-0b49-49de-b931-221fa1da6805",
-  "path": "skill/investment/investment-coarse-processor",
-  "path_key": "skill/investment/investment-coarse-processor",
+  "path": "investment-coarse-processor",
+  "path_key": "investment-coarse-processor",
   "enabled": true,
   "tags": [],
   "source": {

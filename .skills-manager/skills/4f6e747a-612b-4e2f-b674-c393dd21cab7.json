@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "4f6e747a-612b-4e2f-b674-c393dd21cab7",
-  "path": "skill/investment/xueqiu-spyder",
-  "path_key": "skill/investment/xueqiu-spyder",
+  "path": "xueqiu-spyder",
+  "path_key": "xueqiu-spyder",
   "enabled": true,
   "tags": [],
   "source": {

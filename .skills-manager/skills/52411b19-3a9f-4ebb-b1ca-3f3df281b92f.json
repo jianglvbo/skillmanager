@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "52411b19-3a9f-4ebb-b1ca-3f3df281b92f",
-  "path": "skill/investment/post-fetch",
-  "path_key": "skill/investment/post-fetch",
+  "path": "post-fetch",
+  "path_key": "post-fetch",
   "enabled": true,
   "tags": [],
   "source": {

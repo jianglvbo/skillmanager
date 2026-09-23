@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "6236309d-dd0c-4447-a9c4-bd5d1ccde5fc",
-  "path": "skill/office/mac-cleaner",
-  "path_key": "skill/office/mac-cleaner",
+  "path": "mac-cleaner",
+  "path_key": "mac-cleaner",
   "enabled": true,
   "tags": [],
   "source": {

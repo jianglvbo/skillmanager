@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "9da28362-5903-4a03-b020-7290fba8963d",
-  "path": "skill/investment/investment-refine",
-  "path_key": "skill/investment/investment-refine",
+  "path": "investment-refine",
+  "path_key": "investment-refine",
   "enabled": true,
   "tags": [],
   "source": {

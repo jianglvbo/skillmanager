@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "de1e4c68-5dd5-4189-80ac-d05695202ca7",
-  "path": "skill/meta/server-ops",
-  "path_key": "skill/meta/server-ops",
+  "path": "server-ops",
+  "path_key": "server-ops",
   "enabled": true,
   "tags": [],
   "source": {

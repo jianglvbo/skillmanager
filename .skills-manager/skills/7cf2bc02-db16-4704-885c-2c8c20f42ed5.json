@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "7cf2bc02-db16-4704-885c-2c8c20f42ed5",
-  "path": "skill/frontend/archify",
-  "path_key": "skill/frontend/archify",
+  "path": "archify",
+  "path_key": "archify",
   "enabled": true,
   "tags": [],
   "source": {

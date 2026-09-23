@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "skill_id": "797dfdd1-e839-49eb-9731-4d14bbe8f9fe",
-  "path": "skill/meta/skill-guidelines",
-  "path_key": "skill/meta/skill-guidelines",
+  "path": "skill-guidelines",
+  "path_key": "skill-guidelines",
   "enabled": true,
   "tags": [],
   "source": {
