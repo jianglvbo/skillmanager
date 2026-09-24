@@ -143,13 +143,19 @@ class EgoBridge:
 
     # ── 生命周期 ──────────────────────────────────────────────
     def start(self):
-        """启动桥。**两段式**：先试原任务空间，若它已被交接成"用户所有"（连接会一直
-        挂在等控制权），超时后用新空间重试——避免整轮采集被一个失效空间卡死。
-        2026-09-16 实测：滑块交接后用户没交还，该空间对新连接变成"永远等"，90s 超时。"""
+        """启动桥。**两段式**：先试原任务空间，若它已不可用（被交接成"用户所有"、
+        或用户接管后命令被 pause），**换新空间重试**——避免整轮采集被一个失效空间卡死。
+
+        2026-09-16 实测：滑块交接后用户没交还，该空间对新连接变成"永远等"，90s 超时。
+        2026-09-24 补：空间已被接管时不一定报"超时"——后续调用会直接回
+        `task.listTabs: The user has taken control…`（hard stop）。原先只认"超时"，
+        导致同一轮内第二次调用直接抛错退出（当天 i知否 两次失败即此因）；
+        现按 `_is_fatal()` 判定：**任何「空间不属于 agent」类错误都换新空间续跑**。
+        """
         try:
             return self._start_once(self.space)
         except BridgeError as e:
-            if "超时" not in str(e):
+            if "超时" not in str(e) and not _is_fatal(str(e)):
                 raise
             fresh = "xueqiu-spyder-" + time.strftime("%H%M%S")
             self._is_first_attempt = False
@@ -223,6 +229,14 @@ class EgoBridge:
             raise BridgeError(f"ego 桥启动失败: {hello.get('error', 'unknown')}")
 
         self.main_page = Page(self, "p1")
+        # 空间可用性探活（2026-09-24）：桥握手成功 ≠ 空间属于 agent——若原空间已被用户
+        # 接管，握手照样通过，直到第一条真命令才报 `The user has taken control…`。
+        # 在这里主动探一次（用最轻的 url 命令），让 start() 的两段式重试能真正生效。
+        try:
+            _ = self.main_page.url          # property：读主页面 URL 即探活
+        except BridgeError as e:
+            self.stop()
+            raise e
         return hello
 
     def _bake_config(self, script):
@@ -362,6 +376,9 @@ class EgoBridge:
                 return resp.get("result")
             err = resp.get("error") or f"{cmd} 失败"
             if _is_fatal(err):
+                # 用户接管 = 正常保护（多发生在过滑块时）：**当轮就此停下，不夺回控制权**，
+                # 本博主按失败处理、cutoff 不推进，下一轮采集会换新空间续跑。
+                # 别在这里自动换空间硬续——那会跟用户正在操作的页面抢控制权。
                 raise BridgeError(
                     f"任务空间已不属于 agent（用户接管或空间已结束），{cmd} 停止：{err[:200]}"
                 )
