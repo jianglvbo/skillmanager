@@ -133,7 +133,7 @@ node ~/Project/investment-console/src/scripts/purge-post-history.js --dry       
 
 ### 第六步：向用户报告摘要
 
-采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文，输出文件路径。
+采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文，输出文件路径；末尾附采集进度条 `node ~/Project/investment-console/src/scripts/fetch-progress.js`（**完成口径**：有留档 / 账号已注销 / 确认无新帖——三者任一即算该博主完成，**注销与无新帖不是缺口**，bar 不因此永远到不了 100%）。
 
 ### 第七步：更新 info_cutoff（只写看板 MySQL）
 
