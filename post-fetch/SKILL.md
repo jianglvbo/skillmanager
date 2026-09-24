@@ -114,11 +114,11 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 
 ```bash
 node ~/Project/investment-console/src/scripts/import-post-history.js "<采集产物.md>"   # 落库（幂等，url_hash 判重；博主名按 name+alias 匹配）
-node "{本 skill 目录}/scripts/check-post-history-covered.js" "<采集产物.md>"          # 入库校验（逐帖 url_hash+content_hash）
+node "{post-fetch}/scripts/check-post-history-covered.js" "<采集产物.md>"          # 入库校验（逐帖 url_hash+content_hash）
 node ~/Project/investment-console/src/scripts/import-post-history.js --rm "<采集产物.md>"   # 校验通过后清理临时产物
 node ~/Project/investment-console/src/scripts/purge-post-history.js --dry          # 保留期清理：post_history 只留 180 天
 ```
-> **仓库脚本在 `src/scripts/`**（2026-09-23 归置，原 `scripts/` 已移走）——写 `scripts/import-post-history.js` 会报 `MODULE_NOT_FOUND`。本 skill 自带脚本用相对本 skill 目录的路径（`{本 skill 目录}` 即 SKILL.md 所在目录，如 `~/.zcode/skills/post-fetch`）。
+> **仓库脚本在 `src/scripts/`**（2026-09-23 归置，原顶层 `scripts/` 已移走）——写旧路径会报 `MODULE_NOT_FOUND`。`{post-fetch}` = 本 skill 目录（如 `~/.zcode/skills/post-fetch`）。
 
 | 规则 | 说明 |
 |:---|:---|

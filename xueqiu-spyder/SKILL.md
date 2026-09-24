@@ -26,16 +26,9 @@ compatibility: macOS / Linux
 - **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 回写 / 帖子集提炼均不在此层）。
 - **ego lite 通道复用登录态（2026-09-15 迁移；2026-09-16 收口为唯一通道）**：经 `ego-browser nodejs` 把浏览器动作转发给**本机已打开并已登录雪球的 ego lite**；ego lite 没有对外 CDP 端口，故走本地 socket 桥（`ego_bridge.js`）。**Chrome 相关代码已于 2026-09-16 整段删除**（`_launch_chrome`/`_connect_chrome`/playwright 依赖/9222 端口常量全没了）——起因是 `auto` 模式在 ego 桥超时时**静默拉起过 Google Chrome**（用户当场抓到窗口与 `--remote-debugging-port=9222 --user-data-dir=…/xueqiu-spyder/chrome-profile` 进程）。
   - **默认值 `XUEQIU_TRANSPORT=ego`**；设成别的值会直接报错并告诉你"本工具只走 ego lite"，不再有任何自动回落。
-- **全文优先**：截断帖必须经详情页验证补全，未经验证不得标「全文」。
-- **可见性与打扰的边界（2026-09-16 两轮口径合并）**：
-  1. 采集页开在 **ego 自己的标签页**里（看得见，但不抢焦点）——用户原话「**不要让 ego lite 一直跳到我前面，但是如果遇到滑块请激活 ego lite，让我注意到**」→ **默认不激活**（`XUEQIU_EGO_WAKE=1` 才会在采集时置前）；
-  2. **命中滑块/安全验证时强制激活** ego lite（App 没开就 `open -a` 拉起），并把控制权交给用户；过完验证自动重试本页；
-  3. **页签随用随关**：工作页一进一出（用完立刻真关，下次要用再开），主页面随空间回收关闭——**跑完不留标签**；
-  4. **空间用完即回收**：桥退出（一轮采集结束）时 `finish({keep:[]})` 关标签 + **释放空间**（实测 `closedSpace:true`）；批量每采完一位就释放，不堆空间；
-  5. 命中风控/异常仍**自动截图留证**（`~/.cache/xueqiu-spyder/shots/<批次>/`），详情页每 5 条抽一帧（`XUEQIU_EGO_SHOT_EVERY`）。
-- **风控自控**：命中滑块/安全验证（`滑动|安全验证|captcha|访问验证`）时**不硬撞**——把 ego 交给用户接管、等其过完验证再自动重试本页（超时才按 WAF 中止）；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。
-- **时间窗精确**：`--from/--to` 毫秒级过滤；置顶帖识别排除，不纳入窗口统计。
-- **输出对齐帖子集规范**：frontmatter 七字段 + 每帖三件套（标题/正文/发布行），供 post-fetch 直接交接提炼。
+- **可见性与打扰的边界（2026-09-16 两轮口径合并）**：用户原话「**不要让 ego lite 一直跳到我前面，但是如果遇到滑块请激活 ego lite，让我注意到**」——采集页开在 ego 自己的标签页里、**默认不激活**、页签随用随关、空间用完即回收、风控自动截图；**唯一会激活窗口的就是命中滑块**（强制置前并交用户接管）。逐条行为与开关见「第二步」与环境变量表。
+- **风控自控**：命中滑块/安全验证（`滑动|安全验证|captcha|访问验证`）时**不硬撞**——把 ego 交给用户接管、等其过完验证再自动重试本页（超时才按 WAF 中止）；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。**静默空页按风控处理**（博主主页不可能全空，见「第二步」）。
+- **时间窗精确**：`--from/--to` 毫秒级过滤。
 
 ### 禁止行为
 - 绝不内置或硬编码博主列表
@@ -43,7 +36,7 @@ compatibility: macOS / Linux
 - 绝不在采集阶段分析/提炼帖子内容（content_type/view_date 由 investment-refine 判定）
 - 绝不未经详情页验证即标「全文」——API text 可能截断，以详情页为准
 - 绝不删除原文 emoji 与引用结构（`//@` 引用保留原文嵌套；表情图转 `[表情名]` 占位文本保留）
-- 绝不把置顶帖归入采集窗口
+- 绝不把置顶帖归入采集窗口（`--from/--to` 过滤时一并排除）
 
 ---
 
@@ -62,24 +55,12 @@ compatibility: macOS / Linux
 | --output | path | 否 | 输出目录（默认 ./output） |
 | --column | flag | 否 | 仅抓取专栏文章 |
 
-**单帖接口 `statuses/show.json` 限流（2026-09-11 实测，硬约束）**：按 URL 取单帖正文/形态时走此接口——
-
-| 项 | 实测 |
-|:---|:---|
-| 危险区 | **≈1.1 req/s 连续约 200 次 → 405**（返回 `text/html` 验证页，非 JSON） |
-| 安全速率 | **`sleep ≥1.2s` + 每 50 次停 45s（≈0.7 req/s）**；1.0s + 每 100 次停 30s 连续 160 次无封禁 |
-| 退避 | 命中 405 → **暂停 300s** 重试同 id；**连续 3 次限流即中止本轮**、保留进度稍后续跑 |
-| 进度语义 | **只有真正取到内容的才记进度**；限流失败必须留待重跑（曾把 488 条失败静默记为已处理，缺口被掩盖） |
-
-> 与 timeline 端点同属阿里云 WAF 保护，完整实测依据与批量节流表见 post-fetch `references/execution-guide.md`。
+**单帖接口 `statuses/show.json` 限流（2026-09-11 实测，硬约束）**：按 URL 取单帖正文/形态时走此接口。**速率与退避表见 post-fetch `references/execution-guide.md`「单帖接口限流」节**（危险区 ≈1.1 req/s、安全速率 ≈0.7 req/s、405 退避 300s、连续 3 次限流中止本轮）；与 timeline 端点同属阿里云 WAF 保护，**提速率是最容易踩的坑**。
 
 **产物交接（2026-09-12 变更）**：本工具产出的「帖子集」markdown 是**临时载体**——post-fetch **第三步之二**用 `~/Project/investment-console/src/scripts/import-post-history.js` 把它落进 `post_history`（摘要帖与无链接帖不入库），第三步之三做入库校验后即清理（`--rm`）。**输出目录用 vault 外的临时目录**（默认 `~/.cache/xueqiu-spyder/out`），采集产物不再写进 vault 的 `工作区/粗制品/`；`post_history` 既是采集落点也是提炼前的唯一原文来源。
 > 仓库脚本 2026-09-23 起在 **`src/scripts/`**（原 `scripts/` 已移走，写旧路径会 `MODULE_NOT_FOUND`）。
 
-**timeline 端点自动降级（2026-09-09 固化）**：`v4/statuses/user_timeline.json` 被阿里云 WAF 对该 IP 临时封禁（405，页面自身带签名请求亦 405）时，crawler **自动切到旧版 `/statuses/user_timeline.json`** 重试本页（数据一致，仅每页上限由 50 降为 20），只降级一次，无需人工干预。可用环境变量覆盖：
-- `XUEQIU_TIMELINE_URL`：主端点（默认 v4）
-- `XUEQIU_TIMELINE_URL_FALLBACK`：降级端点（默认旧版）
-- `XUEQIU_POSTS_COUNT`：每页条数（默认 20，两端点兼容值）
+**timeline 端点自动降级（2026-09-09 固化）**：`v4/statuses/user_timeline.json` 被阿里云 WAF 对该 IP 临时封禁（405，页面自身带签名请求亦 405）时，crawler **自动切到旧版 `/statuses/user_timeline.json`** 重试本页（数据一致，仅每页上限由 50 降为 20），只降级一次，无需人工干预。端点与每页条数可用环境变量覆盖（见 `references/env-vars.md`）。
 
 ### 第一步：确认运行环境
 
@@ -90,11 +71,9 @@ $PY --version && $PY -c "import requests"
 ego-browser --help >/dev/null && echo "ego CLI OK"
 ```
 
-### 第二步：确认 ego lite 已打开且已登录雪球
+### 第二步：ego lite 通道就绪（并保持现场可见）
 
-- 先决条件：**ego lite 正在运行**，且其中已登录雪球（用户自己的浏览器，工具不负责拉起）
-- CLI 可用性：`ego-browser --help` 有输出（CLI 装在 `~/.local/bin/ego-browser`）
-- 自检（Python 侧一行连通性检查，等价于「登录态是否可用」）：
+先决条件：**ego lite 正在运行且已登录雪球**（用户自己的浏览器，工具不负责拉起）；`ego-browser --help` 有输出（CLI 在 `~/.local/bin/ego-browser`）。自检：
 
 ```bash
 $PY - <<'PY'
@@ -107,27 +86,30 @@ b.stop()
 PY
 ```
 
-- 未登录（标题不含雪球 / fetch 命中 `滑动|安全验证|captcha`）→ 停止，提示用户**在 ego lite 里登录雪球**后重跑
-- 通道细节与踩坑（脚本注入、socket、ego 不继承环境变量等）见 `ego_browser.py` 模块头注释
+未登录（标题不含雪球 / fetch 命中 `滑动|安全验证|captcha`）→ 停止，提示用户**在 ego lite 里登录雪球**后重跑。通道细节与踩坑（脚本注入、socket、ego 不继承环境变量）见 `ego_browser.py` 模块头注释。
 
-> **Chrome 通道已删除（2026-09-16）**：`XUEQIU_TRANSPORT` 只认 `ego`；
-> 旧 `chrome`/`auto` 取值一律直接报错。历史上 `auto` 曾在 ego 桥超时时静默拉起 Chrome
-> （用户当场抓到进程），所以这不是"改默认值"，是把相关代码整段删掉了。
-
-### 第二步之二：看一眼现场（采集全程保持可见）· 2026-09-16 新增
-
-采集时**页面就在 ego lite 里开着**（不是无头、不是别的浏览器），工具会自动：
+**采集全程在 ego lite 里可见**（不是无头、不是别的浏览器），工具自动执行：
 
 | 行为 | 说明 | 关闭方式 |
 |:---|:---|:---|
-| 窗口激活 | **默认不激活**（用户口径：「不要让 ego lite 一直跳到我前面」）；想让采集时置前设 `XUEQIU_EGO_WAKE=1` | 默认已是关 |
-| 页签随用随关 | 工作页一进一出：用完**立刻真关**，下次要用再开（ego 任务空间 8 页上限，靠这个不撞顶）；主页面随空间回收一并关闭。**跑完不留标签** | 无需配置 |
-| **命中滑块 → 激活 ego 并交给你接管** | timeline/详情页命中滑块或安全验证时，**强制激活 ego lite**（ego 没开会用 `open -a` 拉起）+ 自动 `handOff()`，等你过完验证、控制权交还后**自动重试本页**（默认最长等 15 分钟） | `XUEQIU_EGO_SLIDER_WAIT_MS` 调等待时长 |
+| 窗口激活 | **默认不激活**（用户口径：「不要让 ego lite 一直跳到我前面」） | `XUEQIU_EGO_WAKE=1` 才置前 |
+| 页签随用随关 | 工作页一进一出、用完**立刻真关**（ego 空间 8 页上限靠这个不撞顶）；主页面随空间回收关闭。**跑完不留标签** | 无需配置 |
+| **命中滑块 → 激活 ego 并交用户接管** | timeline/详情页命中滑块或安全验证时**强制激活**（没开会 `open -a` 拉起）+ 自动 `handOff()`，用户过完验证、控制权交还后**自动重试本页** | `XUEQIU_EGO_SLIDER_WAIT_MS` 调时长 |
 | 命中风控/异常自动截图 | timeline 命中滑块/验证、详情页 405、详情页异常、翻页失败 | `XUEQIU_EGO_SHOT_DIR=`（置空） |
 | 详情页每 5 条抽一帧 | 记录补全进度与偶发风控弹窗 | `XUEQIU_EGO_SHOT_EVERY=0` |
 
 截图落在 `~/.cache/xueqiu-spyder/shots/<批次时间戳>/`，文件名含时间与原因（如 `-waf-detail-…`、`-progress-15`）。
 **采集期间请把 ego lite 留在可见位置**——风控弹窗（滑块/安全验证）只在页面上出现，截图是事后核对用的，不是替代现场盯屏。
+
+> **Chrome 通道已删除（2026-09-16）**：`XUEQIU_TRANSPORT` 只认 `ego`，旧 `chrome`/`auto` 取值一律直接报错。
+> 历史上 `auto` 曾在 ego 桥超时时静默拉起 Chrome（用户当场抓到进程），所以这不是"改默认值"，是把相关代码整段删掉了。
+
+**静默空页 = 风控（2026-09-24 用户判据，最危险的失败形态）**：被风控时页面可能**正常打开**（头像/粉丝数/认证都在），**只有帖子列表是空的**。用户原话：「**没有博主主页进去是全空的**」——**博主主页不可能零帖子**。
+- **看到空列表一律按风控处理，绝不判「无新帖」**（后者会推进 cutoff，把漏采固化下来）。
+- 判定别信 DOM（`.timeline__list` / `.timeline__item__info` 会随渲染变体失配，2026-09-24 曾据此误报 3 位博主「0 条」）；改用**同源 API 复核**：`/statuses/user_timeline.json?user_id=<id>&page=1` 返回 statuses 即页面正常。
+- 处置：不推进 cutoff、列入待重试，冷却后重试。
+
+**「用户接管」会中断整轮（正常保护，别抢回）**：命中滑块时 ego 被激活并交用户，用户一动手接管，任务空间即不属于 agent，后续每条都报「任务空间已不属于 agent / hard stop」。等用户过完验证后下一轮采集会自动换新空间继续（2026-09-21 / 09-24 各遇一次）。
 
 ### 第三步：执行采集
 
@@ -143,34 +125,12 @@ $PY main.py user {xq_id} --from "{cutoff_iso}" --outfile "雪球采集-{昵称}-
 - 打开输出文件，核对：frontmatter 七字段齐全、每帖带 `[原文]` 链接、发布行含 `形态/全文|摘要` 标记、无 WAF 报错残留
 - 不合格 → 修复或重跑；合格 → 汇报文件路径 + 采集条数 + 时间范围
 
-### 环境变量（工具层全量）
+### 环境变量与退出码
 
-| 变量 | 默认 | 作用 |
-|:---|:---|:---|
-| `XUEQIU_TRANSPORT` | **`ego`** | 只允许 ego lite（唯一通道）；任何其它取值都会直接报错 |
-| `XUEQIU_EGO_SPACE` | 空 | 复用指定 ego 任务空间 id（多轮采集沿用同一个） |
-| `XUEQIU_EGO_SPACE_NAME` | `xueqiu-spyder` | 新建任务空间时的名字 |
-| `XUEQIU_EGO_WAKE` | **`0`** | 采集时是否把 ego 窗口拉到前台；**默认不抢焦点**。滑块交接时的激活**不受**此开关影响（那条一定会激活，让用户注意到） |
-| （页签/空间策略固定） | — | 工作页随用随关；桥退出（一轮采集结束）时 `finish({keep:[]})` 关标签**并释放空间**——没有"保留"开关 |
-| `XUEQIU_EGO_SHOT_DIR` | `~/.cache/xueqiu-spyder/shots` | 截图目录（置空＝不落图） |
-| `XUEQIU_EGO_SHOT_EVERY` | `5` | 详情页每 N 条抽一帧（0＝关） |
-| `XUEQIU_EGO_SLIDER_WAIT_MS` | `900000`（15 分钟） | 滑块交接后等用户过验证的时长；超时按 WAF 中止本轮 |
-| `XUEQIU_EGO_BOOT_TIMEOUT` | `90` | 桥启动握手超时（秒） |
-| `XUEQIU_EGO_LOG` | 空 | 把桥 stderr 另存一份日志（排障用） |
-| ~~`XUEQIU_DEBUG_PORT` / `XUEQIU_DEBUG_HOST` / `XUEQIU_CHROME_PATH`~~ | — | **已删除**（Chrome 通道 2026-09-16 从代码移除） |
+**全量表与退出码语义见 `references/env-vars.md`**（含页数门禁、退出码 3 教训）。编排层最常打交道的两条：
 
-**退出码约定（2026-09-09 固化，编排层据此决定是否更新 info_cutoff）**：
-
-| 退出码 | 含义 | 编排层动作 |
-|:---|:---|:---|
-| `0` | 采集成功，已产出帖子集 | 可更新 info_cutoff |
-| `2` | 采集成功，**窗口内无新帖**（确认无内容） | 可更新 info_cutoff |
-| `3` | **窗口起点没翻到**（页数不足，最旧帖仍比窗口起点新） | **禁止更新 cutoff**，加大 `--max-pages` 重跑 |
-| `1` | **失败**（WAF 封禁 / 登录失效 / 异常，未产出） | **禁止更新 cutoff**（防漏采） |
-
-> 退出码 2 与 1 必须严格区分：「无新帖」是正常完成，「失败」是未完成——混为一谈会导致漏采（编排层误以为已采完而推进 cutoff）。
->
-> **退出码 3（2026-09-12 新增，实战教训）**：`--max-pages` 太小（如 4 页=80 条）时，高产博主的时间线根本没翻到窗口起点，过滤后 0 条会被误报成「无新帖」（退出码 2）。实测：雪月霜 09-08 窗口 4 页判定无帖，加到 15 页后抓到 19 条。判据是**本轮最旧帖的 created_at 是否 ≤ 窗口起点**——大于即页数不足。高产博主（日均 20 条以上）请按 `窗口天数 × 日均条数 ÷ 20 + 2` 估算页数。
+- `XUEQIU_TRANSPORT` 只认 `ego`；`XUEQIU_EGO_WAKE` 默认 `0`（不抢焦点）
+- 退出码：`0` 有产出 / `2` 窗口内无新帖 / `3` 窗口起点没翻到（**页数用满**且最旧帖仍新于起点，**禁止推进 cutoff**）/ `1` 失败（**禁止推进 cutoff**）
 
 ### stock / search 子命令（独立能力，不经 post-fetch）
 
@@ -183,28 +143,9 @@ $PY main.py search 治雨                                       # 搜用户 ID
 
 ## Output Format
 
-帖子集 markdown（对齐 post-fetch `references/output-format.md`）：
+**帖子集 markdown 的字段表、三件套结构与铁律，唯一权威在 post-fetch `references/output-format.md`**——本层只负责产出，不另立规范（frontmatter 七字段 + 每帖 `## N. 标题`/正文/发布行，发布行含 `形态` 与 `全文|摘要` 标记及 `[原文]` 链接）。
 
-```markdown
----
-title: "雪球帖子采集：{nickname} {YYYY年M月D日}"
-source: "https://xueqiu.com/u/{xq_id}"
-author: "{nickname}"
-date: "{YYYY年M月D日}"
-recorded: "{YYYY年M月D日}"
-type: "帖子集"
-status: "待提炼"        # 含摘要帖时 "待提炼-含摘要"
-tags: []
----
-
-## 1. {帖子标题}
-
-{正文全文}
-
-> 发布：{YYYY年M月D日 HH:MM} | 形态：{回复|短文|长文|专栏} | 转发 {n} | 回复 {n} | 点赞 {n} | {全文|摘要} | [原文](https://xueqiu.com/{xq_id}/{post_id})
-```
-
-形态客观判定：含 "回复 @"/引用块 → 回复；原创 <300 字 → 短文；≥300 字或含分段 → 长文；专栏文章 → 专栏。
+形态客观判定（本层执行）：含 "回复 @"/引用块 → 回复；原创 <300 字 → 短文；≥300 字或含分段 → 长文；专栏文章 → 专栏。
 
 ---
 
@@ -220,7 +161,9 @@ tags: []
 | 帖子集生成 | `report.py` | frontmatter + 三件套 + 发布行输出 | 执行 |
 | CLI 入口/时间窗 | `main.py` | 子命令分发、--from/--to 解析 | 执行 |
 | API/参数常量 | `config.py` | 端点、延迟、翻页默认值 | 读取 |
-| 框架输出规范 | post-fetch `references/output-format.md` | frontmatter/三件套/字段表/铁律（编排层持有） | 读取 |
+| **环境变量 / 退出码语义** | `references/env-vars.md` | 全量环境变量表、退出码约定与页数门禁 | 读取 |
+| 框架输出规范 | post-fetch `references/output-format.md` | frontmatter/三件套/字段表/铁律（**编排层持有**，跨 skill 引用） | 读取 |
+| 采集编排细节 | post-fetch `references/execution-guide.md` | 时间窗/页数取值/单帖限流表/风控处置（**编排层持有**，跨 skill 引用） | 读取 |
 
 ---
 
@@ -252,4 +195,6 @@ tags: []
 - [ ] 时间窗生效（--from/--to，毫秒过滤）？
 - [ ] timeline 端点被封时自动降级生效（日志含「自动降级到旧版路径」）？
 - [ ] 退出码语义正确（0=有产出 / 2=窗口内无新帖 / 3=窗口起点没翻到、页数不足 / 1=失败），未把「失败」或「页数不足」误当「无新帖」？
+- [ ] `author` 取自 API `user.screen_name`，与文件名博主名一致？（出现所有文件同名或知名大 V 名＝抓到侧栏推荐位）
+- [ ] 报告「无新帖」的博主：是否用同源 API 复核过（`/statuses/user_timeline.json` 返回 statuses 即页面正常）？**空列表不得当无新帖**——博主主页不可能全空，那是风控拦截
 - [ ] 无 WAF/滑块报错残留、输出未被验证页污染？

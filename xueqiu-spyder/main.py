@@ -142,15 +142,21 @@ def run_user(user_id, max_pages=10, output_dir=None, days=None, column_only=Fals
             ]
             window_desc = f"{from_time or ('最近%d天' % days if days else '起')} ~ {to_time or 'now'}"
             logger.info(f"时间窗过滤[{window_desc}]: {before} -> {len(all_posts)} 条（置顶帖已排除）")
+            # 窗口起点覆盖门禁（2026-09-24 补齐）：原先只在「过滤后全空」时检查页数是否够，
+            # 漏洞是——被 WAF 中途截断但已捞到几条时，会静默判成功并推进 cutoff，
+            # 中间那段永久漏采。现在：**只要页数用满且最旧帖仍新于窗口起点，就判页数不足**。
+            # 「页数用满」的判据：累计条数 ≥ max_pages × 每页条数（spyder 实际生效值，
+            # 降级端点会变成 20，故取 crawler 实例上的真实值）。
+            page_size = getattr(crawler, "_timeline_count", 20) or 20
+            if lo and oldest and oldest > lo and before >= max_pages * page_size:
+                logger.error(
+                    "窗口起点 %s 未被翻到：本轮最旧帖为 %s（页数已用满 max-pages=%d × %d 条）——"
+                    "不可推进 cutoff，须加大 --max-pages 重跑",
+                    from_time, time.strftime('%Y-%m-%d %H:%M', time.localtime(oldest / 1000)),
+                    max_pages, page_size,
+                )
+                return NO_WINDOW_REACHED
             if not all_posts:
-                # 关键判定：本轮抓到的最旧帖仍比窗口起点新 → 是页数不足没翻到，不是"无新帖"
-                if lo and oldest and oldest > lo:
-                    logger.error(
-                        "窗口起点 %s 未被翻到：本轮最旧帖为 %s，页数不足（--max-pages %d）——"
-                        "不可判定为『窗口内无帖』，须加大 --max-pages 重跑",
-                        from_time, time.strftime('%Y-%m-%d %H:%M', time.localtime(oldest / 1000)), max_pages,
-                    )
-                    return NO_WINDOW_REACHED
                 logger.warning("过滤后无帖子（窗口内无新帖，采集完成）")
                 return NO_NEW_POSTS
 
