@@ -14,7 +14,12 @@
 
 - **第一层 WAF URL 拦截**：分页裸 URL（`page>=2`）被拦截返回「很抱歉…访问被阻断」。规避：spyder 通过 **ego lite 里已登录的雪球会话**请求（带签名参数），正常可翻页。
 - **第二层 阿里云滑块验证**：连续请求触发「访问验证：请按住滑块」。规避：人工过验证 / 稍后重试，绝不硬撞。
+- **第三层 静默空页（最危险——会被误读成「博主没发帖」）**：被风控时页面可能**正常打开**（头像/粉丝数/认证都在），只有**帖子列表是空的**。用户口径（2026-09-24）：「**没有博主主页进去是全空的**」——**博主主页不可能零帖子**，看到空列表一律按风控拦截处理，不得判「无新帖」。
+  - **判据**：`timeline__item` 类元素数为 0（或帖子区无内容）＝被拦；有任意条目＝页面正常。
+  - **注意 DOM 渲染变体**：`.timeline__list` / `.timeline__item__info` 可能不匹配（换了渲染），别用它们判定空页——用**同源 API** 复核（`/statuses/user_timeline.json?user_id=&page=1`，返回 statuses 即正常）。
+  - **处置**：不推进 cutoff（按失败处理），冷却后重试；本轮已把该博主列入待重试清单。
 - spyder 翻页若持续失败：检查 **ego lite 里**的雪球登录态是否过期（标题含昵称=已登录），必要时用户重新登录雪球。
+- **「用户接管」会中断整轮**（2026-09-21/24 各踩一次）：命中滑块时 ego 被激活并 `handOff` 给用户，用户一动手接管，任务空间即不属于 agent，后续每条都报 `任务空间已不属于 agent / hard stop`。这是正常保护，**不要重试夺回**——等用户过完验证、下一轮采集会自动换新空间继续。
 
 > timeline API 仍可用于**快速预扫**（page=1 判断博主是否有新帖），但完整采集以 spyder 工具层为准。
 
@@ -47,7 +52,9 @@ python3 {post-fetch}/scripts/xq_sync_console.py --apply    # 确认后落地：�
 执行模板：
 
 ```bash
-SPYDER=~/.agents/skills/xueqiu-spyder                       # 工具层权威位置（部署目录）
+# 先探活：路径已多次迁移（~/.agents → ~/.zcode/skills → 项目内 .agents），别信固定值
+SPYDER="$(ls -d ~/.zcode/skills/xueqiu-spyder ~/Project/investment-console/.agents/skills/xueqiu-spyder 2>/dev/null | head -1)"
+[ -n "$SPYDER" ] || { echo "❌ xueqiu-spyder 未找到，先 ls 确认位置"; exit 1; }
 PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}
 NOW=$(date "+%Y-%m-%dT%H:%M:%S")
 $PY "$SPYDER/main.py" user {xq_id} \
@@ -56,7 +63,7 @@ $PY "$SPYDER/main.py" user {xq_id} \
   --output "{输出目录}"
 ```
 
-- `{xueqiu-spyder 目录}`：**`~/.agents/skills/xueqiu-spyder/`**（部署目录＝权威；`~/.workbuddy/skills/investment/xueqiu-spyder/` 是历史镜像，勿用）
+- `{xueqiu-spyder 目录}`：**位置会迁，引用前先 `ls` 探活**。历史：`~/.agents/skills/xueqiu-spyder/`（2026-09-23 失效）→ `~/.zcode/skills/xueqiu-spyder/`（symlink → `~/.skills-manager/skills/`）／项目内 `.agents/skills/xueqiu-spyder/`；`~/.workbuddy/...` 是历史镜像，勿用。**硬编码路径已三次失效**（09-21 / 09-23 / 09-24 各踩一次），本轮 `run_fetch_batch.py` 的候选列表还留着失效项
 
 - `{info_cutoff}` 取看板 `blogger.info_cutoff_datetime`（ISO `YYYY-MM-DDTHH:mm:ss`）；新增博主默认半年前 17:50:00
 
@@ -96,7 +103,7 @@ spyder 输出后逐项核对：
 1. frontmatter 七字段：title/source/author/date/recorded/type/status（type=`帖子集`；status=`待提炼`，含摘要帖则 `待提炼-含摘要`）
 2. 每帖三件套：`## N. 标题` + 正文 + 摘要行（发布行含 `形态`、`全文/摘要`、`[原文]` 链接）
 3. 纯文本净化：无 `![[`、`![](url)`、`<img>`、`[表情]` 占位残留（Unicode emoji 属正文保留）
-4. `author` 值合法：不含 `发布于|来自|关注|：|:`，判不出置 `Unknown` 并标待复核
+4. `author` 值合法：不含 `发布于|来自|关注|：|:`，判不出置 `Unknown` 并标待复核；**且必须等于文件名里的博主名**——`author` 取 API `user.screen_name`，若出现**所有文件同名**或出现知名大 V 名（如「大道无形我有型」）＝抓到了侧栏「用户推荐」位（DOM 竞态，2026-09-21/24 各踩一次），按文件名批量订正后再入库
 5. 不合格项 → 修复后落 vault；合格 → 汇报 + info_cutoff 回写（看板）
 
 ---
@@ -134,14 +141,14 @@ esac
 采集产物 md **不再落 vault 粗制品**，它是临时文件；原文落 `post_history`，提炼也从库里读：
 
 ```bash
-# ① 落库（幂等，url_hash 判重）
-node ~/Project/investment-console/scripts/import-post-history.js "<采集产物.md>"
+# ① 落库（幂等，url_hash 判重）——仓库脚本 2026-09-23 起在 src/scripts/
+node ~/Project/investment-console/src/scripts/import-post-history.js "<采集产物.md>"
 # ② 入库校验（逐帖 url_hash + content_hash 一致才算留档；缺口则禁止清理）
-node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js "<采集产物.md>"
+node <post-fetch>/scripts/check-post-history-covered.js "<采集产物.md>"
 # ③ 校验通过 → 清理临时产物（--rm 一步到位，移入废纸篓可恢复）
-node ~/Project/investment-console/scripts/import-post-history.js --rm "<采集产物.md>"
+node ~/Project/investment-console/src/scripts/import-post-history.js --rm "<采集产物.md>"
 # ④ 保留期清理：post_history 只保留 180 天（滚动窗口；2026-09-15 用户拍板由 30 天放宽）
-node ~/Project/investment-console/scripts/purge-post-history.js --dry
+node ~/Project/investment-console/src/scripts/purge-post-history.js --dry
 ```
 - 摘要帖与无 `[原文]` 链接的帖**按设计不入库**（列出但不计缺口）
 - 「言论 post_history_id 取不到」「按 URL 查不到留档」在 180 天窗口外**都是正常现象**

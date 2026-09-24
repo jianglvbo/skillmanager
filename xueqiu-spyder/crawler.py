@@ -497,7 +497,16 @@ class XueqiuCrawler:
         raise CrawlerError(f"无法解析用户ID: {target}")
 
     def get_user_all_posts_with_info(self, user_id, max_pages=10):
-        """在同一个页面中获取用户信息和所有帖子，避免重复导航"""
+        """在同一个页面中获取用户信息和所有帖子，避免重复导航
+
+        昵称来源（2026-09-24 定论，别再改回 DOM）：**取 timeline API 首条帖子的
+        `user.screen_name`**——API 自带该字段（实测 `/statuses/user_timeline.json`
+        返回 `user:{screen_name, id}`），与帖子数据同源、无渲染竞态。
+        历史两种 DOM 取法都踩过坑：`.user-name` 抢在时间轴渲染前会命中侧栏
+        「用户推荐」（曾把 10 个博主的 author 写成「大道无形我有型」）；改
+        `document.title` 只是缓解，页面加载中 title 未成形时仍会回落到侧栏。
+        DOM 仅作末位兜底（拿不到 API 数据时才用）。
+        """
         user_page = self._ego.new_page()
         all_statuses = []
         screen_name = str(user_id)
@@ -507,21 +516,6 @@ class XueqiuCrawler:
                 wait_until="domcontentloaded",
                 timeout=15000,
             )
-            try:
-                user_page.wait_for_selector(".user-name", timeout=5000)
-            except Exception:
-                pass
-
-            # 在同一页面获取用户名
-            # 2026-09-21：个人页头部已无 .user-name（该 class 只在时间轴帖子作者与
-            # 侧栏「用户推荐」上）——先取 .user-name 会抢在时间轴渲染前命中侧栏
-            # 推荐位（曾把 author 写成「大道无形我有型」）。document.title 恒为
-            # 「{昵称} - 雪球」，用它优先，.user-name 只作无 title 后备。
-            screen_name = user_page.evaluate("""() => {
-                const title = document.title || '';
-                if (title.includes(' - 雪球')) return title.replace(' - 雪球', '').trim();
-                return document.querySelector('.user-name')?.textContent?.trim() || '';
-            }""") or str(user_id)
 
             # 在同一页面分页获取帖子
             for page_num in range(1, max_pages + 1):
@@ -542,6 +536,22 @@ class XueqiuCrawler:
                     break
                 all_statuses.extend(statuses)
                 logger.info(f"  第 {page_num} 页获取 {len(statuses)} 条 (共 {len(all_statuses)})")
+
+            # 昵称：API 首条帖子的 user.screen_name（与帖子同源，无渲染竞态）。
+            # 本轮无帖（窗口内无新帖）时拿不到 → 回落到 DOM，再不行用传入的 user_id。
+            for st in all_statuses:
+                sn = (st.get("user") or {}).get("screen_name")
+                if sn:
+                    screen_name = str(sn).strip()
+                    break
+            else:
+                dom_name = user_page.evaluate("""() => {
+                    const t = document.title || '';
+                    if (t.includes(' - 雪球')) return t.replace(' - 雪球', '').trim();
+                    return '';
+                }""")
+                if dom_name:
+                    screen_name = dom_name
         finally:
             user_page.close()
         return screen_name, all_statuses

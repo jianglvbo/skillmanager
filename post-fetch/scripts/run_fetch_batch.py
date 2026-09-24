@@ -23,9 +23,16 @@ import time
 import urllib.request
 
 API = "http://127.0.0.1:8698"
-_SPYDER_CANDS = ["~/.agents/skills/xueqiu-spyder", "~/.zcode/skills/xueqiu-spyder"]
-SPYDER_DIR = next((os.path.expanduser(c) for c in _SPYDER_CANDS if os.path.isdir(os.path.expanduser(c))),
-                  os.path.expanduser(_SPYDER_CANDS[0]))
+# 工具层位置会迁（~/.agents → ~/.zcode/skills → 项目内 .agents），按序探活；
+# 全部落空时给出可执行的报错，别静默用失效路径（2026-09-24：首项失效已踩过）
+_SPYDER_CANDS = [
+    "~/.zcode/skills/xueqiu-spyder",
+    "~/Project/investment-console/.agents/skills/xueqiu-spyder",
+]
+SPYDER_DIR = next((os.path.expanduser(c) for c in _SPYDER_CANDS if os.path.isdir(os.path.expanduser(c))), None)
+if not SPYDER_DIR:
+    sys.exit("❌ 未找到 xueqiu-spyder 工具层，已探: " + " / ".join(_SPYDER_CANDS)
+             + "\n（路径已多次迁移，先用 ls 确认真实位置再改本脚本候选表）")
 OUT_DIR = os.path.expanduser("~/.cache/xueqiu-spyder/out")
 LIST_PATH = os.path.expanduser("~/.cache/xueqiu-spyder/batch_list.json")
 

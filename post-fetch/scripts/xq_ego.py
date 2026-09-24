@@ -23,7 +23,12 @@ import sys
 from contextlib import contextmanager
 
 # 复用工具层的 ego 通道（唯一实现，别再各写一份）
-_SPYDER_CANDIDATES = ["~/.agents/skills/xueqiu-spyder", "~/.zcode/skills/xueqiu-spyder"]
+# 位置会迁（~/.agents → ~/.zcode/skills → 项目内 .agents），按序探活；全落空显式报错
+_SPYDER_CANDIDATES = [
+    "~/.zcode/skills/xueqiu-spyder",
+    "~/Project/investment-console/.agents/skills/xueqiu-spyder",
+]
+SPYDER_DIR = None
 for _c in _SPYDER_CANDIDATES:
     _d = os.path.expanduser(_c)
     if os.path.isdir(_d):
@@ -31,6 +36,9 @@ for _c in _SPYDER_CANDIDATES:
         if SPYDER_DIR not in sys.path:
             sys.path.insert(0, SPYDER_DIR)
         break
+if not SPYDER_DIR:
+    sys.exit("❌ 未找到 xueqiu-spyder 工具层，已探: " + " / ".join(_SPYDER_CANDIDATES)
+             + "\n（路径已多次迁移，先用 ls 确认真实位置再改本脚本候选表）")
 
 from ego_browser import BridgeError, EgoBridge   # noqa: E402  （路径注入后才能导入）
 

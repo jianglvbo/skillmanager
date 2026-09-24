@@ -77,16 +77,16 @@ compatibility: 通用
 ### 第二步：检查工具层环境
 
 ```bash
-SPYDER=~/.agents/skills/xueqiu-spyder          # 工具层权威位置（部署目录）
+SPYDER="$(ls -d ~/.zcode/skills/xueqiu-spyder ~/Project/investment-console/.agents/skills/xueqiu-spyder 2>/dev/null | head -1)"   # 工具层位置（2026-09-24：路径已从 ~/.agents 迁走，用前先 ls 确认存在）
 PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # venv 路径存本机 0600 配置，不入仓库
 $PY -c "import requests" && ego-browser --help >/dev/null && echo "ego CLI OK"
-ego-browser --help >/dev/null && echo "ego CLI OK"     # 采集通道（2026-09-15 起用 ego lite）
 ```
 - 依赖缺失 → `$PY -m pip install -r "$SPYDER/requirements.txt"`
 - **ego 通道预检**：ego lite 已在运行且已登录雪球（工具层第二步的自检脚本会打印当前页 URL/标题）；
   CLI 缺失 → 提示用户在 ego lite 里安装命令行工具
 - 未登录 → 提示用户**先在 ego lite 里登录雪球**再重跑（不再提示启动 Chrome）
 - 工具层细节见 `xueqiu-spyder` SKILL.md；`XUEQIU_TRANSPORT` 只认 `ego`（Chrome 路径已从代码删除）
+- **路径会迁**：`~/.agents/skills/xueqiu-spyder` 已于 2026-09-23 失效，现行是 `~/.zcode/skills/`（symlink → `~/.skills-manager/skills/`）或项目内 `.agents/skills/`。硬编码路径三次失效（2026-09-21 / 09-23 / 09-24 各踩一次，报 `ModuleNotFoundError`/`No such file`）——**引用前一律先 `ls` 探活，别信文档里的固定路径**
 
 ### 第三步：执行采集（委托 xueqiu-spyder）
 
@@ -114,10 +114,11 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 
 ```bash
 node ~/Project/investment-console/src/scripts/import-post-history.js "<采集产物.md>"   # 落库（幂等，url_hash 判重；博主名按 name+alias 匹配）
-node ~/.agents/skills/post-fetch/scripts/check-post-history-covered.js "<采集产物.md>"  # 入库校验（逐帖 url_hash+content_hash）
+node "{本 skill 目录}/scripts/check-post-history-covered.js" "<采集产物.md>"          # 入库校验（逐帖 url_hash+content_hash）
 node ~/Project/investment-console/src/scripts/import-post-history.js --rm "<采集产物.md>"   # 校验通过后清理临时产物
 node ~/Project/investment-console/src/scripts/purge-post-history.js --dry          # 保留期清理：post_history 只留 180 天
 ```
+> **仓库脚本在 `src/scripts/`**（2026-09-23 归置，原 `scripts/` 已移走）——写 `scripts/import-post-history.js` 会报 `MODULE_NOT_FOUND`。本 skill 自带脚本用相对本 skill 目录的路径（`{本 skill 目录}` 即 SKILL.md 所在目录，如 `~/.zcode/skills/post-fetch`）。
 
 | 规则 | 说明 |
 |:---|:---|
