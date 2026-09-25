@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "scenario_id": "16386adf-8311-46aa-bb32-e0dda5e0812f",
-  "name": "Default",
+  "name": "投资框架",
   "description": "Default startup scenario",
-  "icon": null,
+  "icon": "book-open",
   "sort_order": 0
 }
