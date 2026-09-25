@@ -1,11 +1,11 @@
 #!/usr/bin/expect -f
 # server-ops 投资控制台部署器（rsync 推送 + 密码兜底）
 # 用法：expect scripts/rsyncrun.exp
-# 部署内容：本地 ~/Project/investment-console → 服务器 /home/jianglb/investment-console
+# 部署内容：本地 ~/Project/investment-dashboard → 服务器 /home/jianglb/investment-dashboard
 # 排除：.DS_Store / config.json（生产配置）/ data（运营备份）/ node_modules（服务器 npm 维护）
 # 已配密钥时走免密；否则自动取 credentials.md ## SSH 段密码兜底。
 # 注意：rsync 只推送代码，部署后仍需手动重启服务：
-#   ssh 106.55.14.116 "sudo systemctl restart investment-console"
+#   ssh 106.55.14.116 "sudo systemctl restart investment-dashboard"
 set timeout 1200
 set fh [open $env(HOME)/.config/server-ops/credentials.md r]
 set data [read $fh]
@@ -18,7 +18,7 @@ foreach line [split $data "\n"] {
   if {$inSsh && [regexp {^-\s*密码:\s*(\S+)} $line -> p]} { set pass $p; break }
 }
 if {$pass eq ""} { puts "PASS_EXTRACT_FAIL"; exit 9 }
-spawn rsync -az --exclude ".DS_Store" --exclude "config.json" --exclude "data" --exclude "node_modules" -e "ssh -p 22" $env(HOME)/Project/investment-console/ jianglb@106.55.14.116:/home/jianglb/investment-console/
+spawn rsync -az --exclude ".DS_Store" --exclude "config.json" --exclude "data" --exclude "node_modules" -e "ssh -p 22" $env(HOME)/Project/investment-dashboard/ jianglb@106.55.14.116:/home/jianglb/investment-dashboard/
 expect {
   -re {[Pp]assword:} { send -- "$pass\r"; exp_continue }
   eof

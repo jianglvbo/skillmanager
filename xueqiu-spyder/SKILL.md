@@ -57,7 +57,7 @@ compatibility: macOS / Linux
 
 **单帖接口 `statuses/show.json` 限流（2026-09-11 实测，硬约束）**：按 URL 取单帖正文/形态时走此接口。**速率与退避表见 post-fetch `references/execution-guide.md`「单帖接口限流」节**（危险区 ≈1.1 req/s、安全速率 ≈0.7 req/s、405 退避 300s、连续 3 次限流中止本轮）；与 timeline 端点同属阿里云 WAF 保护，**提速率是最容易踩的坑**。
 
-**产物交接（2026-09-12 变更）**：本工具产出的「帖子集」markdown 是**临时载体**——post-fetch **第三步之二**用 `~/Project/investment-console/src/scripts/import-post-history.js` 把它落进 `post_history`（摘要帖与无链接帖不入库），第三步之三做入库校验后即清理（`--rm`）。**输出目录用 vault 外的临时目录**（默认 `~/.cache/xueqiu-spyder/out`），采集产物不再写进 vault 的 `工作区/粗制品/`；`post_history` 既是采集落点也是提炼前的唯一原文来源。
+**产物交接（2026-09-12 变更）**：本工具产出的「帖子集」markdown 是**临时载体**——post-fetch **第三步之二**用 `~/Project/investment-dashboard/src/scripts/import-post-history.js` 把它落进 `post_history`（摘要帖与无链接帖不入库），第三步之三做入库校验后即清理（`--rm`）。**输出目录用 vault 外的临时目录**（默认 `~/.cache/xueqiu-spyder/out`），采集产物不再写进 vault 的 `工作区/粗制品/`；`post_history` 既是采集落点也是提炼前的唯一原文来源。
 > 仓库脚本 2026-09-23 起在 **`src/scripts/`**（原 `scripts/` 已移走，写旧路径会 `MODULE_NOT_FOUND`）。
 
 **timeline 端点自动降级（2026-09-09 固化）**：`v4/statuses/user_timeline.json` 被阿里云 WAF 对该 IP 临时封禁（405，页面自身带签名请求亦 405）时，crawler **自动切到旧版 `/statuses/user_timeline.json`** 重试本页（数据一致，仅每页上限由 50 降为 20），只降级一次，无需人工干预。端点与每页条数可用环境变量覆盖（见 `references/env-vars.md`）。

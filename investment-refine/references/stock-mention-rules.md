@@ -35,7 +35,7 @@
 
 > 库里 `stock.code` 存的是**不带交易所前缀**的六位/五位/英文码，所以判市场看**首位**：`60/68/00/30/83/87/920` → A 股、五位数字 → 港股、英文 → 美股。
 > **两个坑**：① **六位数字会撞车**——韩股 `000660`（SK海力士）恰好是「00 开头」，按形状会推成 A 股，所以**回填时一律不覆盖已有的 `market_code`**，新建时也应由调用方显式传 `market`；② `—`/空代码推不出来（如马士基），**留空是正常的**，它只在「个股（全部）」里出现（framework-rules #52：无关联/无市场不是缺陷）。
-> 服务端已有 `deriveMarketFromCode()` 兜底（新建个股没传 `market` 时从代码推），回填脚本 `~/Project/investment-console/scripts/backfill-market-code.js`。
+> 服务端已有 `deriveMarketFromCode()` 兜底（新建个股没传 `market` 时从代码推），回填脚本 `~/Project/investment-dashboard/scripts/backfill-market-code.js`。
 
 > 组合代号 `$名称(ZH123456)$` **不是个股**（雪球组合），按 `<框架>/framework-rules` 处理：只留 `target` 文本。
 > 指数/ETF/基金（`$恒生指数$`、`$沪深300$`、`$中概互联ETF$`）也不是个股。

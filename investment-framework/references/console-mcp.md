@@ -1,6 +1,6 @@
-# Investment Console MCP（投资知识库看板）
+# Investment Console MCP（投资看板）
 
-投资知识库看板（investment-console）的 MCP 服务，供任何 agent（WorkBuddy / 其他 agent）接入读写投资知识库派生数据。
+投资看板（investment-dashboard）的 MCP 服务，供任何 agent（WorkBuddy / 其他 agent）接入读写投资知识库派生数据。
 
 ## 连接信息
 
@@ -13,8 +13,8 @@
 
 ## 前提
 
-- **看板本地运行**：`investment-console` 服务在本机（端口 8698，launchd: `com.investment-console`），读本地 iCloud vault；**MySQL 仍在远程服务器** `106.55.14.116:3306`（`investment_kb`）
-- 数据源：Obsidian vault 派生 MySQL（`investment_kb` 库）——**vault 为绝对基准**，MySQL 为派生数据
+- **看板本地运行**：`investment-dashboard` 服务在本机（端口 8698，launchd: `com.investment-dashboard`），读本地 iCloud vault；**MySQL 仍在远程服务器** `106.55.14.116:3306`（`investment-dashboard`）
+- 数据源：Obsidian vault 派生 MySQL（`investment-dashboard` 库）——**vault 为绝对基准**，MySQL 为派生数据
 - 本地 config.json 含 `mcpToken`（与服务端鉴权一致）
 
 ## 工具清单（30 个）
@@ -31,7 +31,7 @@
 | 预测控制台（2026-08-31 新增） | `console_list_subjects`、`console_get_subject`、`console_add_prediction`、`console_update_status`、`console_add_track` |
 | 言论追踪（2026-09-02 新增，**2026-09-10 分型改造**） | `blogger_statement`（博主言论结构化落库，MySQL 为权威）。六分法 `contentType` 为唯一分类（research/predict/view/insight/chat/trade），按类型路由物理分表 `stmt_*`；**分型专属字段**：trade→`op`/`price`/`marketCap`/`tradeDate`；predict→`refPrice`/`targetPrice`/`targetDate`/`datePrecision`/`verifyStatus`/`verifyDate`/`verifyResult`（验证闭环表内可查）；research→`dataRefs`/`wikiRef`；insight→`transferable`/`wikiRef`；全类型共有 `form`（帖子形态：回复/短文/长文/专栏）。**优先级**：P1 必录 = trade / research / **predict**（2026-09-10 由 P2 提升）；旧 `kind` 四类落位同日退役。 |
 
-预测控制台域（方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）：`console_add_prediction` 幂等去重（主题+日期+预测人+内容唯一键）；`console_update_status` 改已验证/已撤销时 `verify.result`+`verify.basis` 必填（服务端强制验证留痕）。库表（2026-09-13 规范化为单数表名）：实体四表 `stock`/`industry`/`market_index`/`market`，预测即言论行 `statement_predict` + 验证留痕子表 `statement_verify_sub`，言论统一只读视图 `statement`（字典为 `dict` 单表 type=console_type/prediction_status/verify_result）。vault 文件派生索引在内存扫描（files/tags 表已退役），本机 migrate_to_mysql.py 已退役；存量迁移已完成，一次性脚本已删除。 `console_add_prediction` 支持 subjectMarket（sh/sz/hk/kr/us）与 subjectHkConnect（1/0），只补空不覆盖；个股代码显示权威为 `stock.code`/`stock.market_code`/`stock.has_hk_connect`，控制台另有 `pending_decision`（待决策）、`quote`/`todo`（看板首页），完整结构见 ../investment-kb/investment_kb.sql。
+预测控制台域（方案 A：MySQL 唯一存储，vault 不再存控制台 Markdown）：`console_add_prediction` 幂等去重（主题+日期+预测人+内容唯一键）；`console_update_status` 改已验证/已撤销时 `verify.result`+`verify.basis` 必填（服务端强制验证留痕）。库表（2026-09-13 规范化为单数表名）：实体四表 `stock`/`industry`/`market_index`/`market`，预测即言论行 `statement_predict` + 验证留痕子表 `statement_verify_sub`，言论统一只读视图 `statement`（字典为 `dict` 单表 type=console_type/prediction_status/verify_result）。vault 文件派生索引在内存扫描（files/tags 表已退役），本机 migrate_to_mysql.py 已退役；存量迁移已完成，一次性脚本已删除。 `console_add_prediction` 支持 subjectMarket（sh/sz/hk/kr/us）与 subjectHkConnect（1/0），只补空不覆盖；个股代码显示权威为 `stock.code`/`stock.market_code`/`stock.has_hk_connect`，控制台另有 `pending_decision`（待决策）、`quote`/`todo`（看板首页），完整结构见 ../investment-kb/investment-dashboard.sql。
 
 ## ⚠️ 枚举码硬约束（落库避坑 · 2026-08-31 实测）
 
@@ -68,7 +68,7 @@ curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/js
 
 ```
 mcpServers:
-  investment-console:
+  investment-dashboard:
     type: http
     url: http://127.0.0.1:8698/mcp
     headers:

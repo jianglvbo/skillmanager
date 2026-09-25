@@ -19,7 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const CONSOLE = '/Users/jianglb/Project/investment-console';
+const CONSOLE = '/Users/jianglb/Project/investment-dashboard';
 const mysql = require(path.join(CONSOLE, 'node_modules', 'mysql2', 'promise'));
 const cfg = require(path.join(CONSOLE, 'src', 'config.json'));   // 2026-09-23 仓库归置：config 移入 src/
 

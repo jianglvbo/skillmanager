@@ -26,7 +26,7 @@ from contextlib import contextmanager
 # 位置会迁（~/.agents → ~/.zcode/skills → 项目内 .agents），按序探活；全落空显式报错
 _SPYDER_CANDIDATES = [
     "~/.zcode/skills/xueqiu-spyder",
-    "~/Project/investment-console/.agents/skills/xueqiu-spyder",
+    "~/Project/investment-dashboard/.agents/skills/xueqiu-spyder",
 ]
 SPYDER_DIR = None
 for _c in _SPYDER_CANDIDATES:

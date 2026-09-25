@@ -1,5 +1,5 @@
 -- ============================================================
--- investment_kb: 投资知识库看板派生数据层
+-- investment-dashboard: 投资看板派生数据层
 -- 架构原则: 本地 vault 为绝对基准（第一/首要/绝对），本库仅为
 --           阅读 + 加工总结的派生数据；一切冲突以 vault 为准。
 -- 字符集: utf8mb4 / utf8mb4_unicode_ci
@@ -42,8 +42,8 @@
 --     ⑤ 弃用对象一律**删前备份、然后 DROP**，不留 _del 残表；派生索引（vault 文件/标签）不落库，内存扫描。
 --     ⑥ 表注释只写「XX表/XX子表」，字段注释平实直述，码值字段标注 `dict.type`。
 -- ============================================================
-CREATE DATABASE IF NOT EXISTS investment_kb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE investment_kb;
+CREATE DATABASE IF NOT EXISTS investment-dashboard DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE investment-dashboard;
 
 -- ============ 一、码值表（统一字典） ============
 CREATE TABLE dict (

@@ -27,7 +27,7 @@ API = "http://127.0.0.1:8698"
 # 全部落空时给出可执行的报错，别静默用失效路径（2026-09-24：首项失效已踩过）
 _SPYDER_CANDS = [
     "~/.zcode/skills/xueqiu-spyder",
-    "~/Project/investment-console/.agents/skills/xueqiu-spyder",
+    "~/Project/investment-dashboard/.agents/skills/xueqiu-spyder",
 ]
 SPYDER_DIR = next((os.path.expanduser(c) for c in _SPYDER_CANDS if os.path.isdir(os.path.expanduser(c))), None)
 if not SPYDER_DIR:

@@ -15,8 +15,8 @@ echo "  \"mysql\": \"$(sudo systemctl is-active mysql)\","
 echo "  \"redis\": \"$(sudo systemctl is-active redis-investment)\","
 echo "  \"qa_http\": \"$(curl -s -o /dev/null -w %{http_code} http://127.0.0.1:8700/)\","
 echo "  \"site_https\": \"$(curl -sk -o /dev/null -w %{http_code} --resolve www.jianglvbo.site:443:127.0.0.1 https://www.jianglvbo.site/)\","
-cnt=$(sudo mysql -N -e "SELECT CONCAT('bloggers=',(SELECT COUNT(*) FROM investment_kb.blogger),' statements=',(SELECT COUNT(*) FROM investment_kb.statement),' post_history=',(SELECT COUNT(*) FROM investment_kb.post_history),' stocks=',(SELECT COUNT(*) FROM investment_kb.stock))")
-echo "  \"investment_kb_counts\": \"$cnt\""
+cnt=$(sudo mysql -N -e "SELECT CONCAT('bloggers=',(SELECT COUNT(*) FROM investment-dashboard.blogger),' statements=',(SELECT COUNT(*) FROM investment-dashboard.statement),' post_history=',(SELECT COUNT(*) FROM investment-dashboard.post_history),' stocks=',(SELECT COUNT(*) FROM investment-dashboard.stock))")
+echo "  \"investment-dashboard_counts\": \"$cnt\""
 echo "}"
 REMOTE
 else
@@ -30,7 +30,7 @@ curl -s -o /dev/null -w "qa(8700): %{http_code}\n" http://127.0.0.1:8700/
 curl -sk -o /dev/null -w "www.jianglvbo.site(443): %{http_code}\n" --resolve www.jianglvbo.site:443:127.0.0.1 https://www.jianglvbo.site/
 echo "== 证书有效期 =="
 echo | openssl s_client -connect 127.0.0.1:443 -servername www.jianglvbo.site 2>/dev/null | openssl x509 -noout -dates
-echo "== investment_kb 行数快检 =="
-sudo mysql -N -e "SELECT CONCAT('bloggers=', (SELECT COUNT(*) FROM investment_kb.blogger), ' statements=', (SELECT COUNT(*) FROM investment_kb.statement), ' post_history=', (SELECT COUNT(*) FROM investment_kb.post_history), ' stocks=', (SELECT COUNT(*) FROM investment_kb.stock))"
+echo "== investment-dashboard 行数快检 =="
+sudo mysql -N -e "SELECT CONCAT('bloggers=', (SELECT COUNT(*) FROM investment-dashboard.blogger), ' statements=', (SELECT COUNT(*) FROM investment-dashboard.statement), ' post_history=', (SELECT COUNT(*) FROM investment-dashboard.post_history), ' stocks=', (SELECT COUNT(*) FROM investment-dashboard.stock))"
 REMOTE
 fi

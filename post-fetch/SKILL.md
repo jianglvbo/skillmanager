@@ -62,7 +62,7 @@ compatibility: 通用
 
 每次采集会话开始**必须**先执行（无论单博主还是批量）。完整规则见 `references/execution-guide.md`「前置步骤」——获取用户 ID、分页拉取关注列表、与看板对比（新增→确认后登记 / 取关→报告由用户看板删除 / 无变动）、更新 `updateDate`。
 
-**两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——**只核对看板 `blogger.info_cutoff_datetime`**（规则 #36；画像 md 已于 2026-09-12 退役，不再有画像侧可对）。批量采集前想看整体覆盖，在 investment-console 仓根跑 `node src/scripts/fetch-progress.js`（只读，出一根「已抓博主/需抓博主」进度条，不带其它文字）。
+**两个连带检查**：① 残留检测——看板已移除但 `博主/` 层仍有文件夹 → 报告并询问清理或迁移（防未登记博主悬空）；② info_cutoff 一致性——**只核对看板 `blogger.info_cutoff_datetime`**（规则 #36；画像 md 已于 2026-09-12 退役，不再有画像侧可对）。批量采集前想看整体覆盖，在 investment-dashboard 仓根跑 `node src/scripts/fetch-progress.js`（只读，出一根「已抓博主/需抓博主」进度条，不带其它文字）。
 
 > **采集期间请让 ego lite 留在可见位置（2026-09-16 用户要求）**：用户原话「采集博主言论的时候，我需要 ego lite 的页面在前端，我才能知道有没有触发风控」。工具层会自动把 ego 拉到前台、**页签随用随关（桥退出即关）**、并在风控/异常时截图留证（`~/.cache/xueqiu-spyder/shots/<批次>/`）；编排层汇报时要：① 提醒用户采集期间盯一眼现场；② 若本轮出过风控，把截图路径一并报出来。
 >
@@ -77,7 +77,7 @@ compatibility: 通用
 ### 第二步：检查工具层环境
 
 ```bash
-SPYDER="$(ls -d ~/.zcode/skills/xueqiu-spyder ~/Project/investment-console/.agents/skills/xueqiu-spyder 2>/dev/null | head -1)"   # 工具层位置（2026-09-24：路径已从 ~/.agents 迁走，用前先 ls 确认存在）
+SPYDER="$(ls -d ~/.zcode/skills/xueqiu-spyder ~/Project/investment-dashboard/.agents/skills/xueqiu-spyder 2>/dev/null | head -1)"   # 工具层位置（2026-09-24：路径已从 ~/.agents 迁走，用前先 ls 确认存在）
 PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # venv 路径存本机 0600 配置，不入仓库
 $PY -c "import requests" && ego-browser --help >/dev/null && echo "ego CLI OK"
 ```
@@ -113,10 +113,10 @@ $PY {xueqiu-spyder}/main.py user {xq_id} \
 **这一步就是采集的落点**：帖子直接落 `post_history`，**提炼也从库里读原文**；采集产物 md 只是临时载体、**不存进 vault 的 `工作区/粗制品/`**。意义有两条：① 提炼的唯一原文来源；② 避免重采（原文没留档就只能重抓，曾为此回采 210 条并触发 WAF 405）。
 
 ```bash
-node ~/Project/investment-console/src/scripts/import-post-history.js "<采集产物.md>"   # 落库（幂等，url_hash 判重；博主名按 name+alias 匹配）
+node ~/Project/investment-dashboard/src/scripts/import-post-history.js "<采集产物.md>"   # 落库（幂等，url_hash 判重；博主名按 name+alias 匹配）
 node "{post-fetch}/scripts/check-post-history-covered.js" "<采集产物.md>"          # 入库校验（逐帖 url_hash+content_hash）
-node ~/Project/investment-console/src/scripts/import-post-history.js --rm "<采集产物.md>"   # 校验通过后清理临时产物
-node ~/Project/investment-console/src/scripts/purge-post-history.js --dry          # 保留期清理：post_history 只留 180 天
+node ~/Project/investment-dashboard/src/scripts/import-post-history.js --rm "<采集产物.md>"   # 校验通过后清理临时产物
+node ~/Project/investment-dashboard/src/scripts/purge-post-history.js --dry          # 保留期清理：post_history 只留 180 天
 ```
 > **仓库脚本在 `src/scripts/`**（2026-09-23 归置，原顶层 `scripts/` 已移走）——写旧路径会报 `MODULE_NOT_FOUND`。`{post-fetch}` = 本 skill 目录（如 `~/.zcode/skills/post-fetch`）。
 
@@ -133,7 +133,7 @@ node ~/Project/investment-console/src/scripts/purge-post-history.js --dry       
 
 ### 第六步：向用户报告摘要
 
-采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文，输出文件路径；末尾附采集进度条 `node ~/Project/investment-console/src/scripts/fetch-progress.js`（**完成口径**：有留档 / 账号已注销 / 确认无新帖——三者任一即算该博主完成，**注销与无新帖不是缺口**，bar 不因此永远到不了 100%）。
+采集 N 条帖子，时间范围 X ~ Y，其中 M 条补全了全文，输出文件路径；末尾附采集进度条 `node ~/Project/investment-dashboard/src/scripts/fetch-progress.js`（**完成口径**：有留档 / 账号已注销 / 确认无新帖——三者任一即算该博主完成，**注销与无新帖不是缺口**，bar 不因此永远到不了 100%）。
 
 ### 第七步：更新 info_cutoff（只写看板 MySQL）
 

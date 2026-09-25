@@ -53,7 +53,7 @@ python3 {post-fetch}/scripts/xq_sync_console.py --apply    # 确认后落地：�
 
 ```bash
 # 先探活：路径已多次迁移（~/.agents → ~/.zcode/skills → 项目内 .agents），别信固定值
-SPYDER="$(ls -d ~/.zcode/skills/xueqiu-spyder ~/Project/investment-console/.agents/skills/xueqiu-spyder 2>/dev/null | head -1)"
+SPYDER="$(ls -d ~/.zcode/skills/xueqiu-spyder ~/Project/investment-dashboard/.agents/skills/xueqiu-spyder 2>/dev/null | head -1)"
 [ -n "$SPYDER" ] || { echo "❌ xueqiu-spyder 未找到，先 ls 确认位置"; exit 1; }
 PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}
 NOW=$(date "+%Y-%m-%dT%H:%M:%S")
@@ -142,13 +142,13 @@ esac
 
 ```bash
 # ① 落库（幂等，url_hash 判重）——仓库脚本 2026-09-23 起在 src/scripts/
-node ~/Project/investment-console/src/scripts/import-post-history.js "<采集产物.md>"
+node ~/Project/investment-dashboard/src/scripts/import-post-history.js "<采集产物.md>"
 # ② 入库校验（逐帖 url_hash + content_hash 一致才算留档；缺口则禁止清理）
 node <post-fetch>/scripts/check-post-history-covered.js "<采集产物.md>"
 # ③ 校验通过 → 清理临时产物（--rm 一步到位，移入废纸篓可恢复）
-node ~/Project/investment-console/src/scripts/import-post-history.js --rm "<采集产物.md>"
+node ~/Project/investment-dashboard/src/scripts/import-post-history.js --rm "<采集产物.md>"
 # ④ 保留期清理：post_history 只保留 180 天（滚动窗口；2026-09-15 用户拍板由 30 天放宽）
-node ~/Project/investment-console/src/scripts/purge-post-history.js --dry
+node ~/Project/investment-dashboard/src/scripts/purge-post-history.js --dry
 ```
 - 摘要帖与无 `[原文]` 链接的帖**按设计不入库**（列出但不计缺口）
 - 「言论 post_history_id 取不到」「按 URL 查不到留档」在 180 天窗口外**都是正常现象**

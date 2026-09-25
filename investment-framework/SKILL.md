@@ -99,7 +99,7 @@ compatibility: 通用
 
 每周审查仍保留：内容层（C3 一致性 / C4 知行合一 / C6 经验验证 / C7 关联备注）+ 待回收处置，是操作门覆盖不到的兜底网。
 
-### 看板联动（investment-console）
+### 看板联动（investment-dashboard）
 
 完整清单见 `references/console-guide.md` §9（提炼链路 `refine_trace`／复核 `refine_review`／`review_record` / `console_*` 几类 MCP 落库、逐步复核与产物展示、失败处理）。提炼/审查执行器各自负责落库调用，编排者只在汇报中核对「看板数据未写入」提示。
 
@@ -132,8 +132,8 @@ compatibility: 通用
 | MACRO_OTHER | {OTHER_DIR}/宏观 | 未登记投资人对具体宏观事件的分析 |
 | ROUGH_DIR | {VAULT_ROOT}/工作区/粗制品 | 粗制品暂存（雪球帖子集**不**落这里：采集直落 post_history，见 #29/#41；非雪球来源暂存于此） |
 | RAW_DIR | {VAULT_ROOT}/工作区/原始资源 | 粗加工后原始资源 |
-| 原文库 post_history | 看板 MySQL `post_history` 表（**采集落点 + 提炼前原文；只存帖子必要信息，不存提炼产物**）。写：`~/Project/investment-console/src/scripts/import-post-history.js [--rm] <采集产物.md>`（批量；--rm 落库后清临时产物）或 `MCP post_history action=upsert`；读：`MCP post_history action=get/check` | 提炼的原文来源、回顾/重新提炼先查这里（规则 #41） |
-| 本地看板启动器 | `~/Project/investment-console/scripts/run-server.sh`（launchd `com.investment-console` 的 ProgramArguments 指向它；自愈 node 路径） | 看板 8698 启动/排障（详见 references/console-guide.md §8.5） |
+| 原文库 post_history | 看板 MySQL `post_history` 表（**采集落点 + 提炼前原文；只存帖子必要信息，不存提炼产物**）。写：`~/Project/investment-dashboard/src/scripts/import-post-history.js [--rm] <采集产物.md>`（批量；--rm 落库后清临时产物）或 `MCP post_history action=upsert`；读：`MCP post_history action=get/check` | 提炼的原文来源、回顾/重新提炼先查这里（规则 #41） |
+| 本地看板启动器 | `~/Project/investment-dashboard/scripts/run-server.sh`（launchd `com.investment-dashboard` 的 ProgramArguments 指向它；自愈 node 路径） | 看板 8698 启动/排障（详见 references/console-guide.md §8.5） |
 | 博主控制台 | 看板 MySQL `blogger` 表（读 GET /api/bloggers/live、写 POST /api/bloggers 与 /api/bloggers/update；vault 工作区/博主控制台.md 已退役删除） | 博主注册权威（编号/别名/雪球ID/平台/特别关注/信息截止） |
 
 ---

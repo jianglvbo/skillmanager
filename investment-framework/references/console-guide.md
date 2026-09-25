@@ -1,10 +1,10 @@
-# 投资看板（investment-console）联动指南
+# 投资看板（investment-dashboard）联动指南
 
 > 本文件描述流水线（提炼/审查/言论追踪）与投资看板的数据契约与渲染约定，只保留**执行流水线时必须知道**的部分。
 
 ## 1. 看板是什么
 
-纯前端 + 零依赖 Node 轻服务，**本地运行**（`~/Project/investment-console`，端口 8698，launchd 托管 com.investment-console）。读本地 iCloud vault（`config.vaultRoot` 指向 Obsidian 库），派生索引与运营记录写**远程共享 MySQL**（`investment_kb`，host 见 config.json；方案 A：预测控制台等已迁库，vault 不再存控制台 Markdown）。MCP 端点 `http://127.0.0.1:8698/mcp`（Bearer token 见 `investment-framework/references/console-mcp.md`）。**看板不产生知识，只呈现流水线结果。**
+纯前端 + 零依赖 Node 轻服务，**本地运行**（`~/Project/investment-dashboard`，端口 8698，launchd 托管 com.investment-dashboard）。读本地 iCloud vault（`config.vaultRoot` 指向 Obsidian 库），派生索引与运营记录写**远程共享 MySQL**（`investment-dashboard`，host 见 config.json；方案 A：预测控制台等已迁库，vault 不再存控制台 Markdown）。MCP 端点 `http://127.0.0.1:8698/mcp`（Bearer token 见 `investment-framework/references/console-mcp.md`）。**看板不产生知识，只呈现流水线结果。**
 
 ## 2. 数据契约（流水线写入）
 
@@ -22,7 +22,7 @@
 > **2026-09-15 醒目标注**：本节（含 §4 决策链路图规范）描述的是 `refine_record` 契约
 > —— 该 MCP 工具与 `refine_record`/`refine_target_sub` 两张表**已于 2026-09-14 下架**
 > （framework-rules #54；旧 187 条记录备份在
-> `~/Project/investment-console/backups/refine_legacy_20260913155544/`）。
+> `~/Project/investment-dashboard/backups/refine_legacy_20260913155544/`）。
 > **新提炼只调 `MCP refine_trace`（7 步判定）**，写的是 `refine_item`/`refine_step`/`refine_review`。
 > 下文里的 `targets[]`、`thinking` v2、`verify` 等字段都只用于解释历史数据，不要再按它写入。
 
@@ -110,18 +110,18 @@
 
 | 项 | 值 |
 |:---|:---|
-| 服务 | launchd `com.investment-console`（`~/Library/LaunchAgents/com.investment-console.plist`，KeepAlive=1，端口 8698） |
-| 启动器 | **`~/Project/investment-console/scripts/run-server.sh`**（plist 的 ProgramArguments 指向它）——按「WorkBuddy `versions/current` → 任一已装版本 → PATH 里的 node」解析 node 后 exec server.js |
-| 重启 | `launchctl kickstart -k gui/$(id -u)/com.investment-console`；改 plist 后用 `launchctl bootout` + `launchctl bootstrap gui/$(id -u) <plist>` |
-| 日志 | `~/Library/Logs/investment-console.log`（stdout+stderr 合并） |
-| 健康检查 | `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8698/` → 200；`launchctl list \| grep investment-console` → 第二列为退出码（非 0 即异常） |
+| 服务 | launchd `com.investment-dashboard`（`~/Library/LaunchAgents/com.investment-dashboard.plist`，KeepAlive=1，端口 8698） |
+| 启动器 | **`~/Project/investment-dashboard/scripts/run-server.sh`**（plist 的 ProgramArguments 指向它）——按「WorkBuddy `versions/current` → 任一已装版本 → PATH 里的 node」解析 node 后 exec server.js |
+| 重启 | `launchctl kickstart -k gui/$(id -u)/com.investment-dashboard`；改 plist 后用 `launchctl bootout` + `launchctl bootstrap gui/$(id -u) <plist>` |
+| 日志 | `~/Library/Logs/investment-dashboard.log`（stdout+stderr 合并） |
+| 健康检查 | `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8698/` → 200；`launchctl list \| grep investment-dashboard` → 第二列为退出码（非 0 即异常） |
 
 > **踩过的坑（2026-09-11）**：plist 原先写死 `~/.workbuddy/binaries/node/versions/22.22.2-2/bin/node`，WorkBuddy 升级把该版本删掉后**服务静默起不来**——`launchctl list` 显示退出码 `78`、端口无监听，但日志里没有任何报错（因为根本没启动到 node）。**排查口诀**：退出码非 0 且日志无新增 → 先验 `ProgramArguments` 里的可执行文件是否存在。现已改为启动器脚本自愈。
-**数据库注释约定（2026-09-11 补齐）**：`investment_kb` **每表每字段均带 COMMENT**（约定写在权威文件 `investment-framework/references/investment_kb.sql` 文件头）。新增表/字段后跑审计：
+**数据库注释约定（2026-09-11 补齐）**：`investment-dashboard` **每表每字段均带 COMMENT**（约定写在权威文件 `investment-framework/references/investment-dashboard.sql` 文件头）。新增表/字段后跑审计：
 
 ```bash
-node ~/Project/investment-console/scripts/audit-schema-comments.js           # 列清单
-node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
+node ~/Project/investment-dashboard/scripts/audit-schema-comments.js           # 列清单
+node ~/Project/investment-dashboard/scripts/audit-schema-comments.js --strict  # 有缺失则退出码 1
 ```
 
 审计口径：只读视图 `statement` 无列注释概念，自动排除。**当前状态：表注释 29/29、列注释 330/330**（六张帖子表与 `_sub`/`_rel` 表均已补齐；`blogger_statements_legacy`、被重启窗口期误建的空表 `statement_reviews` 均已清理，见 framework-rules #39/#44）。
@@ -129,8 +129,8 @@ node ~/Project/investment-console/scripts/audit-schema-comments.js --strict  # �
 **权威 schema 是生成物（2026-09-12 起）**：改库后必须重新导出 + 回放校验，否则文件与实库漂移（本轮就抓出过视图缺列、表名不一致）：
 
 ```bash
-node ~/Project/investment-console/scripts/export-schema.js        # 实库 → investment-framework/references/investment_kb.sql（含 dict 内容快照）
-node ~/Project/investment-console/scripts/verify-schema-replay.js # 空库回放 + 逐列类型/注释比对；一致退出码 0，漂移 1
+node ~/Project/investment-dashboard/scripts/export-schema.js        # 实库 → investment-framework/references/investment-dashboard.sql（含 dict 内容快照）
+node ~/Project/investment-dashboard/scripts/verify-schema-replay.js # 空库回放 + 逐列类型/注释比对；一致退出码 0，漂移 1
 ```
 
 > **连接 collation 坑（2026-09-12）**：服务端与脚本连 MySQL 必须用 `charset: 'utf8mb4_unicode_ci'`。沿用 `'utf8mb4'` 会落到 `utf8mb4_general_ci`，与视图里字面量派生的列（`utf8mb4_bin`）比较时直接报 `Illegal mix of collations`（`COALESCE(content_type,'view')<>'trade'` 这类写法首当其冲）。
@@ -140,9 +140,9 @@ node ~/Project/investment-console/scripts/verify-schema-replay.js # 空库回放
 覆盖：博主列表计数、博主详情、帖子列表、买卖列表、控制台主题列表/详情。运维：
 
 ```bash
-bash ~/Project/investment-console/scripts/cache-stats.sh                  # 看板侧命中率 + 服务器 Redis 状态 + 隧道
-python3 ~/Project/investment-console/scripts/redis-inspect.py keys        # 缓存里有什么（键/大小/TTL/值预览）
-python3 ~/Project/investment-console/scripts/redis-inspect.py get '<key>' # 单键的值（自动解压+格式化）
+bash ~/Project/investment-dashboard/scripts/cache-stats.sh                  # 看板侧命中率 + 服务器 Redis 状态 + 隧道
+python3 ~/Project/investment-dashboard/scripts/redis-inspect.py keys        # 缓存里有什么（键/大小/TTL/值预览）
+python3 ~/Project/investment-dashboard/scripts/redis-inspect.py get '<key>' # 单键的值（自动解压+格式化）
 curl -s http://127.0.0.1:8698/api/cache/stats                 # 进程内命中/未命中/键数
 curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（epoch+1）
 ```
@@ -160,7 +160,7 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 
 ## 9. 编排者看板联动清单（自 SKILL.md 下沉）
 
-流水线结果写入本地运行的投资看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管 com.investment-console；读本地 iCloud vault、连远程 MySQL；连接与 token 见 `investment-framework/references/console-mcp.md`），看板不产生知识、只呈现结果：
+流水线结果写入本地运行的投资看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管 com.investment-dashboard；读本地 iCloud vault、连远程 MySQL；连接与 token 见 `investment-framework/references/console-mcp.md`），看板不产生知识、只呈现结果：
 
 - **提炼** → `MCP refine_trace`（refine 第五步，写 7 步判定）→ 提炼记录页（单元卡 + 逐步复核）；复核走 `MCP refine_review`
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）

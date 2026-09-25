@@ -2,7 +2,7 @@
 
 > ✅ **§六 / §七 / §八 是现行规则，提炼时必须照做**（investment-refine SKILL 第二步第 5 条 / 第三步 3.0 直接引用）：分流决策矩阵、落库前置八问、写入硬约束与低质帖判据都在下面这三节。
 >
-> ⚠️ **§一~§五（`refine_record` 请求体结构）已于 2026-09-14 退役**：`refine_record` 工具与 `refine_record`/`refine_target_sub` 两张表已下架，**仅供查阅历史数据**（旧记录备份 `~/Project/investment-console/backups/refine_legacy_20260913155544/`）。**新提炼的链路一律调 MCP `refine_trace`（7 步判定，见 framework-rules #54），不要再按 §一~§五 写入。**
+> ⚠️ **§一~§五（`refine_record` 请求体结构）已于 2026-09-14 退役**：`refine_record` 工具与 `refine_record`/`refine_target_sub` 两张表已下架，**仅供查阅历史数据**（旧记录备份 `~/Project/investment-dashboard/backups/refine_legacy_20260913155544/`）。**新提炼的链路一律调 MCP `refine_trace`（7 步判定，见 framework-rules #54），不要再按 §一~§五 写入。**
 
 ---
 
@@ -69,7 +69,7 @@
 
 ## 二B、字典码对照表（避坑 · 2026-08-31 实测）
 
-**`layer`/`category`/`relation`/`type`/`sourceType` 必须传数据库字典英文码，传中文会落库失败（外键约束报错）**。全量对照（源：远端 MySQL `investment_kb` 的 `dict` 单表，`type` 列区分字典域；2026-08-31 schema 整合后由多张 dict_* 合并为单表）：
+**`layer`/`category`/`relation`/`type`/`sourceType` 必须传数据库字典英文码，传中文会落库失败（外键约束报错）**。全量对照（源：远端 MySQL `investment-dashboard` 的 `dict` 单表，`type` 列区分字典域；2026-08-31 schema 整合后由多张 dict_* 合并为单表）：
 
 | 字段 | 字典表 | 合法码（码 → 中文含义） |
 |:---|:---|:---|
@@ -268,7 +268,7 @@
 > 4. **没有就留空**：采集原文里没有 `//@` 段时留空（**不许用概括顶上**）——看板会显示「被回应者内容未采集（点编辑可补录）」，这才是正确信号；
 > 5. **自回复也算**：`//@` 引的是博主本人（uid 相同）时为自回复链，照抄他本人旧话即可（同样不带包装）。
 > **落库自动兜底**：服务端 `_cleanReplyTo()`（`server.js`）在写入口剥包装——传了带包装的值不会报错，但会被清洗（等于白传）；前端 `stripReplyWrapper()` 渲染侧再兜一层。
-> **批量回填工具**：`investment-console/scripts/backfill-reply-to.js`（从 `post_history`.`post_text` 抽 `//@` 段，空值写入 / 截断升级 / 概括改写，改写明细存 `backups/reply_to_verbatim_audit.tsv`）；**存量去包装**：`investment-console/scripts/strip-reply-wrappers.js`（2026-09-12 首次执行改写 304 行，备份 `backups/reply_wrapper_strip_20260912.json`，幂等）。
+> **批量回填工具**：`investment-dashboard/scripts/backfill-reply-to.js`（从 `post_history`.`post_text` 抽 `//@` 段，空值写入 / 截断升级 / 概括改写，改写明细存 `backups/reply_to_verbatim_audit.tsv`）；**存量去包装**：`investment-dashboard/scripts/strip-reply-wrappers.js`（2026-09-12 首次执行改写 304 行，备份 `backups/reply_wrapper_strip_20260912.json`，幂等）。
 > **已废弃写法**：`（回应"…"）博主观点` 内嵌式（2026-09-11 前使用）——前端已不再解析，历史 224 行已迁移进 `replyTo`。
 > **前端渲染**：`replyBodyHtml(view, replyTo)` 优先读字段，仅对历史数据回落解析内嵌写法。
 

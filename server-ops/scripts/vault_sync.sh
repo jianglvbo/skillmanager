@@ -27,8 +27,8 @@ rsync -az "${EXTRA[@]}" "${EXCLUDES[@]}" \
   "$VAULT/" "${USER}@${HOST}:${DEST}/"
 
 if [ "$1" != "--dry-run" ]; then
-  # 2026-09-12：服务器版投资看板已删（投资看板现仅本机运行：launchd com.investment-console + 127.0.0.1:8698）。
-  # 原此处 `systemctl restart investment-console` 会去重启一个**已不存在的服务**——已移除；
+  # 2026-09-12：服务器版投资看板已删（投资看板现仅本机运行：launchd com.investment-dashboard + 127.0.0.1:8698）。
+  # 原此处 `systemctl restart investment-dashboard` 会去重启一个**已不存在的服务**——已移除；
   # 服务器上只剩 fitness-console(8699) / 「问」(8700) / MySQL，需要刷新它们时用各自的部署命令。
   echo "✅ vault 已同步到 ${USER}@${HOST}:${DEST}（服务器已无投资看板服务，无需重启）"
 fi

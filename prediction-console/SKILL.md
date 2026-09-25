@@ -6,7 +6,7 @@ version: 2.3.0
 
 # 预测控制台维护（MySQL 版）
 
-> **2026-08-31 方案 A 落地**：预测控制台由 vault Markdown 迁移至 MySQL（investment_kb 预测域 4 表 + 4 字典），vault 不再存控制台文件。所有读写走 MCP 工具（`mcp__investment-console__console_*`）。博主控制台仍由 `blogger` 表 + `*_blogger` MCP 工具管理。
+> **2026-08-31 方案 A 落地**：预测控制台由 vault Markdown 迁移至 MySQL（investment-dashboard 预测域 4 表 + 4 字典），vault 不再存控制台文件。所有读写走 MCP 工具（`mcp__investment-dashboard__console_*`）。博主控制台仍由 `blogger` 表 + `*_blogger` MCP 工具管理。
 
 ## Default Stance
 
@@ -101,7 +101,7 @@ version: 2.3.0
 | MCP 工具调用 | investment-framework/references/console-mcp.md | 读取 |
 | 行业分类标准 | investment-framework/references/tag-taxonomy.md | 读取 |
 | 个股/指数价格 | 腾讯 kline API（web.ifzq.gtimg.cn，不复权） | 执行 |
-| 博主画像 | MySQL `blogger` 表（唯一权威） | 经 add/update_blogger 读写；**画像 md 已彻底废弃**（2026-09-12：服务端删除全部回写代码与 `/api/blogger/resync`，存量文件已于 2026-09-14 按用户指示清空（49 个画像文件先清 inbound 引用、再移入废纸篓，备份在 ~/Project/investment-console/backups/blogger_profile_20260914000617/）） |
+| 博主画像 | MySQL `blogger` 表（唯一权威） | 经 add/update_blogger 读写；**画像 md 已彻底废弃**（2026-09-12：服务端删除全部回写代码与 `/api/blogger/resync`，存量文件已于 2026-09-14 按用户指示清空（49 个画像文件先清 inbound 引用、再移入废纸篓，备份在 ~/Project/investment-dashboard/backups/blogger_profile_20260914000617/）） |
 
 ---
 

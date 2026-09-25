@@ -127,7 +127,7 @@ def mysql_scan() -> dict:
     """
     import pymysql
     conn = pymysql.connect(host="106.55.14.116", port=3306, user="jianglb",
-                           password=os.environ.get("DB_PASS", ""), database="investment_kb",
+                           password=os.environ.get("DB_PASS", ""), database="investment-dashboard",
                            connect_timeout=8)
     cur = conn.cursor()
     out = {}
