@@ -6,6 +6,6 @@
   "tools": {
     "qoder": true,
     "qwen_work": false,
-    "zcode": true
+    "zcode": false
   }
 }
