@@ -6,14 +6,14 @@ version: 2.3.0
 
 # 预测控制台维护（MySQL 版）
 
-> **2026-08-31 方案 A 落地**：预测控制台由 vault Markdown 迁移至 MySQL（investment-dashboard 预测域 4 表 + 4 字典），vault 不再存控制台文件。所有读写走 MCP 工具（`mcp__investment-dashboard__console_*`）。博主控制台仍由 `blogger` 表 + `*_blogger` MCP 工具管理。
+> **2026-08-31 方案 A 落地**：预测控制台由 vault Markdown 迁移至 MySQL（投资看板预测域 4 表 + 4 字典），vault 不再存控制台文件。所有读写走 MCP 工具（`mcp__investment-console__console_*`；平台 2026-09-25 由 investment-dashboard 改名 console）。博主控制台仍由 `blogger` 表 + `add/update/get_blogger` 等 MCP 工具管理。
 
 ## Default Stance
 
 ### 核心原则
 - **组合与代号不入主题（2026-09-12）**：雪球组合（`$名称(ZH123456)$`）不是个股/行业/市场主题，**不建 subject**（组合信息留在帖子 `target` 文本里）；纯小写拉丁短名（如 `cww`）是未识别代号，须先还原真名再建主题。建主题接口已内置门禁拦截，报错即按提示改写。
 
-- **行业/指数只能从标准表取（2026-09-15 用户拍板，硬约束）**：`industry` 主题的行业名必须命中 `industry_sw`（申万 2021 版：一级 31 / 二级 134 / 三级 335），`index` 主题必须命中 `index_catalog`（72 条：宽基/行业/主题/策略/风格/属性/债券/跨境）。**建主题前先取标准名**：调 `industry_sw_list`（可按 level/parent/keyword 过滤）或 `index_catalog_list`（可按 category/keyword 过滤），不要凭记忆写行业名。未命中会被服务端**直接拒绝并返回候选项**；行业落库存 `short_name`（去 Ⅱ/Ⅲ 后缀，「白酒Ⅱ」→ 落「白酒」）；个股 `industryName` 未命中时不再静默建非标行业，错误会出现在返回的 `warnings` 里，须改用标准名重挂。确属行业但标准表没有 → **先补标准表**（改主仓 `seed/*.json` 后重跑 `scripts/seed_industry_index.js`），不要绕过门禁新建
+- **行业/指数只能从标准表取（2026-09-15 用户拍板，硬约束）**：`industry` 主题的行业名必须命中 `industry_sw`（申万 2021 版：一级 31 / 二级 134 / 三级 335），`index` 主题必须命中 `index_catalog`（72 条：宽基/行业/主题/策略/风格/属性/债券/跨境）。**建主题前先取标准名**：调 `industry_sw_list`（可按 level/parent/keyword 过滤）或 `index_catalog_list`（可按 category/keyword 过滤），不要凭记忆写行业名。未命中会被服务端**直接拒绝并返回候选项**；行业落库存 `short_name`（去 Ⅱ/Ⅲ 后缀，「白酒Ⅱ」→ 落「白酒」）；个股 `industryName` 未命中时不再静默建非标行业，错误会出现在返回的 `warnings` 里，须改用标准名重挂。确属行业但标准表没有 → **先补标准表**（直接改库 `industry_sw` / `index_catalog` 表；原 `src/seed/*.json` 种子与 `seed_industry_index.js` 脚本已于 2026-09-23 移除，库即权威源），不要绕过门禁新建
 - **四控制台分工**：`consoleType=stock`（个股，标题含代码）/ `industry`（行业，申万标准名）/ `index`（指数，取指数目录名，如 沪深300/创业板/中证人工智能主题指数）/ `market`（市场，**封闭清单 9 个**：A股/港股/美股/韩股/汇率/虚拟货币/美债/国债/日债）
 - **一主题一段**：每只股票/行业/指数/市场在实体四表（`stock`/`industry`/`market_index`/`market`）各占一行，个股含 `code`+`market_code` 字段，禁止合并（如"神火/云铝"合成一段）
 - **去重由 DB 兜底**：`console_add_prediction` 按（主题+预测日期+预测人+内容）唯一键幂等，重复自动跳过并返回 `duplicate: true`
