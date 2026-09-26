@@ -1,6 +1,6 @@
 ---
 name: manage-skills
-description: Manage the user's shared agent-skill library via skills-manager-cli — install, update, remove, deploy or undeploy skills per agent, organize them into folders, search, and adopt existing skills. Use this whenever the user wants Claude Code, Codex, Cursor, or another agent to gain or lose a skill, wants to organize the central library, or asks what is installed or deployed. Prefer this over direct agent-folder installs because Skills Manager preserves source metadata, folder membership, updates, and cross-agent deployment state.
+description: Manage the user's shared agent-skill library via skills-manager-cli — install, update, remove, deploy or undeploy skills per agent, manage presets, organize tags, search, and adopt existing skills. Use this whenever the user wants Claude Code, Codex, Cursor, or another agent to gain or lose a skill, wants to organize the central library, or asks what is installed or deployed. Prefer this over direct agent-folder installs because Skills Manager preserves source metadata, preset membership, updates, and cross-agent deployment state.
 ---
 
 ## Before doing anything
@@ -69,20 +69,14 @@ aside and retry. Never delete it for them.
 
 ## Mental model
 
-There's **one central library** at `~/.skills-manager/skills/` that all agents share. Each skill has source metadata, at most one **folder**, and zero or more real deployments in agent directories. A **folder** is both an organizing group and a unit of deployment: it records which agents it claims, and `folders deploy` pushes its whole subtree at once.
+There's **one central library** at `~/.skills-manager/skills/` that all agents share. Each skill has source metadata, preset membership, tags, and zero or more real deployments in agent directories. A **preset** is a reusable group; several presets may be deployed at the same time.
 
 Keep these three states separate:
 - **Library**: install/remove controls whether Skills Manager owns the skill.
-- **Folder membership**: `folders add` / `folders move` organize the library only.
-- **Deployment**: `skills deploy/undeploy` and `folders deploy/undeploy` control what an agent can actually see.
+- **Preset membership**: `presets add-skill/remove-skill` organizes the library only.
+- **Deployment**: `skills deploy/undeploy` and `presets deploy/undeploy` control what an agent can actually see.
 
-A folder claiming an agent does **not** mean its skills are deployed — the claim is
-intent, the deployment is on disk. `folders show` reports both, and `skills sync`
-re-asserts every folder's claim.
-
-Project workspaces (a repo's own `.agents/skills`) are a separate destination that
-this CLI does not write to: the desktop app's workspace tags do that, so send the
-user there for per-project deployment rather than trying to script it.
+Internally, presets are still stored as scenarios for backward-compatible Git Backup. The CLI and UI call them presets.
 
 ## Install
 
@@ -108,9 +102,7 @@ user there for per-project deployment rather than trying to script it.
 "$SM" skills deploy <skill> --agent claude_code --agent codex
 ```
 
-`--folder REF` files the install into that folder and applies the folder's claimed
-agents in the same step, so a skill added to a curated folder lands where the rest
-of the folder already is.
+`--sync` and `--sync-preset` remain legacy shortcuts for the exclusive active-preset workflow.
 
 **Ref resolution** is deterministic, no path-existence guessing:
 1. Starts with `./`, `../`, `/`, or `~/` → local path
@@ -118,7 +110,7 @@ of the folder already is.
 3. Matches `owner/repo`, `owner/repo/skill`, or `owner/repo@skill` → skillssh
 4. Otherwise → error; pass `--local` / `--git` / `--skillssh` to disambiguate
 
-**Always verify after install** with `skills list` or `skills show <name>` so you can confirm the skill landed and report the folder and deployment state back to the user.
+**Always verify after install** with `skills list` or `skills show <name>` so you can confirm the skill landed and report the preset / sync state back to the user.
 
 ## Search
 
@@ -176,26 +168,25 @@ Remove deletes the central-library copy, all synced targets across agents, and t
 "$SM" --json skills status <skill>
 ```
 
-These commands change real managed deployments without deleting the central-library copy or changing folder membership. `skills enable/disable` are deprecated compatibility commands and do not change deployment; never use them.
+These commands change real managed deployments without deleting the central-library copy or changing preset membership. `skills enable/disable` are deprecated compatibility commands and do not change deployment; never use them.
 
 `skills deploy` and `skills undeploy` always require at least one explicit `--agent`, whether the command names one skill or several. `skills status` also reports target rows left by a custom agent that is no longer registered, so stale deployments stay visible and can be cleaned with an explicit undeploy while the row exists.
 
-## Re-assert folder deployments
+## Legacy exclusive sync
 
 ```bash
-# Fill in everything every folder claims that is missing on disk — safe, no writes
+# Sync current active preset to all enabled agents
+"$SM" skills sync
+
+# Preview the target list — safe, no writes
 "$SM" skills sync --dry-run
 
-# Same, for one folder (id or name)
-"$SM" skills sync --folder "Web Dev"
+# Switch the one legacy active preset, then sync
+"$SM" skills sync --preset "Web Dev"
 
-# Only one agent's copies
+# Only sync to a single agent (useful when one agent's directory got out of sync)
 "$SM" skills sync --tool claude_code
 ```
-
-`sync` is **additive**: it pushes claimed pairs that are absent, and never removes
-a deployment a folder no longer claims. Use `folders undeploy` for that. It refuses
-rather than silently doing nothing when no folder claims an agent yet.
 
 ## Adopt skills installed elsewhere
 
@@ -239,7 +230,7 @@ When skills already live in an agent's directory (e.g. installed via `npx skills
 
 This is how a `local` skill becomes git-backed so `update` works, and how a
 skill pointed at the wrong repo gets corrected. It updates the row **in place**,
-so the skill id survives and the folder membership and per-agent
+so the skill id survives and the tags, preset membership and per-agent
 deployments keyed to it all stay intact.
 
 - The flag is `--subpath` here, not `--git-subpath` — that one belongs to `adopt`. Pass `--subpath ""` when the skill is at the repo root, which must itself hold a `SKILL.md`.
@@ -256,69 +247,70 @@ differs. Never pass `--force` on the user's behalf — report `content_changed:
 true`, say that proceeding overwrites the library copy wholesale, and let them
 decide.
 
-## Folders
-
-A folder holds skills — one folder per skill — and declares the agents it deploys
-to. A reference is an id or a name, and everything below a folder counts: `show`,
-`deploy`, `undeploy` and `delete` all walk the subtree.
+## Tag
 
 ```bash
-"$SM" --json folders list
-"$SM" --json folders show "Web Dev"       # skills, claimed agents, and what is on disk
-"$SM" folders create "Web Dev"
-"$SM" folders create "Git" --parent "Web Dev"
-"$SM" folders rename "Web Dev" "Frontend"
-"$SM" folders move "Git" --parent "Frontend"    # omit --parent for the library root
-"$SM" folders add "Frontend" <skill>...         # membership: moves them out of the old folder
-
-# Read or replace the agents this folder deploys to
-"$SM" --json folders targets "Frontend"
-"$SM" folders targets "Frontend" --agent claude_code --agent codex
-
-# Push or pull the whole subtree
-"$SM" folders deploy "Frontend"                  # to the agents it claims
-"$SM" folders deploy "Frontend" --agent codex
-"$SM" folders undeploy "Frontend"
-
-"$SM" folders delete "Frontend" --dry-run
-"$SM" folders delete "Frontend" --yes
-"$SM" folders delete "Frontend" --undeploy --yes
+"$SM" skills tag add <skill> web frontend
+"$SM" skills tag remove <skill> frontend
+"$SM" skills tag set <skill> web frontend
+"$SM" skills tag rename frontend web
+"$SM" skills tag delete obsolete --dry-run
+"$SM" skills tag delete obsolete --yes
+"$SM" skills tag list <skill>   # tags on one skill
+"$SM" skills tag list           # all distinct tags
 ```
 
-`deploy` and `undeploy` with no `--agent` use the folder's own claimed targets, and
-**refuse** when it claims none — point it at an agent with `folders targets` first.
-`targets` replaces the whole set, so the difference is exactly what gets deployed or
-taken back, and `--dry-run` reports that difference without writing.
-
-`folders delete` removes the folder only: its skills stay in the library, re-homed
-to whatever the folder's own parent was, and its subfolders come up with it. Without
-`--undeploy` the deployed copies stay on every agent's disk, which is usually not
-what "delete this group" means to a user — ask before choosing.
-
-Useful queries:
+Useful organization queries:
 
 ```bash
-"$SM" --json skills list --folder "Frontend"     # includes subfolders
-"$SM" --json skills list --unfiled
+"$SM" --json skills list --untagged
+"$SM" --json skills list --no-preset
+"$SM" --json skills list --tag frontend
+"$SM" --json skills list --preset "Web Dev"
 "$SM" --json skills list --deployed-to codex
-"$SM" --json skills list --source git
 ```
+
+## Presets
+
+```bash
+"$SM" presets list
+"$SM" presets current
+"$SM" presets show "Web Dev"
+"$SM" presets create "Web Dev" --description "Frontend work"
+"$SM" presets update "Web Dev" --name "Frontend"
+"$SM" presets delete "Old" --dry-run
+"$SM" presets delete "Old" --yes
+
+"$SM" presets add-skill <preset> <skill>...
+"$SM" presets remove-skill <preset> <skill>...
+
+"$SM" presets deploy <preset>                  # all enabled coding agents
+"$SM" presets deploy <preset> --agent codex
+"$SM" presets undeploy <preset> --agent claude_code
+"$SM" presets undeploy <preset>                # every agent with target rows for this preset
+"$SM" --json presets status <preset>
+```
+
+`deploy/undeploy` are additive and match the app's Preset pills. Explicit `presets apply/deactivate` commands remain for the legacy exclusive active-preset model; do not use them for normal "turn this preset on/off" requests.
+
+The no-`--agent` defaults intentionally differ: deploy targets all installed, enabled coding agents; undeploy discovers the preset's actual target rows and removes them even when an agent is now disabled, uninstalled, or no longer registered. Use the no-agent undeploy for "turn this preset off everywhere."
+
+Preset create/update/delete and add-skill/remove-skill are organization-only CLI operations. They never deploy or undeploy agent files implicitly.
 
 ## Health check
 
 When sync misbehaves or a command errors in a confusing way:
 
 ```bash
-"$SM" --json repo status    # base dir, skill and folder counts
-"$SM" --json agents list    # detected agents and their target paths
-"$SM" --json folders show "Frontend"   # claimed agents vs what is on disk
+"$SM" --json repo status   # base dir, skill / preset counts, active preset
+"$SM" --json agents list  # detected agents and their target paths
 "$SM" agents enable codex
 "$SM" agents disable claude_code
 ```
 
-`repo status`, `agents list`, and `folders show` are read-only and are the first checks for "why isn't this skill showing up in Cursor" questions. `agents disable` is a real mutation: it removes every managed deployment for that agent. `agents enable` makes the agent globally available again; it does not decide what should live there, so follow up with an explicit `skills deploy` or `folders deploy`.
+`repo status` and `agents list` are read-only and are the first checks for "why isn't this skill showing up in Cursor" questions. `agents disable` is a real mutation: it removes every managed deployment for that agent. `agents enable` makes the agent globally available again and re-syncs the legacy active preset, if one exists; use explicit skill or preset deployment afterward when the requested state is additive.
 
-Use `agents disable <agent>` when the user wants the whole Agent integration turned off or wants every managed skill removed from it. If they only want one skill or one folder's worth taken away while keeping the Agent available for future deployments, use `skills undeploy` or `folders undeploy` instead.
+Use `agents disable <agent>` when the user wants the whole Agent integration turned off or wants every managed skill removed from it. If they only want one skill or preset removed while keeping the Agent available for future deployments, use `skills undeploy` or `presets undeploy` instead.
 
 ## Typical workflows
 
@@ -336,7 +328,7 @@ Use `agents disable <agent>` when the user wants the whole Agent integration tur
 "$SM" --json skills list
 ```
 
-The `folder_id`, `folder`, `deployed_to`, and `source_type` fields are usually the most informative. The legacy `enabled` field is not deployment state.
+The `preset_ids`, `presets`, `deployed_to`, `tags`, and `source_type` fields are usually the most informative. The legacy `enabled` field is not deployment state.
 
 ### "Pull in the skills already installed in my agent directories"
 
@@ -356,7 +348,7 @@ Report which skills actually refreshed (`refreshed: true` in the JSON) vs which 
 ## Pitfalls
 
 - **Install succeeded but skill doesn't appear in the agent** → install defaults to library-only. Use `skills deploy <skill> --agent <key>`.
-- **Folder membership changed but agent files did not** → membership is organization only. Follow with `folders deploy` or `skills deploy` when the user also asked to make it visible.
-- **`folders deploy` / `folders undeploy` / `skills sync` refuse with "claims no agent"** → the folder has no targets yet. Set them with `folders targets <FOLDER> --agent <KEY>`, or pass `--agent` on the deploy itself.
-- **Adopted skills can't be `update`d from git** → `npx skills add` and manual `git clone` don't leave source metadata, so adopt has to treat them as `local`. Re-point them with `skills set-source`. Do **not** reach for `adopt --git-url` here: adopt only ever creates new library entries, and it fails *late* — `--dry-run` returns `ok: true` with the skill sitting in `skipped`, and only the real run errors with `--git-url requires exactly one adoptable skill, found 0`. Do **not** remove-then-reinstall either — that drops the skill id, and with it the folder membership and every per-agent deployment keyed to it.
-- Use `--dry-run` before bulk remove, folder delete, deploy, or undeploy operations. Use `check` before `update`.
+- **Preset membership changed but agent files did not** → membership is organization only. Follow with `presets deploy` or `skills deploy` when the user also asked to make it visible.
+- **No active preset** only affects legacy `skills sync` / `presets apply`; additive deploy commands do not require one.
+- **Adopted skills can't be `update`d from git** → `npx skills add` and manual `git clone` don't leave source metadata, so adopt has to treat them as `local`. Re-point them with `skills set-source`. Do **not** reach for `adopt --git-url` here: adopt only ever creates new library entries, and it fails *late* — `--dry-run` returns `ok: true` with the skill sitting in `skipped`, and only the real run errors with `--git-url requires exactly one adoptable skill, found 0`. Do **not** remove-then-reinstall either — that drops the skill id, and with it the tags, preset membership and every per-agent deployment.
+- Use `--dry-run` before bulk remove, tag delete, preset delete, deploy, or undeploy operations. Use `check` before `update`.
