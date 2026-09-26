@@ -7,6 +7,7 @@ import time
 
 import config
 from crawler import XueqiuCrawler, CrawlerError
+import feed as feed_mod
 
 # 哨兵：采集成功但时间窗内无新帖（与「采集失败」区分——2026-09-09 固化）
 # 退出码约定：0=有产出 / 2=窗口内无新帖（采集完成）/ 1=失败（WAF/登录/异常）
@@ -207,8 +208,8 @@ def run_search(keyword):
 
 
 def main():
-    # 兼容旧用法：如果第一个参数不是 stock/user/search，自动当作 stock 子命令
-    if len(sys.argv) > 1 and sys.argv[1] not in ("stock", "user", "search", "-h", "--help"):
+    # 兼容旧用法：如果第一个参数不是已知子命令，自动当作 stock 子命令
+    if len(sys.argv) > 1 and sys.argv[1] not in ("stock", "user", "search", "feed", "-h", "--help"):
         sys.argv.insert(1, "stock")
 
     parser = argparse.ArgumentParser(description="雪球爬虫工具")
@@ -236,6 +237,19 @@ def main():
     sp_search = subparsers.add_parser("search", help="搜索雪球用户")
     sp_search.add_argument("keyword", help="搜索关键词（用户名）")
 
+    # feed 子命令（流式采集——日常增量缺省路径，2026-09-26 实测定型）
+    sp_feed = subparsers.add_parser("feed", help="流式采集关注/热门时间线（多博主帖子集）")
+    sp_feed.add_argument("--tab", choices=["follow", "hot"], default="follow",
+                         help="follow=关注流（缺省，增量日常采集）；hot=热门流（探索用）")
+    sp_feed.add_argument("--limit", type=int, default=50, help="最多采集条数（默认 50）")
+    sp_feed.add_argument("--since", default=None,
+                         help="窗口起点 ISO；缺省=上次流断点书签（follow），无书签则按 limit 采")
+    sp_feed.add_argument("--no-since", action="store_true", help="忽略断点书签，按 limit 采")
+    sp_feed.add_argument("--filter-tracked", choices=["auto", "on", "off"], default="auto",
+                         help="看板博主过滤（auto=关注流开/热门流关；被过滤帖不入产物，未建档帖入库侧也会跳过）")
+    sp_feed.add_argument("--output", default=None, help="输出目录（默认 ~/.cache/xueqiu-spyder/out）")
+    sp_feed.add_argument("--outfile", default=None, help="输出文件名（默认 雪球采集-{流名}-{日期}.md）")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -253,6 +267,12 @@ def main():
         elif args.command == "search":
             run_search(args.keyword)
             return
+        elif args.command == "feed":
+            result = feed_mod.run_feed(
+                args.tab, args.limit,
+                None if args.no_since else args.since,
+                args.output, args.outfile, args.filter_tracked,
+            )
         else:
             parser.print_help()
             sys.exit(1)
