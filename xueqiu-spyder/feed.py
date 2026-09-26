@@ -33,7 +33,7 @@ import ego_browser
 N_TARGET_DEFAULT = 50
 PACE = (2.6, 3.4)          # 例外详情页节流
 BREAK_N = 3
-MAX_SCROLL = 60            # 滚动步数硬上限（≈500 条），超出按「书签未翻到」处理
+MAX_SCROLL = 120           # 滚动步数硬上限（含点「加载更多」，≈1000 条），超出按「书签未翻到」处理
 STATE_PATH = os.path.expanduser("~/.cache/xueqiu-spyder/feed-state.json")
 DASHBOARD = "http://127.0.0.1:8698"
 
@@ -70,7 +70,7 @@ OLDEST_LABEL_JS = r"""
 }
 """
 LIST_EXPAND_JS = r"""
-() => [...document.querySelectorAll('.timeline__item')].slice(0, 62)
+() => [...document.querySelectorAll('.timeline__item')]
   .filter(it => { const c = it.querySelector('.timeline__item__content'); return c && (c.innerText || '').includes('展开'); })
   .map(it => { const a = it.querySelector('a[href].date-and-source'); return a ? a.getAttribute('href') : null; })
   .filter(Boolean)
