@@ -4,7 +4,7 @@ description: >
   投资框架提炼执行器。直接执行：读取原文 → 分析 → 创建框架条目 → 汇报结果。
   一篇帖子可拆为多条框架条目（一对多）。
   触发词：「提炼」「归档框架条目」。
-  由 investment-framework 编排调用，不独立触发；区别于 investment-review（审查）与 post-fetch（采集）。
+  由 investment-framework 编排调用，不独立触发；区别于 investment-review（审查）与 xueqiu-spyder（采集）。
 license: MIT
 agent_created: true
 metadata:
@@ -74,7 +74,7 @@ compatibility: 通用
 |:--|:--|:--|
 | ① | **`post_history` 原文库（采集落点 + 提炼前原文；帖子集路径的默认也是唯一来源）** | MCP `post_history` → `action=get`（传 `url`）或 `action=check`（传 `blogger`+`from`/`to` 列清单） |
 | ② | vault 原始资源文件（仅常规路径） | 常规读取 |
-| ③ | 上两者都没有 → 才回采 | 按 `source_url` 单帖回采，**遵守 post-fetch `execution-guide.md` 的单帖限流**（≈0.7 req/s、405 退避 300s），回采后顺手 `post_history` `action=upsert` 落库 |
+| ③ | 上两者都没有 → 才回采 | 按 `source_url` 单帖回采，**遵守 xueqiu-spyder `execution-guide.md` 的单帖限流**（≈0.7 req/s、405 退避 300s），回采后顺手 `post_history` `action=upsert` 落库 |
 
 > `post_history` 用途有二：① 提炼的原文来源；② 避免重采。不参与归类判定、不存提炼产物（言论行带 `post_history_id` 指回留档）。**留档保留 180 天（滚动窗口）**：查不到是正常情况，不是漏采或缺陷；按上表第 ③ 步回采后顺手 `upsert` 落库即重新进入窗口；汇报不得把「留档无记录」写成缺口。
 
@@ -157,7 +157,7 @@ compatibility: 通用
 | 提炼时 | investment-framework/references/footnote-taxonomy.md（由编排者传入） | 脚注类型定义，用于 [^data-N]/[^date-N] 格式 | 读取 |
 | 提炼时 | investment-framework/references/template-guide.md（由编排者传入） | 各模板 section 写作指引（模板为纯结构骨架，写作要求统一在此） | 读取 |
 | 提炼后落库 | references/refine-schema.md | 分流决策矩阵（§六）、落库八问（§七）、写入硬约束（§八） | 读取 |
-| 帖子集提炼 | references/refine-checklist.md | 精华去糟粕价值流水线、灰区裁决（framework-rules #29 执行版，post-fetch 交接后加载） | 读取 |
+| 帖子集提炼 | references/refine-checklist.md | 精华去糟粕价值流水线、灰区裁决（framework-rules #29 执行版，xueqiu-spyder 交接后加载） | 读取 |
 | 提炼时 | investment-framework/assets/{模板名}.md（由编排者传入） | 对应分类的 frontmatter + 正文模板（纯结构骨架） | 读取 |
 
 ---

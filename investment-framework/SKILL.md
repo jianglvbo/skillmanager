@@ -4,7 +4,7 @@ description: >
   投资知识框架全局编排者。管理三大归属层（我的/博主/其他）+ 六大分类（分析框架/交易体系/投资心态/投资心得/个股/行业）+ 宏观。
   定义流水线（粗制品→粗加工→原始资源→提炼→审查）、模板表、路径表、全局规则、审查机制。
   触发词：「投资框架」「框架全貌」「pipeline」「粗加工」「提炼」「归档」「审查」「review」。
-  区别于 post-fetch（只抓取帖子）：本 skill 是路径和模板的唯一持有者，负责串联全部加工模块。
+  区别于 xueqiu-spyder（帖子采集，编排+工具一体）：本 skill 是路径和模板的唯一持有者，负责串联全部加工模块。
 license: MIT
 agent_created: true
 metadata:
@@ -91,7 +91,7 @@ compatibility: 通用
 
 | 操作 | 出口校验门 | 工具 |
 |:---|:---|:---|
-| 采集/同步后（post-fetch 前置步骤） | 控制台-画像 info_cutoff 一致 + 博主层残留检测 | execution-guide「前置步骤」 |
+| 采集/同步后（xueqiu-spyder 前置步骤） | 控制台-画像 info_cutoff 一致 + 博主层残留检测 | execution-guide「前置步骤」 |
 | 提炼后（refine 第三步收尾） | 段落布局/模板段落完整 0 问题 | scripts/verify-format.py |
 | **删除/回收/移动前**（#25/#26） | inbound 引用反查，清理完才允许删 | scripts/check_inbound.py |
 | 任意批量操作后 / 提交前 | 增量扫描 git 变更文件（秒级） | investment-review/scripts/vault_review.py --incremental |
@@ -111,11 +111,11 @@ compatibility: 通用
 
 | 信息 | 获取方式 | 用途 |
 |:---|:---|:---|
-| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、看板 blogger「信息截止」更新（post-fetch 第七步） |
-| 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（post-fetch 第三步） |
+| 当前日期 | `date "+%Y-%m-%d"` | 框架条目 `updateDate`、审查冷静天数计算（review R2）、看板 blogger「信息截止」更新（xueqiu-spyder 第八步） |
+| 当前时间 | `date "+%Y-%m-%d %H:%M"` | 雪球采集时间窗口基准（xueqiu-spyder 第五步） |
 | 待提炼文档状态 | 查询原始资源 frontmatter `status` | 判定走粗加工 or 直接提炼（提炼输入锚点判定） |
 
-> 各执行 skill 在需要时自行获取（如 refine 写 `updateDate` 前、review 算冷静天数前、post-fetch 时间窗口前），编排者不代为传递时间戳。
+> 各执行 skill 在需要时自行获取（如 refine 写 `updateDate` 前、review 算冷静天数前、xueqiu-spyder 时间窗口前），编排者不代为传递时间戳。
 
 ---
 

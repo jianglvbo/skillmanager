@@ -6,7 +6,7 @@
 「每 10 位停 60 秒」的节流。这段编排以前是人工一条条敲，容易漏位、漏回写。
 
 **职责边界**：本脚本只做采集 + 回写 cutoff + 产出「采集产物清单」，
-**不直接入库**（入库走 post-fetch 第三步之二：import-post-history.js → 校验 → 清理）。
+**不直接入库**（入库走本 skill SKILL.md 第七步：import-post-history.js → 校验 → 清理）。
 
 用法:
   python3 run_fetch_batch.py [--limit N] [--only 博主1,博主2] [--skip 博主1] [--pages-override N]
@@ -23,9 +23,10 @@ import time
 import urllib.request
 
 API = "http://127.0.0.1:8698"
-# 工具层位置会迁（~/.agents → ~/.zcode/skills → 项目内 .agents），按序探活；
-# 全部落空时给出可执行的报错，别静默用失效路径（2026-09-24：首项失效已踩过）
+# 工具层即本 skill 目录（2026-09-26 编排并入 xueqiu-spyder，本脚本就在 skill 内）；
+# 保留按序探活兜底，防止 symlink 断链时静默用失效路径（2026-09-24：首项失效已踩过）
 _SPYDER_CANDS = [
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "~/.zcode/skills/xueqiu-spyder",
     "~/Project/investment-dashboard/.agents/skills/xueqiu-spyder",
 ]

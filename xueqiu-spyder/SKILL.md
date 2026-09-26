@@ -1,200 +1,164 @@
 ---
 name: xueqiu-spyder
 description: |
-  雪球抓取工具层。**通过 ego lite 通道**（`ego-browser nodejs` + 本地 socket 桥，
-  见 `ego_bridge.js` / `ego_browser.py`）复用本机已登录雪球会话，调用
-  雪球 timeline API + 详情页补全，抓取指定博主的帖子全文，输出对齐投资框架规范的
-  帖子集 markdown（frontmatter + 三件套 + 发布行，含形态/全文标记/原文链接）。
-  触发词：「xueqiu-spyder」「spyder 抓取」「雪球抓取」「抓取雪球」「采集雪球」
-  排除条件：博主控制台同步 / info_cutoff 回写 / 帖子集提炼等框架动作由 post-fetch
-  编排调用本工具，不独立执行；含「提炼」「分析」关键词时交 post-fetch / investment-refine。
+  雪球博主帖子采集（编排+工具一体；2026-09-26 由原抓取工具层与 post-fetch 编排层合并而成）。
+  **feed 流式采集为日常增量缺省**：关注流一次会话覆盖全部已关注博主（多博主帖子集、流内展开与计数、
+  引用卡结构化为回复内容、流断点书签取代逐博主 cutoff），风控暴露最小；user 逐博主翻页保留给
+  首采/深窗口/补漏。产物落 post_history 后交接 investment-refine 提炼。
+  触发词：「xueqiu-spyder」「spyder 抓取」「雪球抓取」「抓取雪球」「采集雪球」「雪球帖子」
+  「xq fetch」「雪球动态」「采集帖子」。
+  排除条件：含「提炼」「分析」「画像」→ investment-refine；含「审查」→ investment-review。
 license: MIT
 agent_created: true
 metadata:
-  version: "3.0.0"
-  short-description: 雪球抓取工具层（ego lite 通道复用登录态，输出帖子集标准格式）
-  layer: tool
-  orchestrated_by: post-fetch
+  version: "4.0.0"
+  short-description: 雪球帖子采集（feed 流式缺省 + 逐博主兜底，编排工具一体）
 compatibility: macOS / Linux
 ---
 
-# 雪球抓取工具层 v3.0
+# 雪球帖子采集 v4.0（编排 + 工具一体）
 
 ## Default Stance
 
 ### 核心原则
-- **采集层单一职责**：只做抓取与帖子集输出，不做框架编排（控制台同步 / info_cutoff 回写 / 帖子集提炼均不在此层）。
-- **ego lite 通道复用登录态（2026-09-15 迁移；2026-09-16 收口为唯一通道）**：经 `ego-browser nodejs` 把浏览器动作转发给**本机已打开并已登录雪球的 ego lite**；ego lite 没有对外 CDP 端口，故走本地 socket 桥（`ego_bridge.js`）。**Chrome 相关代码已于 2026-09-16 整段删除**（`_launch_chrome`/`_connect_chrome`/playwright 依赖/9222 端口常量全没了）——起因是 `auto` 模式在 ego 桥超时时**静默拉起过 Google Chrome**（用户当场抓到窗口与 `--remote-debugging-port=9222 --user-data-dir=…/xueqiu-spyder/chrome-profile` 进程）。
-  - **默认值 `XUEQIU_TRANSPORT=ego`**；设成别的值会直接报错并告诉你"本工具只走 ego lite"，不再有任何自动回落。
-- **可见性与打扰的边界（2026-09-16 两轮口径合并）**：用户原话「**不要让 ego lite 一直跳到我前面，但是如果遇到滑块请激活 ego lite，让我注意到**」——采集页开在 ego 自己的标签页里、**默认不激活**、页签随用随关、空间用完即回收、风控自动截图；**唯一会激活窗口的就是命中滑块**（强制置前并交用户接管）。逐条行为与开关见「第二步」与环境变量表。
-- **风控自控**：命中滑块/安全验证（`滑动|安全验证|captcha|访问验证`）时**不硬撞**——把 ego 交给用户接管、等其过完验证再自动重试本页（超时才按 WAF 中止）；**timeline 端点级封禁自动降级**（v4 → 旧版端点，见「输入参数」段）。**静默空页按风控处理**（博主主页不可能全空，见「第二步」）。
-- **时间窗精确**：`--from/--to` 毫秒级过滤。
+- **采集层单一职责**：只做抓取、帖子集输出与落库，不做框架动作（控制台同步之外的分析/提炼/画像均不在此层）。
+- **模式缺省**：feed 流式（`main.py feed`）＝日常增量缺省（关注流一次会话覆盖全部博主）；user 逐博主（`main.py user`）＝首采/深窗口/补漏兜底。决策表见 `references/execution-guide.md`「模式决策」。
+- **ego lite 通道唯一**（2026-09-16 收口）：复用本机已登录雪球的 ego lite（socket 桥 `ego_browser.py`+`ego_bridge.js`）；Chrome 通道代码已整段删除，`XUEQIU_TRANSPORT` 只认 `ego`。
+- **防漏采铁律**：只有采集真正完成才推进断点/cutoff——退出码 1（失败）/ 3（窗口起点或书签未翻到）一律禁写；宁可重复采，不可漏采。
+- **风控自控**：滑块/安全验证不硬撞——激活 ego 交用户接管、过完自动重试；**静默空页＝风控**（博主主页不可能零帖子，空列表一律按拦截处理，绝不判「无新帖」）；连续失败熔断。
+- **纯文本产出**：写入前逐条净化（删 `![[..]]`/`![](url)`/`<img>`/裸图 URL/表情占位；Unicode emoji 保留）；`作者` 值不得含 `发布于|来自|关注`，判不出置 `Unknown`；采集阶段不猜 content_type/view_date（investment-refine 判定）。
 
 ### 禁止行为
-- 绝不内置或硬编码博主列表
+- 绝不内置或硬编码博主列表（以关注列表↔控制台同步为准）
 - 绝不绕过登录态裸调 API（WAF 拦截）；绝不连续翻页硬撞滑块
-- 绝不在采集阶段分析/提炼帖子内容（content_type/view_date 由 investment-refine 判定）
-- 绝不未经详情页验证即标「全文」——API text 可能截断，以详情页为准
-- 绝不删除原文 emoji 与引用结构（`//@` 引用保留原文嵌套；表情图转 `[表情名]` 占位文本保留）
-- 绝不把置顶帖归入采集窗口（`--from/--to` 过滤时一并排除）
+- 绝不在采集阶段分析或总结帖子内容
+- 绝不把置顶帖归入采集窗口（user 模式）
+- 绝不跳过格式验收（对照 output-format.md）与入库校验
+- 绝不让 ego lite 抢焦点（唯一例外：滑块交接；`XUEQIU_EGO_WAKE=0` 缺省不激活）
+- 绝不未经完整性验证标「全文」——user 模式以详情页为准；feed 模式以流内信号为准（无展开控件或展开成功＝全文，2026-09-26 实测 DOM 自带截断控件）
 
 ---
 
 ## Workflow
 
-### 输入参数（user 子命令，post-fetch 编排主路径）
-
-| 参数 | 类型 | 必填 | 说明 |
-|:---|:---|:---|:---|
-| user_id | str/int | 是 | 雪球用户 ID 或用户名（用户名自动搜索解析） |
-| --from | str | 否 | 起始时间 `YYYY-MM-DD` 或 `YYYY-MM-DDTHH:MM:SS`（对齐 info_cutoff 增量窗口） |
-| --to | str | 否 | 截止时间（默认当前） |
-| --days | int | 否 | 相对窗口（与 --from 互斥，--from 优先；兼容旧用法） |
-| --max-pages | int | 否 | 最大翻页数（默认 10；**编排层须按窗口长度下调**：≤24h→3、≤7天→5，见 post-fetch execution-guide） |
-| --outfile | str | 否 | 输出文件名（默认 `雪球采集-{昵称}-{日期}.md`） |
-| --output | path | 否 | 输出目录（默认 ./output） |
-| --column | flag | 否 | 仅抓取专栏文章 |
-
-**单帖接口 `statuses/show.json` 限流（2026-09-11 实测，硬约束）**：按 URL 取单帖正文/形态时走此接口。**速率与退避表见 post-fetch `references/execution-guide.md`「单帖接口限流」节**（危险区 ≈1.1 req/s、安全速率 ≈0.7 req/s、405 退避 300s、连续 3 次限流中止本轮）；与 timeline 端点同属阿里云 WAF 保护，**提速率是最容易踩的坑**。
-
-**产物交接（2026-09-12 变更）**：本工具产出的「帖子集」markdown 是**临时载体**——post-fetch **第三步之二**用 `~/Project/investment-dashboard/src/scripts/import-post-history.js` 把它落进 `post_history`（摘要帖与无链接帖不入库），第三步之三做入库校验后即清理（`--rm`）。**输出目录用 vault 外的临时目录**（默认 `~/.cache/xueqiu-spyder/out`），采集产物不再写进 vault 的 `工作区/粗制品/`；`post_history` 既是采集落点也是提炼前的唯一原文来源。
-> 仓库脚本 2026-09-23 起在 **`src/scripts/`**（原 `scripts/` 已移走，写旧路径会 `MODULE_NOT_FOUND`）。
-
-**timeline 端点自动降级（2026-09-09 固化）**：`v4/statuses/user_timeline.json` 被阿里云 WAF 对该 IP 临时封禁（405，页面自身带签名请求亦 405）时，crawler **自动切到旧版 `/statuses/user_timeline.json`** 重试本页（数据一致，仅每页上限由 50 降为 20），只降级一次，无需人工干预。端点与每页条数可用环境变量覆盖（见 `references/env-vars.md`）。
-
-### 第一步：确认运行环境
+### 第一步：环境就绪
 
 ```bash
-# venv 解释器（依赖：requests；ego 桥用系统 ego-browser，无需 playwright）
-PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}   # 本机 venv 路径存 ~/.config/xueqiu-spyder/python（0600，不进仓库）
-$PY --version && $PY -c "import requests"
-ego-browser --help >/dev/null && echo "ego CLI OK"
+PY=${XUEQIU_PY:-$(cat ~/.config/xueqiu-spyder/python 2>/dev/null || echo python3)}
+SPYDER="$(ls -d ~/.zcode/skills/xueqiu-spyder ~/Project/investment-dashboard/.agents/skills/xueqiu-spyder 2>/dev/null | head -1)"
+$PY -c "import requests" && ego-browser --help >/dev/null && echo OK   # 路径会迁，先 ls 探活
 ```
 
-### 第二步：ego lite 通道就绪（并保持现场可见）
+- 前决条件：**ego lite 正在运行且已登录雪球**（工具不负责拉起）；未登录 → 停止，提示用户在 ego lite 里登录
+- **采集期间请把 ego lite 留在可见位置**——风控弹窗只在页面上出现，截图（`~/.cache/xueqiu-spyder/shots/<批次>/`）是事后核对用的
+- 「用户接管」会中断整轮（正常保护，别抢回）；下一轮自动换新空间继续
 
-先决条件：**ego lite 正在运行且已登录雪球**（用户自己的浏览器，工具不负责拉起）；`ego-browser --help` 有输出（CLI 在 `~/.local/bin/ego-browser`）。自检：
+### 第二步：前置同步（关注列表 ↔ 看板控制台，每次会话必做）
 
 ```bash
-$PY - <<'PY'
-import sys; sys.path.insert(0, "<xueqiu-spyder 目录>")   # 先 ls 探活：位置多次迁移
-import ego_browser
-b = ego_browser.EgoBridge(); b.start()
-print("ego ready:", b.main_page.url)         # 期望 https://xueqiu.com/…
-print("login:", b.call("evaluate", page="p1", fn="() => document.title"))
-b.stop()
-PY
+python3 "$SPYDER/scripts/xq_sync_console.py"            # dry-run（默认）
+python3 "$SPYDER/scripts/xq_sync_console.py" --apply    # 确认后落地
 ```
 
-未登录（标题不含雪球 / fetch 命中 `滑动|安全验证|captcha`）→ 停止，提示用户**在 ego lite 里登录雪球**后重跑。通道细节与踩坑（脚本注入、socket、ego 不继承环境变量）见 `ego_browser.py` 模块头注释。
+新增→报告后登记；取关→报告由用户看板手工删；残留检测 + info_cutoff 一致性核对 → 细节见 `references/execution-guide.md`「前置步骤」。
 
-**采集全程在 ego lite 里可见**（不是无头、不是别的浏览器），工具自动执行：
+### 第三步：模式决策
 
-| 行为 | 说明 | 关闭方式 |
-|:---|:---|:---|
-| 窗口激活 | **默认不激活**（用户口径：「不要让 ego lite 一直跳到我前面」） | `XUEQIU_EGO_WAKE=1` 才置前 |
-| 页签随用随关 | 工作页一进一出、用完**立刻真关**（ego 空间 8 页上限靠这个不撞顶）；主页面随空间回收关闭。**跑完不留标签** | 无需配置 |
-| **命中滑块 → 激活 ego 并交用户接管** | timeline/详情页命中滑块或安全验证时**强制激活**（没开会 `open -a` 拉起）+ 自动 `handOff()`，用户过完验证、控制权交还后**自动重试本页** | `XUEQIU_EGO_SLIDER_WAIT_MS` 调时长 |
-| 命中风控/异常自动截图 | timeline 命中滑块/验证、详情页 405、详情页异常、翻页失败 | `XUEQIU_EGO_SHOT_DIR=`（置空） |
-| 详情页每 5 条抽一帧 | 记录补全进度与偶发风控弹窗 | `XUEQIU_EGO_SHOT_EVERY=0` |
+| 场景 | 模式 |
+|:---|:---|
+| 日常增量（全部已关注博主，隔 ≤3 天） | **feed** |
+| 首采 / 窗口 >3 天 / 跨周补采 / 书签未翻到 | user |
+| feed 完成后的缺帖抽查 | user（轮转抽 1/5~1/7 未露面博主翻一页核对） |
 
-截图落在 `~/.cache/xueqiu-spyder/shots/<批次时间戳>/`，文件名含时间与原因（如 `-waf-detail-…`、`-progress-15`）。
-**采集期间请把 ego lite 留在可见位置**——风控弹窗（滑块/安全验证）只在页面上出现，截图是事后核对用的，不是替代现场盯屏。
-
-> **Chrome 通道已删除（2026-09-16）**：`XUEQIU_TRANSPORT` 只认 `ego`，旧 `chrome`/`auto` 取值一律直接报错。
-> 历史上 `auto` 曾在 ego 桥超时时静默拉起 Chrome（用户当场抓到进程），所以这不是"改默认值"，是把相关代码整段删掉了。
-
-**静默空页 = 风控（2026-09-24 用户判据，最危险的失败形态）**：被风控时页面可能**正常打开**（头像/粉丝数/认证都在），**只有帖子列表是空的**。用户原话：「**没有博主主页进去是全空的**」——**博主主页不可能零帖子**。
-- **看到空列表一律按风控处理，绝不判「无新帖」**（后者会推进 cutoff，把漏采固化下来）。
-- 判定别信 DOM（`.timeline__list` / `.timeline__item__info` 会随渲染变体失配，2026-09-24 曾据此误报 3 位博主「0 条」）；改用**同源 API 复核**：`/statuses/user_timeline.json?user_id=<id>&page=1` 返回 statuses 即页面正常。
-- 处置：不推进 cutoff、列入待重试，冷却后重试。
-
-**「用户接管」会中断整轮（正常保护，别抢回）**：命中滑块时 ego 被激活并交用户，用户一动手接管，任务空间即不属于 agent，后续每条都报「任务空间已不属于 agent / hard stop」。等用户过完验证后下一轮采集会自动换新空间继续（2026-09-21 / 09-24 各遇一次）。
-
-### 第三步：执行采集
+### 第四步：feed 模式采集（缺省）
 
 ```bash
-$PY main.py user {xq_id} --from "{cutoff_iso}" --outfile "雪球采集-{昵称}-{日期}.md" --output "{输出目录}"
+$PY "$SPYDER/main.py" feed --tab follow --limit 50 \
+  --outfile "雪球采集-关注流-{YYYY年M月D日}.md" --output ~/.cache/xueqiu-spyder/out
 ```
 
-- 流程：翻页拉列表 → 置顶排除 + 时间窗过滤 → 截断帖详情页补全（含精确时间覆盖）→ 帖子集输出
-- 在 ego lite 页面里发出的带签名请求可成功翻页；裸 API 翻页被 WAF 拦截时工具抛 `CrawlerError`，按报错提示处理
+- 窗口＝**流断点书签**（`~/.cache/xueqiu-spyder/feed-state.json`）→ 当前；无书签按 limit 采
+- 退出码：0=产出（写书签）/ 2=窗口内无帖（写书签）/ **3=书签未翻到（禁写，走 user 兜底）** / 1=失败（禁写）
+- 关注流缺省按看板博主过滤（服务不可用时不过滤，未建档帖入库侧跳过）；流内相对时间锚定采集瞬间换算绝对时间（`（流内推算）`/`（修改于·推算）`标记）；例外帖（自身专栏/展开失败）走详情页（节流 2.6~3.4s、熔断 3 次）
+- cutoff 回写：仅对**本轮实际采到帖**的博主回写（值=书签）；未露面博主不动
+- 机制要点与全部细节 → `references/execution-guide.md`「feed 模式」
 
-### 第四步：校验输出
-
-- 打开输出文件，核对：frontmatter 七字段齐全、每帖带 `[原文]` 链接、发布行含 `形态/全文|摘要` 标记、无 WAF 报错残留
-- 不合格 → 修复或重跑；合格 → 汇报文件路径 + 采集条数 + 时间范围
-
-### 环境变量与退出码
-
-**全量表与退出码语义见 `references/env-vars.md`**（含页数门禁、退出码 3 教训）。编排层最常打交道的两条：
-
-- `XUEQIU_TRANSPORT` 只认 `ego`；`XUEQIU_EGO_WAKE` 默认 `0`（不抢焦点）
-- 退出码：`0` 有产出 / `2` 窗口内无新帖 / `3` 窗口起点没翻到（**页数用满**且最旧帖仍新于起点，**禁止推进 cutoff**）/ `1` 失败（**禁止推进 cutoff**）
-
-### stock / search 子命令（独立能力，不经 post-fetch）
+### 第五步：user 模式采集（兜底）
 
 ```bash
-$PY main.py stock SZ002738 --min-reply 20 --max-pages 10   # 个股大V观点报告
-$PY main.py search 治雨                                       # 搜用户 ID
+NOW=$(date "+%Y-%m-%dT%H:%M:%S")
+$PY "$SPYDER/main.py" user {xq_id} --from "{info_cutoff}" --to "$NOW" \
+  --max-pages {N} --outfile "雪球采集-{昵称}-{YYYY年M月D日}.md" --output ~/.cache/xueqiu-spyder/out
+```
+
+- **`--max-pages` 按窗口长度取**（硬约束）：≤24h→3、≤7 天→5、>7 天→10；批量每 10 位停 60 秒
+- **时区陷阱**：看板 API 把本地时间序列化成 UTC ISO，做 `--from` 必须 +8h 还原（批处理脚本已内置）
+- 流程：翻页 → 置顶排除+时间窗过滤 → 截断帖详情页补全（含精确时间覆盖）→ 帖子集输出；v4 端点 405 自动降级旧端点
+- 批量跑全部博主用 `scripts/run_fetch_batch.py`；细节 → `references/execution-guide.md`「user 模式」
+
+### 第六步：格式验收（强制，对照 `references/output-format.md`）
+
+frontmatter 齐全（type=帖子集；status=待提炼 / 待提炼-含摘要）→ 每帖三件套（标题+正文+发布行，发布行含 `形态`、`作者`、`全文/摘要`、`[原文]`）→ 纯文本净化 → 归属正确（`作者` ≠ 全员同名/知名大V名＝抓到推荐位）。
+
+### 第七步：落库 + 校验 + 清理（强制）
+
+```bash
+node ~/Project/investment-dashboard/src/scripts/import-post-history.js "<采集产物.md>"        # 幂等落库
+node "$SPYDER/scripts/check-post-history-covered.js" "<采集产物.md>"                          # 入库校验
+node ~/Project/investment-dashboard/src/scripts/import-post-history.js --rm "<采集产物.md>"   # 过校验后才清理
+```
+
+- 摘要帖与无链接帖按设计不入库；产物是临时文件，**不进 vault**（`~/.cache/xueqiu-spyder/out`）
+- 保留期清理：`node ~/Project/investment-dashboard/src/scripts/purge-post-history.js --dry`（180 天滚动窗口）
+
+### 第八步：断点与 cutoff 回写
+
+- **feed**：书签在采集器内自动维护（成功才写）；cutoff 按「本轮见到帖」的博主回写（`scripts/xq_update_cutoff.py`）
+- **user**：退出码 0/2 → 回写该博主 info_cutoff 为实际完成时间；1/3 → **cutoff 不动**、列入待重试清单报告用户
+
+### 第九步：报告
+
+条数、时间范围、全文/摘要数、博主数；出过风控必须附截图路径；末尾附进度条 `node ~/Project/investment-dashboard/src/scripts/fetch-progress.js`（完成口径：有留档/已注销/确认无新帖）。
+
+### stock / search 子命令（独立能力，不经提炼流水线）
+
+```bash
+$PY "$SPYDER/main.py" stock SZ002738 --min-reply 20 --max-pages 10   # 个股大V观点报告
+$PY "$SPYDER/main.py" search 治雨                                     # 搜用户 ID
 ```
 
 ---
 
 ## Output Format
 
-**帖子集 markdown 的字段表、三件套结构与铁律，唯一权威在 post-fetch `references/output-format.md`**——本层只负责产出，不另立规范（frontmatter 七字段 + 每帖 `## N. 标题`/正文/发布行，发布行含 `形态` 与 `全文|摘要` 标记及 `[原文]` 链接）。
-
-形态客观判定（本层执行）：含 "回复 @"/引用块 → 回复；原创 <300 字 → 短文；≥300 字或含分段 → 长文；专栏文章 → 专栏。
-
----
+帖子集 markdown，规范唯一权威在 `references/output-format.md`（frontmatter 七字段 + 三件套 + 发布行 `形态/作者/全文|摘要/[原文]` + 回复内容块 + 多博主规则）。feed 多博主帖集的归属以发布行 `作者：` 为权威、URL uid 仲裁兜底。
 
 ## Relative Files
 
-| 场景 | 文件 | 内容 | 方式 |
-|:---|:---|:---|:---|
-| 运行环境/依赖 | `requirements.txt` | requests（playwright 已于 2026-09-16 移除） | 安装 |
-| **ego lite 通道（默认）** | `ego_browser.py` | 起 unix socket、`-e` 注入配置启动桥、JSON Lines 协议；对外只有两个东西：`EgoBridge`（start/stop/call/new_page/main_page/handoff）与 `Page`（goto/evaluate/wait_for_selector/text/cookies/screenshot/url/close） | 执行 |
-| **ego 通道的浏览器侧** | `ego_bridge.js` | 在 `ego-browser nodejs` 里执行：任务空间/标签页/`page.evaluate` 转发 | 执行（由 ego_browser.py 拉起） |
-| 抓取内核 | `crawler.py` | 通道选择（ego 优先）、翻页、截断补全、WAF 检测、时间覆盖 | 执行 |
-| 形态/emoji/观点分析 | `analyzer.py` | 形态判定、`//@` 保留、表情转占位、Opinion 结构 | 执行 |
-| 帖子集生成 | `report.py` | frontmatter + 三件套 + 发布行输出 | 执行 |
-| CLI 入口/时间窗 | `main.py` | 子命令分发、--from/--to 解析 | 执行 |
-| API/参数常量 | `config.py` | 端点、延迟、翻页默认值 | 读取 |
-| **环境变量 / 退出码语义** | `references/env-vars.md` | 全量环境变量表、退出码约定与页数门禁 | 读取 |
-| 框架输出规范 | post-fetch `references/output-format.md` | frontmatter/三件套/字段表/铁律（**编排层持有**，跨 skill 引用） | 读取 |
-| 采集编排细节 | post-fetch `references/execution-guide.md` | 时间窗/页数取值/单帖限流表/风控处置（**编排层持有**，跨 skill 引用） | 读取 |
-
----
+| 场景 | 文件 | 方式 |
+|:---|:---|:---|
+| 执行细节/前置同步/风控/模式决策/feed 与 user 模式细则 | `references/execution-guide.md` | 读取 |
+| 帖子集格式/铁律/回复内容块 | `references/output-format.md` | 读取 |
+| 环境变量/退出码语义 | `references/env-vars.md` | 读取 |
+| 流式采集核心 | `feed.py`（`main.py feed` 入口） | 执行 |
+| 逐博主/个股/搜索 | `main.py` `crawler.py` `analyzer.py` `report.py` `config.py` | 执行 |
+| ego 通道 | `ego_browser.py` `ego_bridge.js` | 执行 |
+| 编排脚本（同步/cutoff/批量/摘要补全/落库校验） | `scripts/xq_sync_console.py` `scripts/xq_update_cutoff.py` `scripts/run_fetch_batch.py` `scripts/xq_refetch_summary.py` `scripts/check-post-history-covered.js` `scripts/xq_ego.py` `scripts/clean_legacy_batches.py` | 执行 |
 
 ## Source Hierarchy
 
-| 优先级 | 来源 |
-|:---|:---|
-| 1 | 用户显式参数 / post-fetch 编排传入参数（user_id、--from/--to、--outfile） |
-| 2 | 环境变量 `XUEQIU_TRANSPORT` / `XUEQIU_EGO_WAKE` / `XUEQIU_EGO_SLIDER_WAIT_MS`（ego 桥配置，本机覆盖默认；旧 `XUEQIU_DEBUG_PORT`/`XUEQIU_CHROME_PATH` 等 Chrome 通道变量已于 2026-09-16 删除，见上表） |
-| 3 | `config.py` 默认值 |
-| 4 | 雪球页面/API 实际结构 |
+1. 用户显式参数 > 2. 看板控制台（MySQL blogger 表） > 3. `references/*.md` 规范 > 4. 雪球页面/API 实际结构（由工具层解析）
 
 ---
 
 ## 自检
 
-- [ ] venv 依赖可用（`import requests` 通过；playwright 已移除）？
-- [ ] **ego 通道就绪**：ego lite 已打开且已登录雪球（第二步自检打印出雪球标题）？
-- [ ] 日志确认走的是 ego 通道（`已连接 ego lite`）？（Chrome 回落路径 2026-09-16 已删除，日志里不该再出现任何 Chrome 字样）
-- [ ] 采集时 ego lite 窗口保持**可见**（前台）——风控弹窗只在页面上出现？
-- [ ] 若本轮命中滑块：是否已交接给用户（`handOff`）并在其过完验证后自动重试本页？汇报里是否说明「哪一步被滑块拦过、谁处理的」？
-- [ ] 采集跑完后，ego 里**没有多出来的页签、也没有残留空间**（桥退出会 `finish({keep:[]})` 一并回收；有残留说明回收没生效）？
-- [ ] 全程**没有抢焦点**（除了命中滑块那一次激活）？日志里不该出现"已把 ego lite 窗口拉到前台"（除非 `XUEQIU_EGO_WAKE=1` 或滑块交接）？
-- [ ] 若本轮出现过风控/异常：`~/.cache/xueqiu-spyder/shots/<批次>/` 下是否有对应截图？汇报里是否给了路径？
-- [ ] 输出为帖子集格式（frontmatter 七字段 + 三件套 + 发布行）？
-- [ ] 每帖均带 `[原文](https://xueqiu.com/{xq_id}/{post_id})` 链接？
-- [ ] 置顶帖已排除、未纳入窗口统计？
-- [ ] 截断帖已补全或标记「摘要」（无未经详情页验证即标「全文」）？
-- [ ] 时间窗生效（--from/--to，毫秒过滤）？
-- [ ] timeline 端点被封时自动降级生效（日志含「自动降级到旧版路径」）？
-- [ ] 退出码语义正确（0=有产出 / 2=窗口内无新帖 / 3=窗口起点没翻到、页数不足 / 1=失败），未把「失败」或「页数不足」误当「无新帖」？
-- [ ] `author` 取自 API `user.screen_name`，与文件名博主名一致？（出现所有文件同名或知名大 V 名＝抓到侧栏推荐位）
-- [ ] 报告「无新帖」的博主：是否用同源 API 复核过（`/statuses/user_timeline.json` 返回 statuses 即页面正常）？**空列表不得当无新帖**——博主主页不可能全空，那是风控拦截
-- [ ] 无 WAF/滑块报错残留、输出未被验证页污染？
+- [ ] ego lite 已打开且已登录雪球？日志确认走 ego 通道（不应出现任何 Chrome 字样）？
+- [ ] 前置同步已执行（关注列表↔控制台，含残留与 info_cutoff 一致性）？
+- [ ] 模式选择符合决策表？feed 采集后未露面博主是否安排了轮转抽查？
+- [ ] **退出码语义正确**：1/3 未推进断点/cutoff、已列入待重试？未把「书签未翻到」误当「无新帖」？
+- [ ] 产物对照 output-format.md 验收：三件套/发布行 `作者`/全文摘要标记/`[原文]` 链接/纯文本净化？
+- [ ] 报「无新帖」的博主（user 模式）经同源 API 复核过？空列表不得当无新帖？
+- [ ] 产物已落 post_history 且入库校验通过后才清理临时文件？
+- [ ] 全程没抢焦点（滑块交接除外）；跑完无残留页签/空间；风控截图已归档并附在汇报里？
+- [ ] `作者` 校验：多博主帖集按发布行作者归属、uid 仲裁无冲突？全员同名＝推荐位误抓？

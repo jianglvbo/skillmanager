@@ -380,7 +380,7 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
             p2.close()
             b.stop()
 
-    # 组装帖子集（多博主格式，规范见 post-fetch→xueqiu-spyder references/output-format.md）
+    # 组装帖子集（多博主格式，规范见本 skill references/output-format.md）
     now_dt = datetime.fromtimestamp(anchor_ms / 1000)
     out_rows, n_full = [], 0
     for i, r in enumerate(rows, 1):
