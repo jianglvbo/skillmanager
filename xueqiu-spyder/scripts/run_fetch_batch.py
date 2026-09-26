@@ -91,6 +91,7 @@ def main():
     ap.add_argument("--only", default="", help="只跑这些博主（逗号分隔）")
     ap.add_argument("--skip", default="", help="跳过这些博主（逗号分隔）")
     ap.add_argument("--pages-override", type=int, default=0, help="强制页数（默认按窗口算）")
+    ap.add_argument("--since", default="", help="统一窗口起点 ISO（覆盖各博主自身 cutoff，用于补采/回溯）")
     args = ap.parse_args()
 
     data = api("/api/bloggers/live")
@@ -121,7 +122,7 @@ def main():
     for i, b in enumerate(targets, 1):
         name = b["name"]
         xq = str(b["xueqiuId"]).strip()
-        cut = cutoff_iso(b)
+        cut = (args.since or "").strip() or cutoff_iso(b)
         if not cut:
             cut = (datetime.date.today() - datetime.timedelta(days=182)).strftime(
                 "%Y-%m-%dT17:50:00")

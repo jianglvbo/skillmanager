@@ -368,12 +368,15 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
                 continue
         rows.append(r)
     rows = rows[:limit]
-    if since_dt is not None and not reached:
-        print("流书签未翻到（滚动地板/步数上限）：不可写断点，须重跑或走逐博主兜底")
-        return "__NO_WINDOW_REACHED__"
+    window_incomplete = since_dt is not None and not reached
     if not rows:
+        if window_incomplete:
+            print("流书签未翻到且窗口内无帖：不可当无新帖，须走 user 兜底")
+            return "__NO_WINDOW_REACHED__"
         print("窗口内无新帖（流内未见到书签之后的帖子）")
         return "__NO_NEW_POSTS__"
+    if window_incomplete:
+        print("⚠ 流书签未翻到（滚动地板）：已采部分仍产出（断点不写），窗口缺口须走 user 兜底")
 
     # 例外帖：自身专栏 / 展开失败 → 详情页
     todo = [r for r in rows if r["column"] or r["trunc"]]
@@ -518,6 +521,7 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
           + ("，熔断余下按摘要" if url_visited < len(todo) else ""))
     print(f"[展开] 遇到需展开 {exp.get('ok', 0) + max(exp.get('remaining', 0), 0)} 条"
           f"（流内展开成功 {exp.get('ok', 0)}，未成功转详情页 {max(exp.get('remaining', 0), 0)}）")
-    # 成功产出 → 写流断点书签（本轮起点）
-    save_bookmark(tab, datetime.fromtimestamp(anchor_ms / 1000).strftime("%Y-%m-%dT%H:%M:%S"))
+    # 成功产出 → 写流断点书签（本轮起点）；窗口未翻到时**禁写**（防漏采固化）
+    if not window_incomplete:
+        save_bookmark(tab, datetime.fromtimestamp(anchor_ms / 1000).strftime("%Y-%m-%dT%H:%M:%S"))
     return path

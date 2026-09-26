@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "42df1384-8b45-40ac-b65f-6b1876445d40",
+  "path": "workspace-conventions",
+  "path_key": "workspace-conventions",
+  "enabled": true,
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  },
+  "folder_id": "73142b82-bed6-4b22-a3fa-4219b47dc827"
+}
