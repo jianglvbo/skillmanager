@@ -174,9 +174,14 @@ def tidy_article(t):
 
 def clean_quote(t):
     t = tidy_article(t)
-    t = re.sub(r"\s*(昨天|今天)?\s*\d{1,2}:\d{2}\s*(·\s*转发\s*\d+\s*·\s*讨论\s*\d+\s*·\s*赞\s*\d+)?\s*$", "", t).strip()
-    t = re.sub(r"(\d+\s*(分钟|小时|天)前)\s*$", "", t).strip()
-    t = re.sub(r"^(?:专栏|：+|:+)\s*", "", t).strip()
+    # 引用卡尾注（转发项可能缺省）：「4小时前 · 讨论 70 · 赞 19」「09-24 17:55 · 转发 1 · 讨论 2 · 赞 3」
+    t = re.sub(r"\s*(?:(?:昨天|今天)?\s*\d{1,2}:\d{2}|\d{1,2}-\d{1,2}\s*\d{1,2}:\d{2}|\d+\s*(?:分钟|小时|天)前)"
+               r"\s*(?:·\s*(?:转发|讨论|评论|赞)\s*\d+)*\s*$", "", t).strip()
+    # 孤立标签行（专栏标记由样式承载）与残留冒号
+    t = re.sub(r"^\s*专栏\s*$", "", t, flags=re.M).strip()
+    t = re.sub(r"^[:：]+\s*", "", t).strip()
+    for _ in range(2):
+        t = re.sub(r"(收起|展开|查看对话|查看图片)\s*$", "", t).strip()
     return t
 
 
@@ -425,11 +430,6 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
                 body = tidy_article(d["content"])
             else:
                 complete, reason = "摘要", "流内展开失败"
-        elif r.get("quoted") and r["quoted"].get("text") and r["quoted"].get("url") \
-                and not own.startswith("回复@"):
-            qt = clean_quote(r["quoted"]["text"])
-            if qt and not (r["quoted"].get("title") and r["quoted"]["title"][:8] in body):
-                body = own + "\n\n" + qt
         # 时间：详情页权威 > 流内推算
         tm, tmark, edited = "", "", False
         if d and d.get("timeRaw"):
@@ -445,27 +445,31 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
         if not tm:
             complete, reason = "摘要", "时间不可解析"
             tm = "1970年01月01日 00:00"
-        # 引用卡结构化 → 回复内容块（正文已内联则跳过）
+        # ── 引用卡 → 「回复内容」块：专栏/原帖两种样式（唯一拼接路径）。
+        # 详情页来源的正文已内联引用（d 存在）与回复帖（//@ 链承载）不追加，防重复。
         q = r.get("quoted")
-        if q and q.get("url") and not own.startswith("回复@"):
-            already = bool(q.get("title") and q["title"][:8] in body)
-            if not already:
-                kind = "专栏" if q.get("isColumn") else "帖子"
-                head = f"> 回复内容：{q.get('author') or '被引作者'} 的{kind}"
-                if q.get("title"):
-                    head += f"《{q['title']}》"
-                parts = ([q.get("time")] if q.get("time") else []) + \
-                    [f"转发 {q['counts'][0]}", f"讨论 {q['counts'][1]}", f"赞 {q['counts'][2]}"]
-                meta = " · ".join(p for p in parts if p)
+        if q and q.get("url") and not d and not own.startswith("回复@"):
+            qauthor = q.get("author") or "被引作者"
+            c = q.get("counts") or [0, 0, 0]
+            meta_parts = ([q.get("time")] if q.get("time") else []) + \
+                [f"转发 {c[0]}", f"讨论 {c[1]}", f"赞 {c[2]}"]
+            meta = " · ".join(p for p in meta_parts if p)
+            block = None
+            if q.get("isColumn") and q.get("title"):
+                head = f"> 回复内容·专栏：{qauthor}《{q['title']}》"
                 if meta:
                     head += f"（{meta}）"
-                block = [head, f"> 被引原文：https://xueqiu.com{q['url']}"]
-                lead = (q.get("lead") or "").strip()
-                if q.get("title"):
-                    lead = lead.replace(q["title"], "", 1).strip()
-                lead = re.sub(r"^(?:专栏|：+|:+)\s*", "", lead).strip()
+                block = [head]
+                lead = clean_quote(q.get("lead") or "")
+                lead = re.sub(r"\s*\n\s*", "", lead.replace(q["title"], "", 1)).strip()
                 if lead:
-                    block.insert(1, f"> 导语：{lead}")
+                    block.append(f"> 文章导语（截断）：{lead}")
+                block.append(f"> 被引原文：https://xueqiu.com{q['url']}")
+            elif not q.get("isColumn"):
+                qtext = re.sub(r"\s*\n\s*", "", clean_quote(q.get("lead") or "")).strip()
+                head = f"> 回复内容·原帖：{qauthor}：{qtext}" if qtext else f"> 回复内容·原帖：{qauthor}"
+                block = [head, f"> 被引原文：https://xueqiu.com{q['url']}"]
+            if block:
                 body = (body + "\n\n" + "\n".join(block)).strip()
         title = first_sentence(body)
         if r["column"] and body:
