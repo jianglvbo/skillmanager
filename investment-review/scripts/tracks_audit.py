@@ -181,6 +181,24 @@ def mysql_scan() -> dict:
         miss += n
     out["key_types_without_subject"] = miss
     out["key_types_without_subject_by_table"] = per_tbl
+    # ⑤b 规则 #59A「信号必须挂在标的上」的全类型存量核查（2026-09-27 审查固化）：
+    #     上面只数 P1 三类缺关联，#59A 管的是"给了 stance 就必须至少挂一条实体"，
+    #     且服务端 `_validateSignal` 并不查关联表存在性 → 只能靠本审计兜底。
+    cur.execute("""SELECT s.content_type, COUNT(*) FROM statement s
+                   WHERE s.stance_code IS NOT NULL AND TRIM(s.stance_code)<>''
+                     AND NOT EXISTS (SELECT 1 FROM statement_stock_rel k WHERE k.statement_id=s.id)
+                     AND NOT EXISTS (SELECT 1 FROM statement_industry_rel i WHERE i.statement_id=s.id)
+                     AND NOT EXISTS (SELECT 1 FROM statement_market_rel m WHERE m.statement_id=s.id)
+                   GROUP BY s.content_type""")
+    out["stance_without_subject"] = {r[0]: r[1] for r in cur.fetchall()}
+    cur.execute("""SELECT COUNT(*) FROM statement WHERE (stance_code IS NULL OR TRIM(stance_code)='')
+                     AND signal_text IS NOT NULL AND TRIM(signal_text)<>''""")
+    out["signal_without_stance"] = cur.fetchone()[0]
+    # ⑤c 心得具象化覆盖率（insight 应沉淀成框架条目才有 wiki_ref）
+    cur.execute("""SELECT SUM(wiki_ref IS NULL OR TRIM(wiki_ref)=''), COUNT(*) FROM statement_insight""")
+    n_no_wiki, n_ins = cur.fetchone()
+    out["insight_without_wiki"] = int(n_no_wiki or 0)
+    out["insight_total"] = int(n_ins or 0)
     # ⑥ 复核建议积压（审查首步数据源）
     cur.execute("SELECT status_code, COUNT(*) FROM statement_review_sub GROUP BY status_code")
     out["statement_review_sub"] = {r[0]: r[1] for r in cur.fetchall()}

@@ -235,7 +235,7 @@ F={"no_fm":[],"fm_error":[],"missing_fields":[],"quoting":[],"tag_issues":[],
    "stock_code_missing":[],"blogger_not_registered":[],
    "other_author_registered":[],
    "recycle_expired":[],"recycle_pending":[],"recycle_invalid":[],
-   "footnote_links_workspace":[]}
+   "footnote_links_workspace":[],"footnote_format":[]}
 summary={"total":0,"by_template":{}}
 
 files=[]
@@ -409,6 +409,40 @@ for rel in sorted(files):
                 target=wl.split("|")[0].split("#")[0].strip()
                 if target.startswith("工作区/"):
                     F["footnote_links_workspace"].append((rel, wl, "脚注指向工作区文件（仅限wiki产物间引用，见 footnote-taxonomy 禁止行为#6）"))
+
+    # 脚注格式细则（2026-09-27 审查固化）。此前 SKILL 声明的 S6 只实现了一半：
+    #   标签白名单、标签与中文关系词一致性、关联脚注必须有 wikilink 目标、data/date 时间锚
+    #   四项都没有检查项，所以"脚注格式 0 问题"是假绿（当次实测全库 41 条不合规）。
+    #   孤儿/悬空脚注已由 verify-format.py 覆盖，此处不重复。
+    REL_CN = {"enhance":"增强","supplement":"补充","conflict":"冲突","complement":"互补","opposite":"对立"}
+    for line in text.splitlines():
+        ls = line.strip()
+        m = re.match(r"^\[\^([^\]]+)\]:\s*(.*)$", ls)
+        if not m: continue
+        key, body = m.group(1), m.group(2)
+        prefix = key.rsplit("-", 1)[0]
+        where = (rel, "[^"+key+"]")
+        if not re.match(r"^(enhance|supplement|conflict|complement|opposite|data|date)-\d+$", key):
+            F["footnote_format"].append((*where, "非法标签名（白名单=enhance/supplement/conflict/complement/opposite/data/date，见禁止行为#1）"))
+        if "]]]" in body or body.count("]]") > len(extract_wikilinks(body)):
+            F["footnote_format"].append((*where, "wikilink 多余闭合（]]] 或多出一个 ]]）"))
+        parts_em = re.split(r"\s+—\s+", body, maxsplit=1)
+        tail = parts_em[1].strip() if len(parts_em) > 1 else ""
+        if prefix in REL_CN:
+            if not extract_wikilinks(body):
+                F["footnote_format"].append((*where, "关联脚注无 wikilink 目标（指向看板/画像 md 的引用已失效，画像自 #36 退役）"))
+            mc = re.match(r"^(增强|补充|冲突|互补|对立|数据|时效|关联|参考)\s*[:：]", tail)
+            cn = mc.group(1) if mc else ""
+            if cn in ("关联", "参考"):
+                F["footnote_format"].append((*where, f"描述用了非标准关系词「{cn}」"))
+            elif cn and cn != REL_CN[prefix]:
+                F["footnote_format"].append((*where, f"标签 {prefix} 与中文关系词「{cn}」不一致（禁止行为#2）"))
+            elif not cn:
+                F["footnote_format"].append((*where, f"关联脚注缺中文关系词「{REL_CN[prefix]}：」"))
+        elif prefix == "data" and not re.search(r"截至|截止", body):
+            F["footnote_format"].append((*where, "data 脚注缺截止日期（规范：来源 — 描述，截至YYYY年M月）"))
+        elif prefix == "date" and not re.search(r"截至\s*\d{4}\s*年", body):
+            F["footnote_format"].append((*where, "date 脚注缺「截至YYYY年M月」时间锚"))
 
     # 个股代码（framework-rules #28）：文件名须含 {名称}({代码})，代码后可附加描述后缀
     # 代码位数：A股6位/港股4-5位/美股1-5位/澳交所等3位——统一放宽为 2-6 位字母数字（含 .AX 等市场后缀形式）
