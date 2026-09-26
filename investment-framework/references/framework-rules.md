@@ -260,7 +260,7 @@
 
 44. 数据库结构与命名规则（2026-09-11 拍板，2026-09-12 终版，2026-09-15 实体三表→四表：术语＝言论、实体四表、关联七表）：
     - **术语与命名**：库内一律用 `statement` 指「言论」，**不用 post**——六张类型表 `statement_trade`/`statement_predict`/`statement_research`/`statement_view`/`statement_insight`/`statement_chat`，只读视图 `statement`（UNION），序列 `statement_id_seq`；帖子时间字段 `statement_datetime`。**分层命名（2026-09-12 用户口径）**：**采集层叫「帖子」→ `post_*`；提炼后叫「言论」→ `statement_*`**，两层各归其位，`post_history` 不是「例外」而是帖子层：其表名与列名（`posted_datetime`/`platform_post_id`/`post_id`）一律保持 `post_` 前缀；只有指向**言论层**的回指列在注释里写明语义——`post_history.post_id` = 「该帖提炼后的言论 id，指向六张言论表之一」（列名按帖子层保持 `post_id`，2026-09-12 用户选 A）。MCP 工具 `blogger_statement` / `console_statement_review`，入参 `statementId`。中文描述里「帖子」指平台侧原帖、「言论」指我们提炼落库的行，不要混用。
-    - **子表 `_sub` / 关联表 `_rel`**：子表 `statement_verify_sub`（验证留痕）/ `statement_review_sub`（复核建议）/ `review_check_sub`；提炼链路四表见 #54（`refine_chain_step`/`refine_item`/`refine_step`/`refine_review`，原 `refine_target_sub` 已随旧表下架）；关联表一律 `_rel` 后缀（见下 6 张）。
+    - **子表 `_sub` / 关联表 `_rel`**：子表 `statement_verify_sub`（验证留痕）/ `statement_review_sub`（复核建议）/ `review_check_sub`；提炼链路步骤表已下线见 #54（仅 `refine_item` 保留为只读历史，粗加工标记在用）；关联表一律 `_rel` 后缀（见下 6 张）。
     - **实体四表（取代 prediction_subjects；2026-09-15 新增指数）**：`stock`（个股：name/code/market_code/aliases/hk_connect）、`industry`（行业：name/code）、`market_index`（**指数**：如创业板指/沪深300，表名不能叫 `index`——MySQL 保留字）、`market`（市场：code/name，A股/港股/美股/韩股…）。控制台页签直接读这四张表。**行业表只放行业**——宏观/认知/策略/风格类（估值、周期、仓位管理、宏观经济、地缘政治…）不是实体，落 wiki「我的」层；个股名/市场名不得混进行业表（2026-09-12 清理了 27 条此类污染 + 8 条错位）；**行业里的指数类条目（创业板等）归 `market_index`**（2026-09-15 已迁创业板 1 条，code 待补）。另有两张名单/目录表（只读参考数据）：`index_catalog`（指数目录，类别/编制机构）、`industry_sw`（申万行业目录 1/2/3 级）。
     - **关联七张（用户拍板）**：`statement_blogger_rel`（**言论一定挂博主**）、`statement_stock_rel`、`statement_industry_rel`、`statement_market_index_rel`（2026-09-15 新增）、`statement_market_rel`（**言论可以没有个股/行业/指数/市场关联**）、`stock_industry_rel`（**个股一定挂行业，且可多行业**）、`stock_market_rel`（个股↔市场）。原来那张多态表已删除。**跟踪表 `statement_rel` 也已退役（2026-09-12 用户选 A）**：它长期 0 行、看板无读路径（「有写入无读取」的死功能），`console_add_track` 工具一并下架——预测的后续演进由后续言论自身承载（时间线上正文与时间可见）。
     - **不变量（写入即校验，2026-09-12 实测全库 0 违规）**：① 每条言论必有 `statement_blogger_rel`；② 每只个股至少一条 `stock_industry_rel`（服务端 `blogger_trade` / `console_ensure_subject` 支持传 `industryName` 建关联，缺则记缺口待补）；③ 通胀之类宏观概念**不属于市场**，不建实体关联。
@@ -379,19 +379,7 @@
     - **与 #52 的关系**：`is_review_required` 默认「只置位、不清除」是防**批量修正时误清**；**用户显式下令的清理**（本次即用户拍板）不受此限，但必须先备份、先 dry-run 给用户看分流结果。
     - **看板入口**：不再需要单独的「只看待复核」开关——入口就是**待决策菜单**；`data-bact="review"` / `?reviewOnly=1` 是死代码，可一并清掉。
 
-54. 提炼链路：**每步一条记录，用户可逐步复核**（2026-09-13 用户拍板，表已建）：
-    - **为什么要记步骤**：用户原话「如果提炼有问题，我要根据提炼链路看出来是哪一步的问题，我需要能对这一步做复核，这样下次审计能知道要改」。所以记的不是「走了哪些流程」，而是**每一步的判定结论 + 依据 + 复核状态**——动作型步骤（读原文、调工具）不进链路，**只有能判对错的判定才进**。
-    - **7 步**（`dict.type=refine_step`，`sort_order` 即顺序）：`worth` 值不值得提炼 / `content_type` 内容类型 / `split` 拆分 / `attribution` 归属与分类 / `subjects` 标的关联 / `signal_time` 信号与时间 / `relation` 关系与落点。复核意见按 `step_code` 能**直接定位到要改的规则文件**（第 5 步 → `stock-mention-rules.md`，第 2 步 → 分流矩阵，第 1 步 → 低质帖判据表…）。
-    - **两条链路共用一套步骤编号**（用户选 1A）：模板表 `refine_chain_step` 决定适用子集——`statement`（帖子→言论）7 步全上；`wiki`（粗制品→wiki）6 步（无 `content_type`，`subjects`/`signal_time` 标 `is_required=0` 允许留空）。**不做两套编号**（否则审计要查两遍、口径会分裂）。
-    - **一个源可以走两条链路**（用户选 2A）：一个帖子同时产出言论和 wiki 条目时**建两条 `refine_item`**（同一 source、不同 `chain_code`）——「值不值得成条目」和「值不值得落成言论」是两个独立判断，合成一条后打回时说不清是哪一半错。
-    - **结论来源分两种**（`refine_step.is_derived`）：帖子链路的多数步，结论**可从 `statement` 行直接带出**（`content_type`/`stance_code`/`view_date_source`/`post_form`/关联表），agent 不必重写，标 `is_derived=1` + 补依据即可；**wiki 链路没有库内实体**（看板也看不到文件），步记录**必须自己写全**，标 `is_derived=0`。这是两条链路最本质的差别。
-    - **复核双档**（用户口径「步级更细，但没空时我就复核整帖」）：**步级**＝抠某一步（`refine_review.step_id`）；**帖级**＝整帖过一遍（`statement_id`，wiki 用 `target_rel`）。帖级是**合法路径**，粒度诚实记为帖级。**帖级 confirm 只把「还没复核过」的步标 confirmed，绝不覆盖已打回的步**（2026-09-13 自检抓到：原来无条件覆盖，会把 rejected 抹成 confirmed，等于丢失复核结论）。
-    - **结论改了，复核作废**：`refine_trace` 重写某步 `verdict` 时该步回到 `pending`（不能拿旧复核盖新结论）；verdict 没变则保留用户已复核状态。
-    - **复核必须内化才能关**（沿用 #49/#50）：`refine_review action=apply` 的 `internalized` 必填（写清改了哪条规则/哪个文件）；`action=add` 且 `verdict=wrong` 时 `correction`/`note` 至少给一个——否则审查不知道该改什么。
-    - **表结构（四张，用户选「5→4」）**：`refine_chain_step`（模板：链路×步骤）/ `refine_item`（单元＝源×链路）/ `refine_step`（每步一条）/ `refine_review`（复核，独立成表）。步骤定义与链路定义进 `dict`，不另建定义表。
-    - **落库与读取**：写链路 MCP `refine_trace`（REST `POST /api/refine/trace`）；复核 MCP `refine_review`（REST `POST /api/refine/review`）；读某条言论的链路 `refine_trace action=get`（`GET /api/refine/chain?statementId=`）；**待处理复核队列 `refine_review action=list&status=open`＝审查首步必查**。
-    - **新提炼只调 `refine_trace`（7 步判定，写新四表）**：看板「提炼记录」页只读新四表；粗制品「是否已加工」按 `refine_item.source_rel`（`chain_code='wiki'`）推导。
-      > 沿革：旧 `refine_record`/`refine_target_sub` 两表、MCP `refine_record`、REST `/api/refine/{list,record}` 及相关服务端函数已于 2026-09-14 下架（旧数据先备份 `backups/` 再清空、两表 DROP、不留残表）。
+54. 提炼链路步骤落库：**已整体下线**（2026-09-26 用户拍板：不再逐步骤落库与复核；提炼有问题用户直接写**待决策队列**）。`refine_chain_step`/`refine_step`/`refine_review` 三表已删（备份 `out/zcode/backups/refine-tables-20260926.json`），MCP `refine_trace`/`refine_review` 与 `/api/refine/*` 端点一并下架；**`refine_item` 保留为只读历史**——仅粗加工「是否已加工」标记还读它（`chain_code='wiki'` 的 `source_rel`，新提炼不再写入）。沿革：更早的 `refine_record`/`refine_target_sub` 已于 2026-09-14 下架（备份 `backups/refine_legacy_20260913155544/`）。
 
 55. 港股通名单：**落库 + 有过期时间 + 双向都必须准**（2026-09-14 用户拍板）：
     - **用户口径（原话）**：「港股通名单很久才会更新一次的，你可以给他存起来，以后好判断，只要设计好过期时间重新获取即可。**港股通多的就是错的，少的也是错的，必须要一直**（准）」。

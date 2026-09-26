@@ -2,7 +2,7 @@
 
 > ✅ **§六 / §七 / §八 是现行规则，提炼时必须照做**（investment-refine SKILL 第二步第 5 条 / 第三步 3.0 直接引用）：分流决策矩阵、落库前置八问、写入硬约束与低质帖判据都在下面这三节。
 >
-> ⚠️ **§一~§五（`refine_record` 请求体结构）已于 2026-09-14 退役**：`refine_record` 工具与 `refine_record`/`refine_target_sub` 两张表已下架，**仅供查阅历史数据**（旧记录备份 `~/Project/investment-dashboard/backups/refine_legacy_20260913155544/`）。**新提炼的链路一律调 MCP `refine_trace`（7 步判定，见 framework-rules #54），不要再按 §一~§五 写入。**
+> ⚠️ **§一~§五（`refine_record` 请求体结构）已于 2026-09-14 退役**：`refine_record` 工具与 `refine_record`/`refine_target_sub` 两张表已下架，**仅供查阅历史数据**（旧记录备份 `~/Project/investment-dashboard/backups/refine_legacy_20260913155544/`）。**`refine_trace`（7 步判定）亦已于 2026-09-26 下线**（framework-rules #54：提炼步骤落库整体退役，备份 `out/zcode/backups/refine-tables-20260926.json`）；本文件保留六分法与信号判据等**判定规则**供提炼执行参照，不再有任何落库上报动作。
 
 ---
 

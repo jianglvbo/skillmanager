@@ -129,15 +129,7 @@ compatibility: 通用
 
 ### 第五步：同步数据看板
 
-**唯一落库动作：调 MCP `refine_trace`**（REST `POST /api/refine/trace` 兼容）——看板「提炼记录」页据此展示产物 + **7 步判定**，用户可对某一步打回。规则与字段含义见 **framework-rules #54**：
-
-- `chainCode`：帖子→言论填 `statement`；粗制品→wiki 填 `wiki`。**一个帖子同时产出言论和 wiki 条目时建两条**（同一 source、不同 chain）。
-- 锚：帖子链路传 `statementId`（幂等键）；wiki 链路传 `sourceRel`（vault 相对路径）+ `batchKey`。
-- `steps`：按 `dict.type=refine_step` 的 7 步给结论 —— `worth`/`content_type`/`split`/`attribution`/`subjects`/`signal_time`/`relation`。**帖子链路的多数步结论可从 `statement` 行直接带出**（`isDerived=1`，只补 `basis`）；**wiki 链路没有库内实体，必须自己写全**（`isDerived=0`）。
-- `verdict` 写这一步的结论（一句话）；`basis` 写依据（原文句）；结构化结论可选放 `verdictJson`。
-- 返回里的 `missingRequired`/`warning` 说明模板要求的步没给，要补齐。
-
-> 旧「refine_record」链路已下架（工具与表均删，历史数据见 console-guide.md），不要调用。
+**提炼步骤落库已下线**（2026-09-26 用户拍板，framework-rules #54）：`refine_trace`/`refine_review` 工具与 `refine_step`/`refine_review`/`refine_chain_step` 三表已删除，**不再上报 7 步判定**。提炼产物照常落各自存储（言论六表 / wiki 条目，各自的落库动作不变）；用户对提炼结果的异议直接写**待决策队列**（第一步 1.1），agent 下次提炼时内化成规则。
 
 ## Output Format
 
