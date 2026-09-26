@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "skill_id": "cdd71593-b91a-45f8-8dde-eb9306334b51",
+  "path": "bark",
+  "path_key": "bark",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  },
+  "folder_id": null
+}
