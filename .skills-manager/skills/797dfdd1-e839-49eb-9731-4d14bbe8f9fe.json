@@ -4,7 +4,6 @@
   "path": "skill-guidelines",
   "path_key": "skill-guidelines",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

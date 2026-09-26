@@ -4,7 +4,6 @@
   "path": "skill-seekers",
   "path_key": "skill-seekers",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

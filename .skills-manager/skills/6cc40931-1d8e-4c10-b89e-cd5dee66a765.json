@@ -4,7 +4,6 @@
   "path": "westockdata",
   "path_key": "westockdata",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

@@ -4,7 +4,6 @@
   "path": "mac-cleaner",
   "path_key": "mac-cleaner",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

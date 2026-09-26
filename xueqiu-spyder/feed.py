@@ -59,33 +59,33 @@ OLDEST_LABEL_JS = r"""
   return t.trim();
 }
 """
-EXPAND_JS = r"""
-async (maxItems) => {
-  let ok = 0, tried = 0;
-  for (const it of [...document.querySelectorAll('.timeline__item')].slice(0, 62)) {
-    if (ok >= maxItems) break;
-    const content = it.querySelector('.timeline__item__content');
-    if (!content) continue;
-    if (!((content.innerText || '').includes('展开'))) continue;
-    tried++;
-    const btn = it.querySelector('a.timeline__expand__control') ||
-                [...content.querySelectorAll('a,span')].find(e => {
-                  const t = (e.innerText || '').trim();
-                  return t === '展开' || t === '展开全文';
-                });
-    if (!btn) continue;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      btn.scrollIntoView({ block: 'center' });
-      await new Promise(r => setTimeout(r, attempt === 0 ? 1000 : 1300));
-      btn.click();
-      await new Promise(r => setTimeout(r, 450));
-      if (!((content.innerText || '').includes('展开'))) { ok++; break; }
-    }
-  }
-  // ego evaluate 有 15s 页内执行上限：外层按 maxItems 分轮调用，直到无剩余
-  const remaining = [...document.querySelectorAll('.timeline__item')].slice(0, 62)
-    .filter(it => { const c = it.querySelector('.timeline__item__content'); return c && (c.innerText || '').includes('展开'); }).length;
-  return { ok, tried, remaining };
+LIST_EXPAND_JS = r"""
+() => [...document.querySelectorAll('.timeline__item')].slice(0, 62)
+  .filter(it => { const c = it.querySelector('.timeline__item__content'); return c && (c.innerText || '').includes('展开'); })
+  .map(it => { const a = it.querySelector('a[href].date-and-source'); return a ? a.getAttribute('href') : null; })
+  .filter(Boolean)
+"""
+SCROLL_ONE_JS = r"""
+(href) => {
+  const a = document.querySelector('.timeline__item a[href].date-and-source[href="' + href + '"]');
+  if (!a) return { gone: true };
+  const btn = a.closest('.timeline__item').querySelector('a.timeline__expand__control');
+  if (!btn) return { gone: false, nobtn: true };
+  btn.scrollIntoView({ block: 'center' });
+  return { ok: true };
+}
+"""
+CLICK_ONE_JS = r"""
+(href) => {
+  const a = document.querySelector('.timeline__item a[href].date-and-source[href="' + href + '"]');
+  if (!a) return { gone: true };
+  const it = a.closest('.timeline__item');
+  const content = it.querySelector('.timeline__item__content');
+  if (!content || !content.innerText.includes('展开')) return { ok: true, done: true };
+  const btn = it.querySelector('a.timeline__expand__control');
+  if (!btn) return { ok: false, nobtn: true };
+  btn.click();
+  return { ok: true, done: !content.innerText.includes('展开') };
 }
 """
 FEED_JS = r"""
@@ -314,12 +314,25 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
             oldest = p.evaluate(OLDEST_LABEL_JS, None)
             reached = label_older_than(oldest, time.time() * 1000, since_dt)
 
-        # 流内展开（视口 dwell）——ego evaluate 15s 页内上限，分轮执行每轮最多 6 条
-        exp_ok, exp_remaining = 0, -1
-        for _round in range(15):
-            exp = p.evaluate(EXPAND_JS, 6)
-            exp_ok += exp.get("ok", 0)
-            exp_remaining = exp.get("remaining", 0)
+        # 流内展开：节奏在 Python 侧（ego 后台页会节流页内 setTimeout，页内长循环必超时；
+        # 且 ego evaluate 有 15s 页内上限——页内只做瞬时动作，dwell 全在桥外）
+        exp_ok, exp_remaining = 0, 0
+        for _round in range(3):
+            hrefs = p.evaluate(LIST_EXPAND_JS, None) or []
+            if not hrefs:
+                break
+            logger.info("展开第 %s 轮：%s 条待展开", _round + 1, len(hrefs))
+            for href in hrefs:
+                for dwell in (1.0, 1.3):
+                    p.evaluate(SCROLL_ONE_JS, href)
+                    time.sleep(dwell)
+                    res = p.evaluate(CLICK_ONE_JS, href) or {}
+                    if res.get("gone") or res.get("nobtn"):
+                        break
+                    if res.get("done"):
+                        exp_ok += 1
+                        break
+            exp_remaining = len(p.evaluate(LIST_EXPAND_JS, None) or [])
             if not exp_remaining:
                 break
         exp = {"ok": exp_ok, "remaining": exp_remaining}

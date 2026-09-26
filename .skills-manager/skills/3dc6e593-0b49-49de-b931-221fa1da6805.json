@@ -4,7 +4,6 @@
   "path": "investment-coarse-processor",
   "path_key": "investment-coarse-processor",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

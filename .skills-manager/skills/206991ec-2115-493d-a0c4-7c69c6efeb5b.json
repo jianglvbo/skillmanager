@@ -4,7 +4,6 @@
   "path": "prediction-console",
   "path_key": "prediction-console",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

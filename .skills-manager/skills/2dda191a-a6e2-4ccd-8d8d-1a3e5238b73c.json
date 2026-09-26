@@ -4,7 +4,6 @@
   "path": "qmd",
   "path_key": "qmd",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

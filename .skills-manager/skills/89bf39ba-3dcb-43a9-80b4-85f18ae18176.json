@@ -4,7 +4,6 @@
   "path": "ego-browser",
   "path_key": "ego-browser",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

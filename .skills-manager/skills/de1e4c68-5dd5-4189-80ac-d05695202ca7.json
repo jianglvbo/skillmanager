@@ -4,7 +4,6 @@
   "path": "server-ops",
   "path_key": "server-ops",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

@@ -4,7 +4,6 @@
   "path": "investment-refine",
   "path_key": "investment-refine",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

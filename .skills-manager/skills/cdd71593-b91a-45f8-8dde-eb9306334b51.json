@@ -4,7 +4,6 @@
   "path": "bark",
   "path_key": "bark",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "local",
     "ref": null,

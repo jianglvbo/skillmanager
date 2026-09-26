@@ -4,7 +4,6 @@
   "path": "investment-framework",
   "path_key": "investment-framework",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

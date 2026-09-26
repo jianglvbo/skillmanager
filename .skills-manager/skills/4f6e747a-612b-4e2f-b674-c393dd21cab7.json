@@ -4,7 +4,6 @@
   "path": "xueqiu-spyder",
   "path_key": "xueqiu-spyder",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

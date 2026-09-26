@@ -4,7 +4,6 @@
   "path": "frontend-design",
   "path_key": "frontend-design",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

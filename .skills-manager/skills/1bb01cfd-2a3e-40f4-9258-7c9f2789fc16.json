@@ -4,7 +4,6 @@
   "path": "byted-web-search",
   "path_key": "byted-web-search",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,

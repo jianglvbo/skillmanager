@@ -4,9 +4,6 @@
   "path": "git-ops",
   "path_key": "git-ops",
   "enabled": true,
-  "tags": [
-    "规范"
-  ],
   "source": {
     "type": "import",
     "ref": null,

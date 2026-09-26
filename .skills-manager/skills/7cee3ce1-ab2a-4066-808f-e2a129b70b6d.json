@@ -4,7 +4,6 @@
   "path": "investment-review",
   "path_key": "investment-review",
   "enabled": true,
-  "tags": [],
   "source": {
     "type": "import",
     "ref": null,
