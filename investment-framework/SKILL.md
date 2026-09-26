@@ -3,7 +3,8 @@ name: investment-framework
 description: >
   投资知识框架全局编排者。管理三大归属层（我的/博主/其他）+ 六大分类（分析框架/交易体系/投资心态/投资心得/个股/行业）+ 宏观。
   定义流水线（粗制品→粗加工→原始资源→提炼→审查）、模板表、路径表、全局规则、审查机制。
-  触发词：「投资框架」「框架全貌」「pipeline」「粗加工」「提炼」「归档」「审查」「review」。
+  触发词：「投资框架」「框架全貌」「pipeline」「编排」。
+  排除条件（业务环节词交执行器，本 skill 不抢）：「粗加工」「归档」「整理帖子」→ coarse-processor；「提炼」→ refine；「审查」「review」「健康度」→ review；「采集」「抓取」→ xueqiu-spyder。
   区别于 xueqiu-spyder（帖子采集，编排+工具一体）：本 skill 是路径和模板的唯一持有者，负责串联全部加工模块。
 license: MIT
 agent_created: true

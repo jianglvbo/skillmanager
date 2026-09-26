@@ -4,7 +4,8 @@ description: >
   投资框架提炼执行器。直接执行：读取原文 → 分析 → 创建框架条目 → 汇报结果。
   一篇帖子可拆为多条框架条目（一对多）。
   触发词：「提炼」「归档框架条目」。
-  由 investment-framework 编排调用，不独立触发；区别于 investment-review（审查）与 xueqiu-spyder（采集）。
+  环节词归执行器所有（investment-framework 已让出「粗加工/归档/提炼/审查」），用户说「提炼」即命中本 skill；
+  整链编排走 investment-framework。区别于 investment-review（审查）与 xueqiu-spyder（采集）。
 license: MIT
 agent_created: true
 metadata:
