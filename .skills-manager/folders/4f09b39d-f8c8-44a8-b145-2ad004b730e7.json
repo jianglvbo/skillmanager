@@ -3,5 +3,6 @@
   "folder_id": "4f09b39d-f8c8-44a8-b145-2ad004b730e7",
   "name": "投资分析框架",
   "parent_id": null,
-  "sort_order": 999
+  "sort_order": 999,
+  "targets": []
 }
