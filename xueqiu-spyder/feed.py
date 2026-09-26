@@ -61,12 +61,13 @@ OLDEST_LABEL_JS = r"""
 """
 EXPAND_JS = r"""
 async (maxItems) => {
-  let ok = 0;
-  for (const it of [...document.querySelectorAll('.timeline__item')]) {
+  let ok = 0, tried = 0;
+  for (const it of [...document.querySelectorAll('.timeline__item')].slice(0, 62)) {
     if (ok >= maxItems) break;
     const content = it.querySelector('.timeline__item__content');
     if (!content) continue;
     if (!((content.innerText || '').includes('展开'))) continue;
+    tried++;
     const btn = it.querySelector('a.timeline__expand__control') ||
                 [...content.querySelectorAll('a,span')].find(e => {
                   const t = (e.innerText || '').trim();
@@ -81,7 +82,10 @@ async (maxItems) => {
       if (!((content.innerText || '').includes('展开'))) { ok++; break; }
     }
   }
-  return { ok };
+  // ego evaluate 有 15s 页内执行上限：外层按 maxItems 分轮调用，直到无剩余
+  const remaining = [...document.querySelectorAll('.timeline__item')].slice(0, 62)
+    .filter(it => { const c = it.querySelector('.timeline__item__content'); return c && (c.innerText || '').includes('展开'); }).length;
+  return { ok, tried, remaining };
 }
 """
 FEED_JS = r"""
@@ -253,7 +257,7 @@ def save_bookmark(tab, iso):
 # ── 主流程 ───────────────────────────────────────────────────────────
 
 def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
-             outfile=None, filter_mode="auto"):
+             outfile=None, filter_mode="auto", use_bookmark=True):
     import logging
     logger = logging.getLogger(__name__)
     if output_dir is None:
@@ -261,10 +265,10 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
     since_dt = None
     if since:
         since_dt = datetime.strptime(since.replace("T", " ")[:19], "%Y-%m-%d %H:%M:%S")
-    elif tab == "follow":
+    elif tab == "follow" and use_bookmark:
         bm = load_bookmark(tab)
         if bm:
-            since_dt = datetime.strptime(bm[:19], "%Y-%m-%d %H:%M:%S")
+            since_dt = datetime.strptime(bm.replace("T", " ")[:19], "%Y-%m-%d %H:%M:%S")
             logger.info("流断点书签: %s（上次采集起点之后的内容为本轮窗口）", bm)
 
     tracked = None
@@ -310,8 +314,15 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
             oldest = p.evaluate(OLDEST_LABEL_JS, None)
             reached = label_older_than(oldest, time.time() * 1000, since_dt)
 
-        # 流内展开（视口 dwell）
-        exp = p.evaluate(EXPAND_JS, min(limit + 12, 60))
+        # 流内展开（视口 dwell）——ego evaluate 15s 页内上限，分轮执行每轮最多 6 条
+        exp_ok, exp_remaining = 0, -1
+        for _round in range(15):
+            exp = p.evaluate(EXPAND_JS, 6)
+            exp_ok += exp.get("ok", 0)
+            exp_remaining = exp.get("remaining", 0)
+            if not exp_remaining:
+                break
+        exp = {"ok": exp_ok, "remaining": exp_remaining}
         time.sleep(1.0)
         res = p.evaluate(FEED_JS, None)
         anchor_ms, raw = res["now"], res["rows"]
@@ -347,7 +358,9 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
 
     # 例外帖：自身专栏 / 展开失败 → 详情页
     todo = [r for r in rows if r["column"] or r["trunc"]]
-    logger.info("例外帖 %s 条（专栏/展开失败）→ 详情页补全", len(todo))
+    n_col = sum(1 for r in todo if r["column"])
+    url_visited, url_ok = 0, 0
+    logger.info("例外帖 %s 条（专栏 %s / 展开失败 %s）→ 详情页补全", len(todo), n_col, len(todo) - n_col)
     if todo:
         b = ego_browser.EgoBridge()
         b.start()
@@ -355,6 +368,7 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
         fails = 0
         try:
             for r in todo:
+                url_visited += 1
                 try:
                     p2.goto("https://xueqiu.com" + r["href"])
                     time.sleep(1.2 + random.random() * 0.5)
@@ -367,6 +381,7 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
                     if not d.get("content"):
                         raise RuntimeError("详情页无正文")
                     r["detail"] = d
+                    url_ok += 1
                     fails = 0
                 except Exception as e:
                     r["detail_err"] = str(e)[:120]
@@ -481,6 +496,10 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
     print(f"帖子集已生成: {path}")
     print(f"统计: {len(out_rows)} 帖（全文 {n_full} / 摘要 {len(out_rows) - n_full}），博主 {n_author} 位"
           + (f"，非看板博主过滤 {dropped_untracked} 条" if dropped_untracked else ""))
+    print(f"[URL] 例外帖详情页访问 {url_visited} 次（成功 {url_ok}）：专栏 {n_col} / 展开失败 {len(todo) - n_col}"
+          + ("，熔断余下按摘要" if url_visited < len(todo) else ""))
+    print(f"[展开] 遇到需展开 {exp.get('ok', 0) + max(exp.get('remaining', 0), 0)} 条"
+          f"（流内展开成功 {exp.get('ok', 0)}，未成功转详情页 {max(exp.get('remaining', 0), 0)}）")
     # 成功产出 → 写流断点书签（本轮起点）
     save_bookmark(tab, datetime.fromtimestamp(anchor_ms / 1000).strftime("%Y-%m-%dT%H:%M:%S"))
     return path

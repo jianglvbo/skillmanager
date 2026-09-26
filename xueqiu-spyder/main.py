@@ -270,8 +270,8 @@ def main():
         elif args.command == "feed":
             result = feed_mod.run_feed(
                 args.tab, args.limit,
-                None if args.no_since else args.since,
-                args.output, args.outfile, args.filter_tracked,
+                args.since, args.output, args.outfile, args.filter_tracked,
+                use_bookmark=not args.no_since,
             )
         else:
             parser.print_help()
