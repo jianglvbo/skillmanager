@@ -33,6 +33,7 @@ import ego_browser
 N_TARGET_DEFAULT = 50
 PACE = (2.6, 3.4)          # 例外详情页节流
 BREAK_N = 3
+URL_BUDGET = 50            # 单次采集例外详情页主动预算（防 WAF 连击；超出即停、余下标摘要）
 MAX_SCROLL = 120           # 滚动步数硬上限（含点「加载更多」，≈1000 条），超出按「书签未翻到」处理
 STATE_PATH = os.path.expanduser("~/.cache/xueqiu-spyder/feed-state.json")
 DASHBOARD = "http://127.0.0.1:8698"
@@ -397,7 +398,8 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
     todo = [r for r in rows if r["column"] or r["trunc"]]
     n_col = sum(1 for r in todo if r["column"])
     url_visited, url_ok = 0, 0
-    logger.info("例外帖 %s 条（专栏 %s / 展开失败 %s）→ 详情页补全", len(todo), n_col, len(todo) - n_col)
+    logger.info("例外帖 %s 条（专栏 %s / 展开失败 %s）→ 详情页补全（预算 %s）",
+                len(todo), n_col, len(todo) - n_col, URL_BUDGET)
     if todo:
         b = ego_browser.EgoBridge()
         b.start()
@@ -405,6 +407,10 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
         fails = 0
         try:
             for r in todo:
+                if url_visited >= URL_BUDGET:
+                    logger.error("例外 URL 达主动预算 %s，余下 %s 条按「摘要」处理",
+                                 URL_BUDGET, len(todo) - todo.index(r))
+                    break
                 url_visited += 1
                 try:
                     p2.goto("https://xueqiu.com" + r["href"])
@@ -416,7 +422,7 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
                         time.sleep(2.5)
                         d = p2.evaluate(DETAIL_JS, None)
                     if not d.get("content"):
-                        raise RuntimeError("详情页无正文")
+                        raise RuntimeError("详情页无正文（纯图片帖或渲染缺）")
                     r["detail"] = d
                     url_ok += 1
                     fails = 0
@@ -490,6 +496,10 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
                 block = [head, f"> 被引原文：https://xueqiu.com{q['url']}"]
             if block:
                 body = (body + "\n\n" + "\n".join(block)).strip()
+        # 空正文＝纯图片帖（控制字剥离后无文本）→ 按「摘要」处理（import 按设计不入库，
+        # 提炼本就会丢零信息量帖；不标全文防误导，2026-09-26 实测 #242）
+        if not body.strip():
+            complete, reason = "摘要", "纯图片帖（无文本正文）"
         title = first_sentence(body)
         if r["column"] and body:
             m = re.match(r"^([^\n，。]{4,60})", body)

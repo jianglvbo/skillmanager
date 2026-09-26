@@ -2,7 +2,8 @@
 
 > 三份文档分工，别混：`README.md` 给人（是什么/怎么跑/有什么功能）、
 > `AGENTS.md` 给 agent（改这个仓库不能踩什么）、workspace-conventions skill 给跨项目通用规范。
-> 校验字符串 `开工与收工` / `一处一义` / `产物落点` 是 `check-workspace.sh` 的判据，改了就 FAIL。
+> 校验字符串 `开工与收工` / `一处一义` / `产物落点` 是 `check-workspace.sh` 的判据，改了就 FAIL；
+> 两份名单走 `<!-- agent-cells: … -->` / `<!-- root-entries: … -->` 注释锚点，脚本读它们（渲染时不可见）。
 
 ```markdown
 # <仓库名> — agent 工作约定
@@ -19,13 +20,20 @@
 
 ## 目录
 
+<!-- agent-cells: qoder-cn zcode qwenworkcn claude -->
+<!-- root-entries: AGENTS.md README.md package.json src out .gitignore .agents -->
+
+**两份固定名单**（`check-workspace.sh` 直接读上面两行注释锚点，改这里即生效、别处不再列）：
+`root-entries` ＝ 允许出现在仓库一级的条目；`agent-cells` ＝ 允许出现的 `out/` 分格名。
+要加新目录或新分格，**先改锚点行再建目录**（脚本对根外条目报 WARN、对 `out/` 名单外分格报 FAIL）。
+
 【本项目目录树；每行一句「这里放什么、为什么在这」；点目录与实际 skill 层要写准】
 
 ## 产物落点：`out/<agent>/`
 
-- agent 产出只落 `out/<agent>/`，`<agent>` 从固定名单取（不靠目录名推）：
-  【按本机实际启用的 agent 列，如 `qoder-cn` / `zcode` / `qwenworkcn` / `claude`】。
-  截图、报告、导出数据、一次性脚本全算产物；格子不存在就 `mkdir -p`。
+- agent 产出只落 `out/<agent>/`，`<agent>` 只取 §目录 `agent-cells` 那份名单（**唯一来源**，
+  不靠目录名推、这里不再列一遍）。截图、报告、导出数据、一次性脚本全算产物；
+  格子不存在就 `mkdir -p`（名单里没有就先扩名单）。
 - **不碰别人家的格子**；产物不散落仓库根或源码目录。
 - `out/` 不进 git——要跨会话生效的结论写进 commit message 或本文，别指望别人翻图。
 

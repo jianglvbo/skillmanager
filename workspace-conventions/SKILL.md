@@ -1,6 +1,6 @@
 ---
 name: workspace-conventions
-description: 工作区协作规范初始化与核对：把六条跨项目通用约定（项目规则→AGENTS.md、通用规则→各 agent 用户级文件、项目说明→README、共享 skill 层→.agents/skills、跨会话交接→git、交付产物→out/<agent>/）落成一份可自校的 AGENTS.md，并机械校验落地结果。当用户说「工作区规范」「初始化 AGENTS.md」「这个规范能不能复制到别的仓库」「跨工作区约定」「核对 AGENTS.md 和现状是否一致」「新建项目的 agent 协作规则」时使用。不用于：单个项目特有的业务纪律（写该项目自己的 AGENTS.md）、不改本 skill 也能答的问题、以及任何改库/改线上状态的动作。
+description: 工作区协作规范初始化与核对：把跨项目通用约定（规则分层 AGENTS.md/README/skill、共享 .agents/skills 层、git 交接、out/<agent> 产物分格、各 agent 用户级落点）落成一份可自校的 AGENTS.md，并用脚本机械校验落地结果。触发词：「工作区规范」「初始化 AGENTS.md」「这套规范能复制到别的仓库」「跨工作区约定」「核对 AGENTS.md 和现状是否一致」「新建项目的 agent 协作规则」。不用于：单个项目特有的业务纪律（写该项目自己的 AGENTS.md）、任何改库/改线上状态的动作。
 ---
 
 # 六条规范（本 skill 是唯一权威措辞）
@@ -12,7 +12,10 @@ description: 工作区协作规范初始化与核对：把六条跨项目通用�
 | 3 | 项目说明给人读 | `README.md` | 是（只查是否与 AGENTS.md 双写） |
 | 4 | 共享 skill 层 | 工作区 `.agents/skills/` | **本体不可移植**，只搬规则 |
 | 5 | 跨会话/跨 agent 交接 | `git log` + `git status/diff` → commit message | 是 |
-| 6 | 交付产物 | `out/<agent>/`，名单固定、不进 git | 是 |
+| 6 | 交付产物 | `out/<agent>/`，分格名取自 AGENTS.md 名单锚点，不进 git | 是 |
+
+> 边界：git 的**动作**（暂存/提交/推送）走 git-ops，本 skill 只定「规范写在哪、怎么校验」；
+> skill 的安装与部署走 manage-skills，本 skill 只说清工作区这层的可见性后果。
 
 # Default stance
 
@@ -55,9 +58,12 @@ description: 工作区协作规范初始化与核对：把六条跨项目通用�
 
 ## 第三步：写 AGENTS.md
 
-按 `references/agents-md-template.md` 落骨架，六段齐全：开工与收工 / 目录 / 规则归属（一处一义）/
-产物落点 / Skill 可见性 / 项目自有纪律。项目自有纪律那段留空自填，**通用六条不抄进来**——
-本 skill 是它们的权威措辞，AGENTS.md 只写指回句和本项目的差异。
+按 `references/agents-md-template.md` 落骨架，五段齐全：开工与收工（内含「分工＝一处一义」）/
+目录 / 产物落点 / Skill 可见性 / 项目自有纪律。**§目录 的两份名单锚点是机器读的**
+（`<!-- agent-cells: … -->` 与 `<!-- root-entries: … -->`）：脚本从这两行取判据，
+所以分格名和一级目录名单**只准写在这一处**，产物落点等段落一律只准指回。
+项目自有纪律那段留空自填，**通用六条不抄进来**——本 skill 是它们的权威措辞，
+AGENTS.md 只写指回句和本项目的差异。
 
 ## 第四步：处理共享 skill 层
 
@@ -65,9 +71,21 @@ description: 工作区协作规范初始化与核对：把六条跨项目通用�
 谁创建现有软链、新工作区要不要重建。若必需，AGENTS.md 里写明「本层是本项目某些 skill
 唯一的可见通道」+ 翻案记录（免得下一个会话又把它删了）。
 
+建层的可执行出口（先问用户要哪几个 skill，别自己全塞）：
+
+```bash
+mkdir -p .agents/skills
+ln -s "$HOME/.skills-manager/skills/<skill-name>" .agents/skills/<skill-name>
+find .agents/skills -maxdepth 1 -type l ! -exec test -e {} \; -print   # 空输出才算建对
+```
+
+没有中心库（换机器）→ 只能 `cp -R` 实体目录进 `.agents/skills/`，并在工作区规则里写明
+「这层是副本、不会随库更新」；优先让用户走桌面 app 的 workspace tag 托管。
+
 ## 第五步：通用规则落点
 
-读 `references/injection-map.md` 按表处理：该 agent 有用户级文件 → 写进去；
+读 `references/injection-map.md`——**它是某台机器某天的一次性快照，只能当「去哪查」的索引，
+不能当结论引用**：按表里的命令重新实测后再下判断。该 agent 有用户级文件 → 写进去；
 没有 → 报告「无落点」并给出实际机制（如记忆目录），不硬造文件。
 
 ## 第六步：机械校验 + 汇报（不可省）
@@ -108,6 +126,8 @@ bash <skill_dir>/scripts/check-workspace.sh <工作区根>    # FAIL 非零退�
 
 - [ ] 第二步真的跑过命令了？每条结论都能报出证据（文件行号 / sha / DB 计数）？
 - [ ] AGENTS.md 里没有把本 skill 的六条措辞抄一遍（只留指回 + 本项目差异）？
+- [ ] 两份名单只落在 §目录 的锚点行一处（产物落点等段落只指回，脚本读锚点）？
+- [ ] 引用 `injection-map.md` 前重新实测过？没把快照当结论？
 - [ ] 第 4 条的可移植性限制已在汇报里写明（绝对软链 + 不进 git + 谁维护）？
 - [ ] 不可移植的 skill 安装动作，是否只做成「前置条件 + 待用户确认」而非自行复制软链？
 - [ ] `check-workspace.sh` 输出 fails=0？warns 有逐条解释？

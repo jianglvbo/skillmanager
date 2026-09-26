@@ -1,19 +1,34 @@
 #!/usr/bin/env bash
 # 工作区协作规范自检：纯只读，不改任何文件。有 FAIL 则退出码 1。
 # 用法：check-workspace.sh [工作区根目录]     （缺省＝当前目录）
-# 名单可用环境变量覆盖：WORKSPACE_AGENT_DIRS="qoder-cn zcode claude"
+#
+# 两份名单的权威来源是工作区 AGENTS.md §目录 里的注释锚点——脚本读它，不复制名单：
+#   <!-- agent-cells: qoder-cn zcode qwenworkcn claude -->
+#   <!-- root-entries: AGENTS.md README.md src out .gitignore .agents -->
+# out/ 分格缺锚点时退回环境变量 WORKSPACE_AGENT_DIRS；根目录名单缺锚点只 WARN。
 set -u
 
 ROOT="${1:-$(pwd)}"
 cd "$ROOT" 2>/dev/null || { echo "FAIL root_not_found $ROOT"; exit 1; }
 
-AGENT_DIRS="${WORKSPACE_AGENT_DIRS:-qoder-cn zcode qwenworkcn claude}"
+FALLBACK_CELLS="${WORKSPACE_AGENT_DIRS:-qoder-cn zcode qwenworkcn claude}"
 fails=0
 warns=0
 
 pass() { echo "PASS $1"; }
 fail() { echo "FAIL $1"; fails=$((fails + 1)); }
 warn() { echo "WARN $1"; warns=$((warns + 1)); }
+
+# 从 AGENTS.md 取一行注释锚点的内容；取不到输出空
+anchor() {
+  [ -f AGENTS.md ] || return 0
+  awk -v k="$1" '
+    { i = index($0, "<!-- " k ": ")
+      if (i > 0) {
+        s = substr($0, i + length("<!-- " k ": ")); j = index(s, " -->")
+        if (j > 0) { print substr(s, 1, j - 1); exit }
+      } }' AGENTS.md
+}
 
 # --- 1. 三份文档分工 ---
 [ -f AGENTS.md ] && pass agents_md_present || fail agents_md_missing
@@ -46,15 +61,23 @@ else
   warn git_repo_absent_skipped_tracked_check
 fi
 
-# --- 4. out/ 分格命名 ---
+# --- 4. out/ 分格命名（FAIL：分格名是硬约束）---
+cells=$(anchor agent-cells)
+if [ -n "$cells" ]; then
+  pass agent_cells_from_anchor
+else
+  cells="$FALLBACK_CELLS"
+  warn agent_cells_anchor_missing_using_fallback
+fi
 if [ -d out ]; then
   found=0
-  for d in out/*/; do
+  for d in ./out/*/; do
     [ -d "$d" ] || continue
     found=1
-    name=$(basename "$d")
+    name=${d#./out/}
+    name=${name%/}
     ok=0
-    for a in $AGENT_DIRS; do
+    for a in $cells; do
       [ "$name" = "$a" ] && ok=1
     done
     [ "$ok" = 1 ] && pass "out_cell_known $name" || fail "out_cell_unlisted $name"
@@ -64,17 +87,36 @@ else
   warn out_dir_absent_create_on_first_artifact
 fi
 
-# --- 5. 悬空软链：静默失效，必须显式测 ---
+# --- 5. 根目录固定名单（WARN：散落只提示不拦）---
+root_list=$(anchor root-entries)
+if [ -n "$root_list" ]; then
+  pass root_entries_from_anchor
+  for e in ./* ./.[!.]*; do
+    [ -e "$e" ] || continue
+    base=${e#./}
+    case "$base" in
+      .git | .DS_Store | *.swp | *~) continue ;;
+    esac
+    hit=0
+    for r in $root_list; do
+      [ "$base" = "$r" ] && hit=1
+    done
+    [ "$hit" = 1 ] || warn "root_entry_unlisted $base"
+  done
+else
+  warn root_entries_anchor_missing
+fi
+
+# --- 6. 悬空软链：静默失效，必须显式测 ---
 check_links() {
   layer="$1"
   [ -d "$layer" ] || return 0
-  dead=$(find "$layer" -maxdepth 1 -type l ! -exec test -e {} \; -print 2>/dev/null)
-  if [ -z "$dead" ]; then
-    pass "links_ok $layer"
-  else
-    echo "$dead" | while IFS= read -r l; do echo "WARN dangling_link $l"; done
-    warns=$((warns + 1))
-  fi
+  dead_found=0
+  while IFS= read -r l; do
+    warn "dangling_link $l"
+    dead_found=1
+  done < <(find "$layer" -maxdepth 1 -type l ! -exec test -e {} \; -print 2>/dev/null)
+  [ "$dead_found" = 1 ] || pass "links_ok $layer"
 }
 check_links ".agents/skills"
 check_links "$HOME/.agents/skills"
