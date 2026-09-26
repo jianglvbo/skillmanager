@@ -4,5 +4,9 @@
   "name": "投资分析框架",
   "parent_id": null,
   "sort_order": 2,
-  "targets": []
+  "targets": [
+    "qoder",
+    "qwen_work",
+    "zcode"
+  ]
 }
