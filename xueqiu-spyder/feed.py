@@ -50,7 +50,7 @@ CLICK_TAB_JS = r"""
 }
 """
 ITEM_COUNT_JS = "() => document.querySelectorAll('.timeline__item').length"
-SCROLL_JS = "() => { window.scrollBy(0, 2600); return window.scrollY; }"
+SCROLL_JS = "() => { const y0 = window.scrollY; window.scrollBy(0, 2600); return { y0, y1: window.scrollY }; }"
 OLDEST_LABEL_JS = r"""
 () => {
   const items = [...document.querySelectorAll('.timeline__item')];
@@ -305,11 +305,12 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
                     reached = True
                     if n >= limit:
                         break
-            before = n
-            p.evaluate(SCROLL_JS, None)
+            sc = p.evaluate(SCROLL_JS, None) or {}
             steps += 1
             time.sleep(1.2)
-            if p.evaluate(ITEM_COUNT_JS, None) <= before:
+            # 停滞判定＝滚动位置不再推进（条数与最旧标签在同分组内都会停滞，2026-09-26 实测：
+            # 96 条处最旧标签卡住但流仍在加载，按它们判 stale 会提前误停）
+            if not sc.get("y1") or (sc.get("y1", 0) - sc.get("y0", 0)) < 100:
                 stale += 1
                 if stale >= 3:
                     break
