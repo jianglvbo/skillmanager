@@ -51,6 +51,16 @@ CLICK_TAB_JS = r"""
 """
 ITEM_COUNT_JS = "() => document.querySelectorAll('.timeline__item').length"
 SCROLL_JS = "() => { const y0 = window.scrollY; window.scrollBy(0, 2600); return { y0, y1: window.scrollY }; }"
+# 关注流不是纯无限滚动：每加载一批底部出现「加载更多」按钮（a.home__timeline__more），
+# 不点它滚轮/scrollBy 都停在 95 条（2026-09-26 实测——用户手动滑动时其实点过它）。
+LOAD_MORE_JS = r"""
+() => {
+  window.scrollTo(0, document.body.scrollHeight);
+  const btn = [...document.querySelectorAll('a.home__timeline__more')].find(e => e.offsetWidth || e.offsetHeight);
+  if (btn) { btn.click(); return true; }
+  return false;
+}
+"""
 OLDEST_LABEL_JS = r"""
 () => {
   const items = [...document.querySelectorAll('.timeline__item')];
@@ -311,6 +321,11 @@ def run_feed(tab="follow", limit=N_TARGET_DEFAULT, since=None, output_dir=None,
             # 停滞判定＝滚动位置不再推进（条数与最旧标签在同分组内都会停滞，2026-09-26 实测：
             # 96 条处最旧标签卡住但流仍在加载，按它们判 stale 会提前误停）
             if not sc.get("y1") or (sc.get("y1", 0) - sc.get("y0", 0)) < 100:
+                # 滚到底仍不动 → 点「加载更多」续流（关注流分批加载，不点永远停在 95 条）
+                if p.evaluate(LOAD_MORE_JS, None):
+                    time.sleep(2.2)
+                    stale = 0
+                    continue
                 stale += 1
                 if stale >= 3:
                     break
