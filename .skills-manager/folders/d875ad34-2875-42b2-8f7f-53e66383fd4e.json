@@ -4,5 +4,9 @@
   "name": "本机操作工具",
   "parent_id": null,
   "sort_order": 4,
-  "targets": []
+  "targets": [
+    "qoder",
+    "qwen_work",
+    "zcode"
+  ]
 }

@@ -4,5 +4,9 @@
   "name": "搜索",
   "parent_id": null,
   "sort_order": 3,
-  "targets": []
+  "targets": [
+    "qoder",
+    "qwen_work",
+    "zcode"
+  ]
 }

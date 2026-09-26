@@ -4,5 +4,9 @@
   "name": "基础工具",
   "parent_id": null,
   "sort_order": 1,
-  "targets": []
+  "targets": [
+    "qoder",
+    "qwen_work",
+    "zcode"
+  ]
 }
