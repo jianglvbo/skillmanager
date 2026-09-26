@@ -162,11 +162,12 @@ curl -s -X POST http://127.0.0.1:8698/api/cache/clear         # 手动失效（e
 
 流水线结果写入本地运行的投资看板（`http://127.0.0.1:8698`，端口 8698，launchd 托管 com.investment-dashboard；读本地 iCloud vault、连远程 MySQL；连接与 token 见 `investment-framework/references/console-mcp.md`），看板不产生知识、只呈现结果：
 
-- **提炼** → `MCP refine_trace`（refine 第五步，写 7 步判定）→ 提炼记录页（单元卡 + 逐步复核）；复核走 `MCP refine_review`
+- **提炼** → 产物照常落各自存储（言论六表 / wiki 条目，各自落库动作不变）；提炼步骤落库与 `refine_trace`/`refine_review` 已下线（2026-09-26 用户拍板，framework-rules #54），提炼记录页不再存在
 - **审查** → `MCP review_record`（review 第四步已实现）→ 审查模块（2026-08-16 起不再产出 md 审查报告）
 - **待决策**（2026-09-12 用户要求，原名「待复核」）→ `MCP pending_decision`：agent 处理不了的帖子/问题进队（带候选答案），
   用户在看板「待决策」页（菜单在「审查」**前面**，带未处理数角标）点选或作答；**下次提炼把答复内化成规则/别名/案例并回写 `internalized`**（2026-09-15 用户拍板：跟着提炼走、不跟审查），同类帖子以后不再问用户（framework-rules #49）。
-  三个 tab：待你裁决（open）/ 待内化（resolved 且 internalized 空）/ 已处理；卡片含原文、候选按钮、自由作答与「已内化→落点」。
+  四个 tab：**待处理（默认）＝待你裁决(open)∪待内化(resolved 且 internalized 空)**（2026-09-26 用户定义：「待处理＝待决策和待内化的所有内容，即待我决策处理的所有内容」；`list status=pending`）/ 待你裁决（open）/ 待内化 / 已处理；
+  seg 末尾「＋待办」＝用户手写一条给 agent 的待办（提炼问题/要删要改，落 `raised_by=user`+`resolved`+`verdict=fix`，同样由提炼 1.1 内化）；卡片含原文、候选按钮、自由作答与「已内化→落点」。
   **用户在卡片上还能点「建议删除这条言论」**（＝帖子质量不够却被提炼了，**理由必填**）：答复落成 `verdict=delete`，
   提炼时 `list status=pending_internalize verdict=delete` 就是**必须执行的删除清单**（删完 `internalize` 回写「已删除言论 #id + 规则落点」，
   页面随之显示「言论已删除」）；删除理由要追加到 `refine-schema.md` 的「用户删过的类型」判据表，让同类帖子下次不落库（framework-rules #50）。`blogger_statement` 遇到解析不出的标的名会**自动上报**一类（warnings 里带编号）。
